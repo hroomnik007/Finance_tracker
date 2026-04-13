@@ -3,13 +3,6 @@
 > PWA aplikácia na sledovanie rodinných financií — jednoduchá, rýchla a privacy-first.
 
 [![Deploy to GitHub Pages](https://github.com/hroomnik007/Finance_tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/hroomnik007/Finance_tracker/actions/workflows/deploy.yml)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?logo=github)](https://hroomnik007.github.io/Finance_tracker/)
-
----
-
-## 🚀 Live demo
-
-👉 **[https://hroomnik007.github.io/Finance_tracker/](https://hroomnik007.github.io/Finance_tracker/)**
 
 ---
 
