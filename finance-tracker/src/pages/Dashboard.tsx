@@ -154,7 +154,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             style={{ backgroundColor: 'rgba(52,211,153,0.15)' }}>
             <TrendingUp size={18} style={{ color: '#34d399' }} />
           </div>
-          <p className="font-mono font-semibold text-base lg:text-lg text-white text-center leading-tight">
+          <p className="font-mono font-semibold text-sm lg:text-base text-white text-center leading-tight whitespace-nowrap">
             {formatAmount(totalIncome)}
           </p>
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
@@ -172,7 +172,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             style={{ backgroundColor: 'rgba(248,113,113,0.15)' }}>
             <TrendingDown size={18} style={{ color: '#f87171' }} />
           </div>
-          <p className="font-mono font-semibold text-base lg:text-lg text-white text-center leading-tight">
+          <p className="font-mono font-semibold text-sm lg:text-base text-white text-center leading-tight whitespace-nowrap">
             {formatAmount(totalExpenses)}
           </p>
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
@@ -190,7 +190,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             <Wallet size={18} style={{ color: balance >= 0 ? '#818cf8' : '#f87171' }} />
           </div>
           <p
-            className="font-mono font-semibold text-base lg:text-lg text-center leading-tight"
+            className="font-mono font-semibold text-sm lg:text-base text-center leading-tight whitespace-nowrap"
             style={{ color: balance >= 0 ? '#34d399' : '#f87171' }}
           >
             {formatAmount(balance)}

@@ -34,7 +34,7 @@ export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
       >
         <ChevronLeft size={15} />
       </button>
-      <span className="text-sm font-semibold text-white px-2 min-w-[130px] text-center whitespace-nowrap">
+      <span className="text-sm font-semibold text-white px-2 text-center whitespace-nowrap">
         {t.months[month - 1]} {year}
       </span>
       <button
