@@ -291,7 +291,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         <div className="card fade-up stagger-5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-sm font-semibold text-[#f1f5f9]">{t.dashboard.recentTransactions}</h3>
-            <button className="flex items-center gap-1 text-xs text-[#6366f1] hover:text-[#818cf8] transition-colors font-medium">
+            <button
+              onClick={() => onNavigate('variable-expenses')}
+              className="flex items-center gap-1 text-xs text-[#6366f1] hover:text-[#818cf8] transition-colors font-medium cursor-pointer"
+            >
               {t.dashboard.showAll} <ArrowRight size={12} />
             </button>
           </div>
