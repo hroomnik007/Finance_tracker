@@ -129,8 +129,8 @@ function App() {
         {page === 'settings' && <SettingsPage />}
       </main>
 
-      {/* Global FAB — visible on every page */}
-      <GlobalFAB month={month} year={year} showToast={showToast} />
+      {/* Global FAB — page-specific visibility */}
+      <GlobalFAB month={month} year={year} showToast={showToast} currentPage={page} />
     </div>
   )
 }

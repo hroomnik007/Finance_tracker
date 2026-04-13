@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { db } from '../db/database'
 import { BottomSheet } from '../components/BottomSheet'
 import { useFormatters } from '../hooks/useFormatters'
@@ -32,15 +32,6 @@ export function CategoriesPage() {
   const [color, setColor] = useState(PRESET_COLORS[6])
   const [icon, setIcon] = useState('🛒')
   const [budgetLimit, setBudgetLimit] = useState('')
-
-  function openAdd() {
-    setEditing(null)
-    setName('')
-    setColor(PRESET_COLORS[6])
-    setIcon('🛒')
-    setBudgetLimit('')
-    setSheetOpen(true)
-  }
 
   function openEdit(cat: Category) {
     setEditing(cat)
@@ -87,15 +78,9 @@ export function CategoriesPage() {
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-6 pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#f1f5f9]">{t.expenses.categories.title}</h1>
-          <p className="text-xs text-[#475569] mt-0.5">{t.expenses.categories.subtitle}</p>
-        </div>
-        <button onClick={openAdd} className="btn-primary">
-          <Plus size={16} />
-          {t.expenses.categories.add}
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-[#f1f5f9]">{t.expenses.categories.title}</h1>
+        <p className="text-xs text-[#475569] mt-0.5">{t.expenses.categories.subtitle}</p>
       </div>
 
       {/* Grid */}

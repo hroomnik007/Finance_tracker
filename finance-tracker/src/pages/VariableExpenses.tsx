@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Edit2, Trash2 } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { DateInput } from '../components/DateInput'
 import { MonthSwitcher } from '../components/MonthSwitcher'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
@@ -454,7 +453,20 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
               {t.expenses.variable.date}
             </label>
-            <DateInput value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
+            <input
+              type="date"
+              value={form.date}
+              onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+              style={{
+                background: 'transparent',
+                color: 'white',
+                border: '1px solid #475569',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                width: '100%',
+                colorScheme: 'dark',
+              }}
+            />
           </div>
           <button
             onClick={handleSave}

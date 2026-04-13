@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from './BottomSheet'
-import { DateInput } from './DateInput'
 import { useIncomes } from '../hooks/useIncomes'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
@@ -11,17 +10,37 @@ import { useTranslation } from '../i18n'
 import { db } from '../db/database'
 import { todayISO } from '../utils/format'
 
-type ModalType = 'income' | 'variable' | 'fixed' | null
+type ModalType = 'income' | 'variable' | 'fixed' | 'category' | null
+
+const FAB_VISIBLE_PAGES = ['income', 'variable-expenses', 'fixed-expenses', 'categories']
+
+const PAGE_MODAL_MAP: Record<string, ModalType> = {
+  'income': 'income',
+  'variable-expenses': 'variable',
+  'fixed-expenses': 'fixed',
+  'categories': 'category',
+}
+
+const PRESET_COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#22c55e',
+  '#10b981', '#06b6d4', '#3b82f6', '#6366f1',
+  '#8b5cf6', '#a855f7', '#ec4899', '#64748b',
+]
+
+const PRESET_ICONS = [
+  '🍔', '🛒', '🚗', '🏠', '💊', '🎉', '👕', '📚',
+  '✈️', '🎮', '🐾', '💇', '🏋️', '📱', '💡', '🍕',
+  '☕', '🎬', '🛻', '🏥', '🎓', '🌿', '🧴', '💰',
+]
 
 interface GlobalFABProps {
   month: number
   year: number
   showToast: (msg: string) => void
+  currentPage: string
 }
 
-export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
-  // ── Menu state ────────────────────────────────────────────────────────────
-  const [menuOpen, setMenuOpen] = useState(false)
+export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null)
 
   // ── Data hooks ────────────────────────────────────────────────────────────
@@ -32,7 +51,7 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
 
-  // ── Income form state (flat — never defined as inner component) ──────────
+  // ── Income form state ─────────────────────────────────────────────────────
   const [incAmt, setIncAmt] = useState('')
   const [incLabel, setIncLabel] = useState('')
   const [incDate, setIncDate] = useState(todayISO())
@@ -51,11 +70,14 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
   const [fixAmt, setFixAmt] = useState('')
   const [fixDay, setFixDay] = useState('1')
 
+  // ── Category form state ───────────────────────────────────────────────────
+  const [catName, setCatName] = useState('')
+  const [catColor, setCatColor] = useState(PRESET_COLORS[6])
+  const [catIcon, setCatIcon] = useState('🛒')
+  const [catBudgetLimit, setCatBudgetLimit] = useState('')
+
   // ── Open / close helpers ──────────────────────────────────────────────────
   function openModal(type: ModalType) {
-    // 1. Close menu first so it fully unmounts
-    setMenuOpen(false)
-    // 2. Small delay ensures no FAB re-render interferes with modal mount
     setTimeout(() => {
       if (type === 'income') {
         setIncAmt(''); setIncLabel(''); setIncDate(todayISO()); setIncRecurring(false)
@@ -64,6 +86,8 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
         setVarNewCatMode(false); setVarNewCatName('')
       } else if (type === 'fixed') {
         setFixLabel(''); setFixAmt(''); setFixDay('1')
+      } else if (type === 'category') {
+        setCatName(''); setCatColor(PRESET_COLORS[6]); setCatIcon('🛒'); setCatBudgetLimit('')
       }
       setActiveModal(type)
     }, 50)
@@ -110,6 +134,18 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
     closeModal()
   }
 
+  async function saveCategory() {
+    if (!catName.trim()) return
+    const limit = catBudgetLimit ? parseFloat(catBudgetLimit) : undefined
+    await addCategory({
+      name: catName.trim(),
+      color: catColor,
+      icon: catIcon,
+      budgetLimit: limit && limit > 0 ? limit : undefined,
+    })
+    closeModal()
+  }
+
   // ── Live budget preview (variable expense) ────────────────────────────────
   const liveBudget = varCatId ? budgetStatuses.find(b => b.categoryId === parseInt(varCatId)) : null
   const liveVarAmt = parseFloat(varAmt) || 0
@@ -120,11 +156,19 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
     ? (livePct >= 100 ? '#f87171' : livePct >= 70 ? '#fbbf24' : '#34d399')
     : '#34d399'
 
+  // ── Only render on allowed pages ──────────────────────────────────────────
+  if (!FAB_VISIBLE_PAGES.includes(currentPage)) return null
+
+  const handleFABClick = () => {
+    const modalType = PAGE_MODAL_MAP[currentPage]
+    if (modalType) openModal(modalType)
+  }
+
   return (
     <>
       {/* ── Floating Action Button ────────────────────────────────────────── */}
       <button
-        onClick={() => setMenuOpen(o => !o)}
+        onClick={handleFABClick}
         aria-label="Pridať záznam"
         className="fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl cursor-pointer"
         style={{
@@ -134,53 +178,8 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
           boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
         }}
       >
-        <Plus
-          size={26}
-          style={{
-            transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease',
-          }}
-        />
+        <Plus size={26} />
       </button>
-
-      {/* ── Action menu ──────────────────────────────────────────────────── */}
-      {menuOpen && (
-        <>
-          {/* Transparent backdrop — closes menu on outside click */}
-          <div
-            className="fixed inset-0"
-            style={{ zIndex: 38 }}
-            onClick={() => setMenuOpen(false)}
-          />
-          {/* Menu items — stacked above FAB */}
-          <div
-            className="fixed right-4 flex flex-col gap-2"
-            style={{ bottom: 'calc(5rem + 64px)', zIndex: 41 }}
-          >
-            {([
-              { emoji: '🔒', label: 'Pridať fixný výdavok', type: 'fixed' as ModalType },
-              { emoji: '💳', label: 'Pridať výdavok',       type: 'variable' as ModalType },
-              { emoji: '💰', label: 'Pridať príjem',        type: 'income' as ModalType },
-            ] as const).map(item => (
-              <button
-                key={item.type}
-                onClick={() => openModal(item.type)}
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold shadow-lg cursor-pointer"
-                style={{
-                  background: 'linear-gradient(135deg, #1e2444, #252b4a)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.45)',
-                  minWidth: '200px',
-                  color: '#f1f5f9',
-                }}
-              >
-                <span className="text-xl">{item.emoji}</span>
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
 
       {/* ── ADD INCOME modal ─────────────────────────────────────────────── */}
       <BottomSheet open={activeModal === 'income'} onClose={closeModal} title={t.income.addTitle}>
@@ -212,7 +211,20 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
               {t.income.date}
             </label>
-            <DateInput value={incDate} onChange={setIncDate} />
+            <input
+              type="date"
+              value={incDate}
+              onChange={e => setIncDate(e.target.value)}
+              style={{
+                background: 'transparent',
+                color: 'white',
+                border: '1px solid #475569',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                width: '100%',
+                colorScheme: 'dark',
+              }}
+            />
           </div>
           <div
             className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
@@ -319,7 +331,20 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
               {t.expenses.variable.date}
             </label>
-            <DateInput value={varDate} onChange={setVarDate} />
+            <input
+              type="date"
+              value={varDate}
+              onChange={e => setVarDate(e.target.value)}
+              style={{
+                background: 'transparent',
+                color: 'white',
+                border: '1px solid #475569',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                width: '100%',
+                colorScheme: 'dark',
+              }}
+            />
           </div>
 
           <button
@@ -380,6 +405,97 @@ export function GlobalFAB({ month, year, showToast }: GlobalFABProps) {
             <button
               onClick={saveFixed}
               disabled={!fixLabel.trim() || !fixAmt}
+              className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ height: '48px' }}
+            >
+              {t.common.add}
+            </button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* ── ADD CATEGORY modal ────────────────────────────────────────────── */}
+      <BottomSheet open={activeModal === 'category'} onClose={closeModal} title={t.expenses.categories.newTitle}>
+        <div className="flex flex-col gap-5">
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
+              {t.expenses.categories.nameLabel}
+            </label>
+            <input
+              className="input-field"
+              placeholder={t.expenses.categories.namePlaceholder}
+              value={catName}
+              onChange={e => setCatName(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
+              {t.expenses.categories.iconLabel} <span className="text-[#f1f5f9] ml-2 text-sm not-uppercase">{catIcon}</span>
+            </label>
+            <div className="grid grid-cols-8 gap-1.5">
+              {PRESET_ICONS.map(em => (
+                <button
+                  key={em}
+                  onClick={() => setCatIcon(em)}
+                  className="h-10 w-full rounded-xl text-lg flex items-center justify-center transition-all duration-150"
+                  style={{
+                    backgroundColor: catIcon === em ? catColor + '30' : 'var(--bg-elevated)',
+                    border: catIcon === em ? `1px solid ${catColor}60` : '1px solid var(--border-subtle)',
+                  }}
+                >
+                  {em}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
+              {t.expenses.categories.colorLabel}
+            </label>
+            <div className="flex flex-wrap gap-2.5">
+              {PRESET_COLORS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCatColor(c)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-110"
+                  style={{
+                    backgroundColor: c,
+                    boxShadow: catColor === c ? `0 0 0 3px var(--bg-elevated), 0 0 0 5px ${c}` : 'none',
+                  }}
+                >
+                  {catColor === c && <span className="text-white text-xs font-bold">✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
+              {t.expenses.categories.limitLabel} <span className="text-[#475569]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
+            </label>
+            <input
+              className="input-field"
+              type="number" inputMode="decimal"
+              placeholder={t.expenses.categories.limitPlaceholder}
+              min="0" step="0.01"
+              value={catBudgetLimit}
+              onChange={e => setCatBudgetLimit(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={closeModal}
+              className="btn-secondary flex-1 justify-center rounded-2xl"
+              style={{ height: '48px' }}
+            >
+              {t.common.cancel}
+            </button>
+            <button
+              onClick={saveCategory}
+              disabled={!catName.trim()}
               className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ height: '48px' }}
             >
