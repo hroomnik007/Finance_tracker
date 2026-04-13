@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Edit2, Trash2 } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -48,7 +48,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [confirmId, setConfirmId] = useState<number | null>(null)
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
-  const [mobileCatsOpen, setMobileCatsOpen] = useState(false)
 
   const getCategoryById = (id: number) => categories.find(c => c.id === id)
   const getBudgetForCat = (catId: number) => budgetStatuses.find(b => b.categoryId === catId)
@@ -115,197 +114,20 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
   const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : '#34d399'
 
-  const FormBody = () => (
-    <div className="flex flex-col gap-4">
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.expenses.variable.amount}
-        </label>
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="0,00"
-          value={form.amount}
-          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-          className="input-field font-mono font-bold"
-          style={{ height: '60px', fontSize: '1.5rem' }}
-        />
-      </div>
-
-      {livePct !== null && liveLimit && (
-        <div
-          className="rounded-2xl p-3.5"
-          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-        >
-          <div className="flex justify-between text-xs mb-2">
-            <span className="text-[#94a3b8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
-            <span className="font-mono text-[#94a3b8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
-          </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="h-full rounded-full progress-fill"
-              style={{
-                width: `${livePct}%`,
-                backgroundColor: liveBudgetBarColor,
-                boxShadow: `0 0 8px ${liveBudgetBarColor}`,
-              }} />
-          </div>
-        </div>
-      )}
-
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.expenses.variable.category}
-        </label>
-        {!newCatMode ? (
-          <select
-            value={form.categoryId}
-            onChange={e => {
-              if (e.target.value === '__new__') { setNewCatMode(true); setForm(f => ({ ...f, categoryId: '' })) }
-              else setForm(f => ({ ...f, categoryId: e.target.value }))
-            }}
-            className="input-field cursor-pointer"
-          >
-            <option value="">{t.expenses.variable.selectCategory}</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-            <option value="__new__">{t.expenses.variable.newCategory}</option>
-          </select>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder={t.expenses.variable.newCategoryName}
-              value={newCatName}
-              onChange={e => setNewCatName(e.target.value)}
-              className="input-field flex-1"
-            />
-            <button
-              onClick={() => { setNewCatMode(false); setNewCatName('') }}
-              className="btn-secondary px-3 rounded-xl shrink-0"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.expenses.variable.note}
-        </label>
-        <input
-          type="text"
-          placeholder={t.expenses.variable.notePlaceholder}
-          value={form.note}
-          onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-          className="input-field"
-        />
-      </div>
-
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.expenses.variable.date}
-        </label>
-        <DateInput
-          value={form.date}
-          onChange={date => setForm(f => ({ ...f, date }))}
-        />
-      </div>
-
-      <button
-        onClick={handleSave}
-        className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '48px', marginTop: '4px' }}
-      >
-        {editing ? t.expenses.variable.saveChanges : t.expenses.variable.add}
-      </button>
-    </div>
-  )
-
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="flex flex-col gap-5 pb-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-4 flex-1 lg:flex-none min-w-0">
-          <h1 className="hidden lg:block text-2xl font-bold text-white shrink-0">{t.expenses.variable.title}</h1>
-          <div className="hidden lg:block">
-            <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-          </div>
-          <div className="lg:hidden">
-            <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-          </div>
+      {/* Header — month switcher only (add via global FAB) */}
+      <div className="flex items-center gap-4">
+        <div className="lg:hidden flex-1">
+          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
         </div>
-        <button onClick={openAdd} className="btn-primary shrink-0">
-          <Plus size={16} /> {t.expenses.variable.add}
-        </button>
+        <h1 className="hidden lg:block text-2xl font-bold text-white shrink-0">{t.expenses.variable.title}</h1>
+        <div className="hidden lg:block">
+          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        </div>
       </div>
 
-      {/* ── Mobile: collapsible categories panel ── */}
-      {budgetStatuses.length > 0 && (
-        <div className="lg:hidden">
-          <button
-            onClick={() => setMobileCatsOpen(o => !o)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-150 cursor-pointer"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-card)',
-            }}
-          >
-            <span className="text-sm font-semibold text-[#f1f5f9] flex items-center gap-2">
-              <span>📊</span> {t.expenses.variable.categoriesAndBudget}
-            </span>
-            {mobileCatsOpen
-              ? <ChevronUp size={16} style={{ color: '#475569' }} />
-              : <ChevronDown size={16} style={{ color: '#475569' }} />
-            }
-          </button>
-          {mobileCatsOpen && (
-            <div
-              className="rounded-2xl p-4 mt-2 flex flex-col gap-3"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--shadow-card)',
-              }}
-            >
-              {budgetStatuses.map((bs: BudgetStatus) => {
-                const barColor = getBudgetBarColor(bs.percentage)
-                const pct = Math.min(bs.percentage, 100)
-                return (
-                  <div
-                    key={bs.categoryId}
-                    className={`rounded-2xl p-4 transition-all ${bs.isOver ? 'pulse-glow' : ''}`}
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      border: bs.isOver ? '1px solid rgba(248,113,113,0.35)' : '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
-                          style={{ backgroundColor: bs.categoryColor + '22' }}>{bs.categoryIcon}</span>
-                        <span className="text-sm font-medium text-[#f1f5f9] leading-snug">{bs.categoryName}</span>
-                      </div>
-                      <span className="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded-full"
-                        style={{ color: barColor, backgroundColor: barColor + '20' }}>
-                        {Math.round(bs.percentage)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full overflow-hidden mb-2"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                      <div className="h-full rounded-full progress-fill"
-                        style={{ width: `${pct}%`, backgroundColor: bs.categoryColor, boxShadow: `0 0 8px ${bs.categoryColor}` }} />
-                    </div>
-                    <p className="text-xs text-[#475569]">{formatAmount(bs.spent)} z {formatAmount(bs.limit)}</p>
-                    {bs.isOver && <p className="text-[#f87171] text-xs mt-0.5 font-medium">{t.dashboard.limitExceeded}</p>}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Desktop: two-panel layout ── */}
       <div className="hidden lg:grid lg:grid-cols-[35fr_65fr] lg:gap-5">
@@ -561,25 +383,95 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         )}
       </div>
 
-      {/* FAB mobile */}
-      <button
-        onClick={openAdd}
-        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
-        style={{
-          bottom: '5rem',
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
-        }}
-      >
-        <Plus size={26} />
-      </button>
-
       <BottomSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
       >
-        <FormBody />
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.expenses.variable.amount}
+            </label>
+            <input
+              type="number" inputMode="decimal" placeholder="0,00"
+              value={form.amount}
+              onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+              className="input-field font-mono font-bold"
+              style={{ height: '60px', fontSize: '1.5rem' }}
+            />
+          </div>
+          {livePct !== null && liveLimit && (
+            <div className="rounded-2xl p-3.5"
+              style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-[#94a3b8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
+                <span className="font-mono text-[#94a3b8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="h-full rounded-full progress-fill"
+                  style={{ width: `${livePct}%`, backgroundColor: liveBudgetBarColor, boxShadow: `0 0 8px ${liveBudgetBarColor}` }} />
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.expenses.variable.category}
+            </label>
+            {!newCatMode ? (
+              <select
+                value={form.categoryId}
+                onChange={e => {
+                  if (e.target.value === '__new__') { setNewCatMode(true); setForm(f => ({ ...f, categoryId: '' })) }
+                  else setForm(f => ({ ...f, categoryId: e.target.value }))
+                }}
+                className="input-field cursor-pointer"
+              >
+                <option value="">{t.expenses.variable.selectCategory}</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                <option value="__new__">{t.expenses.variable.newCategory}</option>
+              </select>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text" placeholder={t.expenses.variable.newCategoryName}
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  className="input-field flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setNewCatMode(false); setNewCatName('') }}
+                  className="btn-secondary px-3 rounded-xl shrink-0"
+                >✕</button>
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.expenses.variable.note}
+            </label>
+            <input
+              type="text" placeholder={t.expenses.variable.notePlaceholder}
+              value={form.note}
+              onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.expenses.variable.date}
+            </label>
+            <DateInput value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
+          </div>
+          <button
+            onClick={handleSave}
+            className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
+            style={{ height: '48px', marginTop: '4px' }}
+          >
+            {editing ? t.expenses.variable.saveChanges : t.expenses.variable.add}
+          </button>
+        </div>
       </BottomSheet>
 
       <ConfirmDialog

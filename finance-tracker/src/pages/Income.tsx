@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -78,88 +78,19 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const totalAmount = incomes.reduce((s, i) => s + i.amount, 0)
   const recurringCount = incomes.filter(i => i.recurring).length
 
-  const FormContent = () => (
-    <div className="flex flex-col gap-4">
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.income.amount}
-        </label>
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="0,00"
-          value={form.amount}
-          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-          className="input-field font-mono text-2xl font-bold"
-          style={{ height: '60px', fontSize: '1.5rem' }}
-        />
-      </div>
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.income.description}
-        </label>
-        <input
-          type="text"
-          placeholder={t.income.descriptionPlaceholder}
-          value={form.label}
-          onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
-          className="input-field"
-        />
-      </div>
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-          {t.income.date}
-        </label>
-        <DateInput
-          value={form.date}
-          onChange={date => setForm(f => ({ ...f, date }))}
-        />
-      </div>
-      <div
-        className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
-        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', minHeight: '56px' }}
-      >
-        <span className="text-sm font-medium text-[#f1f5f9]">{t.income.recurringToggle}</span>
-        <button
-          onClick={() => setForm(f => ({ ...f, recurring: !f.recurring }))}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${
-            form.recurring ? 'bg-[#6366f1]' : 'bg-[#212840]'
-          }`}
-          style={{ border: form.recurring ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.08)' }}
-        >
-          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-            form.recurring ? 'translate-x-5' : 'translate-x-0'
-          }`} />
-        </button>
-      </div>
-      <button
-        onClick={handleSave}
-        className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '48px', marginTop: '4px' }}
-      >
-        {editing ? t.income.saveChanges : t.income.add}
-      </button>
-    </div>
-  )
-
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="flex flex-col gap-5 lg:gap-6 pb-4">
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1 lg:flex-none">
-          <div className="flex-1 lg:hidden">
-            <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-          </div>
-          <h2 className="hidden lg:block text-2xl font-bold text-white">{t.income.title}</h2>
-          <div className="hidden lg:block">
-            <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-          </div>
+      {/* Header — month switcher only (add via global FAB) */}
+      <div className="flex items-center gap-4">
+        <div className="lg:hidden flex-1">
+          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
         </div>
-        <button onClick={openAdd} className="btn-primary shrink-0">
-          <Plus size={16} /> {t.income.add}
-        </button>
+        <h2 className="hidden lg:block text-2xl font-bold text-white">{t.income.title}</h2>
+        <div className="hidden lg:block">
+          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -363,7 +294,58 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         onClose={() => setSheetOpen(false)}
         title={editing ? t.income.editTitle : t.income.addTitle}
       >
-        <FormContent />
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.income.amount}
+            </label>
+            <input
+              type="number" inputMode="decimal" placeholder="0,00"
+              value={form.amount}
+              onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+              className="input-field font-mono font-bold"
+              style={{ height: '60px', fontSize: '1.5rem' }}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.income.description}
+            </label>
+            <input
+              type="text" placeholder={t.income.descriptionPlaceholder}
+              value={form.label}
+              onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+              {t.income.date}
+            </label>
+            <DateInput value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
+          </div>
+          <div
+            className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
+            style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', minHeight: '56px' }}
+          >
+            <span className="text-sm font-medium text-[#f1f5f9]">{t.income.recurringToggle}</span>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, recurring: !f.recurring }))}
+              className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${form.recurring ? 'bg-[#6366f1]' : 'bg-[#212840]'}`}
+              style={{ border: form.recurring ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${form.recurring ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
+          </div>
+          <button
+            onClick={handleSave}
+            className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
+            style={{ height: '48px', marginTop: '4px' }}
+          >
+            {editing ? t.income.saveChanges : t.income.add}
+          </button>
+        </div>
       </BottomSheet>
 
       <ConfirmDialog
