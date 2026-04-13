@@ -110,20 +110,23 @@ export function CategoriesPage() {
           {categories.map((cat, idx) => (
             <div
               key={cat.id}
-              className="relative p-5 rounded-[20px] flex flex-col gap-3 group cursor-default fade-up"
+              className="relative p-5 rounded-[20px] flex flex-col gap-3 group cursor-pointer fade-up"
+              onClick={() => openEdit(cat)}
               style={{
                 backgroundColor: cat.color + '12',
                 border: `1px solid ${cat.color}40`,
                 animationDelay: `${idx * 40}ms`,
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease, filter 0.15s ease',
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
                 ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-elevated)'
+                ;(e.currentTarget as HTMLElement).style.filter = 'brightness(1.1)'
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
                 ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+                ;(e.currentTarget as HTMLElement).style.filter = 'brightness(1)'
               }}
             >
               {/* Icon centered */}
@@ -157,7 +160,7 @@ export function CategoriesPage() {
               {/* Actions — appear on hover */}
               <div className="flex items-center gap-2 mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button
-                  onClick={() => openEdit(cat)}
+                  onClick={(e) => { e.stopPropagation(); openEdit(cat) }}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
                   style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}
                   onMouseEnter={e => {
@@ -173,7 +176,7 @@ export function CategoriesPage() {
                   {t.common.edit}
                 </button>
                 <button
-                  onClick={() => setDeleteId(cat.id!)}
+                  onClick={(e) => { e.stopPropagation(); setDeleteId(cat.id!) }}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
                   style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}
                   onMouseEnter={e => {
@@ -291,9 +294,26 @@ export function CategoriesPage() {
               className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ height: '48px' }}
             >
-              {editing ? t.common.save : t.common.add}
+              {editing ? t.expenses.variable.saveChanges : t.common.add}
             </button>
           </div>
+
+          {editing && (
+            <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <button
+                onClick={() => {
+                  const idToDelete = editing.id!
+                  closeSheet()
+                  setDeleteId(idToDelete)
+                }}
+                className="btn-danger w-full flex items-center justify-center gap-2 rounded-2xl font-medium"
+                style={{ height: '44px' }}
+              >
+                <Trash2 size={15} />
+                Vymazať kategóriu
+              </button>
+            </div>
+          )}
         </div>
       </BottomSheet>
 
