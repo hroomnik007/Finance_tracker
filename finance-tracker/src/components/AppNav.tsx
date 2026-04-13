@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   ChevronDown, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon,
   LayoutDashboard, TrendingUp, CreditCard, Settings,
-  BarChart3, Lock, Tag, Menu,
+  BarChart3, Lock, Tag,
 } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
@@ -194,20 +194,6 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         }}
       >
         {collapsed ? <ChevronRightIcon size={12} /> : <ChevronLeft size={12} />}
-      </button>
-
-      {/* ── Mobile top-left toggle ── */}
-      <button
-        onClick={onToggle}
-        className="flex lg:hidden fixed top-4 left-4 z-50 items-center justify-center w-9 h-9 rounded-xl"
-        style={{
-          background: 'rgba(33,40,64,0.95)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          color: '#94a3b8',
-          backdropFilter: 'blur(8px)',
-        }}
-      >
-        <Menu size={17} />
       </button>
 
       {/* ── Desktop sidebar ── */}

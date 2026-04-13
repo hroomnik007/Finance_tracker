@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Menu } from 'lucide-react'
 import { AppNav } from './components/AppNav'
 import { ToastContainer } from './components/ToastContainer'
 import { Dashboard } from './pages/Dashboard'
@@ -72,6 +73,28 @@ function App() {
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
       <ToastContainer toasts={toasts} />
 
+      {/* Mobile top bar — fixed 56px bar prevents hamburger from overlapping content */}
+      <div
+        className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center px-4"
+        style={{
+          height: '56px',
+          backgroundColor: '#1c2340',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <button
+          onClick={toggleSidebar}
+          className="flex items-center justify-center w-9 h-9 rounded-xl cursor-pointer"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            color: '#94a3b8',
+          }}
+        >
+          <Menu size={17} />
+        </button>
+      </div>
+
       <AppNav
         current={page}
         onChange={setPage}
@@ -81,10 +104,9 @@ function App() {
         onToggle={toggleSidebar}
       />
 
-      {/* Main content */}
-      {/* pt-16 on mobile clears the fixed hamburger button (top:16px + h:36px + gap = 64px) */}
+      {/* Main content — pt-14 (56px) clears the fixed mobile top bar */}
       <main
-        className="flex-1 h-full overflow-y-auto min-w-0 pb-20 lg:pb-0 pt-16 lg:pt-6"
+        className="flex-1 h-full overflow-y-auto min-w-0 pb-20 lg:pb-0 pt-14 lg:pt-6"
         style={{ paddingLeft: '32px', paddingRight: '32px' }}
       >
         {page === 'dashboard' && (
@@ -101,7 +123,7 @@ function App() {
             showToast={showToast}
           />
         )}
-        {page === 'fixed-expenses' && <FixedExpensesPage />}
+        {page === 'fixed-expenses' && <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />}
         {page === 'categories' && <CategoriesPage />}
         {page === 'settings' && <SettingsPage />}
       </main>

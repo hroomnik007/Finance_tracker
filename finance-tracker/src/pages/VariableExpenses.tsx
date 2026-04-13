@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -48,6 +48,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [confirmId, setConfirmId] = useState<number | null>(null)
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
+  const [mobileCatsOpen, setMobileCatsOpen] = useState(false)
 
   const getCategoryById = (id: number) => categories.find(c => c.id === id)
   const getBudgetForCat = (catId: number) => budgetStatuses.find(b => b.categoryId === catId)
@@ -238,6 +239,73 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           <Plus size={16} /> {t.expenses.variable.add}
         </button>
       </div>
+
+      {/* ── Mobile: collapsible categories panel ── */}
+      {budgetStatuses.length > 0 && (
+        <div className="lg:hidden">
+          <button
+            onClick={() => setMobileCatsOpen(o => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-150 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-card)',
+            }}
+          >
+            <span className="text-sm font-semibold text-[#f1f5f9] flex items-center gap-2">
+              <span>📊</span> {t.expenses.variable.categoriesAndBudget}
+            </span>
+            {mobileCatsOpen
+              ? <ChevronUp size={16} style={{ color: '#475569' }} />
+              : <ChevronDown size={16} style={{ color: '#475569' }} />
+            }
+          </button>
+          {mobileCatsOpen && (
+            <div
+              className="rounded-2xl p-4 mt-2 flex flex-col gap-3"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: 'var(--shadow-card)',
+              }}
+            >
+              {budgetStatuses.map((bs: BudgetStatus) => {
+                const barColor = getBudgetBarColor(bs.percentage)
+                const pct = Math.min(bs.percentage, 100)
+                return (
+                  <div
+                    key={bs.categoryId}
+                    className={`rounded-2xl p-4 transition-all ${bs.isOver ? 'pulse-glow' : ''}`}
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: bs.isOver ? '1px solid rgba(248,113,113,0.35)' : '1px solid var(--border-subtle)',
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+                          style={{ backgroundColor: bs.categoryColor + '22' }}>{bs.categoryIcon}</span>
+                        <span className="text-sm font-medium text-[#f1f5f9] leading-snug">{bs.categoryName}</span>
+                      </div>
+                      <span className="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded-full"
+                        style={{ color: barColor, backgroundColor: barColor + '20' }}>
+                        {Math.round(bs.percentage)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden mb-2"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                      <div className="h-full rounded-full progress-fill"
+                        style={{ width: `${pct}%`, backgroundColor: bs.categoryColor, boxShadow: `0 0 8px ${bs.categoryColor}` }} />
+                    </div>
+                    <p className="text-xs text-[#475569]">{formatAmount(bs.spent)} z {formatAmount(bs.limit)}</p>
+                    {bs.isOver && <p className="text-[#f87171] text-xs mt-0.5 font-medium">{t.dashboard.limitExceeded}</p>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Desktop: two-panel layout ── */}
       <div className="hidden lg:grid lg:grid-cols-[35fr_65fr] lg:gap-5">

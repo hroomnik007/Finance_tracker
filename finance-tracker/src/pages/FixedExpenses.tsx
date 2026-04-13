@@ -3,11 +3,18 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Pencil, Trash2, Lock } from 'lucide-react'
 import { db } from '../db/database'
 import { BottomSheet } from '../components/BottomSheet'
+import { MonthSwitcher } from '../components/MonthSwitcher'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { FixedExpense } from '../types'
 
-export function FixedExpensesPage() {
+interface FixedExpensesPageProps {
+  month: number
+  year: number
+  onMonthChange: (month: number, year: number) => void
+}
+
+export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesPageProps) {
   const fixedExpenses = useLiveQuery(() => db.fixedExpenses.orderBy('dayOfMonth').toArray(), [])
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
@@ -66,13 +73,10 @@ export function FixedExpensesPage() {
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-5 pb-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#f1f5f9]">{t.expenses.fixed.title}</h1>
-          <p className="text-xs text-[#475569] mt-0.5">{t.expenses.fixed.subtitle}</p>
-        </div>
-        <button onClick={openAdd} className="btn-primary">
+      {/* Header — month switcher + add button (same pattern as Variabilné) */}
+      <div className="flex items-center justify-between gap-2">
+        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        <button onClick={openAdd} className="btn-primary shrink-0">
           <Plus size={16} />
           {t.expenses.fixed.add}
         </button>
@@ -133,7 +137,7 @@ export function FixedExpensesPage() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#f1f5f9] truncate leading-snug">{expense.label}</p>
-                  <p className="text-xs text-[#475569] mt-0.5">
+                  <p className="text-xs text-[#475569] mt-0.5 truncate">
                     {t.expenses.fixed.everyMonth}, {ordinalSuffix(expense.dayOfMonth)}
                   </p>
                 </div>

@@ -59,7 +59,7 @@ export function DateInput({ value, onChange }: DateInputProps) {
     }
   }
 
-  const cls = "bg-transparent outline-none text-[#f1f5f9] placeholder:text-[#475569] text-center text-[15px]"
+  const cls = "bg-transparent outline-none text-[#f1f5f9] placeholder:text-[#475569] text-center text-[15px] tabular-nums"
 
   const dayField = (
     <input
@@ -70,7 +70,7 @@ export function DateInput({ value, onChange }: DateInputProps) {
       value={day}
       maxLength={2}
       className={cls}
-      style={{ width: '36px' }}
+      style={{ width: '24px' }}
       onChange={e => {
         const v = e.target.value.replace(/\D/g, '').slice(0, 2)
         setDay(v)
@@ -88,7 +88,7 @@ export function DateInput({ value, onChange }: DateInputProps) {
       value={month}
       maxLength={2}
       className={cls}
-      style={{ width: '36px' }}
+      style={{ width: '24px' }}
       onChange={e => {
         const v = e.target.value.replace(/\D/g, '').slice(0, 2)
         setMonth(v)
@@ -106,7 +106,7 @@ export function DateInput({ value, onChange }: DateInputProps) {
       value={year}
       maxLength={4}
       className={cls}
-      style={{ width: '56px' }}
+      style={{ width: '40px' }}
       onChange={e => {
         const v = e.target.value.replace(/\D/g, '').slice(0, 4)
         setYear(v)

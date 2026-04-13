@@ -5,14 +5,17 @@ export function useFormatters() {
 
   const formatAmount = (amount: number): string => {
     try {
-      return new Intl.NumberFormat('sk-SK', {
+      const formatted = new Intl.NumberFormat('sk-SK', {
         style: 'currency',
         currency: settings.currency,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(amount)
+      // Replace all whitespace variants with non-breaking space (U+00A0)
+      // to prevent line breaks inside formatted numbers (e.g. "1 500,00 €")
+      return formatted.replace(/[\s\u202F]/g, '\u00A0')
     } catch {
-      return `${amount.toFixed(2)} ${settings.currency}`
+      return `${amount.toFixed(2)}\u00A0${settings.currency}`
     }
   }
 
