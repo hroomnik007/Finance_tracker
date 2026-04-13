@@ -104,31 +104,28 @@ function App() {
         onToggle={toggleSidebar}
       />
 
-      {/* Main content scroll container */}
+      {/* Main content scroll container — paddingTop: 56px clears the fixed 56px mobile top bar */}
       <main
         className="flex-1 h-full overflow-y-auto min-w-0 pb-20 lg:pb-0"
-        style={{ paddingLeft: '32px', paddingRight: '32px' }}
+        style={{ paddingLeft: '32px', paddingRight: '32px', paddingTop: '56px' }}
       >
-        {/* Global content wrapper — pt-14 (56px) on mobile clears the fixed top bar; pt-6 on desktop */}
-        <div className="pt-14 lg:pt-6">
-          {page === 'dashboard' && (
-            <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
-          )}
-          {page === 'income' && (
-            <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
-          )}
-          {page === 'variable-expenses' && (
-            <VariableExpensesPage
-              month={month}
-              year={year}
-              onMonthChange={handleMonthChange}
-              showToast={showToast}
-            />
-          )}
-          {page === 'fixed-expenses' && <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />}
-          {page === 'categories' && <CategoriesPage />}
-          {page === 'settings' && <SettingsPage />}
-        </div>
+        {page === 'dashboard' && (
+          <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
+        )}
+        {page === 'income' && (
+          <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
+        )}
+        {page === 'variable-expenses' && (
+          <VariableExpensesPage
+            month={month}
+            year={year}
+            onMonthChange={handleMonthChange}
+            showToast={showToast}
+          />
+        )}
+        {page === 'fixed-expenses' && <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />}
+        {page === 'categories' && <CategoriesPage />}
+        {page === 'settings' && <SettingsPage />}
       </main>
     </div>
   )
