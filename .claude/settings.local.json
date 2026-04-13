@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm run:*)",
+      "Bash(kill %1)",
+      "Bash(npx tsc:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(curl -s http://localhost:5174/)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(git init:*)",
+      "Bash(chmod +x /home/citizenseven/Claude/deploy.sh)",
+      "Bash(git add:*)"
+    ]
+  }
+}
