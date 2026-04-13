@@ -1,12 +1,13 @@
 #!/bin/bash
-# Deploy script — build + rsync to Raspberry Pi
+# Deploy script — build + deploy
 # Usage: ./deploy.sh
+# TODO: configure REMOTE_USER, REMOTE_HOST, REMOTE_PATH before use
 
 set -e
 
-REMOTE_USER="pi"
-REMOTE_HOST="<IP_RASPBERRY>"         # TODO: replace with your RPi IP or Tailscale IP
-REMOTE_PATH="/var/www/financie/"
+REMOTE_USER="user"                   # TODO: replace with your server username
+REMOTE_HOST="192.168.1.X"           # TODO: replace with your server IP
+REMOTE_PATH="/var/www/financie/"    # TODO: replace with your server path
 
 echo "🔨 Building..."
 npm run build
