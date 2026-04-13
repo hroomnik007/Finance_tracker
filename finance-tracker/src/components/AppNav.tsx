@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import {
   ChevronDown, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon,
   LayoutDashboard, TrendingUp, CreditCard, Settings,
@@ -17,9 +18,13 @@ interface AppNavProps {
 
 export function AppNav({ current, onChange, month, year, collapsed, onToggle }: AppNavProps) {
   const { t } = useTranslation()
-  // Expansion is derived directly from currentPage — no separate state
-  const expensesOpen = current === 'variable-expenses' || current === 'fixed-expenses'
-  const expensesActive = expensesOpen
+  const expensesActive = current === 'variable-expenses' || current === 'fixed-expenses'
+  const [expensesOpen, setExpensesOpen] = useState(expensesActive)
+
+  // Auto-expand when navigating to an expense page; auto-collapse when leaving
+  useEffect(() => {
+    setExpensesOpen(expensesActive)
+  }, [expensesActive])
 
   const SidebarContent = ({ mobile }: { mobile?: boolean }) => (
     <>
@@ -61,7 +66,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         {/* Výdavky — collapsible group */}
         <div className="mb-1">
           <button
-            onClick={() => { onChange('variable-expenses'); if (mobile) onToggle() }}
+            onClick={() => setExpensesOpen(o => !o)}
             className="w-full flex items-center gap-3 px-4 py-[11px] rounded-2xl transition-all duration-150 cursor-pointer text-left"
             style={{
               background: expensesActive
