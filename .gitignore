@@ -38,9 +38,3 @@ pnpm-debug.log*
 dev-dist/
 public/sw.js
 public/workbox-*.js
-
-# Claude Code internal files
-.claude/
-
-# Unused/temp folders
-pocasie/
