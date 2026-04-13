@@ -9,11 +9,13 @@ import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { BudgetStatus, VariableExpense } from '../types'
+import type { Page } from '../App'
 
 interface DashboardProps {
   month: number
   year: number
   onMonthChange: (month: number, year: number) => void
+  onNavigate: (page: Page) => void
 }
 
 const getBudgetBarColor = (pct: number) => {
@@ -22,7 +24,7 @@ const getBudgetBarColor = (pct: number) => {
   return '#34d399'
 }
 
-export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
+export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const { incomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses()
   const { variableExpenses } = useVariableExpenses(month, year)
@@ -142,9 +144,10 @@ export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
 
       {/* ── SUMMARY STRIP — 3 cards ── */}
       <div className="grid grid-cols-3 gap-3 fade-up stagger-2" style={{ alignItems: 'stretch' }}>
-        {/* Príjmy */}
-        <div
-          className="card card-hover flex flex-col items-center gap-2.5 py-5 px-3"
+        {/* Príjmy — clickable → income page */}
+        <button
+          onClick={() => onNavigate('income')}
+          className="card card-hover flex flex-col items-center gap-2.5 py-5 px-3 cursor-pointer transition-all duration-150 hover:scale-[1.03] hover:brightness-110 text-left w-full"
           style={{ borderTop: '3px solid #34d399' }}
         >
           <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
@@ -157,11 +160,12 @@ export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
             {t.dashboard.income}
           </p>
-        </div>
+        </button>
 
-        {/* Výdavky */}
-        <div
-          className="card card-hover flex flex-col items-center gap-2.5 py-5 px-3"
+        {/* Výdavky — clickable → variable-expenses page */}
+        <button
+          onClick={() => onNavigate('variable-expenses')}
+          className="card card-hover flex flex-col items-center gap-2.5 py-5 px-3 cursor-pointer transition-all duration-150 hover:scale-[1.03] hover:brightness-110 text-left w-full"
           style={{ borderTop: '3px solid #f87171' }}
         >
           <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
@@ -174,7 +178,7 @@ export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
             {t.dashboard.expenses}
           </p>
-        </div>
+        </button>
 
         {/* Zostatok */}
         <div

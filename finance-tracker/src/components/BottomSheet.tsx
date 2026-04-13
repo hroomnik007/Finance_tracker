@@ -33,16 +33,16 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 fade-in flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 fade-in flex items-end sm:items-center justify-center px-4 sm:px-0">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-md"
         onClick={onClose}
       />
 
-      {/* Sheet */}
+      {/* Sheet — px-4 on outer container ensures 16px margin on each side on mobile */}
       <div
-        className="relative w-full max-h-[92svh] overflow-y-auto slide-up rounded-t-[24px] sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in"
+        className="relative w-full max-h-[92svh] overflow-y-auto slide-up rounded-[24px] sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in"
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',

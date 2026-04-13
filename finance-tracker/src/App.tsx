@@ -17,12 +17,31 @@ export type Page =
   | 'categories'
   | 'settings'
 
+const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings']
+
+function getPageFromHash(): Page {
+  const hash = window.location.hash.slice(1) as Page
+  return VALID_PAGES.includes(hash) ? hash : 'dashboard'
+}
+
 function App() {
-  const [page, setPage] = useState<Page>('dashboard')
+  const [page, setPage] = useState<Page>(getPageFromHash)
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const { toasts, showToast } = useToast()
+
+  // Feature 2 — hash routing: sync page → hash
+  useEffect(() => {
+    window.location.hash = page
+  }, [page])
+
+  // Feature 2 — hash routing: sync hash → page (browser back/forward)
+  useEffect(() => {
+    const handler = () => setPage(getPageFromHash())
+    window.addEventListener('hashchange', handler)
+    return () => window.removeEventListener('hashchange', handler)
+  }, [])
 
   // Sidebar collapsed state — persisted in localStorage
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -63,12 +82,13 @@ function App() {
       />
 
       {/* Main content */}
+      {/* pt-16 on mobile clears the fixed hamburger button (top:16px + h:36px + gap = 64px) */}
       <main
-        className="flex-1 h-full overflow-y-auto min-w-0 pb-20 lg:pb-0"
-        style={{ paddingLeft: '32px', paddingRight: '32px', paddingTop: '24px' }}
+        className="flex-1 h-full overflow-y-auto min-w-0 pb-20 lg:pb-0 pt-16 lg:pt-6"
+        style={{ paddingLeft: '32px', paddingRight: '32px' }}
       >
         {page === 'dashboard' && (
-          <Dashboard month={month} year={year} onMonthChange={handleMonthChange} />
+          <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
         )}
         {page === 'income' && (
           <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />

@@ -126,13 +126,13 @@ export function DateInput({ value, onChange }: DateInputProps) {
 
   return (
     <div
-      className="date-input-wrapper flex items-center px-4 rounded-[14px] transition-all duration-200"
+      className="date-input-wrapper flex items-center gap-1 px-3 rounded-[14px] transition-all duration-200"
       style={{ height: '48px', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
     >
       {parts[0]}
-      <span className="select-none px-1" style={{ color: '#64748b', fontSize: '16px', fontWeight: 500 }}>{sep}</span>
+      <span className="select-none" style={{ color: '#64748b', fontSize: '15px', fontWeight: 500, lineHeight: 1 }}>{sep}</span>
       {parts[1]}
-      <span className="select-none px-1" style={{ color: '#64748b', fontSize: '16px', fontWeight: 500 }}>{sep}</span>
+      <span className="select-none" style={{ color: '#64748b', fontSize: '15px', fontWeight: 500, lineHeight: 1 }}>{sep}</span>
       {parts[2]}
     </div>
   )

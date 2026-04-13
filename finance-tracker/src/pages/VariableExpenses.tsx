@@ -224,15 +224,15 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="flex flex-col gap-5 pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <h1 className="hidden lg:block text-2xl font-bold text-white">{t.expenses.variable.title}</h1>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-4 flex-1 lg:flex-none min-w-0">
+          <h1 className="hidden lg:block text-2xl font-bold text-white shrink-0">{t.expenses.variable.title}</h1>
           <div className="hidden lg:block">
             <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
           </div>
-        </div>
-        <div className="lg:hidden flex-1">
-          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+          <div className="lg:hidden">
+            <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+          </div>
         </div>
         <button onClick={openAdd} className="btn-primary shrink-0">
           <Plus size={16} /> {t.expenses.variable.add}
