@@ -7,12 +7,6 @@
 
 ---
 
-## 🚀 Live demo
-
-👉 **[https://hroomnik007.github.io/Finance_tracker/](https://hroomnik007.github.io/Finance_tracker/)**
-
----
-
 ## ✨ Funkcie
 
 | Funkcia | Popis |
