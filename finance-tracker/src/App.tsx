@@ -9,6 +9,7 @@ import { FixedExpensesPage } from './pages/FixedExpenses'
 import { CategoriesPage } from './pages/Categories'
 import { SettingsPage } from './pages/Settings'
 import { useToast } from './hooks/useToast'
+import { GlobalFAB } from './components/GlobalFAB'
 
 export type Page =
   | 'dashboard'
@@ -127,6 +128,9 @@ function App() {
         {page === 'categories' && <CategoriesPage />}
         {page === 'settings' && <SettingsPage />}
       </main>
+
+      {/* Global FAB — visible on every page */}
+      <GlobalFAB month={month} year={year} showToast={showToast} />
     </div>
   )
 }

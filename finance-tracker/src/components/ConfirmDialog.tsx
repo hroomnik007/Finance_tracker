@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '../i18n'
 
 interface ConfirmDialogProps {
@@ -13,18 +14,23 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: ConfirmDia
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
-    }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [open, onCancel])
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center fade-in">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onCancel} />
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center fade-in"
+      style={{ zIndex: 210 }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+        onClick={onCancel}
+      />
       <div
         className="relative mx-4 w-full max-w-sm p-6 modal-in"
         style={{
@@ -36,20 +42,15 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: ConfirmDia
       >
         <p className="text-sm text-[#94a3b8] text-center mb-6 leading-relaxed">{message}</p>
         <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="btn-secondary flex-1 justify-center py-2.5"
-          >
+          <button onClick={onCancel} className="btn-secondary flex-1 justify-center py-2.5">
             {t.common.cancel}
           </button>
-          <button
-            onClick={onConfirm}
-            className="btn-danger flex-1 justify-center py-2.5 rounded-2xl"
-          >
+          <button onClick={onConfirm} className="btn-danger flex-1 justify-center py-2.5 rounded-2xl">
             {t.common.delete}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

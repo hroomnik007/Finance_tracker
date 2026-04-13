@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Pencil, Trash2, Lock } from 'lucide-react'
+import { Pencil, Trash2, Lock } from 'lucide-react'
 import { db } from '../db/database'
 import { BottomSheet } from '../components/BottomSheet'
 import { MonthSwitcher } from '../components/MonthSwitcher'
@@ -73,14 +73,8 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-5 pb-4">
-      {/* Header — month switcher + add button (same pattern as Variabilné) */}
-      <div className="flex items-center justify-between gap-2">
-        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <button onClick={openAdd} className="btn-primary shrink-0">
-          <Plus size={16} />
-          {t.expenses.fixed.add}
-        </button>
-      </div>
+      {/* Header — month switcher only (add via global FAB) */}
+      <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
 
       {/* Expense list */}
       <div
