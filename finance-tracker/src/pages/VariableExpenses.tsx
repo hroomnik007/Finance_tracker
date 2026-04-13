@@ -59,14 +59,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const liveLimit = liveBudget?.limit
   const livePct = liveLimit ? Math.min((liveSpent / liveLimit) * 100, 100) : null
 
-  const openAdd = () => {
-    setEditing(null)
-    setForm(emptyForm())
-    setNewCatMode(false)
-    setNewCatName('')
-    setSheetOpen(true)
-  }
-
   const openEdit = (e: VariableExpense) => {
     setEditing(e)
     setForm({ amount: String(e.amount), categoryId: String(e.categoryId), note: e.note, date: e.date })

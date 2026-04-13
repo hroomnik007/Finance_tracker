@@ -29,14 +29,6 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
 
   const total = fixedExpenses?.reduce((s, e) => s + e.amount, 0) ?? 0
 
-  function openAdd() {
-    setEditing(null)
-    setLabel('')
-    setAmount('')
-    setDayOfMonth('1')
-    setSheetOpen(true)
-  }
-
   function openEdit(e: FixedExpense) {
     setEditing(e)
     setLabel(e.label)

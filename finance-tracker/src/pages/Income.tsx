@@ -39,12 +39,6 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const [form, setForm] = useState<FormState>(makeEmpty())
   const [confirmId, setConfirmId] = useState<number | null>(null)
 
-  const openAdd = () => {
-    setEditing(null)
-    setForm(makeEmpty())
-    setSheetOpen(true)
-  }
-
   const openEdit = (income: Income) => {
     setEditing(income)
     setForm({
