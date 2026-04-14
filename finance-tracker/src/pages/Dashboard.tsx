@@ -1,5 +1,9 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, XAxis, CartesianGrid,
+} from 'recharts'
 import { TrendingUp, TrendingDown, Wallet, ArrowRight } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { MonthSwitcher } from '../components/MonthSwitcher'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -8,8 +12,19 @@ import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
+import { db } from '../db/database'
 import type { BudgetStatus, VariableExpense } from '../types'
 import type { Page } from '../App'
+
+const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
+
+function getLast6Months() {
+  const now = new Date()
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
+    return { month: d.getMonth() + 1, year: d.getFullYear(), label: MONTHS_SK[d.getMonth()] }
+  })
+}
 
 interface DashboardProps {
   month: number
@@ -38,6 +53,27 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const totalVariable = variableExpenses.reduce((s: number, v) => s + v.amount, 0)
   const totalExpenses = totalFixed + totalVariable
   const balance = totalIncome - totalExpenses
+
+  // Historical data for area/bar charts
+  const last6Months = getLast6Months()
+  const chartData = useLiveQuery(async () => {
+    const [allIncomes, allVariable, allFixed] = await Promise.all([
+      db.incomes.toArray(),
+      db.variableExpenses.toArray(),
+      db.fixedExpenses.toArray(),
+    ])
+    const fixedTotal = allFixed.reduce((s, f) => s + f.amount, 0)
+    return last6Months.map(({ month, year, label }) => {
+      const prefix = `${year}-${String(month).padStart(2, '0')}`
+      const income = allIncomes
+        .filter(i => i.date.startsWith(prefix))
+        .reduce((s, i) => s + i.amount, 0)
+      const variable = allVariable
+        .filter(e => e.date.startsWith(prefix))
+        .reduce((s, e) => s + e.amount, 0)
+      return { label, income, expenses: variable + fixedTotal }
+    })
+  }, []) ?? []
 
   const last5 = [...variableExpenses]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -327,6 +363,111 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* ── AREA CHART: Príjmy vs Výdavky ── */}
+      {chartData.length > 0 && (
+        <div className="card fade-up">
+          <h3 className="text-sm font-semibold text-[#E2D9F3] mb-4">Príjmy vs Výdavky</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#34D399" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F87171" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#F87171" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: '#9D84D4', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#32265A',
+                  border: '1px solid #4C3A8A',
+                  borderRadius: 12,
+                  fontFamily: 'Plus Jakarta Sans, sans-serif',
+                  fontSize: 13,
+                }}
+                labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
+                itemStyle={{ color: '#B8A3E8' }}
+                formatter={(val) => formatAmount(Number(val))}
+              />
+              <Area
+                type="monotone"
+                dataKey="income"
+                name="Príjmy"
+                stroke="#34D399"
+                strokeWidth={2}
+                fill="url(#fillIncome)"
+                dot={false}
+              />
+              <Area
+                type="monotone"
+                dataKey="expenses"
+                name="Výdavky"
+                stroke="#F87171"
+                strokeWidth={2}
+                fill="url(#fillExpenses)"
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div className="flex gap-4 justify-center mt-3">
+            <span className="flex items-center gap-1.5 text-xs text-[#9D84D4]">
+              <span className="w-3 h-0.5 rounded-full inline-block" style={{ backgroundColor: '#34D399' }} />
+              Príjmy
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-[#9D84D4]">
+              <span className="w-3 h-0.5 rounded-full inline-block" style={{ backgroundColor: '#F87171' }} />
+              Výdavky
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── BAR CHART: Mesačné výdavky ── */}
+      {chartData.length > 0 && (
+        <div className="card fade-up">
+          <h3 className="text-sm font-semibold text-[#E2D9F3] mb-4">Mesačné výdavky</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: '#9D84D4', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#32265A',
+                  border: '1px solid #4C3A8A',
+                  borderRadius: 12,
+                  fontFamily: 'Plus Jakarta Sans, sans-serif',
+                  fontSize: 13,
+                }}
+                labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
+                itemStyle={{ color: '#B8A3E8' }}
+                formatter={(val) => formatAmount(Number(val))}
+              />
+              <Bar
+                dataKey="expenses"
+                name="Výdavky"
+                fill="#A78BFA"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={48}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
 

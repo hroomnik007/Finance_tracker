@@ -158,7 +158,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           </div>
         </div>
         <button onClick={openAdd} className="btn-primary shrink-0">
-          <Plus size={16} /> {t.income.add}
+          <Plus size={16} />
+          <span className="hidden lg:inline">{t.income.add}</span>
         </button>
       </div>
 
