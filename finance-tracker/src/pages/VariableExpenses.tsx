@@ -111,6 +111,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   }, {})
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
   const sortedAll = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date))
+  const hasAnyNote = sortedAll.some(e => e.note && e.note.trim() !== '')
 
   const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
 
@@ -223,9 +224,19 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="flex flex-col gap-5 pb-4">
-      {/* Header — month switcher only */}
+      {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        <button
+          onClick={openAdd}
+          className="hidden lg:flex items-center gap-2 text-sm text-white rounded-full px-4 py-2 cursor-pointer shrink-0"
+          style={{ backgroundColor: '#7C3AED' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#6D28D9' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#7C3AED' }}
+        >
+          <Plus size={15} />
+          Pridať výdavok
+        </button>
       </div>
 
 
@@ -295,7 +306,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                           boxShadow: `0 0 8px ${bs.categoryColor}`,
                         }} />
                     </div>
-                    <p className="text-xs text-[#9D84D4]">
+                    <p className="text-[#9D84D4] pr-2" style={{ fontSize: '12px' }}>
                       {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                     </p>
                     {bs.isOver && (
@@ -329,7 +340,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                 <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
                   <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.category_col}</th>
-                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>
+                  {hasAnyNote && <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>}
                   <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.amount_col}</th>
                   <th className="px-5 py-4 text-center text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.actions_col}</th>
                 </tr>
@@ -371,7 +382,11 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-[#B8A3E8]">{e.note || '—'}</td>
+                      {hasAnyNote && (
+                        <td className="px-5 py-3.5" style={{ color: e.note ? '#B8A3E8' : '#4C3A8A' }}>
+                          {e.note || '—'}
+                        </td>
+                      )}
                       <td className="px-5 py-3.5 text-right">
                         <span className="font-mono font-semibold text-[#f87171] whitespace-nowrap">
                           -{formatAmount(e.amount)}

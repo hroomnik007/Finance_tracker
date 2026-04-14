@@ -162,7 +162,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── HERO CARD ── */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1E1535 0%, #2D1F5E 100%)',
+          background: 'linear-gradient(135deg, #1E1535 0%, #2D1F5E 50%, #1A1040 100%)',
           border: '0.5px solid #4C3A8A',
           borderRadius: 20,
           padding: 20,
@@ -185,7 +185,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         {/* Balance number + badge */}
         <div className="flex items-center gap-3 mb-3 flex-wrap">
           <p
-            className="font-mono font-semibold leading-none"
+            className="font-mono font-semibold leading-none md:text-[52px]"
             style={{ fontSize: 'clamp(1.8rem, 7vw, 3rem)', color: balance >= 0 ? '#34D399' : '#F87171' }}
           >
             {formatAmount(balance)}
@@ -212,7 +212,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                     <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="value" stroke="#A78BFA" strokeWidth={1.5} fill="url(#sparkFill)" dot={false} />
+                <Area type="monotone" dataKey="value" stroke="#A78BFA" strokeWidth={2} fill="url(#sparkFill)" fillOpacity={0.2} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

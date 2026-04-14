@@ -73,9 +73,19 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-5 pb-4">
-      {/* Header — month switcher only */}
+      {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        <button
+          onClick={openAdd}
+          className="hidden lg:flex items-center gap-2 text-sm text-white rounded-full px-4 py-2 cursor-pointer shrink-0"
+          style={{ backgroundColor: '#7C3AED' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#6D28D9' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#7C3AED' }}
+        >
+          <Plus size={15} />
+          Pridať fixný výdavok
+        </button>
       </div>
 
       {/* Expense list */}

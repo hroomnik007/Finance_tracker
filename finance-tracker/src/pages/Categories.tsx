@@ -87,12 +87,24 @@ export function CategoriesPage() {
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-6 pb-4">
       {/* Header */}
-      <div>
-        <h1 className="text-[16px] font-medium text-[#E2D9F3]">{t.expenses.categories.title}</h1>
-        <p className="text-[12px] text-[#6B5A9E] mt-0.5">{t.expenses.categories.subtitle}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-[16px] font-medium text-[#E2D9F3]">{t.expenses.categories.title}</h1>
+          <p className="text-[12px] text-[#6B5A9E] mt-0.5">{t.expenses.categories.subtitle}</p>
+        </div>
+        <button
+          onClick={openAdd}
+          className="hidden lg:flex items-center gap-2 text-sm text-white rounded-full px-4 py-2 cursor-pointer shrink-0"
+          style={{ backgroundColor: '#7C3AED' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#6D28D9' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#7C3AED' }}
+        >
+          <Plus size={15} />
+          Pridať kategóriu
+        </button>
       </div>
 
-      {/* Grid */}
+      {/* Categories list/grid */}
       {(!categories || categories.length === 0) ? (
         <div className="card flex flex-col items-center justify-center py-16 text-center">
           <span className="text-5xl mb-4">🏷️</span>
@@ -100,7 +112,50 @@ export function CategoriesPage() {
           <p className="text-[#9D84D4] text-xs mt-1">{t.expenses.categories.noCategoriesSubtitle}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ alignItems: 'stretch' }}>
+        <>
+          {/* Desktop: horizontal rows */}
+          <div className="hidden lg:flex flex-col gap-2">
+            {categories.map((cat) => (
+              <div
+                key={cat.id}
+                className="flex items-center gap-3 p-3 rounded-2xl group transition-all duration-150"
+                style={{
+                  backgroundColor: '#2A1F4A',
+                  border: '1px solid #4C3A8A',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#6D28D9' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#4C3A8A' }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                  style={{ backgroundColor: cat.color + '30' }}
+                >
+                  {cat.icon}
+                </div>
+                <span className="flex-1 text-[14px] font-medium text-[#E2D9F3]">{cat.name}</span>
+                <span className="text-[12px] text-[#9D84D4]">
+                  {cat.budgetLimit != null ? formatAmount(cat.budgetLimit) : t.expenses.categories.noLimit}
+                </span>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                  <button
+                    onClick={() => openEdit(cat)}
+                    className="p-2 rounded-xl text-[#9D84D4] hover:text-[#A78BFA] hover:bg-[#32265A] transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(cat.id!)}
+                    className="p-2 rounded-xl text-[#9D84D4] hover:text-[#f87171] hover:bg-[rgba(248,113,113,0.1)] transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile: card grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden" style={{ alignItems: 'stretch' }}>
           {categories.map((cat, idx) => (
             <div
               key={cat.id}
@@ -185,7 +240,8 @@ export function CategoriesPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Add / Edit sheet */}

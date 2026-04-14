@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
 import {
   ChevronDown, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon,
   LayoutDashboard, TrendingUp, CreditCard, Settings,
-  BarChart3, Lock, Tag,
+  Receipt, Lock, Tag,
 } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
@@ -21,27 +20,22 @@ const EXPENSE_CHILDREN: Page[] = ['variable-expenses', 'fixed-expenses', 'catego
 export function AppNav({ current, onChange, month, year, collapsed, onToggle }: AppNavProps) {
   const { t } = useTranslation()
   const expensesActive = EXPENSE_CHILDREN.includes(current)
-
-  const [expensesOpen, setExpensesOpen] = useState(false)
-
-  useEffect(() => {
-    if (expensesActive) setExpensesOpen(true)
-  }, [expensesActive])
+  const expensesOpen = expensesActive
 
   const SidebarContent = ({ mobile }: { mobile?: boolean }) => (
     <>
       {/* App header */}
       <div
         className="flex items-center px-5 pt-6 pb-5"
-        style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
+        style={{ borderBottom: '0.5px solid #4C3A8A' }}
       >
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-lg"
-          style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))' }}
+          style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
         >
           💰
         </div>
-        <span className="ml-3 text-[16px] font-bold leading-tight whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
+        <span className="ml-3 text-[16px] font-bold leading-tight whitespace-nowrap text-[#E2D9F3]">
           {t.nav.appName}
         </span>
       </div>
@@ -49,59 +43,53 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
       {/* Nav list */}
       <nav className="flex flex-col px-3 pt-3 flex-1 overflow-y-auto scrollbar-hide">
 
-        <NavItem
+        <SideNavItem
           active={current === 'dashboard'}
           onClick={() => { onChange('dashboard'); if (mobile) onToggle() }}
-          icon={<LayoutDashboard size={17} />}
+          icon={<LayoutDashboard size={16} />}
         >
           {t.nav.overview}
-        </NavItem>
+        </SideNavItem>
 
-        <NavItem
+        <SideNavItem
           active={current === 'income'}
           onClick={() => { onChange('income'); if (mobile) onToggle() }}
-          icon={<TrendingUp size={17} />}
+          icon={<TrendingUp size={16} />}
         >
           {t.nav.income}
-        </NavItem>
+        </SideNavItem>
 
-        {/* Výdavky — collapsible group */}
-        <div className="mb-1">
+        {/* Výdavky — auto-collapse group */}
+        <div className="mb-0.5">
           <button
-            onClick={() => setExpensesOpen(o => !o)}
-            className="w-full flex items-center gap-3 px-4 py-[11px] rounded-2xl transition-all duration-150 cursor-pointer text-left"
+            onClick={() => { onChange('variable-expenses'); if (mobile) onToggle() }}
+            className="w-full flex items-center gap-1.5 px-[14px] py-[10px] rounded-xl transition-all duration-150 cursor-pointer text-left"
             style={{
-              background: expensesActive ? 'rgba(167,139,250,0.15)' : 'transparent',
-              color: expensesActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+              backgroundColor: expensesActive ? '#2D1F5E' : 'transparent',
+              color: expensesActive ? '#A78BFA' : '#9D84D4',
+              fontSize: '14px',
+              fontWeight: expensesActive ? 500 : 400,
             }}
             onMouseEnter={e => {
               if (!expensesActive) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(167,139,250,0.08)'
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#231840'
+                ;(e.currentTarget as HTMLButtonElement).style.color = '#E2D9F3'
               }
             }}
             onMouseLeave={e => {
               if (!expensesActive) {
                 (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'
+                ;(e.currentTarget as HTMLButtonElement).style.color = '#9D84D4'
               }
             }}
           >
-            <span
-              className="w-[17px] h-[17px] flex items-center justify-center shrink-0"
-              style={{ color: expensesActive ? 'var(--accent)' : 'var(--text-hint)' }}
-            >
-              <CreditCard size={17} />
+            <span className="flex items-center justify-center shrink-0" style={{ color: expensesActive ? '#A78BFA' : '#9D84D4' }}>
+              <CreditCard size={16} />
             </span>
-            <span
-              className="flex-1 text-[15px] font-medium whitespace-nowrap"
-              style={{ fontWeight: expensesActive ? 600 : 500 }}
-            >
-              {t.nav.expenses}
-            </span>
+            <span className="flex-1 whitespace-nowrap">{t.nav.expenses}</span>
             {expensesOpen
-              ? <ChevronDown size={14} style={{ color: 'var(--text-hint)' }} />
-              : <ChevronRight size={14} style={{ color: 'var(--text-hint)' }} />
+              ? <ChevronDown size={13} />
+              : <ChevronRight size={13} />
             }
           </button>
 
@@ -109,53 +97,53 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
             className="overflow-hidden"
             style={{
               maxHeight: expensesOpen ? '200px' : '0px',
-              transition: 'max-height 0.3s ease-in-out',
+              transition: 'max-height 0.25s ease-in-out',
             }}
           >
-            <div className="flex flex-col pt-0.5 pb-1">
-              <ChildNavItem
+            <div className="flex flex-col pt-0.5 pb-1 pl-2">
+              <SideChildItem
                 active={current === 'variable-expenses'}
                 onClick={() => { onChange('variable-expenses'); if (mobile) onToggle() }}
-                icon={<BarChart3 size={13} />}
+                icon={<Receipt size={13} />}
               >
                 {t.nav.variable}
-              </ChildNavItem>
-              <ChildNavItem
+              </SideChildItem>
+              <SideChildItem
                 active={current === 'fixed-expenses'}
                 onClick={() => { onChange('fixed-expenses'); if (mobile) onToggle() }}
                 icon={<Lock size={13} />}
               >
                 {t.nav.fixed}
-              </ChildNavItem>
-              <ChildNavItem
+              </SideChildItem>
+              <SideChildItem
                 active={current === 'categories'}
                 onClick={() => { onChange('categories'); if (mobile) onToggle() }}
                 icon={<Tag size={13} />}
               >
                 {t.nav.categories}
-              </ChildNavItem>
+              </SideChildItem>
             </div>
           </div>
         </div>
 
-        <NavItem
+        <SideNavItem
           active={current === 'settings'}
           onClick={() => { onChange('settings'); if (mobile) onToggle() }}
-          icon={<Settings size={17} />}
+          icon={<Settings size={16} />}
         >
           {t.nav.settings}
-        </NavItem>
+        </SideNavItem>
       </nav>
 
       {/* Bottom: current month */}
       <div
         className="mt-auto px-5 py-4"
-        style={{ borderTop: '0.5px solid var(--border-subtle)' }}
+        style={{ borderTop: '0.5px solid #4C3A8A' }}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em]" style={{ color: 'var(--text-hint)' }}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4C3A8A]">
           {t.nav.currentMonth}
         </p>
-        <p className="text-[14px] font-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-[12px] font-medium mt-0.5 text-[#6B5A9E]">
           {t.months[month - 1]} {year}
         </p>
       </div>
@@ -209,7 +197,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
 
 // ── Helper sub-components ─────────────────────────────────────────────────────
 
-function NavItem({
+function SideNavItem({
   active,
   onClick,
   icon,
@@ -223,43 +211,35 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-[11px] rounded-2xl mb-1 transition-all duration-150 cursor-pointer text-left relative"
+      className="w-full flex items-center gap-1.5 px-[14px] py-[10px] rounded-xl mb-0.5 transition-all duration-150 cursor-pointer text-left"
       style={{
-        background: active ? 'rgba(167,139,250,0.15)' : 'transparent',
-        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-        fontWeight: active ? 600 : 500,
+        backgroundColor: active ? '#2D1F5E' : 'transparent',
+        color: active ? '#A78BFA' : '#9D84D4',
+        fontSize: '14px',
+        fontWeight: active ? 500 : 400,
       }}
       onMouseEnter={e => {
         if (!active) {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(167,139,250,0.08)'
-          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#231840'
+          ;(e.currentTarget as HTMLButtonElement).style.color = '#E2D9F3'
         }
       }}
       onMouseLeave={e => {
         if (!active) {
           (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
-          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'
+          ;(e.currentTarget as HTMLButtonElement).style.color = '#9D84D4'
         }
       }}
     >
-      {active && (
-        <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-          style={{ backgroundColor: 'var(--accent)' }}
-        />
-      )}
-      <span
-        className="w-[17px] h-[17px] flex items-center justify-center shrink-0"
-        style={{ color: active ? 'var(--accent)' : 'var(--text-hint)' }}
-      >
+      <span className="flex items-center justify-center shrink-0" style={{ color: active ? '#A78BFA' : '#9D84D4' }}>
         {icon}
       </span>
-      <span className="text-[15px] font-medium whitespace-nowrap">{children}</span>
+      <span className="whitespace-nowrap">{children}</span>
     </button>
   )
 }
 
-function ChildNavItem({
+function SideChildItem({
   active,
   onClick,
   icon,
@@ -273,32 +253,30 @@ function ChildNavItem({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2.5 py-2.5 pl-10 pr-4 rounded-xl mb-0.5 transition-all duration-150 cursor-pointer text-left"
+      className="w-full flex items-center gap-1.5 py-[8px] pl-8 pr-3 rounded-xl mb-0.5 transition-all duration-150 cursor-pointer text-left"
       style={{
-        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+        backgroundColor: active ? '#2D1F5E' : 'transparent',
+        color: active ? '#A78BFA' : '#9D84D4',
+        fontSize: '13px',
         fontWeight: active ? 500 : 400,
-        backgroundColor: active ? 'rgba(167,139,250,0.12)' : 'transparent',
       }}
       onMouseEnter={e => {
         if (!active) {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(167,139,250,0.06)'
-          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#231840'
+          ;(e.currentTarget as HTMLButtonElement).style.color = '#E2D9F3'
         }
       }}
       onMouseLeave={e => {
         if (!active) {
           (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
-          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'
+          ;(e.currentTarget as HTMLButtonElement).style.color = '#9D84D4'
         }
       }}
     >
-      <span
-        className="flex items-center justify-center shrink-0 transition-colors duration-150"
-        style={{ color: active ? 'var(--accent)' : 'var(--text-hint)' }}
-      >
+      <span className="flex items-center justify-center shrink-0" style={{ color: active ? '#A78BFA' : '#6B5A9E' }}>
         {icon}
       </span>
-      <span className="text-[13px] whitespace-nowrap">{children}</span>
+      <span className="whitespace-nowrap">{children}</span>
     </button>
   )
 }

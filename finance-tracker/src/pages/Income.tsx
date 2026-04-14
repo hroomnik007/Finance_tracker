@@ -293,6 +293,13 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             }}
           >
             <table className="w-full text-sm">
+              <colgroup>
+                <col style={{ width: '120px' }} />
+                <col style={{ width: 'auto' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '80px' }} />
+              </colgroup>
               <thead>
                 <tr className="text-left" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">{t.income.date_col}</th>
@@ -355,6 +362,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                 ))}
               </tbody>
             </table>
+            {sorted.length < 5 && (
+              <p className="text-center text-sm text-[#4C3A8A] mt-4 pb-4">Žiadne ďalšie záznamy</p>
+            )}
           </div>
         </>
       )}

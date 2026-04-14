@@ -27,17 +27,27 @@ export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
 
   return (
     <aside
-      className="hidden lg:flex flex-col gap-4 flex-shrink-0 h-full overflow-y-auto"
-      style={{ width: '300px', paddingTop: '16px', paddingRight: '16px', paddingBottom: '24px' }}
+      className="hidden lg:flex flex-col gap-4 flex-shrink-0 overflow-y-auto overflow-x-hidden"
+      style={{
+        width: '300px',
+        minWidth: '300px',
+        padding: '20px',
+        paddingLeft: '0px',
+      }}
     >
       {/* Budget panel */}
       {budgetStatuses.length > 0 && (
         <div
-          className="rounded-[20px] overflow-hidden"
+          className="rounded-[20px] overflow-hidden w-full"
           style={{ backgroundColor: '#2A1F4A', border: '0.5px solid #4C3A8A' }}
         >
-          <div className="px-5 py-4" style={{ borderBottom: '0.5px solid #4C3A8A33' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">Rozpočet</p>
+          <div className="px-4 py-3" style={{ borderBottom: '0.5px solid #4C3A8A55' }}>
+            <p
+              className="font-semibold uppercase text-[#9D84D4]"
+              style={{ fontSize: '11px', letterSpacing: '0.1em' }}
+            >
+              Rozpočet
+            </p>
           </div>
           <div className="flex flex-col gap-3 p-4">
             {budgetStatuses.map(bs => {
@@ -46,19 +56,19 @@ export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
               return (
                 <div key={bs.categoryId}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span
                         className="w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0"
                         style={{ backgroundColor: bs.categoryColor + '22' }}
                       >
                         {bs.categoryIcon}
                       </span>
-                      <span className="text-[13px] font-medium text-[#E2D9F3] truncate max-w-[110px]">
+                      <span className="text-[13px] font-medium text-[#E2D9F3] truncate">
                         {bs.categoryName}
                       </span>
                     </div>
                     <span
-                      className="text-[11px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                      className="text-[11px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ml-2"
                       style={{ color: barColor, backgroundColor: barColor + '20' }}
                     >
                       {Math.round(bs.percentage)}%
@@ -70,7 +80,7 @@ export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
                       style={{ width: `${pct}%`, backgroundColor: bs.categoryColor }}
                     />
                   </div>
-                  <p className="text-[11px] text-[#6B5A9E] mt-1">
+                  <p className="text-[12px] text-[#6B5A9E] mt-1 pr-2">
                     {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                   </p>
                 </div>
@@ -83,11 +93,16 @@ export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
       {/* Last 4 transactions */}
       {last4.length > 0 && (
         <div
-          className="rounded-[20px] overflow-hidden"
+          className="rounded-[20px] overflow-hidden w-full"
           style={{ backgroundColor: '#2A1F4A', border: '0.5px solid #4C3A8A' }}
         >
-          <div className="px-5 py-4" style={{ borderBottom: '0.5px solid #4C3A8A33' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">Posledné transakcie</p>
+          <div className="px-4 py-3" style={{ borderBottom: '0.5px solid #4C3A8A55' }}>
+            <p
+              className="font-semibold uppercase text-[#9D84D4]"
+              style={{ fontSize: '11px', letterSpacing: '0.1em' }}
+            >
+              Posledné transakcie
+            </p>
           </div>
           <div className="flex flex-col p-3 gap-2">
             {last4.map(expense => {
@@ -108,7 +123,7 @@ export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
                     <p className="text-[13px] font-medium text-[#E2D9F3] truncate">{expense.note || cat?.name}</p>
                     <p className="text-[11px] text-[#6B5A9E]">{formatDate(expense.date)}</p>
                   </div>
-                  <span className="font-mono text-[13px] font-semibold text-[#F87171] shrink-0">
+                  <span className="font-mono text-[12px] font-semibold text-[#F87171] shrink-0 ml-1">
                     -{formatAmount(expense.amount)}
                   </span>
                 </div>
