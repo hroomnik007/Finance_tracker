@@ -87,7 +87,7 @@ body {
 /* ── Card system ── */
 .card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 20px;
   border: 0.5px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
   padding: 16px;
@@ -98,6 +98,7 @@ body {
   background: var(--bg-card-hover);
   border-color: var(--border-medium);
   transition: all 150ms ease;
+
 }
 
 /* ── Button system ── */

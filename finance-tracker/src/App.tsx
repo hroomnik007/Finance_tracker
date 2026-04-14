@@ -83,13 +83,13 @@ function App() {
       <main
         className="flex-1 h-full overflow-y-auto min-w-0"
         style={{
-          paddingLeft: '32px',
-          paddingRight: '32px',
-          paddingBottom: '80px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingTop: '16px',
+          paddingBottom: '88px',
         }}
       >
-        {/* pt-6 on all screen sizes — no hamburger bar on mobile anymore */}
-        <div className="pt-6">
+        <div>
           {page === 'dashboard' && (
             <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
           )}

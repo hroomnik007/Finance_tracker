@@ -87,15 +87,9 @@ export function CategoriesPage() {
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-6 pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#E2D9F3]">{t.expenses.categories.title}</h1>
-          <p className="text-xs text-[#9D84D4] mt-0.5">{t.expenses.categories.subtitle}</p>
-        </div>
-        <button onClick={openAdd} className="btn-primary">
-          <Plus size={16} />
-          {t.expenses.categories.add}
-        </button>
+      <div>
+        <h1 className="text-[16px] font-medium text-[#E2D9F3]">{t.expenses.categories.title}</h1>
+        <p className="text-[12px] text-[#6B5A9E] mt-0.5">{t.expenses.categories.subtitle}</p>
       </div>
 
       {/* Grid */}
@@ -296,6 +290,19 @@ export function CategoriesPage() {
           </div>
         </div>
       </BottomSheet>
+
+      {/* FAB — add category */}
+      <button
+        onClick={openAdd}
+        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
+        style={{
+          bottom: '80px',
+          background: 'var(--accent-strong)',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
+        }}
+      >
+        <Plus size={26} />
+      </button>
 
       {/* Delete confirm */}
       <BottomSheet

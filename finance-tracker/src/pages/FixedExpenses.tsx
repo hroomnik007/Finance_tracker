@@ -73,13 +73,9 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="space-y-5 pb-4">
-      {/* Header — month switcher + add button (same pattern as Variabilné) */}
+      {/* Header — month switcher only */}
       <div className="flex items-center justify-between gap-2">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <button onClick={openAdd} className="btn-primary shrink-0">
-          <Plus size={16} />
-          {t.expenses.fixed.add}
-        </button>
       </div>
 
       {/* Expense list */}
@@ -258,6 +254,19 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
           </div>
         </div>
       </BottomSheet>
+
+      {/* FAB — add fixed expense */}
+      <button
+        onClick={openAdd}
+        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
+        style={{
+          bottom: '80px',
+          background: 'var(--accent-strong)',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
+        }}
+      >
+        <Plus size={26} />
+      </button>
 
       {/* Delete confirm sheet */}
       <BottomSheet

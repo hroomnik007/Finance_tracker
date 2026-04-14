@@ -4,19 +4,13 @@ export function useFormatters() {
   const { settings } = useSettingsContext()
 
   const formatAmount = (amount: number): string => {
-    try {
-      const formatted = new Intl.NumberFormat('sk-SK', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(amount)
-      // Map currency codes to display symbols
-      const symbols: Record<string, string> = { EUR: '€', USD: '$', GBP: '£', CZK: 'Kč' }
-      const symbol = symbols[settings.currency] ?? settings.currency
-      // Use non-breaking spaces throughout to prevent line breaks
-      return formatted.replace(/[\s\u202F]/g, '\u00A0') + '\u00A0' + symbol
-    } catch {
-      return `${amount.toFixed(2)}\u00A0${settings.currency}`
-    }
+    const symbols: Record<string, string> = { EUR: '€', USD: '$', GBP: '£', CZK: 'Kč' }
+    const symbol = symbols[settings.currency] ?? settings.currency
+    const abs = Math.abs(amount)
+    const sign = amount < 0 ? '-' : ''
+    const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F')
+    const decPart = (abs % 1).toFixed(2).slice(2)
+    return `${sign}${intPart},${decPart}\u00A0${symbol}`
   }
 
   const formatDate = (dateStr: string): string => {

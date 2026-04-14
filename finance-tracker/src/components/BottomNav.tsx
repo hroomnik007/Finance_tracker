@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { LayoutDashboard, TrendingUp, CreditCard, Settings, BarChart3, Lock, Tag, ChevronUp } from 'lucide-react'
+import { Home, TrendingUp, TrendingDown, Settings, BarChart3, Lock, Tag } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
 
@@ -14,10 +14,8 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   const { t } = useTranslation()
   const [expensesMenuOpen, setExpensesMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-
   const expensesActive = EXPENSE_PAGES.includes(current)
 
-  // Close submenu when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -37,95 +35,88 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
 
   return (
     <>
-      {/* Výdavky submenu popup */}
+      {/* Výdavky submenu — bottom sheet style */}
       {expensesMenuOpen && (
-        <div
-          ref={menuRef}
-          className="fixed z-50"
-          style={{
-            bottom: '72px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'min(200px, 50vw)',
-            background: 'var(--bg-card)',
-            border: '0.5px solid var(--border-medium)',
-            borderRadius: '16px',
-            padding: '6px',
-            boxShadow: '0 -4px 24px rgba(0,0,0,0.4)',
-          }}
-        >
-          <SubmenuItem
-            active={current === 'variable-expenses'}
-            icon={<BarChart3 size={15} />}
-            label={t.nav.variable}
-            onClick={() => handleNavTo('variable-expenses')}
+        <>
+          {/* backdrop */}
+          <div
+            className="fixed inset-0 z-40"
+            style={{ background: 'rgba(0,0,0,0.4)' }}
+            onClick={() => setExpensesMenuOpen(false)}
           />
-          <SubmenuItem
-            active={current === 'fixed-expenses'}
-            icon={<Lock size={15} />}
-            label={t.nav.fixed}
-            onClick={() => handleNavTo('fixed-expenses')}
-          />
-          <SubmenuItem
-            active={current === 'categories'}
-            icon={<Tag size={15} />}
-            label={t.nav.categories}
-            onClick={() => handleNavTo('categories')}
-          />
-        </div>
+          <div
+            ref={menuRef}
+            className="fixed z-50"
+            style={{
+              bottom: '88px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 'min(220px, 60vw)',
+              background: '#2D1F5E',
+              border: '0.5px solid #6B5A9E',
+              borderRadius: '20px',
+              padding: '8px',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
+            }}
+          >
+            <SubmenuItem
+              active={current === 'variable-expenses'}
+              icon={<BarChart3 size={16} />}
+              label={t.nav.variable}
+              onClick={() => handleNavTo('variable-expenses')}
+            />
+            <SubmenuItem
+              active={current === 'fixed-expenses'}
+              icon={<Lock size={16} />}
+              label={t.nav.fixed}
+              onClick={() => handleNavTo('fixed-expenses')}
+            />
+            <SubmenuItem
+              active={current === 'categories'}
+              icon={<Tag size={16} />}
+              label={t.nav.categories}
+              onClick={() => handleNavTo('categories')}
+            />
+          </div>
+        </>
       )}
 
-      {/* Bottom navigation bar */}
+      {/* Bottom navigation bar — pill style */}
       <nav
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          height: '64px',
-          background: 'var(--bg-card)',
-          borderTop: '0.5px solid var(--border-subtle)',
+          padding: '8px 24px 16px',
+          background: '#1A1230',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
           zIndex: 50,
         }}
       >
-        <NavTab
+        <NavPill
           active={current === 'dashboard'}
-          icon={<LayoutDashboard size={22} />}
+          icon={<Home size={20} />}
           label={t.nav.overview}
           onClick={() => handleNavTo('dashboard')}
         />
-        <NavTab
+        <NavPill
           active={current === 'income'}
-          icon={<TrendingUp size={22} />}
+          icon={<TrendingUp size={20} />}
           label={t.nav.income}
           onClick={() => handleNavTo('income')}
         />
-        <NavTab
+        <NavPill
           active={expensesActive || expensesMenuOpen}
-          icon={
-            <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CreditCard size={22} />
-              <ChevronUp
-                size={10}
-                style={{
-                  position: 'absolute',
-                  top: -6,
-                  right: -8,
-                  transition: 'transform 200ms ease',
-                  transform: expensesMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </span>
-          }
+          icon={<TrendingDown size={20} />}
           label={t.nav.expenses}
           onClick={() => setExpensesMenuOpen(o => !o)}
         />
-        <NavTab
+        <NavPill
           active={current === 'settings'}
-          icon={<Settings size={22} />}
+          icon={<Settings size={20} />}
           label={t.nav.settings}
           onClick={() => handleNavTo('settings')}
         />
@@ -134,7 +125,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   )
 }
 
-function NavTab({
+function NavPill({
   active,
   icon,
   label,
@@ -152,19 +143,22 @@ function NavTab({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '4px',
-        fontSize: '10px',
-        color: active ? 'var(--accent)' : 'var(--text-muted)',
-        cursor: 'pointer',
-        background: 'transparent',
-        border: 'none',
+        gap: '3px',
         padding: '8px 16px',
-        flex: 1,
-        transition: 'color 150ms ease',
+        borderRadius: '999px',
+        background: active ? '#2D1F5E' : 'transparent',
+        color: active ? '#A78BFA' : '#6B5A9E',
+        cursor: 'pointer',
+        border: 'none',
+        fontSize: '10px',
+        fontFamily: 'inherit',
+        fontWeight: active ? 600 : 400,
+        transition: 'all 150ms ease',
+        minWidth: '60px',
       }}
     >
       {icon}
-      <span style={{ fontWeight: active ? 600 : 400 }}>{label}</span>
+      <span>{label}</span>
     </button>
   )
 }
@@ -188,10 +182,10 @@ function SubmenuItem({
         display: 'flex',
         alignItems: 'center',
         gap: '10px',
-        padding: '10px 14px',
-        borderRadius: '12px',
-        background: active ? 'rgba(167,139,250,0.15)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--text-secondary)',
+        padding: '11px 14px',
+        borderRadius: '14px',
+        background: active ? 'rgba(167,139,250,0.18)' : 'transparent',
+        color: active ? '#A78BFA' : '#B8A3E8',
         fontSize: '14px',
         fontWeight: active ? 600 : 400,
         cursor: 'pointer',
