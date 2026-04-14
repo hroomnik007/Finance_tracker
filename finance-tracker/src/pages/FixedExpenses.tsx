@@ -109,9 +109,9 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
                   height: '64px',
                 }}
               >
-                {/* Lock icon */}
+                {/* Lock icon — hidden on mobile to save space */}
                 <div
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                  className="hidden sm:flex w-10 h-10 rounded-2xl items-center justify-center shrink-0"
                   style={{ backgroundColor: 'rgba(148,163,184,0.12)' }}
                 >
                   <Lock size={16} style={{ color: '#B8A3E8' }} />
@@ -143,8 +143,8 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
                   {formatAmount(expense.amount)}
                 </span>
 
-                {/* Actions — appear on hover */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                {/* Actions — appear on hover, hidden on mobile */}
+                <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button
                     onClick={() => openEdit(expense)}
                     className="btn-icon text-[#9D84D4] hover:text-[#A78BFA]"

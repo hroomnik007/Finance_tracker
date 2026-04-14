@@ -157,9 +157,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
           </div>
         </div>
-        <button onClick={openAdd} className="btn-primary shrink-0">
+        <button onClick={openAdd} className="hidden lg:flex btn-primary shrink-0">
           <Plus size={16} />
-          <span className="hidden lg:inline">{t.income.add}</span>
+          <span>{t.income.add}</span>
         </button>
       </div>
 
@@ -358,6 +358,19 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           </div>
         </>
       )}
+
+      {/* FAB — mobile only */}
+      <button
+        onClick={openAdd}
+        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
+        style={{
+          bottom: '80px',
+          background: 'var(--accent-strong)',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
+        }}
+      >
+        <Plus size={26} />
+      </button>
 
       <BottomSheet
         open={sheetOpen}

@@ -8,6 +8,7 @@ import { VariableExpensesPage } from './pages/VariableExpenses'
 import { FixedExpensesPage } from './pages/FixedExpenses'
 import { CategoriesPage } from './pages/Categories'
 import { SettingsPage } from './pages/Settings'
+import { RightPanel } from './components/RightPanel'
 import { useToast } from './hooks/useToast'
 
 export type Page =
@@ -109,6 +110,11 @@ function App() {
           {page === 'settings' && <SettingsPage />}
         </div>
       </main>
+
+      {/* Desktop right panel — only on dashboard */}
+      {page === 'dashboard' && (
+        <RightPanel month={month} year={year} onNavigate={setPage} />
+      )}
 
       {/* Mobile bottom navigation — hidden on desktop */}
       <div className="lg:hidden">

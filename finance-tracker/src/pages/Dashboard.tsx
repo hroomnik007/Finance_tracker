@@ -64,7 +64,7 @@ const TOOLTIP_STYLE = {
   fontSize: 13,
 }
 
-export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
+export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
 
   const { incomes } = useIncomes(month, year)
@@ -81,7 +81,7 @@ export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
   const totalExpenses = totalFixed + totalVariable
   const balance = totalIncome - totalExpenses
 
-  const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4)
   const getCategoryById = (id: number) => categories.find(c => c.id === id)
 
   const pieData = categories
@@ -383,6 +383,13 @@ export function Dashboard({ month, year, onMonthChange }: DashboardProps) {
                   </div>
                 )
               })}
+              <button
+                onClick={() => onNavigate('variable-expenses')}
+                className="text-center w-full mt-1 cursor-pointer bg-transparent border-none"
+                style={{ fontSize: '12px', color: '#9D84D4' }}
+              >
+                Zobraziť všetky transakcie →
+              </button>
             </div>
           ) : (
             <div style={{ ...CARD, textAlign: 'center', padding: 40 }}>
