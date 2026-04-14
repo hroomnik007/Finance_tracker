@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./finance-tracker
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,9 +39,9 @@ jobs:
 
       - name: Move build to subfolder
         run: |
-          mkdir -p deploy/redesign
-          cp -r dist/* deploy/redesign/
-          echo '<meta http-equiv="refresh" content="0; url=redesign/">' > deploy/index.html
+          mkdir -p ../deploy/redesign
+          cp -r dist/* ../deploy/redesign/
+          echo '<meta http-equiv="refresh" content="0; url=redesign/">' > ../deploy/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
