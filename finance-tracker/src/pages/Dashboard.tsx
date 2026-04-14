@@ -19,9 +19,9 @@ interface DashboardProps {
 }
 
 const getBudgetBarColor = (pct: number) => {
-  if (pct >= 100) return '#f87171'
-  if (pct >= 70) return '#fbbf24'
-  return '#34d399'
+  if (pct >= 100) return 'var(--negative)'
+  if (pct >= 80) return 'var(--warning)'
+  return 'var(--accent)'
 }
 
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
@@ -84,10 +84,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             {Math.round(bs.percentage)}%
           </span>
         </div>
-        <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-1 rounded-full overflow-hidden mb-2" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
           <div
-            className="h-full rounded-full progress-fill"
-            style={{ width: `${pct}%`, backgroundColor: barColor, boxShadow: `0 0 8px ${barColor}` }}
+            className="h-full progress-fill"
+            style={{ width: `${pct}%`, backgroundColor: barColor, borderRadius: '2px' }}
           />
         </div>
         <div className="flex justify-between items-center">

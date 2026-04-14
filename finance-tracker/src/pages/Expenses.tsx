@@ -654,8 +654,8 @@ export function ExpensesPage({
         className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
         style={{
           bottom: '5rem',
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
+          background: 'var(--accent-strong)',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
         }}
       >
         <Plus size={26} />

@@ -13,32 +13,48 @@
 }
 
 :root {
-  /* Backgrounds */
-  --bg-base: #111827;
-  --bg-surface: #1a2035;
-  --bg-elevated: #212840;
-  --bg-hover: #2a3354;
+  /* === Dusk Purple theme === */
+  --bg-primary: #1E1535;
+  --bg-card: #2A1F4A;
+  --bg-card-hover: #32265A;
 
-  /* Accent — warm indigo/violet gradient */
-  --accent-from: #6366f1;
-  --accent-to: #8b5cf6;
-  --accent-solid: #6366f1;
-  --accent-light: rgba(99, 102, 241, 0.15);
-
-  /* Semantic colors */
-  --color-income: #34d399;
-  --color-expense: #f87171;
-  --color-neutral: #94a3b8;
-  --color-warning: #fbbf24;
-
-  /* Text */
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
+  /* Legacy aliases (keep for compatibility) */
+  --bg-base: #1E1535;
+  --bg-surface: #2A1F4A;
+  --bg-elevated: #32265A;
+  --bg-hover: #32265A;
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.09);
-  --border-medium: rgba(255, 255, 255, 0.13);
+  --border-subtle: #4C3A8A;
+  --border-medium: #6B5A9E;
+
+  /* Accent */
+  --accent: #A78BFA;
+  --accent-strong: #7C3AED;
+  --accent-muted: #6B5A9E;
+
+  /* Legacy accent aliases */
+  --accent-from: #A78BFA;
+  --accent-to: #7C3AED;
+  --accent-solid: #A78BFA;
+  --accent-light: rgba(167, 139, 250, 0.15);
+
+  /* Text */
+  --text-primary: #E2D9F3;
+  --text-secondary: #B8A3E8;
+  --text-muted: #9D84D4;
+  --text-hint: #6B5A9E;
+
+  /* Semantic */
+  --positive: #34D399;
+  --negative: #F87171;
+  --warning: #FBBF24;
+
+  /* Legacy semantic aliases */
+  --color-income: #34D399;
+  --color-expense: #F87171;
+  --color-neutral: #9D84D4;
+  --color-warning: #FBBF24;
 
   /* Shadows */
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
@@ -46,7 +62,7 @@
 }
 
 body {
-  background-color: #111827;
+  background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -70,18 +86,18 @@ body {
 
 /* ── Card system ── */
 .card {
-  background: var(--bg-surface);
-  border-radius: 20px;
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 0.5px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
-  padding: 24px;
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 16px;
+  transition: all 150ms ease;
 }
 
 .card-hover:hover {
+  background: var(--bg-card-hover);
   border-color: var(--border-medium);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-elevated);
+  transition: all 150ms ease;
 }
 
 /* ── Button system ── */

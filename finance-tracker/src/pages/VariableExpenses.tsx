@@ -29,9 +29,9 @@ interface VarForm {
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
 
 const getBudgetBarColor = (pct: number) => {
-  if (pct >= 100) return '#f87171'
-  if (pct >= 70) return '#fbbf24'
-  return '#34d399'
+  if (pct >= 100) return 'var(--negative)'
+  if (pct >= 80) return 'var(--warning)'
+  return 'var(--accent)'
 }
 
 export function VariableExpensesPage({ month, year, onMonthChange, showToast }: VariableExpensesPageProps) {
@@ -113,7 +113,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
   const sortedAll = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date))
 
-  const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : '#34d399'
+  const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
 
   const FormBody = () => (
     <div className="flex flex-col gap-4">
@@ -141,12 +141,12 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             <span className="text-[#94a3b8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
             <span className="font-mono text-[#94a3b8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="h-full rounded-full progress-fill"
+          <div className="h-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
+            <div className="h-full progress-fill"
               style={{
                 width: `${livePct}%`,
                 backgroundColor: liveBudgetBarColor,
-                boxShadow: `0 0 8px ${liveBudgetBarColor}`,
+                borderRadius: '2px',
               }} />
           </div>
         </div>
@@ -567,8 +567,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
         style={{
           bottom: '5rem',
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
+          background: 'var(--accent-strong)',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
         }}
       >
         <Plus size={26} />
