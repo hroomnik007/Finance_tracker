@@ -97,19 +97,19 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
               style={{ backgroundColor: 'rgba(148,163,184,0.1)' }}
             >
-              <Lock size={24} style={{ color: '#94a3b8' }} />
+              <Lock size={24} style={{ color: '#B8A3E8' }} />
             </div>
-            <p className="text-[#94a3b8] font-medium text-sm">{t.expenses.fixed.noExpenses}</p>
-            <p className="text-[#475569] text-xs mt-1">{t.expenses.fixed.noExpensesSubtitle}</p>
+            <p className="text-[#B8A3E8] font-medium text-sm">{t.expenses.fixed.noExpenses}</p>
+            <p className="text-[#9D84D4] text-xs mt-1">{t.expenses.fixed.noExpensesSubtitle}</p>
           </div>
         ) : (
           <div>
             {fixedExpenses.map((expense, idx) => (
               <div
                 key={expense.id}
-                className="flex items-center gap-4 px-5 group transition-all duration-150 hover:bg-[#212840]"
+                className="flex items-center gap-4 px-5 group transition-all duration-150 hover:bg-[#32265A]"
                 style={{
-                  borderBottom: idx !== fixedExpenses.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  borderBottom: idx !== fixedExpenses.length - 1 ? '1px solid #4C3A8A33' : 'none',
                   height: '64px',
                 }}
               >
@@ -118,26 +118,26 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
                   className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
                   style={{ backgroundColor: 'rgba(148,163,184,0.12)' }}
                 >
-                  <Lock size={16} style={{ color: '#94a3b8' }} />
+                  <Lock size={16} style={{ color: '#B8A3E8' }} />
                 </div>
 
                 {/* Day badge */}
                 <div
                   className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0"
                   style={{
-                    backgroundColor: 'rgba(99,102,241,0.12)',
-                    border: '1px solid rgba(99,102,241,0.2)',
+                    backgroundColor: 'rgba(167,139,250,0.12)',
+                    border: '1px solid rgba(167,139,250,0.2)',
                   }}
                 >
-                  <span className="text-xs font-bold text-[#818cf8]">
+                  <span className="text-xs font-bold text-[#A78BFA]">
                     {ordinalSuffix(expense.dayOfMonth)}
                   </span>
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#f1f5f9] truncate leading-snug">{expense.label}</p>
-                  <p className="text-xs text-[#475569] mt-0.5 truncate">
+                  <p className="text-sm font-semibold text-[#E2D9F3] truncate leading-snug">{expense.label}</p>
+                  <p className="text-xs text-[#9D84D4] mt-0.5 truncate">
                     {t.expenses.fixed.everyMonth}, {ordinalSuffix(expense.dayOfMonth)}
                   </p>
                 </div>
@@ -151,13 +151,13 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button
                     onClick={() => openEdit(expense)}
-                    className="btn-icon text-[#475569] hover:text-[#818cf8]"
+                    className="btn-icon text-[#9D84D4] hover:text-[#A78BFA]"
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => setDeleteId(expense.id!)}
-                    className="btn-icon text-[#475569] hover:text-[#f87171]"
+                    className="btn-icon text-[#9D84D4] hover:text-[#f87171]"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -169,17 +169,17 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
             <div
               className="flex items-center justify-between px-5 py-5"
               style={{
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08))',
-                borderTop: '1px solid rgba(255,255,255,0.10)',
+                background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(124,58,237,0.08))',
+                borderTop: '1px solid #4C3A8A',
               }}
             >
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">
                   {t.expenses.fixed.totalLabel}
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">{t.expenses.fixed.everyMonth}</p>
+                <p className="text-xs text-[#B8A3E8] mt-0.5">{t.expenses.fixed.everyMonth}</p>
               </div>
-              <span className="font-mono text-xl font-bold text-[#f1f5f9]">
+              <span className="font-mono text-xl font-bold text-[#E2D9F3]">
                 {formatAmount(total)}
               </span>
             </div>
@@ -195,7 +195,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
       >
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
               {t.expenses.fixed.nameLabel}
             </label>
             <input
@@ -207,7 +207,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
               {t.expenses.fixed.amountLabel}
             </label>
             <input
@@ -224,7 +224,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
               {t.expenses.fixed.dayLabel}
             </label>
             <input
@@ -265,7 +265,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
         onClose={() => setDeleteId(null)}
         title={t.expenses.fixed.removeTitle}
       >
-        <p className="text-sm text-[#94a3b8] mb-6 leading-relaxed">
+        <p className="text-sm text-[#B8A3E8] mb-6 leading-relaxed">
           {t.expenses.fixed.removeMessage}
         </p>
         <div className="flex gap-3">

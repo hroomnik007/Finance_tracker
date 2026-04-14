@@ -34,7 +34,7 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: ConfirmDia
           boxShadow: 'var(--shadow-elevated)',
         }}
       >
-        <p className="text-sm text-[#94a3b8] text-center mb-6 leading-relaxed">{message}</p>
+        <p className="text-sm text-[#B8A3E8] text-center mb-6 leading-relaxed">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}

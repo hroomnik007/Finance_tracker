@@ -81,7 +81,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const FormContent = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.income.amount}
         </label>
         <input
@@ -95,7 +95,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         />
       </div>
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.income.description}
         </label>
         <input
@@ -107,7 +107,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         />
       </div>
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.income.date}
         </label>
         <DateInput
@@ -119,13 +119,13 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
         style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', minHeight: '56px' }}
       >
-        <span className="text-sm font-medium text-[#f1f5f9]">{t.income.recurringToggle}</span>
+        <span className="text-sm font-medium text-[#E2D9F3]">{t.income.recurringToggle}</span>
         <button
           onClick={() => setForm(f => ({ ...f, recurring: !f.recurring }))}
           className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${
-            form.recurring ? 'bg-[#6366f1]' : 'bg-[#212840]'
+            form.recurring ? 'bg-[#A78BFA]' : 'bg-[#32265A]'
           }`}
-          style={{ border: form.recurring ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.08)' }}
+          style={{ border: form.recurring ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
         >
           <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
             form.recurring ? 'translate-x-5' : 'translate-x-0'
@@ -173,7 +173,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             <TrendingUp size={16} style={{ color: '#34d399' }} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#475569] truncate">{t.income.totalLabel}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] truncate">{t.income.totalLabel}</p>
             <p className="font-mono font-semibold text-sm text-[#34d399] truncate">{formatAmount(totalAmount)}</p>
           </div>
         </div>
@@ -183,12 +183,12 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card)' }}
         >
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: 'rgba(99,102,241,0.15)' }}>
-            <Hash size={16} style={{ color: '#818cf8' }} />
+            style={{ backgroundColor: 'rgba(167,139,250,0.15)' }}>
+            <Hash size={16} style={{ color: '#A78BFA' }} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#475569] truncate">{t.income.records}</p>
-            <p className="font-mono font-semibold text-sm text-[#818cf8] truncate">{incomes.length}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] truncate">{t.income.records}</p>
+            <p className="font-mono font-semibold text-sm text-[#A78BFA] truncate">{incomes.length}</p>
           </div>
         </div>
 
@@ -201,7 +201,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             <Repeat size={16} style={{ color: '#60a5fa' }} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#475569] truncate">{t.income.recurring}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] truncate">{t.income.recurring}</p>
             <p className="font-mono font-semibold text-sm text-[#60a5fa] truncate">{recurringCount}</p>
           </div>
         </div>
@@ -211,8 +211,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       {sorted.length === 0 ? (
         <div className="card text-center py-16" style={{ border: '1px solid var(--border-subtle)' }}>
           <p className="text-5xl mb-4">💰</p>
-          <p className="text-[#f1f5f9] font-semibold text-lg mb-2">{t.income.noIncome}</p>
-          <p className="text-[#475569] text-sm">{t.income.noIncomeSubtitle}</p>
+          <p className="text-[#E2D9F3] font-semibold text-lg mb-2">{t.income.noIncome}</p>
+          <p className="text-[#9D84D4] text-sm">{t.income.noIncomeSubtitle}</p>
         </div>
       ) : (
         <>
@@ -247,8 +247,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                     <Calendar size={18} style={{ color: '#34d399' }} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#f1f5f9] leading-snug">{income.label}</p>
-                    <p className="text-xs text-[#475569] mt-0.5">{formatDate(income.date)}</p>
+                    <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{income.label}</p>
+                    <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(income.date)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -267,13 +267,13 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                   </div>
                   <button
                     onClick={() => openEdit(income)}
-                    className="btn-icon text-[#475569] hover:text-[#94a3b8] min-h-[44px] min-w-[36px]"
+                    className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]"
                   >
                     <Edit2 size={14} />
                   </button>
                   <button
                     onClick={() => setConfirmId(income.id!)}
-                    className="btn-icon text-[#475569] hover:text-[#f87171] min-h-[44px] min-w-[36px]"
+                    className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -294,11 +294,11 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569]">{t.income.date_col}</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569]">{t.income.desc_col}</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] text-right">{t.income.amount_col}</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] text-center">{t.income.recurring_col}</th>
-                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] text-center">{t.income.actions_col}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">{t.income.date_col}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">{t.income.desc_col}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] text-right">{t.income.amount_col}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] text-center">{t.income.recurring_col}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] text-center">{t.income.actions_col}</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,7 +311,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                     onClick={() => openEdit(income)}
                   >
-                    <td className="px-6 py-4 text-[#475569] text-sm whitespace-nowrap">{formatDate(income.date)}</td>
+                    <td className="px-6 py-4 text-[#9D84D4] text-sm whitespace-nowrap">{formatDate(income.date)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -320,7 +320,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                         >
                           <Calendar size={14} style={{ color: '#34d399' }} />
                         </div>
-                        <span className="text-[#f1f5f9] font-medium">{income.label}</span>
+                        <span className="text-[#E2D9F3] font-medium">{income.label}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -337,15 +337,15 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                           <Repeat size={11} /> {t.income.recurringBadge}
                         </span>
                       ) : (
-                        <Minus size={14} className="text-[#475569] mx-auto" />
+                        <Minus size={14} className="text-[#9D84D4] mx-auto" />
                       )}
                     </td>
                     <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => openEdit(income)} className="btn-icon text-[#475569] hover:text-[#94a3b8]">
+                        <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
                           <Edit2 size={14} />
                         </button>
-                        <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#475569] hover:text-[#f87171]">
+                        <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
                           <Trash2 size={14} />
                         </button>
                       </div>

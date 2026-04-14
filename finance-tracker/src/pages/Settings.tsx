@@ -48,11 +48,11 @@ const CardHeader = ({ icon, label }: { icon: React.ReactNode; label: string }) =
   >
     <div
       className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-      style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+      style={{ background: 'linear-gradient(135deg, #A78BFA, #7C3AED)' }}
     >
       {icon}
     </div>
-    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">{label}</p>
+    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#B8A3E8]">{label}</p>
   </div>
 )
 
@@ -67,11 +67,11 @@ const SettingRow = ({
 }) => (
   <div
     className="flex items-center justify-between gap-4 px-5 py-4"
-    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+    style={{ borderBottom: '1px solid #4C3A8A33' }}
   >
     <div className="min-w-0 flex-1">
-      <p className="text-sm font-medium text-[#f1f5f9]">{label}</p>
-      {sublabel && <p className="text-xs text-[#475569] mt-0.5">{sublabel}</p>}
+      <p className="text-sm font-medium text-[#E2D9F3]">{label}</p>
+      {sublabel && <p className="text-xs text-[#9D84D4] mt-0.5">{sublabel}</p>}
     </div>
     <div className="flex-shrink-0">{children}</div>
   </div>
@@ -192,8 +192,8 @@ export function SettingsPage() {
     <div className="flex flex-col gap-5 pb-4 max-w-xl">
       {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-[#f1f5f9]">{t.settings.title}</h1>
-        <p className="text-sm text-[#475569] mt-0.5">{t.settings.subtitle}</p>
+        <h1 className="text-2xl font-bold text-[#E2D9F3]">{t.settings.title}</h1>
+        <p className="text-sm text-[#9D84D4] mt-0.5">{t.settings.subtitle}</p>
       </div>
 
       {/* ── Section 1: Všeobecné ── */}
@@ -252,7 +252,7 @@ export function SettingsPage() {
         </SettingRow>
 
         {/* Save button */}
-        <div className="px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="px-5 py-4" style={{ borderTop: '1px solid #4C3A8A33' }}>
           {settingsSaveOk ? (
             <div
               className="w-full flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-[#34d399]"
@@ -303,7 +303,7 @@ export function SettingsPage() {
             <p className="text-xs text-[#34d399] text-center mt-1">{t.settings.importSuccess}</p>
           )}
 
-          <p className="text-xs text-[#475569] text-center pt-1">
+          <p className="text-xs text-[#9D84D4] text-center pt-1">
             {t.settings.exportNote}
           </p>
         </div>
@@ -318,10 +318,10 @@ export function SettingsPage() {
 
         <div className="px-5 py-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-[#f1f5f9]">{t.nav.appName}</p>
+            <p className="text-sm font-semibold text-[#E2D9F3]">{t.nav.appName}</p>
             <span
               className="text-xs px-2.5 py-1 rounded-full font-mono font-medium"
-              style={{ backgroundColor: 'rgba(99,102,241,0.12)', color: '#818cf8' }}
+              style={{ backgroundColor: 'rgba(167,139,250,0.12)', color: '#A78BFA' }}
             >
               {t.settings.version}
             </span>
@@ -329,12 +329,12 @@ export function SettingsPage() {
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-start gap-2.5">
-              <Info size={13} style={{ color: '#475569' }} className="mt-0.5 shrink-0" />
-              <p className="text-xs text-[#94a3b8] leading-relaxed">{t.settings.storedLocally}</p>
+              <Info size={13} style={{ color: '#9D84D4' }} className="mt-0.5 shrink-0" />
+              <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.storedLocally}</p>
             </div>
             <div className="flex items-start gap-2.5">
               <Heart size={13} style={{ color: '#f87171' }} className="mt-0.5 shrink-0" />
-              <p className="text-xs text-[#94a3b8] leading-relaxed">{t.settings.madeWith}</p>
+              <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.madeWith}</p>
             </div>
           </div>
         </div>

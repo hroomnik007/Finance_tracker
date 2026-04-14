@@ -30,7 +30,7 @@ export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
     >
       <button
         onClick={prev}
-        className="btn-icon w-7 h-7 text-[#94a3b8] hover:text-[#f1f5f9]"
+        className="btn-icon w-7 h-7 text-[#B8A3E8] hover:text-[#E2D9F3]"
       >
         <ChevronLeft size={15} />
       </button>
@@ -39,7 +39,7 @@ export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
       </span>
       <button
         onClick={next}
-        className="btn-icon w-7 h-7 text-[#94a3b8] hover:text-[#f1f5f9]"
+        className="btn-icon w-7 h-7 text-[#B8A3E8] hover:text-[#E2D9F3]"
       >
         <ChevronRight size={15} />
       </button>

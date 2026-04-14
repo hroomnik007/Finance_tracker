@@ -124,7 +124,7 @@ export function ExpensesPage({
 
     if (newCatMode) {
       if (!newCatName.trim()) return
-      const id = await addCategory({ name: newCatName, color: '#64748b', icon: '📦' })
+      const id = await addCategory({ name: newCatName, color: '#9D84D4', icon: '📦' })
       const catId = typeof id === 'number' ? id : 0
       await addVariableExpense({ amount, categoryId: catId, note: varForm.note, date: varForm.date })
       setSheetOpen(false)
@@ -174,7 +174,7 @@ export function ExpensesPage({
   const VarExpenseFormBody = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Suma
         </label>
         <input
@@ -194,10 +194,10 @@ export function ExpensesPage({
           style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
         >
           <div className="flex justify-between text-xs mb-2">
-            <span className="text-[#94a3b8]">Rozpočet: {liveBudget?.categoryName}</span>
-            <span className="font-mono text-[#94a3b8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+            <span className="text-[#B8A3E8]">Rozpočet: {liveBudget?.categoryName}</span>
+            <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#32265A' }}>
             <div className="h-full rounded-full progress-fill"
               style={{ width: `${livePct}%`, backgroundColor: getBudgetBarColor(livePct) }} />
           </div>
@@ -205,7 +205,7 @@ export function ExpensesPage({
       )}
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Kategória
         </label>
         {!newCatMode ? (
@@ -241,7 +241,7 @@ export function ExpensesPage({
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Poznámka (nepovinná)
         </label>
         <input
@@ -254,7 +254,7 @@ export function ExpensesPage({
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Dátum
         </label>
         <DateInput
@@ -276,7 +276,7 @@ export function ExpensesPage({
   const FixedExpenseFormBody = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Názov
         </label>
         <input
@@ -288,7 +288,7 @@ export function ExpensesPage({
         />
       </div>
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Suma
         </label>
         <input
@@ -302,7 +302,7 @@ export function ExpensesPage({
         />
       </div>
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           Deň v mesiaci
         </label>
         <input
@@ -360,8 +360,8 @@ export function ExpensesPage({
             onClick={() => handleTabChange(t)}
             className="flex-1 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
             style={{
-              background: tab === t ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'transparent',
-              color: tab === t ? '#ffffff' : '#94a3b8',
+              background: tab === t ? 'linear-gradient(135deg, #A78BFA, #7C3AED)' : 'transparent',
+              color: tab === t ? '#ffffff' : '#B8A3E8',
             }}
           >
             {t === 'variable' ? 'Variabilné' : 'Fixné'}
@@ -376,47 +376,47 @@ export function ExpensesPage({
             <div className="text-center py-16 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
               <p className="text-4xl mb-3">🧾</p>
               <p className="text-white font-semibold mb-1">Žiadne variabilné výdavky</p>
-              <p className="text-[#475569] text-sm">Pridaj výdavok tlačidlom +</p>
+              <p className="text-[#9D84D4] text-sm">Pridaj výdavok tlačidlom +</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
               {sortedDates.map(date => (
                 <div key={date}>
-                  <p className="text-[#475569] text-xs mb-2 px-1 uppercase tracking-wide">{formatDate(date)}</p>
+                  <p className="text-[#9D84D4] text-xs mb-2 px-1 uppercase tracking-wide">{formatDate(date)}</p>
                   <div className="flex flex-col gap-2">
                     {grouped[date].map((expense: VariableExpense) => {
                       const cat = getCategoryById(expense.categoryId)
                       const bs = cat?.id ? getBudgetForCategory(cat.id) : null
                       return (
                         <div key={expense.id}
-                          className="bg-[var(--bg-surface)] rounded-xl px-4 py-3 border border-[var(--border-subtle)] hover:bg-[rgba(255,255,255,0.06)]/50 transition-all duration-200 cursor-pointer"
+                          className="bg-[var(--bg-surface)] rounded-xl px-4 py-3 border border-[var(--border-subtle)] hover:bg-[#32265A]/50 transition-all duration-200 cursor-pointer"
                           onClick={() => openEditVar(expense)}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0"
-                                style={{ backgroundColor: (cat?.color ?? '#64748b') + '33' }}>
+                                style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '33' }}>
                                 {cat?.icon ?? '📦'}
                               </div>
                               <div>
                                 <p className="text-white text-sm">{expense.note || cat?.name || 'Výdavok'}</p>
-                                <p className="text-[#475569] text-xs">{cat?.name}</p>
+                                <p className="text-[#9D84D4] text-xs">{cat?.name}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                               <span className="text-[#f87171] font-medium text-sm">-{formatAmount(expense.amount)}</span>
                               <button onClick={() => openEditVar(expense)}
-                                className="text-[#475569] hover:text-[#94a3b8] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
+                                className="text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
                                 <Edit2 size={14} />
                               </button>
                               <button onClick={() => setConfirmVarId(expense.id!)}
-                                className="text-[#475569] hover:text-[#f87171] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
+                                className="text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
                                 <Trash2 size={14} />
                               </button>
                             </div>
                           </div>
                           {bs && (
-                            <div className="mt-2 h-1.5 bg-[rgba(255,255,255,0.06)] rounded-full overflow-hidden">
+                            <div className="mt-2 h-1.5 bg-[#32265A] rounded-full overflow-hidden">
                               <div className="h-full rounded-full transition-all"
                                 style={{ width: `${Math.min(bs.percentage, 100)}%`, backgroundColor: getBudgetBarColor(bs.percentage) }} />
                             </div>
@@ -444,30 +444,30 @@ export function ExpensesPage({
             <div className="text-center py-16 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
               <p className="text-4xl mb-3">📌</p>
               <p className="text-white font-semibold mb-1">Žiadne fixné výdavky</p>
-              <p className="text-[#475569] text-sm">Pridaj pravidelné výdavky</p>
+              <p className="text-[#9D84D4] text-sm">Pridaj pravidelné výdavky</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {fixedExpenses.map((expense: FixedExpense) => (
                 <div key={expense.id}
-                  className="bg-[var(--bg-surface)] rounded-xl px-4 py-3 flex items-center justify-between border border-[var(--border-subtle)] hover:bg-[rgba(255,255,255,0.06)]/50 transition-all duration-200">
+                  className="bg-[var(--bg-surface)] rounded-xl px-4 py-3 flex items-center justify-between border border-[var(--border-subtle)] hover:bg-[#32265A]/50 transition-all duration-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#6366f1]/15 flex items-center justify-center shrink-0">
-                      <span className="text-[#818cf8] text-xs font-bold">{expense.dayOfMonth}.</span>
+                    <div className="w-8 h-8 rounded-lg bg-[#A78BFA]/15 flex items-center justify-center shrink-0">
+                      <span className="text-[#A78BFA] text-xs font-bold">{expense.dayOfMonth}.</span>
                     </div>
                     <div>
                       <p className="text-white text-sm">{expense.label}</p>
-                      <p className="text-[#475569] text-xs">každý mesiac</p>
+                      <p className="text-[#9D84D4] text-xs">každý mesiac</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#f87171] font-semibold">{formatAmount(expense.amount)}</span>
                     <button onClick={() => openEditFixed(expense)}
-                      className="text-[#475569] hover:text-[#94a3b8] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
+                      className="text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
                       <Edit2 size={14} />
                     </button>
                     <button onClick={() => setConfirmFixedId(expense.id!)}
-                      className="text-[#475569] hover:text-[#f87171] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
+                      className="text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -487,7 +487,7 @@ export function ExpensesPage({
           {budgetStatuses.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-2xl mb-2">📊</p>
-              <p className="text-[#475569] text-sm">Žiadne limity nastavené</p>
+              <p className="text-[#9D84D4] text-sm">Žiadne limity nastavené</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -509,11 +509,11 @@ export function ExpensesPage({
                         {Math.round(bs.percentage)}%
                       </span>
                     </div>
-                    <div className="h-2 bg-[rgba(255,255,255,0.06)] rounded-full overflow-hidden mb-1">
+                    <div className="h-2 bg-[#32265A] rounded-full overflow-hidden mb-1">
                       <div className="h-full rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(bs.percentage, 100)}%`, backgroundColor: barColor }} />
                     </div>
-                    <p className="text-xs text-[#475569]">
+                    <p className="text-xs text-[#9D84D4]">
                       {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                     </p>
                     {bs.isOver && <p className="text-[#f87171] text-xs mt-0.5 font-medium">Limit prekročený!</p>}
@@ -530,12 +530,12 @@ export function ExpensesPage({
             <div className="text-center py-20">
               <p className="text-4xl mb-3">🧾</p>
               <p className="text-white font-semibold mb-1">Žiadne variabilné výdavky</p>
-              <p className="text-[#475569] text-sm">Pridaj výdavok tlačidlom vyššie</p>
+              <p className="text-[#9D84D4] text-sm">Pridaj výdavok tlačidlom vyššie</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[#475569] text-xs border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+                <tr className="text-left text-[#9D84D4] text-xs border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
                   <th className="px-5 py-4 font-medium">Dátum</th>
                   <th className="px-5 py-4 font-medium">Kategória</th>
                   <th className="px-5 py-4 font-medium">Poznámka</th>
@@ -549,22 +549,22 @@ export function ExpensesPage({
                   const bs = cat?.id ? getBudgetForCategory(cat.id) : null
                   return (
                     <tr key={expense.id}
-                      className={`border-b border-[rgba(255,255,255,0.04)] last:border-0 hover:bg-[rgba(255,255,255,0.06)]/40 transition-all duration-150 cursor-pointer ${
+                      className={`border-b border-[#4C3A8A33] last:border-0 hover:bg-[#32265A]/40 transition-all duration-150 cursor-pointer ${
                         idx % 2 === 1 ? '' : ''
                       }`}
                       onClick={() => openEditVar(expense)}
                     >
-                      <td className="px-5 py-4 text-[#475569] whitespace-nowrap">{formatDate(expense.date)}</td>
+                      <td className="px-5 py-4 text-[#9D84D4] whitespace-nowrap">{formatDate(expense.date)}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0"
-                            style={{ backgroundColor: (cat?.color ?? '#64748b') + '33' }}>
+                            style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '33' }}>
                             {cat?.icon ?? '📦'}
                           </span>
                           <div>
                             <p className="text-white text-xs">{cat?.name ?? '—'}</p>
                             {bs && (
-                              <div className="w-16 h-1 bg-[rgba(255,255,255,0.06)] rounded-full mt-0.5">
+                              <div className="w-16 h-1 bg-[#32265A] rounded-full mt-0.5">
                                 <div className="h-full rounded-full"
                                   style={{ width: `${Math.min(bs.percentage, 100)}%`, backgroundColor: getBudgetBarColor(bs.percentage) }} />
                               </div>
@@ -572,18 +572,18 @@ export function ExpensesPage({
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-[#94a3b8]">{expense.note || '—'}</td>
+                      <td className="px-5 py-4 text-[#B8A3E8]">{expense.note || '—'}</td>
                       <td className="px-5 py-4 text-right text-[#f87171] font-semibold whitespace-nowrap">
                         -{formatAmount(expense.amount)}
                       </td>
                       <td className="px-5 py-4 text-center" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-3">
                           <button onClick={() => openEditVar(expense)}
-                            className="text-[#475569] hover:text-[#94a3b8] transition-colors cursor-pointer">
+                            className="text-[#9D84D4] hover:text-[#B8A3E8] transition-colors cursor-pointer">
                             <Edit2 size={14} />
                           </button>
                           <button onClick={() => setConfirmVarId(expense.id!)}
-                            className="text-[#475569] hover:text-[#f87171] transition-colors cursor-pointer">
+                            className="text-[#9D84D4] hover:text-[#f87171] transition-colors cursor-pointer">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -601,15 +601,15 @@ export function ExpensesPage({
       <div className="hidden lg:block bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-subtle)]">
           <h3 className="text-white font-semibold text-sm flex items-center gap-2">
-            <Lock size={14} className="text-[#475569]" /> Fixné výdavky tohto mesiaca
+            <Lock size={14} className="text-[#9D84D4]" /> Fixné výdavky tohto mesiaca
           </h3>
           <button onClick={openAddFixed}
-            className="text-[#818cf8] text-xs hover:text-sky-300 transition-colors cursor-pointer flex items-center gap-1">
+            className="text-[#A78BFA] text-xs hover:text-sky-300 transition-colors cursor-pointer flex items-center gap-1">
             <Plus size={13} /> Pridať
           </button>
         </div>
         {fixedExpenses.length === 0 ? (
-          <p className="text-[#475569] text-sm text-center py-8">
+          <p className="text-[#9D84D4] text-sm text-center py-8">
             Žiadne fixné výdavky. Pridaj ich kliknutím na tlačidlo vyššie.
           </p>
         ) : (
@@ -617,30 +617,30 @@ export function ExpensesPage({
             <div className="divide-y divide-slate-700/30">
               {fixedExpenses.map((exp: FixedExpense) => (
                 <div key={exp.id}
-                  className="flex items-center justify-between px-5 py-3.5 hover:bg-[rgba(255,255,255,0.06)]/20 transition-all duration-150 cursor-pointer"
+                  className="flex items-center justify-between px-5 py-3.5 hover:bg-[#32265A]/20 transition-all duration-150 cursor-pointer"
                   onClick={() => openEditFixed(exp)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-[#6366f1]/15 flex items-center justify-center shrink-0">
-                      <span className="text-[#818cf8] text-xs font-bold">{exp.dayOfMonth}.</span>
+                    <div className="w-7 h-7 rounded-lg bg-[#A78BFA]/15 flex items-center justify-center shrink-0">
+                      <span className="text-[#A78BFA] text-xs font-bold">{exp.dayOfMonth}.</span>
                     </div>
                     <div>
                       <p className="text-white text-sm">{exp.label}</p>
-                      <p className="text-[#475569] text-xs">každý mesiac, deň {exp.dayOfMonth}.</p>
+                      <p className="text-[#9D84D4] text-xs">každý mesiac, deň {exp.dayOfMonth}.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
                     <span className="text-[#f87171] font-semibold text-sm">{formatAmount(exp.amount)}</span>
                     <button onClick={() => openEditFixed(exp)}
-                      className="text-[#475569] hover:text-[#94a3b8] cursor-pointer"><Edit2 size={13} /></button>
+                      className="text-[#9D84D4] hover:text-[#B8A3E8] cursor-pointer"><Edit2 size={13} /></button>
                     <button onClick={() => setConfirmFixedId(exp.id!)}
-                      className="text-[#475569] hover:text-[#f87171] cursor-pointer"><Trash2 size={13} /></button>
+                      className="text-[#9D84D4] hover:text-[#f87171] cursor-pointer"><Trash2 size={13} /></button>
                   </div>
                 </div>
               ))}
             </div>
             {/* Total row */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-t border-[var(--border-subtle)] bg-[rgba(99,102,241,0.06)]">
+            <div className="flex items-center justify-between px-5 py-3.5 border-t border-[var(--border-subtle)] bg-[rgba(167,139,250,0.06)]">
               <span className="text-white font-semibold text-sm">Spolu</span>
               <span className="text-[#f87171] font-bold">{formatAmount(totalFixed)}</span>
             </div>

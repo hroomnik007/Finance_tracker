@@ -75,7 +75,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             >
               {bs.categoryIcon}
             </span>
-            <span className="text-sm font-medium text-[#f1f5f9] leading-snug">{bs.categoryName}</span>
+            <span className="text-sm font-medium text-[#E2D9F3] leading-snug">{bs.categoryName}</span>
           </div>
           <span
             className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ml-2"
@@ -91,7 +91,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           />
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-xs text-[#475569]">
+          <span className="text-xs text-[#9D84D4]">
             {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
           </span>
           {bs.isOver && (
@@ -111,13 +111,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         className="rounded-[20px] p-6 lg:p-8 fade-up stagger-1"
         style={{
           background: 'linear-gradient(135deg, #1a1f35 0%, #1e2040 50%, #1a1535 100%)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid #4C3A8A',
           boxShadow: '0 4px 40px rgba(0,0,0,0.5)',
           minHeight: '140px',
         }}
       >
         <div className="flex items-center justify-between mb-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#475569]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4]">
             {t.dashboard.balance}
           </p>
           <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
@@ -136,7 +136,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             ? <TrendingUp size={14} className="text-[#34d399]" />
             : <TrendingDown size={14} className="text-[#f87171]" />
           }
-          <span className="text-xs text-[#475569]">
+          <span className="text-xs text-[#9D84D4]">
             {balance >= 0 ? t.dashboard.positiveBalance : t.dashboard.negativeBalance}
           </span>
         </div>
@@ -157,7 +157,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <p className="font-mono font-semibold text-sm lg:text-base text-white text-center leading-tight whitespace-nowrap">
             {formatAmount(totalIncome)}
           </p>
-          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#9D84D4] text-center">
             {t.dashboard.income}
           </p>
         </button>
@@ -175,7 +175,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <p className="font-mono font-semibold text-sm lg:text-base text-white text-center leading-tight whitespace-nowrap">
             {formatAmount(totalExpenses)}
           </p>
-          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#9D84D4] text-center">
             {t.dashboard.expenses}
           </p>
         </button>
@@ -183,11 +183,11 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         {/* Zostatok */}
         <div
           className="card card-hover flex flex-col items-center gap-2.5 py-5 px-3"
-          style={{ borderTop: `3px solid ${balance >= 0 ? '#6366f1' : '#f87171'}` }}
+          style={{ borderTop: `3px solid ${balance >= 0 ? '#A78BFA' : '#f87171'}` }}
         >
           <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: balance >= 0 ? 'rgba(99,102,241,0.15)' : 'rgba(248,113,113,0.15)' }}>
-            <Wallet size={18} style={{ color: balance >= 0 ? '#818cf8' : '#f87171' }} />
+            style={{ backgroundColor: balance >= 0 ? 'rgba(167,139,250,0.15)' : 'rgba(248,113,113,0.15)' }}>
+            <Wallet size={18} style={{ color: balance >= 0 ? '#A78BFA' : '#f87171' }} />
           </div>
           <p
             className="font-mono font-semibold text-sm lg:text-base text-center leading-tight whitespace-nowrap"
@@ -195,7 +195,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           >
             {formatAmount(balance)}
           </p>
-          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569] text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#9D84D4] text-center">
             {t.dashboard.balance}
           </p>
         </div>
@@ -209,8 +209,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             <div className="card fade-up stagger-3">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="text-sm font-semibold text-[#f1f5f9]">{t.dashboard.budget}</h3>
-                  <p className="text-xs text-[#475569] mt-0.5">{t.dashboard.budgetThisMonth}</p>
+                  <h3 className="text-sm font-semibold text-[#E2D9F3]">{t.dashboard.budget}</h3>
+                  <p className="text-xs text-[#9D84D4] mt-0.5">{t.dashboard.budgetThisMonth}</p>
                 </div>
               </div>
               <div className="flex flex-col gap-3 md:grid md:grid-cols-2 lg:flex lg:flex-col">
@@ -224,7 +224,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           {pieData.length > 0 && (
             <div className="card fade-up stagger-4">
               <div className="mb-4">
-                <h3 className="text-sm font-semibold text-[#f1f5f9]">{t.dashboard.expensesByCategory}</h3>
+                <h3 className="text-sm font-semibold text-[#E2D9F3]">{t.dashboard.expensesByCategory}</h3>
               </div>
 
               <div className="relative" style={{ height: 280 }}>
@@ -248,13 +248,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                     <Tooltip
                       formatter={(val) => formatAmount(val as number)}
                       contentStyle={{
-                        backgroundColor: '#212840',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        backgroundColor: '#32265A',
+                        border: '1px solid #32265A',
                         borderRadius: 12,
                         fontFamily: 'Plus Jakarta Sans, sans-serif',
                       }}
-                      labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
-                      itemStyle={{ color: '#94a3b8' }}
+                      labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
+                      itemStyle={{ color: '#B8A3E8' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -262,7 +262,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   <p className="font-mono font-bold text-lg text-white leading-tight">
                     {formatAmount(totalVariable)}
                   </p>
-                  <p className="text-xs text-[#475569] mt-1">{t.dashboard.total}</p>
+                  <p className="text-xs text-[#9D84D4] mt-1">{t.dashboard.total}</p>
                 </div>
               </div>
 
@@ -274,7 +274,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                     style={{ backgroundColor: d.color + '18', border: `1px solid ${d.color}30` }}
                   >
                     <span className="text-sm">{d.icon}</span>
-                    <span className="text-[#94a3b8] font-medium">{d.name}</span>
+                    <span className="text-[#B8A3E8] font-medium">{d.name}</span>
                     <span className="font-mono font-semibold" style={{ color: d.color }}>
                       {formatAmount(d.value)}
                     </span>
@@ -290,8 +290,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {last5.length > 0 && (
         <div className="card fade-up stagger-5">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-sm font-semibold text-[#f1f5f9]">{t.dashboard.recentTransactions}</h3>
-            <button className="flex items-center gap-1 text-xs text-[#6366f1] hover:text-[#818cf8] transition-colors font-medium">
+            <h3 className="text-sm font-semibold text-[#E2D9F3]">{t.dashboard.recentTransactions}</h3>
+            <button className="flex items-center gap-1 text-xs text-[#A78BFA] hover:text-[#A78BFA] transition-colors font-medium">
               {t.dashboard.showAll} <ArrowRight size={12} />
             </button>
           </div>
@@ -302,22 +302,22 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               return (
                 <div
                   key={expense.id}
-                  className="flex items-center justify-between py-3 rounded-xl px-3 -mx-3 transition-all duration-150 hover:bg-[#212840] cursor-default"
+                  className="flex items-center justify-between py-3 rounded-xl px-3 -mx-3 transition-all duration-150 hover:bg-[#32265A] cursor-default"
                   style={{
-                    borderBottom: idx < last5.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    borderBottom: idx < last5.length - 1 ? '1px solid #4C3A8A33' : 'none',
                     minHeight: '56px',
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
-                      style={{ backgroundColor: (cat?.color ?? '#64748b') + '25' }}
+                      style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
                     >
                       {cat?.icon ?? '📦'}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#f1f5f9] leading-snug">{expense.note || cat?.name}</p>
-                      <p className="text-xs text-[#475569] mt-0.5">{formatDate(expense.date)}</p>
+                      <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{expense.note || cat?.name}</p>
+                      <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(expense.date)}</p>
                     </div>
                   </div>
                   <span className="font-mono text-sm font-semibold text-[#f87171] shrink-0 ml-3">
@@ -334,8 +334,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {last5.length === 0 && pieData.length === 0 && (
         <div className="card text-center py-16 fade-up">
           <p className="text-5xl mb-4">📊</p>
-          <p className="text-[#f1f5f9] font-semibold text-lg mb-2">{t.dashboard.noExpenses}</p>
-          <p className="text-[#475569] text-sm">{t.dashboard.noExpensesSubtitle}</p>
+          <p className="text-[#E2D9F3] font-semibold text-lg mb-2">{t.dashboard.noExpenses}</p>
+          <p className="text-[#9D84D4] text-sm">{t.dashboard.noExpensesSubtitle}</p>
         </div>
       )}
     </div>

@@ -59,7 +59,7 @@ export function DateInput({ value, onChange }: DateInputProps) {
     }
   }
 
-  const cls = "bg-transparent outline-none text-[#f1f5f9] placeholder:text-[#475569] text-center text-[15px] tabular-nums"
+  const cls = "bg-transparent outline-none text-[#E2D9F3] placeholder:text-[#9D84D4] text-center text-[15px] tabular-nums"
 
   const dayField = (
     <input
@@ -130,9 +130,9 @@ export function DateInput({ value, onChange }: DateInputProps) {
       style={{ height: '48px', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
     >
       {parts[0]}
-      <span className="select-none" style={{ color: '#64748b', fontSize: '15px', fontWeight: 500, lineHeight: 1 }}>{sep}</span>
+      <span className="select-none" style={{ color: '#9D84D4', fontSize: '15px', fontWeight: 500, lineHeight: 1 }}>{sep}</span>
       {parts[1]}
-      <span className="select-none" style={{ color: '#64748b', fontSize: '15px', fontWeight: 500, lineHeight: 1 }}>{sep}</span>
+      <span className="select-none" style={{ color: '#9D84D4', fontSize: '15px', fontWeight: 500, lineHeight: 1 }}>{sep}</span>
       {parts[2]}
     </div>
   )

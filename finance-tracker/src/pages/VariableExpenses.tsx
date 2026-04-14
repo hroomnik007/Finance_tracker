@@ -83,7 +83,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
     if (newCatMode) {
       if (!newCatName.trim()) return
-      const id = await addCategory({ name: newCatName, color: '#64748b', icon: '📦' })
+      const id = await addCategory({ name: newCatName, color: '#9D84D4', icon: '📦' })
       catId = typeof id === 'number' ? id : 0
     } else {
       if (!form.categoryId) return
@@ -118,7 +118,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const FormBody = () => (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.expenses.variable.amount}
         </label>
         <input
@@ -138,8 +138,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
         >
           <div className="flex justify-between text-xs mb-2">
-            <span className="text-[#94a3b8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
-            <span className="font-mono text-[#94a3b8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+            <span className="text-[#B8A3E8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
+            <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
           </div>
           <div className="h-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
             <div className="h-full progress-fill"
@@ -153,7 +153,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       )}
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.expenses.variable.category}
         </label>
         {!newCatMode ? (
@@ -189,7 +189,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.expenses.variable.note}
         </label>
         <input
@@ -202,7 +202,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.expenses.variable.date}
         </label>
         <DateInput
@@ -252,12 +252,12 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
               boxShadow: 'var(--shadow-card)',
             }}
           >
-            <span className="text-sm font-semibold text-[#f1f5f9] flex items-center gap-2">
+            <span className="text-sm font-semibold text-[#E2D9F3] flex items-center gap-2">
               <span>📊</span> {t.expenses.variable.categoriesAndBudget}
             </span>
             {mobileCatsOpen
-              ? <ChevronUp size={16} style={{ color: '#475569' }} />
-              : <ChevronDown size={16} style={{ color: '#475569' }} />
+              ? <ChevronUp size={16} style={{ color: '#9D84D4' }} />
+              : <ChevronDown size={16} style={{ color: '#9D84D4' }} />
             }
           </button>
           {mobileCatsOpen && (
@@ -285,7 +285,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                       <div className="flex items-center gap-2">
                         <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
                           style={{ backgroundColor: bs.categoryColor + '22' }}>{bs.categoryIcon}</span>
-                        <span className="text-sm font-medium text-[#f1f5f9] leading-snug">{bs.categoryName}</span>
+                        <span className="text-sm font-medium text-[#E2D9F3] leading-snug">{bs.categoryName}</span>
                       </div>
                       <span className="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded-full"
                         style={{ color: barColor, backgroundColor: barColor + '20' }}>
@@ -293,11 +293,11 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                       </span>
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden mb-2"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                      style={{ backgroundColor: '#32265A' }}>
                       <div className="h-full rounded-full progress-fill"
                         style={{ width: `${pct}%`, backgroundColor: bs.categoryColor, boxShadow: `0 0 8px ${bs.categoryColor}` }} />
                     </div>
-                    <p className="text-xs text-[#475569]">{formatAmount(bs.spent)} z {formatAmount(bs.limit)}</p>
+                    <p className="text-xs text-[#9D84D4]">{formatAmount(bs.spent)} z {formatAmount(bs.limit)}</p>
                     {bs.isOver && <p className="text-[#f87171] text-xs mt-0.5 font-medium">{t.dashboard.limitExceeded}</p>}
                   </div>
                 )
@@ -320,15 +320,15 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           }}
         >
           <p
-            className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#475569] pb-3 mb-3"
+            className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] pb-3 mb-3"
             style={{ borderBottom: '1px solid var(--border-subtle)' }}
           >
             {t.expenses.variable.categoriesAndBudget}
           </p>
           {budgetStatuses.length === 0 ? (
             <div className="text-center py-8 flex-1 flex flex-col items-center justify-center">
-              <p className="text-[#475569] text-sm">{t.dashboard.noLimits}</p>
-              <p className="text-[#475569]/60 text-xs mt-1">{t.dashboard.setInCategories}</p>
+              <p className="text-[#9D84D4] text-sm">{t.dashboard.noLimits}</p>
+              <p className="text-[#9D84D4]/60 text-xs mt-1">{t.dashboard.setInCategories}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -353,7 +353,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                         >
                           {bs.categoryIcon}
                         </span>
-                        <span className="text-sm font-medium text-[#f1f5f9] truncate mr-2 leading-snug">
+                        <span className="text-sm font-medium text-[#E2D9F3] truncate mr-2 leading-snug">
                           {bs.categoryName}
                         </span>
                       </div>
@@ -365,7 +365,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                       </span>
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden mb-2"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                      style={{ backgroundColor: '#32265A' }}>
                       <div className="h-full rounded-full progress-fill"
                         style={{
                           width: `${pct}%`,
@@ -373,7 +373,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                           boxShadow: `0 0 8px ${bs.categoryColor}`,
                         }} />
                     </div>
-                    <p className="text-xs text-[#475569]">
+                    <p className="text-xs text-[#9D84D4]">
                       {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                     </p>
                     {bs.isOver && (
@@ -398,18 +398,18 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           {sortedAll.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 gap-3">
               <span className="text-5xl">🧾</span>
-              <p className="text-[#f1f5f9] font-semibold">{t.expenses.variable.noExpenses}</p>
-              <p className="text-[#475569] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
+              <p className="text-[#E2D9F3] font-semibold">{t.expenses.variable.noExpenses}</p>
+              <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#475569] font-semibold">{t.expenses.variable.date_col}</th>
-                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#475569] font-semibold">{t.expenses.variable.category_col}</th>
-                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#475569] font-semibold">{t.expenses.variable.note_col}</th>
-                  <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.12em] text-[#475569] font-semibold">{t.expenses.variable.amount_col}</th>
-                  <th className="px-5 py-4 text-center text-[10px] uppercase tracking-[0.12em] text-[#475569] font-semibold">{t.expenses.variable.actions_col}</th>
+                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
+                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.category_col}</th>
+                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>
+                  <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.amount_col}</th>
+                  <th className="px-5 py-4 text-center text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.actions_col}</th>
                 </tr>
               </thead>
               <tbody>
@@ -425,31 +425,31 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                       onMouseLeave={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                       onClick={() => openEdit(e)}
                     >
-                      <td className="px-5 py-3.5 text-[#475569] whitespace-nowrap">{formatDate(e.date)}</td>
+                      <td className="px-5 py-3.5 text-[#9D84D4] whitespace-nowrap">{formatDate(e.date)}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <span
                             className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shrink-0"
-                            style={{ backgroundColor: (cat?.color ?? '#64748b') + '25' }}
+                            style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
                           >
                             {cat?.icon ?? '📦'}
                           </span>
                           <div>
-                            <p className="text-[#94a3b8] text-xs font-medium leading-snug">{cat?.name ?? '—'}</p>
+                            <p className="text-[#B8A3E8] text-xs font-medium leading-snug">{cat?.name ?? '—'}</p>
                             {bs && (
                               <div className="w-14 h-1 rounded-full mt-0.5 overflow-hidden"
-                                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                                style={{ backgroundColor: '#32265A' }}>
                                 <div className="h-full rounded-full"
                                   style={{
                                     width: `${Math.min(bs.percentage, 100)}%`,
-                                    backgroundColor: cat?.color ?? '#64748b',
+                                    backgroundColor: cat?.color ?? '#9D84D4',
                                   }} />
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-[#94a3b8]">{e.note || '—'}</td>
+                      <td className="px-5 py-3.5 text-[#B8A3E8]">{e.note || '—'}</td>
                       <td className="px-5 py-3.5 text-right">
                         <span className="font-mono font-semibold text-[#f87171] whitespace-nowrap">
                           -{formatAmount(e.amount)}
@@ -457,10 +457,10 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                       </td>
                       <td className="px-5 py-3.5 text-center" onClick={ev => ev.stopPropagation()}>
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => openEdit(e)} className="btn-icon text-[#475569] hover:text-[#94a3b8]">
+                          <button onClick={() => openEdit(e)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
                             <Edit2 size={14} />
                           </button>
-                          <button onClick={() => setConfirmId(e.id!)} className="btn-icon text-[#475569] hover:text-[#f87171]">
+                          <button onClick={() => setConfirmId(e.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -479,13 +479,13 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         {sortedDates.length === 0 ? (
           <div className="card flex flex-col items-center justify-center py-20 gap-3 text-center">
             <span className="text-5xl">🧾</span>
-            <p className="text-[#f1f5f9] font-semibold">{t.expenses.variable.noExpenses}</p>
-            <p className="text-[#475569] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
+            <p className="text-[#E2D9F3] font-semibold">{t.expenses.variable.noExpenses}</p>
+            <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
           </div>
         ) : (
           sortedDates.map(date => (
             <div key={date}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2.5 px-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2.5 px-1">
                 {formatDate(date)}
               </p>
               <div className="flex flex-col gap-2">
@@ -516,15 +516,15 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                         <div className="flex items-center gap-3">
                           <div
                             className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
-                            style={{ backgroundColor: (cat?.color ?? '#64748b') + '25' }}
+                            style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
                           >
                             {cat?.icon ?? '📦'}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[#f1f5f9] leading-snug">
+                            <p className="text-sm font-medium text-[#E2D9F3] leading-snug">
                               {e.note || cat?.name || 'Výdavok'}
                             </p>
-                            <p className="text-xs text-[#475569] mt-0.5">{cat?.name}</p>
+                            <p className="text-xs text-[#9D84D4] mt-0.5">{cat?.name}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5" onClick={ev => ev.stopPropagation()}>
@@ -532,23 +532,23 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                             -{formatAmount(e.amount)}
                           </span>
                           <button onClick={() => openEdit(e)}
-                            className="btn-icon text-[#475569] hover:text-[#94a3b8] min-h-[44px] min-w-[36px]">
+                            className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
                             <Edit2 size={13} />
                           </button>
                           <button onClick={() => setConfirmId(e.id!)}
-                            className="btn-icon text-[#475569] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
+                            className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
                             <Trash2 size={13} />
                           </button>
                         </div>
                       </div>
                       {bs && (
                         <div className="mt-2.5 h-1 rounded-full overflow-hidden"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                          style={{ backgroundColor: '#32265A' }}>
                           <div className="h-full rounded-full"
                             style={{
                               width: `${Math.min(bs.percentage, 100)}%`,
-                              backgroundColor: cat?.color ?? '#64748b',
-                              boxShadow: `0 0 6px ${cat?.color ?? '#64748b'}`,
+                              backgroundColor: cat?.color ?? '#9D84D4',
+                              boxShadow: `0 0 6px ${cat?.color ?? '#9D84D4'}`,
                             }} />
                         </div>
                       )}

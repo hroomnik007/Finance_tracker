@@ -39,7 +39,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     <SettingsContext.Provider value={{ settings, refreshSettings: loadSettings }}>
       {loaded
         ? children
-        : <div style={{ minHeight: '100svh', backgroundColor: '#111827' }} />
+        : <div style={{ minHeight: '100svh', backgroundColor: '#1E1535' }} />
       }
     </SettingsContext.Provider>
   )

@@ -9,8 +9,8 @@ import type { Category } from '../types'
 
 const PRESET_COLORS = [
   '#ef4444', '#f97316', '#f59e0b', '#22c55e',
-  '#10b981', '#06b6d4', '#3b82f6', '#6366f1',
-  '#8b5cf6', '#a855f7', '#ec4899', '#64748b',
+  '#10b981', '#06b6d4', '#3b82f6', '#A78BFA',
+  '#7C3AED', '#a855f7', '#ec4899', '#9D84D4',
 ]
 
 const PRESET_ICONS = [
@@ -89,8 +89,8 @@ export function CategoriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#f1f5f9]">{t.expenses.categories.title}</h1>
-          <p className="text-xs text-[#475569] mt-0.5">{t.expenses.categories.subtitle}</p>
+          <h1 className="text-2xl font-bold text-[#E2D9F3]">{t.expenses.categories.title}</h1>
+          <p className="text-xs text-[#9D84D4] mt-0.5">{t.expenses.categories.subtitle}</p>
         </div>
         <button onClick={openAdd} className="btn-primary">
           <Plus size={16} />
@@ -102,8 +102,8 @@ export function CategoriesPage() {
       {(!categories || categories.length === 0) ? (
         <div className="card flex flex-col items-center justify-center py-16 text-center">
           <span className="text-5xl mb-4">🏷️</span>
-          <p className="text-[#94a3b8] font-medium text-sm">{t.expenses.categories.noCategories}</p>
-          <p className="text-[#475569] text-xs mt-1">{t.expenses.categories.noCategoriesSubtitle}</p>
+          <p className="text-[#B8A3E8] font-medium text-sm">{t.expenses.categories.noCategories}</p>
+          <p className="text-[#9D84D4] text-xs mt-1">{t.expenses.categories.noCategoriesSubtitle}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ alignItems: 'stretch' }}>
@@ -134,7 +134,7 @@ export function CategoriesPage() {
                 >
                   {cat.icon}
                 </div>
-                <p className="text-sm font-semibold text-[#f1f5f9] text-center leading-snug">{cat.name}</p>
+                <p className="text-sm font-semibold text-[#E2D9F3] text-center leading-snug">{cat.name}</p>
               </div>
 
               {/* Budget limit badge */}
@@ -150,7 +150,7 @@ export function CategoriesPage() {
                     {formatAmount(cat.budgetLimit)}
                   </span>
                 ) : (
-                  <span className="text-xs text-[#475569] italic">{t.expenses.categories.noLimit}</span>
+                  <span className="text-xs text-[#9D84D4] italic">{t.expenses.categories.noLimit}</span>
                 )}
               </div>
 
@@ -159,14 +159,14 @@ export function CategoriesPage() {
                 <button
                   onClick={() => openEdit(cat)}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}
+                  style={{ backgroundColor: '#32265A', color: '#B8A3E8' }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(99,102,241,0.15)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#818cf8'
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(167,139,250,0.15)'
+                    ;(e.currentTarget as HTMLElement).style.color = '#A78BFA'
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.06)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#94a3b8'
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '#32265A'
+                    ;(e.currentTarget as HTMLElement).style.color = '#B8A3E8'
                   }}
                 >
                   <Pencil size={12} />
@@ -175,14 +175,14 @@ export function CategoriesPage() {
                 <button
                   onClick={() => setDeleteId(cat.id!)}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}
+                  style={{ backgroundColor: '#32265A', color: '#B8A3E8' }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(248,113,113,0.12)'
                     ;(e.currentTarget as HTMLElement).style.color = '#f87171'
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.06)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#94a3b8'
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '#32265A'
+                    ;(e.currentTarget as HTMLElement).style.color = '#B8A3E8'
                   }}
                 >
                   <Trash2 size={12} />
@@ -203,7 +203,7 @@ export function CategoriesPage() {
         <div className="flex flex-col gap-5">
           {/* Name */}
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
               {t.expenses.categories.nameLabel}
             </label>
             <input
@@ -216,8 +216,8 @@ export function CategoriesPage() {
 
           {/* Icon picker */}
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
-              {t.expenses.categories.iconLabel} <span className="text-[#f1f5f9] ml-2 text-sm not-uppercase">{icon}</span>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
+              {t.expenses.categories.iconLabel} <span className="text-[#E2D9F3] ml-2 text-sm not-uppercase">{icon}</span>
             </label>
             <div className="grid grid-cols-8 gap-1.5">
               {PRESET_ICONS.map(em => (
@@ -238,7 +238,7 @@ export function CategoriesPage() {
 
           {/* Color picker */}
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
               {t.expenses.categories.colorLabel}
             </label>
             <div className="flex flex-wrap gap-2.5">
@@ -262,8 +262,8 @@ export function CategoriesPage() {
 
           {/* Budget limit */}
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
-              {t.expenses.categories.limitLabel} <span className="text-[#475569]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
+              {t.expenses.categories.limitLabel} <span className="text-[#9D84D4]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
             </label>
             <input
               className="input-field"
@@ -303,7 +303,7 @@ export function CategoriesPage() {
         onClose={() => setDeleteId(null)}
         title={t.expenses.categories.removeTitle}
       >
-        <p className="text-sm text-[#94a3b8] mb-6 leading-relaxed">
+        <p className="text-sm text-[#B8A3E8] mb-6 leading-relaxed">
           {t.expenses.categories.removeMessage}
         </p>
         <div className="flex gap-3">
