@@ -61,8 +61,7 @@ function getGreeting(t: ReturnType<typeof useTranslation>['t']): string {
   const hour = new Date().getHours()
   if (hour >= 5 && hour < 12) return t.dashboard.greetingMorning
   if (hour >= 12 && hour < 18) return t.dashboard.greetingDay
-  if (hour >= 18 && hour < 22) return t.dashboard.greetingEvening
-  return t.dashboard.greetingNight
+  return t.dashboard.greetingEvening
 }
 
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
@@ -169,7 +168,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
 
         {/* Balance label */}
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-1">{t.dashboard.balance}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-1">{t.dashboard.difference}</p>
 
         {/* Balance number + badge */}
         <div className="flex items-center gap-3 mb-3 flex-wrap">

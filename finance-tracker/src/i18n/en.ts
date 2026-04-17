@@ -23,6 +23,7 @@ export const en: Translations = {
     greetingEvening: 'Good evening',
     greetingNight: 'Good night',
     balance: 'Balance',
+    difference: 'Difference',
     positive: '↑ Positive',
     negative: '↓ Negative',
     totalExpenses: 'Total expenses',

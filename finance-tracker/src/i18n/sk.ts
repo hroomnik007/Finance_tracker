@@ -21,6 +21,7 @@ export const sk = {
     greetingEvening: 'Dobrý večer',
     greetingNight: 'Dobrú noc',
     balance: 'Zostatok',
+    difference: 'Rozdiel',
     positive: '↑ Kladný',
     negative: '↓ Záporný',
     totalExpenses: 'Celkové výdavky',
