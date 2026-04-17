@@ -113,7 +113,7 @@ function App() {
 
       {/* Desktop right panel — only on dashboard */}
       {page === 'dashboard' && (
-        <RightPanel month={month} year={year} onNavigate={setPage} />
+        <RightPanel month={month} year={year} />
       )}
 
       {/* Mobile bottom navigation — hidden on desktop */}
