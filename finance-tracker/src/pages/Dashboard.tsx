@@ -282,16 +282,16 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                       dataKey="value"
                       startAngle={90}
                       endAngle={-270}
-                      activeIndex={activePieIndex ?? undefined}
-                      activeShape={(props: any) => {
-                        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
+                      shape={(props: any) => {
+                        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, index } = props
+                        const isActive = index === activePieIndex
                         return (
                           <g>
                             <Sector
                               cx={cx}
                               cy={cy}
                               innerRadius={innerRadius}
-                              outerRadius={outerRadius + 12}
+                              outerRadius={isActive ? outerRadius + 12 : outerRadius}
                               startAngle={startAngle}
                               endAngle={endAngle}
                               fill={fill}
