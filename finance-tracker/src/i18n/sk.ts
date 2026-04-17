@@ -89,6 +89,9 @@ export const sk = {
       note_col: 'Poznámka',
       amount_col: 'Suma',
       actions_col: 'Akcie',
+      defaultExpense: 'Výdavok',
+      toastLimitExceeded: '🚨 Limit pre {name} bol prekročený!',
+      toastLimitWarning: '⚠️ Blížiš sa k limitu pre {name}',
     },
     fixed: {
       title: 'Fixné výdavky',
@@ -164,6 +167,7 @@ export const sk = {
     noLimit: 'Bez limitu',
     actions: 'Akcie',
     optional: '— nepovinné',
+    of: 'z',
   },
 }
 

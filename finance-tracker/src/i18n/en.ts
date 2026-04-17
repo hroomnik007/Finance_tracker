@@ -91,6 +91,9 @@ export const en: Translations = {
       note_col: 'Note',
       amount_col: 'Amount',
       actions_col: 'Actions',
+      defaultExpense: 'Expense',
+      toastLimitExceeded: '🚨 Limit for {name} was exceeded!',
+      toastLimitWarning: '⚠️ Approaching limit for {name}',
     },
     fixed: {
       title: 'Fixed expenses',
@@ -166,5 +169,6 @@ export const en: Translations = {
     noLimit: 'No limit',
     actions: 'Actions',
     optional: '— optional',
+    of: 'of',
   },
 }

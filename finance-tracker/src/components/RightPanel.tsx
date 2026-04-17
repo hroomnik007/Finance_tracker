@@ -1,5 +1,6 @@
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
+import { useTranslation } from '../i18n'
 
 interface RightPanelProps {
   month: number
@@ -15,6 +16,7 @@ const getBudgetBarColor = (pct: number) => {
 export function RightPanel({ month, year }: RightPanelProps) {
   const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount } = useFormatters()
+  const { t } = useTranslation()
 
   return (
     <aside
@@ -23,7 +25,7 @@ export function RightPanel({ month, year }: RightPanelProps) {
         width: '320px',
         minWidth: '320px',
         padding: '20px',
-        paddingLeft: '0px',
+        paddingLeft: '16px',
       }}
     >
       {/* Budget panel */}
@@ -37,7 +39,7 @@ export function RightPanel({ month, year }: RightPanelProps) {
               className="font-semibold uppercase text-[#9D84D4]"
               style={{ fontSize: '11px', letterSpacing: '0.1em' }}
             >
-              Rozpočet
+              {t.dashboard.budget}
             </p>
           </div>
           <div className="flex flex-col gap-3 p-4">
@@ -72,7 +74,7 @@ export function RightPanel({ month, year }: RightPanelProps) {
                     />
                   </div>
                   <p className="text-[11px] text-[#6B5A9E] mt-1" style={{ whiteSpace: 'nowrap', overflow: 'visible' }}>
-                    {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
+                    {formatAmount(bs.spent)} {t.common.of} {formatAmount(bs.limit)}
                   </p>
                 </div>
               )

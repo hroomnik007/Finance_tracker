@@ -84,7 +84,7 @@ function App() {
       <main
         className="flex-1 h-full overflow-y-auto min-w-0"
         style={{
-          paddingLeft: '16px',
+          paddingLeft: '24px',
           paddingRight: '16px',
           paddingTop: '16px',
           paddingBottom: '88px',

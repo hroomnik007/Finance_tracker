@@ -91,8 +91,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       if (bs) {
         const newSpent = bs.spent + amount
         const newPct = (newSpent / bs.limit) * 100
-        if (newPct >= 100 && bs.percentage < 100) showToast(`🚨 Limit pre ${bs.categoryName} bol prekročený!`)
-        else if (newPct >= 90 && bs.percentage < 90) showToast(`⚠️ Blížiš sa k limitu pre ${bs.categoryName}`)
+        if (newPct >= 100 && bs.percentage < 100) showToast(t.expenses.variable.toastLimitExceeded.replace('{name}', bs.categoryName))
+        else if (newPct >= 90 && bs.percentage < 90) showToast(t.expenses.variable.toastLimitWarning.replace('{name}', bs.categoryName))
       }
     }
 
@@ -297,7 +297,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                         }} />
                     </div>
                     <p className="text-[#9D84D4]" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
-                      {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
+                      {formatAmount(bs.spent)} {t.common.of} {formatAmount(bs.limit)}
                     </p>
                     {bs.isOver && (
                       <p className="text-[#f87171] text-xs mt-0.5 font-medium">{t.dashboard.limitExceeded}</p>
@@ -451,7 +451,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                           </div>
                           <div>
                             <p className="text-sm font-medium text-[#E2D9F3] leading-snug">
-                              {e.note || cat?.name || 'Výdavok'}
+                              {e.note || cat?.name || t.expenses.variable.defaultExpense}
                             </p>
                             <p className="text-xs text-[#9D84D4] mt-0.5">{cat?.name}</p>
                           </div>
