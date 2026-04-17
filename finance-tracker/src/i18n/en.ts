@@ -159,6 +159,18 @@ export const en: Translations = {
     monday: 'Monday',
     sunday: 'Sunday',
   },
+  auth: {
+    login: 'Sign in',
+    register: 'Register',
+    email: 'Email',
+    password: 'Password',
+    confirmPassword: 'Confirm password',
+    noAccount: 'No account?',
+    hasAccount: 'Already have an account?',
+    continueWithout: 'Continue without account',
+    forgotPassword: 'Forgot password?',
+    createAccount: 'Create account',
+  },
   common: {
     save: 'Save',
     cancel: 'Cancel',

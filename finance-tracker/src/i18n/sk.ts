@@ -157,6 +157,18 @@ export const sk = {
     monday: 'Pondelok',
     sunday: 'Nedeľa',
   },
+  auth: {
+    login: 'Prihlásiť sa',
+    register: 'Zaregistrovať sa',
+    email: 'Email',
+    password: 'Heslo',
+    confirmPassword: 'Potvrď heslo',
+    noAccount: 'Nemáš účet?',
+    hasAccount: 'Už máš účet?',
+    continueWithout: 'Pokračovať bez účtu',
+    forgotPassword: 'Zabudol si heslo?',
+    createAccount: 'Vytvoriť účet',
+  },
   common: {
     save: 'Uložiť',
     cancel: 'Zrušiť',
