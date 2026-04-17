@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 import { db } from '../db/database'
 import { BottomSheet } from '../components/BottomSheet'
 import { useFormatters } from '../hooks/useFormatters'
@@ -340,8 +340,9 @@ export function CategoriesPage() {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6"
         style={{
+          position: 'fixed',
+          bottom: '24px',
           right: '24px',
           width: '56px',
           height: '56px',
@@ -355,11 +356,9 @@ export function CategoriesPage() {
           boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
           zIndex: 40,
           color: 'white',
-          fontSize: '28px',
-          lineHeight: 1,
         }}
       >
-        +
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
       {/* Delete confirm */}

@@ -84,13 +84,11 @@ function App() {
       <main
         className="flex-1 h-full overflow-y-auto min-w-0"
         style={{
-          paddingLeft: '24px',
-          paddingRight: '16px',
           paddingTop: '16px',
           paddingBottom: '88px',
         }}
       >
-        <div>
+        <div style={{ paddingLeft: '24px', paddingRight: '24px' }}>
           {page === 'dashboard' && (
             <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
           )}

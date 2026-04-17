@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Edit2, Trash2 } from 'lucide-react'
+import { Edit2, Trash2, Plus } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -493,8 +493,9 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6"
         style={{
+          position: 'fixed',
+          bottom: '24px',
           right: '24px',
           width: '56px',
           height: '56px',
@@ -508,11 +509,9 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
           zIndex: 40,
           color: 'white',
-          fontSize: '28px',
-          lineHeight: 1,
         }}
       >
-        +
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
       <BottomSheet

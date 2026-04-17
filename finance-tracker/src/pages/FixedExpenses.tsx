@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Pencil, Trash2, Lock } from 'lucide-react'
+import { Pencil, Trash2, Lock, Plus } from 'lucide-react'
 import { db } from '../db/database'
 import { BottomSheet } from '../components/BottomSheet'
 import { MonthSwitcher } from '../components/MonthSwitcher'
@@ -167,6 +167,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
               style={{
                 background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(124,58,237,0.08))',
                 borderTop: '1px solid #4C3A8A',
+                paddingLeft: '12px',
               }}
             >
               <div>
@@ -258,8 +259,9 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6"
         style={{
+          position: 'fixed',
+          bottom: '24px',
           right: '24px',
           width: '56px',
           height: '56px',
@@ -273,11 +275,9 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
           boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
           zIndex: 40,
           color: 'white',
-          fontSize: '28px',
-          lineHeight: 1,
         }}
       >
-        +
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
       {/* Delete confirm sheet */}

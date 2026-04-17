@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash, Plus } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -370,8 +370,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6"
         style={{
+          position: 'fixed',
+          bottom: '24px',
           right: '24px',
           width: '56px',
           height: '56px',
@@ -385,11 +386,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
           zIndex: 40,
           color: 'white',
-          fontSize: '28px',
-          lineHeight: 1,
         }}
       >
-        +
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
       <BottomSheet
