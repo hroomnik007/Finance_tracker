@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Edit2, Trash2 } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -296,7 +296,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                           boxShadow: `0 0 8px ${bs.categoryColor}`,
                         }} />
                     </div>
-                    <p className="text-[#9D84D4] pr-2" style={{ fontSize: '12px' }}>
+                    <p className="text-[#9D84D4]" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
                       {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                     </p>
                     {bs.isOver && (
@@ -325,7 +325,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
               <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div style={{ overflowX: 'auto' }}>
+            <table className="w-full text-sm" style={{ minWidth: '480px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
@@ -397,6 +398,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>
@@ -491,11 +493,26 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6 right-6 flex items-center gap-2 text-white font-semibold rounded-full px-4 py-3 cursor-pointer z-40 shadow-xl"
-        style={{ background: '#7C3AED', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' }}
+        className="fixed bottom-20 lg:bottom-6"
+        style={{
+          right: '24px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
+          zIndex: 40,
+          color: 'white',
+          fontSize: '28px',
+          lineHeight: 1,
+        }}
       >
-        <Plus size={16} />
-        <span className="text-sm">{t.expenses.variable.add}</span>
+        +
       </button>
 
       <BottomSheet

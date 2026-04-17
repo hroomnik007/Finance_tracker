@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { db } from '../db/database'
 import { BottomSheet } from '../components/BottomSheet'
 import { useFormatters } from '../hooks/useFormatters'
@@ -340,11 +340,26 @@ export function CategoriesPage() {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6 right-6 flex items-center gap-2 text-white font-semibold rounded-full px-4 py-3 cursor-pointer z-40 shadow-xl"
-        style={{ background: '#7C3AED', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' }}
+        className="fixed bottom-20 lg:bottom-6"
+        style={{
+          right: '24px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
+          zIndex: 40,
+          color: 'white',
+          fontSize: '28px',
+          lineHeight: 1,
+        }}
       >
-        <Plus size={16} />
-        <span className="text-sm">{t.expenses.categories.add}</span>
+        +
       </button>
 
       {/* Delete confirm */}

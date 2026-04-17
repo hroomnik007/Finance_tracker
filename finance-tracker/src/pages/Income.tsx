@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -288,7 +288,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
               boxShadow: 'var(--shadow-card)',
             }}
           >
-            <table className="w-full text-sm">
+            <div style={{ overflowX: 'auto' }}>
+            <table className="w-full text-sm" style={{ minWidth: '560px' }}>
               <colgroup>
                 <col style={{ width: '120px' }} />
                 <col style={{ width: 'auto' }} />
@@ -358,6 +359,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                 ))}
               </tbody>
             </table>
+            </div>
             {sorted.length < 5 && (
               <p className="text-center text-sm text-[#4C3A8A] mt-4 pb-4">Žiadne ďalšie záznamy</p>
             )}
@@ -368,11 +370,26 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-20 lg:bottom-6 right-6 flex items-center gap-2 text-white font-semibold rounded-full px-4 py-3 cursor-pointer z-40 shadow-xl"
-        style={{ background: '#7C3AED', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' }}
+        className="fixed bottom-20 lg:bottom-6"
+        style={{
+          right: '24px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
+          zIndex: 40,
+          color: 'white',
+          fontSize: '28px',
+          lineHeight: 1,
+        }}
       >
-        <Plus size={16} />
-        <span className="text-sm">{t.income.add}</span>
+        +
       </button>
 
       <BottomSheet

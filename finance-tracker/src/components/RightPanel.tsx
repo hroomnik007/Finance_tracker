@@ -29,8 +29,8 @@ export function RightPanel({ month, year }: RightPanelProps) {
       {/* Budget panel */}
       {budgetStatuses.length > 0 && (
         <div
-          className="rounded-[20px] overflow-hidden w-full"
-          style={{ backgroundColor: '#2A1F4A', border: '0.5px solid #4C3A8A' }}
+          className="rounded-[20px] w-full"
+          style={{ backgroundColor: '#2A1F4A', border: '0.5px solid #4C3A8A', overflow: 'visible' }}
         >
           <div className="px-4 py-3" style={{ borderBottom: '0.5px solid #4C3A8A55' }}>
             <p

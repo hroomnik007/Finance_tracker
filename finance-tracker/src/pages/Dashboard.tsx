@@ -214,11 +214,11 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-2 gap-3">
         <div style={{ ...CARD, padding: 12 }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">{t.dashboard.totalExpenses}</p>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-2 leading-snug">{t.dashboard.totalExpenses}</p>
           <p className="font-mono font-medium text-[#F87171] text-[18px] leading-tight">{formatAmount(totalExpenses)}</p>
         </div>
         <div style={{ ...CARD, padding: 12 }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">{t.dashboard.grossIncome}</p>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-2 leading-snug">{t.dashboard.grossIncome}</p>
           <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: '#34D399' }}>
             {formatAmount(totalIncome)}
           </p>
