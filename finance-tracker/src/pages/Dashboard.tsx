@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, CartesianGrid,
 } from 'recharts'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -8,12 +8,10 @@ import { MonthSwitcher } from '../components/MonthSwitcher'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
-import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { db } from '../db/database'
-import type { BudgetStatus } from '../types'
 import type { Page } from '../App'
 
 const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
@@ -34,12 +32,6 @@ function getLast7Days(): string[] {
   })
 }
 
-const getBudgetBarColor = (pct: number) => {
-  if (pct >= 100) return '#F87171'
-  if (pct >= 80) return '#FBBF24'
-  return '#A78BFA'
-}
-
 interface DashboardProps {
   month: number
   year: number
@@ -47,7 +39,7 @@ interface DashboardProps {
   onNavigate: (page: Page) => void
 }
 
-type Tab = 'income' | 'expenses' | 'budget'
+type Tab = 'income' | 'expenses'
 
 const CARD = {
   background: '#2A1F4A',
@@ -66,11 +58,11 @@ const TOOLTIP_STYLE = {
 
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
+  const [activePieIndex, setActivePieIndex] = useState<number | null>(null)
 
   const { incomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses()
   const { variableExpenses } = useVariableExpenses(month, year)
-  const budgetStatuses = useBudgetStatus(month, year)
   const { categories } = useCategories()
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
@@ -123,41 +115,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   // Current date string
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  // Budget item
-  const BudgetItem = ({ bs }: { bs: BudgetStatus }) => {
-    const barColor = getBudgetBarColor(bs.percentage)
-    const pct = Math.min(bs.percentage, 100)
-    return (
-      <div
-        className={bs.isOver ? 'pulse-glow' : ''}
-        style={{ background: '#231840', border: `0.5px solid ${bs.isOver ? 'rgba(248,113,113,0.4)' : '#4C3A8A'}`, borderRadius: 14, padding: 12 }}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
-              style={{ background: bs.categoryColor + '33' }}>
-              {bs.categoryIcon}
-            </span>
-            <span className="text-sm font-medium text-[#E2D9F3]">{bs.categoryName}</span>
-          </div>
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ml-2"
-            style={{ color: barColor, background: barColor + '22' }}>
-            {Math.round(bs.percentage)}%
-          </span>
-        </div>
-        <div className="overflow-hidden mb-1.5" style={{ height: 4, borderRadius: 2, background: '#1E1535' }}>
-          <div className="h-full progress-fill" style={{ width: `${pct}%`, background: barColor, borderRadius: 2 }} />
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-[#9D84D4]">{formatAmount(bs.spent)} z {formatAmount(bs.limit)}</span>
-          {bs.isOver && <span className="text-[11px] text-[#F87171] font-medium">{t.dashboard.limitExceeded}</span>}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-5 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
+    <div className="flex flex-col gap-7 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
 
       {/* ── HERO CARD ── */}
       <div
@@ -169,13 +128,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         }}
       >
         {/* Top row: greeting + date */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <span className="font-semibold text-[15px] text-[#E2D9F3]">Dobrý deň!</span>
           <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>
         </div>
 
         {/* Month switcher */}
-        <div className="mb-4">
+        <div className="mb-6">
           <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
         </div>
 
@@ -221,7 +180,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
       {/* ── PILL TABS ── */}
       <div className="flex gap-2">
-        {([['income', 'Príjmy'], ['expenses', 'Výdavky'], ['budget', 'Rozpočet']] as [Tab, string][]).map(([tab, label]) => (
+        {([['income', 'Príjmy'], ['expenses', 'Výdavky']] as [Tab, string][]).map(([tab, label]) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -245,8 +204,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
         <div style={{ ...CARD, padding: 12 }}>
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">Čistý príjem</p>
-          <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: balance >= 0 ? '#34D399' : '#F87171' }}>
-            {formatAmount(balance)}
+          <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: '#34D399' }}>
+            {formatAmount(totalIncome)}
           </p>
         </div>
       </div>
@@ -313,8 +272,36 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               <div className="relative" style={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
-                      paddingAngle={3} dataKey="value" startAngle={90} endAngle={-270}>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={3}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                      activeIndex={activePieIndex ?? undefined}
+                      activeShape={(props: any) => {
+                        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
+                        return (
+                          <g>
+                            <Sector
+                              cx={cx}
+                              cy={cy}
+                              innerRadius={innerRadius}
+                              outerRadius={outerRadius + 12}
+                              startAngle={startAngle}
+                              endAngle={endAngle}
+                              fill={fill}
+                            />
+                          </g>
+                        )
+                      }}
+                      onClick={(_: any, index: number) => setActivePieIndex(prev => prev === index ? null : index)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
                     </Pie>
                     <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
@@ -322,19 +309,20 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="font-mono font-bold text-[16px] text-white leading-tight">{formatAmount(totalVariable)}</p>
-                  <p className="text-[12px] text-[#9D84D4] mt-0.5">celkom</p>
+                  {activePieIndex !== null && pieData[activePieIndex] ? (
+                    <>
+                      <span className="text-xl mb-0.5">{pieData[activePieIndex].icon}</span>
+                      <p className="text-[12px] text-[#9D84D4] font-medium">{pieData[activePieIndex].name}</p>
+                      <p className="font-mono font-bold text-[15px] text-white leading-tight mt-0.5">{formatAmount(pieData[activePieIndex].value)}</p>
+                      <p className="text-[11px] text-[#9D84D4]">{Math.round((pieData[activePieIndex].value / totalVariable) * 100)}%</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-mono font-bold text-[16px] text-white leading-tight">{formatAmount(totalVariable)}</p>
+                      <p className="text-[12px] text-[#9D84D4] mt-0.5">celkom</p>
+                    </>
+                  )}
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-3 justify-center">
-                {pieData.map((d, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                    style={{ background: d.color + '18', border: `1px solid ${d.color}30` }}>
-                    <span className="text-sm">{d.icon}</span>
-                    <span className="text-[12px] text-[#B8A3E8]">{d.name}</span>
-                    <span className="font-mono text-[12px] font-semibold" style={{ color: d.color }}>{formatAmount(d.value)}</span>
-                  </div>
-                ))}
               </div>
             </div>
           )}
@@ -396,23 +384,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               <p className="text-4xl mb-3">📊</p>
               <p className="text-[14px] text-[#B8A3E8]">{t.dashboard.noExpenses}</p>
               <p className="text-[12px] text-[#6B5A9E] mt-1">{t.dashboard.noExpensesSubtitle}</p>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ROZPOČET */}
-      {activeTab === 'budget' && (
-        <>
-          {budgetStatuses.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {budgetStatuses.map(bs => <BudgetItem key={bs.categoryId} bs={bs} />)}
-            </div>
-          ) : (
-            <div style={{ ...CARD, textAlign: 'center', padding: 40 }}>
-              <p className="text-4xl mb-3">📊</p>
-              <p className="text-[14px] text-[#B8A3E8]">{t.dashboard.noLimits}</p>
-              <p className="text-[12px] text-[#6B5A9E] mt-1">{t.dashboard.setInCategories}</p>
             </div>
           )}
         </>

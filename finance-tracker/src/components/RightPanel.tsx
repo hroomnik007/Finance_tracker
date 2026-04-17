@@ -1,13 +1,9 @@
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
-import { useVariableExpenses } from '../hooks/useVariableExpenses'
-import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
-import type { Page } from '../App'
 
 interface RightPanelProps {
   month: number
   year: number
-  onNavigate: (page: Page) => void
 }
 
 const getBudgetBarColor = (pct: number) => {
@@ -16,14 +12,9 @@ const getBudgetBarColor = (pct: number) => {
   return '#A78BFA'
 }
 
-export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
+export function RightPanel({ month, year }: RightPanelProps) {
   const budgetStatuses = useBudgetStatus(month, year)
-  const { variableExpenses } = useVariableExpenses(month, year)
-  const { categories } = useCategories()
-  const { formatAmount, formatDate } = useFormatters()
-
-  const last4 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4)
-  const getCategoryById = (id: number) => categories.find(c => c.id === id)
+  const { formatAmount } = useFormatters()
 
   return (
     <aside
@@ -90,55 +81,6 @@ export function RightPanel({ month, year, onNavigate }: RightPanelProps) {
         </div>
       )}
 
-      {/* Last 4 transactions */}
-      {last4.length > 0 && (
-        <div
-          className="rounded-[20px] overflow-hidden w-full"
-          style={{ backgroundColor: '#2A1F4A', border: '0.5px solid #4C3A8A' }}
-        >
-          <div className="px-4 py-3" style={{ borderBottom: '0.5px solid #4C3A8A55' }}>
-            <p
-              className="font-semibold uppercase text-[#9D84D4]"
-              style={{ fontSize: '11px', letterSpacing: '0.1em' }}
-            >
-              Posledné transakcie
-            </p>
-          </div>
-          <div className="flex flex-col p-3 gap-2">
-            {last4.map(expense => {
-              const cat = getCategoryById(expense.categoryId)
-              return (
-                <div
-                  key={expense.id}
-                  className="flex items-center gap-3 px-2 py-2 rounded-xl"
-                  style={{ backgroundColor: '#231840' }}
-                >
-                  <span
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0"
-                    style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '33' }}
-                  >
-                    {cat?.icon ?? '📦'}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-[#E2D9F3] truncate">{expense.note || cat?.name}</p>
-                    <p className="text-[11px] text-[#6B5A9E]">{formatDate(expense.date)}</p>
-                  </div>
-                  <span className="font-mono text-[12px] font-semibold text-[#F87171] shrink-0 ml-1">
-                    -{formatAmount(expense.amount)}
-                  </span>
-                </div>
-              )
-            })}
-            <button
-              onClick={() => onNavigate('variable-expenses')}
-              className="text-center w-full mt-1 cursor-pointer bg-transparent border-none"
-              style={{ fontSize: '12px', color: '#9D84D4' }}
-            >
-              Zobraziť všetky →
-            </button>
-          </div>
-        </div>
-      )}
     </aside>
   )
 }

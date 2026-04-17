@@ -46,7 +46,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         <SideNavItem
           active={current === 'dashboard'}
           onClick={() => { onChange('dashboard'); if (mobile) onToggle() }}
-          icon={<LayoutDashboard size={16} />}
+          icon={<LayoutDashboard size={18} />}
         >
           {t.nav.overview}
         </SideNavItem>
@@ -54,7 +54,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         <SideNavItem
           active={current === 'income'}
           onClick={() => { onChange('income'); if (mobile) onToggle() }}
-          icon={<TrendingUp size={16} />}
+          icon={<TrendingUp size={18} />}
         >
           {t.nav.income}
         </SideNavItem>
@@ -67,7 +67,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
             style={{
               backgroundColor: expensesActive ? '#2D1F5E' : 'transparent',
               color: expensesActive ? '#A78BFA' : '#9D84D4',
-              fontSize: '14px',
+              fontSize: '16px',
               fontWeight: expensesActive ? 500 : 400,
             }}
             onMouseEnter={e => {
@@ -84,7 +84,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
             }}
           >
             <span className="flex items-center justify-center shrink-0" style={{ color: expensesActive ? '#A78BFA' : '#9D84D4' }}>
-              <CreditCard size={16} />
+              <CreditCard size={18} />
             </span>
             <span className="flex-1 whitespace-nowrap">{t.nav.expenses}</span>
             {expensesOpen
@@ -104,21 +104,21 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
               <SideChildItem
                 active={current === 'variable-expenses'}
                 onClick={() => { onChange('variable-expenses'); if (mobile) onToggle() }}
-                icon={<Receipt size={13} />}
+                icon={<Receipt size={15} />}
               >
                 {t.nav.variable}
               </SideChildItem>
               <SideChildItem
                 active={current === 'fixed-expenses'}
                 onClick={() => { onChange('fixed-expenses'); if (mobile) onToggle() }}
-                icon={<Lock size={13} />}
+                icon={<Lock size={15} />}
               >
                 {t.nav.fixed}
               </SideChildItem>
               <SideChildItem
                 active={current === 'categories'}
                 onClick={() => { onChange('categories'); if (mobile) onToggle() }}
-                icon={<Tag size={13} />}
+                icon={<Tag size={15} />}
               >
                 {t.nav.categories}
               </SideChildItem>
@@ -129,7 +129,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         <SideNavItem
           active={current === 'settings'}
           onClick={() => { onChange('settings'); if (mobile) onToggle() }}
-          icon={<Settings size={16} />}
+          icon={<Settings size={18} />}
         >
           {t.nav.settings}
         </SideNavItem>
@@ -215,7 +215,7 @@ function SideNavItem({
       style={{
         backgroundColor: active ? '#2D1F5E' : 'transparent',
         color: active ? '#A78BFA' : '#9D84D4',
-        fontSize: '14px',
+        fontSize: '16px',
         fontWeight: active ? 500 : 400,
       }}
       onMouseEnter={e => {
@@ -257,7 +257,7 @@ function SideChildItem({
       style={{
         backgroundColor: active ? '#2D1F5E' : 'transparent',
         color: active ? '#A78BFA' : '#9D84D4',
-        fontSize: '13px',
+        fontSize: '15px',
         fontWeight: active ? 500 : 400,
       }}
       onMouseEnter={e => {
