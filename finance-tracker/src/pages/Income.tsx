@@ -377,7 +377,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         onClick={openAdd}
         style={{
           position: 'fixed',
-          bottom: '24px',
+          bottom: '88px',
           right: '24px',
           width: '56px',
           height: '56px',
@@ -389,7 +389,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
-          zIndex: 40,
+          zIndex: 50,
           color: 'white',
         }}
       >
