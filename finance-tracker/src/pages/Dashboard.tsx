@@ -112,6 +112,21 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     }))
   }, []) ?? []
 
+  const renderPieShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, index } = props
+    return (
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={index === activePieIndex ? outerRadius + 12 : outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+    )
+  }
+
   // Current date string
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -282,23 +297,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                       dataKey="value"
                       startAngle={90}
                       endAngle={-270}
-                      shape={(props: any) => {
-                        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, index } = props
-                        const isActive = index === activePieIndex
-                        return (
-                          <g>
-                            <Sector
-                              cx={cx}
-                              cy={cy}
-                              innerRadius={innerRadius}
-                              outerRadius={isActive ? outerRadius + 12 : outerRadius}
-                              startAngle={startAngle}
-                              endAngle={endAngle}
-                              fill={fill}
-                            />
-                          </g>
-                        )
-                      }}
+                      activeShape={renderPieShape}
                       onClick={(_: any, index: number) => setActivePieIndex(prev => prev === index ? null : index)}
                       style={{ cursor: 'pointer' }}
                     >
