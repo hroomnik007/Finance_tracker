@@ -18,10 +18,10 @@ export function RightPanel({ month, year }: RightPanelProps) {
 
   return (
     <aside
-      className="hidden lg:flex flex-col gap-4 flex-shrink-0 overflow-y-auto overflow-x-hidden"
+      className="hidden lg:flex flex-col gap-4 flex-shrink-0 overflow-y-auto"
       style={{
-        width: '300px',
-        minWidth: '300px',
+        width: '320px',
+        minWidth: '320px',
         padding: '20px',
         paddingLeft: '0px',
       }}
@@ -71,7 +71,7 @@ export function RightPanel({ month, year }: RightPanelProps) {
                       style={{ width: `${pct}%`, backgroundColor: bs.categoryColor }}
                     />
                   </div>
-                  <p className="text-[12px] text-[#6B5A9E] mt-1 pr-2">
+                  <p className="text-[11px] text-[#6B5A9E] mt-1" style={{ whiteSpace: 'nowrap', overflow: 'visible' }}>
                     {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                   </p>
                 </div>

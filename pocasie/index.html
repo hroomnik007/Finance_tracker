@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Počasie</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Počasie</h1>
+      <div class="search-bar">
+        <div class="input-wrap">
+          <input type="text" id="cityInput" placeholder="Zadaj mesto..." autocomplete="off" />
+          <ul id="suggestions" class="suggestions hidden"></ul>
+        </div>
+        <button id="searchBtn">Hľadať</button>
+        <button id="geoBtn" title="Moja poloha">📍</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="error" class="error hidden"></div>
+      <div id="loading" class="loading hidden">Načítavam...</div>
+
+      <section id="current" class="card hidden">
+        <div class="current-top">
+          <div>
+            <div id="cityName" class="city-name"></div>
+            <div id="currentDate" class="current-date"></div>
+          </div>
+          <div id="currentIcon" class="weather-icon"></div>
+        </div>
+        <div class="current-main">
+          <div class="temp-wrap">
+            <div id="currentTemp" class="temp-big"></div>
+            <div id="currentTempMin" class="temp-min hidden"></div>
+          </div>
+          <div class="current-details">
+            <div id="currentDesc" class="desc"></div>
+            <div class="detail-row"><span>Pocitová teplota</span><span id="feelsLike"></span></div>
+            <div class="detail-row"><span>Vlhkosť</span><span id="humidity"></span></div>
+            <div class="detail-row"><span>Vietor</span><span id="wind"></span></div>
+            <div class="detail-row"><span>Zrážky</span><span id="precipitation"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="hourly" class="hidden">
+        <h2 id="hourlyTitle">Dnes po hodinách</h2>
+        <div id="hourlyCards" class="hourly-scroll"></div>
+        <div id="hourDetail" class="hour-detail hidden"></div>
+      </section>
+
+      <section id="forecast" class="hidden">
+        <h2>7-dňová predpoveď</h2>
+        <div id="forecastCards" class="forecast-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

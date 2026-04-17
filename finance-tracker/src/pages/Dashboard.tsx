@@ -131,7 +131,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div className="flex flex-col gap-7 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
+    <div className="flex flex-col gap-5 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
 
       {/* ── HERO CARD ── */}
       <div
@@ -143,18 +143,18 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         }}
       >
         {/* Top row: greeting + date */}
-        <div className="flex items-center justify-between mb-6">
-          <span className="font-semibold text-[15px] text-[#E2D9F3]">Dobrý deň!</span>
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-semibold text-[15px] text-[#E2D9F3]">{t.dashboard.greeting}</span>
           <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>
         </div>
 
         {/* Month switcher */}
-        <div className="mb-6">
+        <div className="mb-3">
           <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
         </div>
 
         {/* Balance label */}
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-1">Zostatok</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-1">{t.dashboard.balance}</p>
 
         {/* Balance number + badge */}
         <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -171,7 +171,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               color: balance >= 0 ? '#34D399' : '#F87171',
             }}
           >
-            {balance >= 0 ? '↑ Kladný' : '↓ Záporný'}
+            {balance >= 0 ? t.dashboard.positive : t.dashboard.negative}
           </span>
         </div>
 
@@ -195,7 +195,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
       {/* ── PILL TABS ── */}
       <div className="flex gap-2">
-        {([['income', 'Príjmy'], ['expenses', 'Výdavky']] as [Tab, string][]).map(([tab, label]) => (
+        {([['income', t.nav.income], ['expenses', t.nav.expenses]] as [Tab, string][]).map(([tab, label]) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -214,11 +214,11 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-2 gap-3">
         <div style={{ ...CARD, padding: 12 }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">Celkové výdavky</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">{t.dashboard.totalExpenses}</p>
           <p className="font-mono font-medium text-[#F87171] text-[18px] leading-tight">{formatAmount(totalExpenses)}</p>
         </div>
         <div style={{ ...CARD, padding: 12 }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">Čistý príjem</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-2">{t.dashboard.grossIncome}</p>
           <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: '#34D399' }}>
             {formatAmount(totalIncome)}
           </p>
@@ -232,7 +232,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         <>
           {chartData.length > 0 && (
             <div style={CARD}>
-              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-4">Príjmy — posledných 6 mesiacov</h3>
+              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-4">{t.dashboard.incomesLast6}</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <defs>
@@ -244,7 +244,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
                   <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
-                  <Area type="monotone" dataKey="income" name="Príjmy" stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
+                  <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -272,7 +272,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           ) : (
             <div style={{ ...CARD, textAlign: 'center', padding: 40 }}>
               <p className="text-4xl mb-3">💰</p>
-              <p className="text-[14px] text-[#B8A3E8]">Žiadne príjmy tento mesiac</p>
+              <p className="text-[14px] text-[#B8A3E8]">{t.dashboard.noIncomes}</p>
             </div>
           )}
         </>
@@ -283,7 +283,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         <>
           {pieData.length > 0 && (
             <div style={CARD}>
-              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-3">Výdavky podľa kategórie</h3>
+              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-3">{t.dashboard.expensesByCategory}</h3>
               <div className="relative" style={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -303,8 +303,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                     >
                       {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
                     </Pie>
-                    <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
-                      itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -318,7 +316,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   ) : (
                     <>
                       <p className="font-mono font-bold text-[16px] text-white leading-tight">{formatAmount(totalVariable)}</p>
-                      <p className="text-[12px] text-[#9D84D4] mt-0.5">celkom</p>
+                      <p className="text-[12px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
                     </>
                   )}
                 </div>
@@ -328,7 +326,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
           {chartData.length > 0 && (
             <div style={CARD}>
-              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-4">Výdavky — posledných 6 mesiacov</h3>
+              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-4">{t.dashboard.expensesLast6}</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <defs>
@@ -340,7 +338,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
                   <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
-                  <Area type="monotone" dataKey="expenses" name="Výdavky" stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
+                  <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -348,7 +346,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
           {last5.length > 0 ? (
             <div className="flex flex-col gap-2">
-              <h3 className="text-[16px] font-medium text-[#E2D9F3]">Posledné transakcie</h3>
+              <h3 className="text-[16px] font-medium text-[#E2D9F3]">{t.dashboard.recentTransactions}</h3>
               {last5.map(expense => {
                 const cat = getCategoryById(expense.categoryId)
                 return (
@@ -375,7 +373,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                 className="text-center w-full mt-1 cursor-pointer bg-transparent border-none"
                 style={{ fontSize: '12px', color: '#9D84D4' }}
               >
-                Zobraziť všetky transakcie →
+                {t.dashboard.showAll} →
               </button>
             </div>
           ) : (

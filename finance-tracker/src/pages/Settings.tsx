@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Download, Upload, Info, Heart, Settings2, Database, Check } from 'lucide-react'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
 import { db } from '../db/database'
 import { setSetting } from '../hooks/useSettings'
 import { DEFAULT_SETTINGS } from '../types'
@@ -180,6 +183,88 @@ export function SettingsPage() {
     input.click()
   }
 
+  async function handleExportPDF() {
+    const [cats, incomes, fixed, variable] = await Promise.all([
+      db.categories.toArray(),
+      db.incomes.toArray(),
+      db.fixedExpenses.toArray(),
+      db.variableExpenses.toArray(),
+    ])
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('Rodinné financie — Export', 14, 18)
+    doc.setFontSize(10)
+    doc.text(`Exportované: ${new Date().toLocaleDateString('sk-SK')}`, 14, 26)
+
+    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
+    const totalFixed = fixed.reduce((s, f) => s + f.amount, 0)
+    const totalVar = variable.reduce((s, v) => s + v.amount, 0)
+    const balance = totalIncome - totalFixed - totalVar
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Typ', 'Popis', 'Suma (€)']],
+      body: [
+        ...incomes.map(i => ['Príjem', i.label, i.amount.toFixed(2)]),
+        ...fixed.map(f => ['Fixný výdavok', f.label, (-f.amount).toFixed(2)]),
+        ...variable.map(v => {
+          const cat = cats.find(c => c.id === v.categoryId)
+          return ['Variabilný výdavok', cat?.name ?? v.note ?? '—', (-v.amount).toFixed(2)]
+        }),
+        ['', 'Zostatok', balance.toFixed(2)],
+      ],
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [124, 58, 237] },
+    })
+
+    doc.save('rodinne-financie-export.pdf')
+  }
+
+  async function handleExportXLSX() {
+    const [cats, incomes, fixed, variable] = await Promise.all([
+      db.categories.toArray(),
+      db.incomes.toArray(),
+      db.fixedExpenses.toArray(),
+      db.variableExpenses.toArray(),
+    ])
+    const wb = XLSX.utils.book_new()
+
+    const incomeRows = incomes.map(i => ({ Dátum: i.date, Popis: i.label, Suma: i.amount, Opakujúci: i.recurring ? 'Áno' : 'Nie' }))
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(incomeRows), 'Príjmy')
+
+    const varRows = variable.map(v => {
+      const cat = cats.find(c => c.id === v.categoryId)
+      return { Dátum: v.date, Kategória: cat?.name ?? '—', Poznámka: v.note, Suma: v.amount }
+    })
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(varRows), 'Výdavky')
+
+    const fixedRows = fixed.map(f => ({ Názov: f.label, Suma: f.amount, 'Deň v mesiaci': f.dayOfMonth }))
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fixedRows), 'Fixné výdavky')
+
+    XLSX.writeFile(wb, 'rodinne-financie-export.xlsx')
+  }
+
+  async function handleExportCSV() {
+    const [cats, variable] = await Promise.all([
+      db.categories.toArray(),
+      db.variableExpenses.toArray(),
+    ])
+    const header = 'Dátum,Kategória,Suma,Poznámka'
+    const rows = variable.map(v => {
+      const cat = cats.find(c => c.id === v.categoryId)
+      const note = (v.note ?? '').replace(/,/g, ';')
+      return `${v.date},${cat?.name ?? '—'},${v.amount},${note}`
+    })
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'rodinne-financie-export.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const firstDayOfWeekOptions = [
     { value: 'monday', label: t.settings.monday },
     { value: 'sunday', label: t.settings.sunday },
@@ -280,13 +365,41 @@ export function SettingsPage() {
         />
 
         <div className="p-5 flex flex-col gap-3">
-          <button
-            onClick={handleExport}
-            className="btn-primary w-full justify-center py-3"
-          >
-            <Download size={15} />
-            {t.settings.exportJSON}
-          </button>
+          {/* 2×2 export grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={handleExport}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
+              style={{ backgroundColor: '#7C3AED' }}
+            >
+              <Download size={14} />
+              JSON
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
+              style={{ backgroundColor: '#EF4444' }}
+            >
+              <Download size={14} />
+              PDF
+            </button>
+            <button
+              onClick={handleExportXLSX}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
+              style={{ backgroundColor: '#22C55E' }}
+            >
+              <Download size={14} />
+              XLSX
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
+              style={{ backgroundColor: '#3B82F6' }}
+            >
+              <Download size={14} />
+              CSV
+            </button>
+          </div>
 
           <button
             onClick={handleImport}

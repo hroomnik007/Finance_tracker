@@ -76,16 +76,6 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <button
-          onClick={openAdd}
-          className="hidden lg:flex items-center gap-2 text-sm text-white rounded-full px-4 py-2 cursor-pointer shrink-0"
-          style={{ backgroundColor: '#7C3AED' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#6D28D9' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#7C3AED' }}
-        >
-          <Plus size={15} />
-          Pridať fixný výdavok
-        </button>
       </div>
 
       {/* Expense list */}
@@ -265,17 +255,14 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
         </div>
       </BottomSheet>
 
-      {/* FAB — add fixed expense */}
+      {/* FAB */}
       <button
         onClick={openAdd}
-        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
-        style={{
-          bottom: '80px',
-          background: 'var(--accent-strong)',
-          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
-        }}
+        className="fixed bottom-20 lg:bottom-6 right-6 flex items-center gap-2 text-white font-semibold rounded-full px-4 py-3 cursor-pointer z-40 shadow-xl"
+        style={{ background: '#7C3AED', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' }}
       >
-        <Plus size={26} />
+        <Plus size={16} />
+        <span className="text-sm">{t.expenses.fixed.add}</span>
       </button>
 
       {/* Delete confirm sheet */}

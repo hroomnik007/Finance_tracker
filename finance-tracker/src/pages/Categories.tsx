@@ -92,16 +92,6 @@ export function CategoriesPage() {
           <h1 className="text-[16px] font-medium text-[#E2D9F3]">{t.expenses.categories.title}</h1>
           <p className="text-[12px] text-[#6B5A9E] mt-0.5">{t.expenses.categories.subtitle}</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="hidden lg:flex items-center gap-2 text-sm text-white rounded-full px-4 py-2 cursor-pointer shrink-0"
-          style={{ backgroundColor: '#7C3AED' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#6D28D9' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#7C3AED' }}
-        >
-          <Plus size={15} />
-          Pridať kategóriu
-        </button>
       </div>
 
       {/* Categories list/grid */}
@@ -347,17 +337,14 @@ export function CategoriesPage() {
         </div>
       </BottomSheet>
 
-      {/* FAB — add category */}
+      {/* FAB */}
       <button
         onClick={openAdd}
-        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white z-30 shadow-xl cursor-pointer"
-        style={{
-          bottom: '80px',
-          background: 'var(--accent-strong)',
-          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)',
-        }}
+        className="fixed bottom-20 lg:bottom-6 right-6 flex items-center gap-2 text-white font-semibold rounded-full px-4 py-3 cursor-pointer z-40 shadow-xl"
+        style={{ background: '#7C3AED', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' }}
       >
-        <Plus size={26} />
+        <Plus size={16} />
+        <span className="text-sm">{t.expenses.categories.add}</span>
       </button>
 
       {/* Delete confirm */}
