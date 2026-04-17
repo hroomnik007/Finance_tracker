@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '../i18n'
 
 interface LoginPageProps {
-  onLogin: () => void
+  onLogin: (rememberMe: boolean) => void
   onNavigateRegister: () => void
   onGuest: () => void
 }
@@ -22,6 +22,7 @@ export function LoginPage({ onLogin, onNavigateRegister, onGuest }: LoginPagePro
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
 
@@ -106,9 +107,26 @@ export function LoginPage({ onLogin, onNavigateRegister, onGuest }: LoginPagePro
             />
           </div>
 
+          {/* Remember me */}
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="checkbox"
+              id="remember"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: '#7C3AED', cursor: 'pointer' }}
+            />
+            <label
+              htmlFor="remember"
+              style={{ fontSize: 14, color: '#9D84D4', cursor: 'pointer' }}
+            >
+              {t.auth.rememberMe}
+            </label>
+          </div>
+
           {/* Login button */}
           <button
-            onClick={onLogin}
+            onClick={() => onLogin(rememberMe)}
             className="w-full font-semibold text-[15px] text-white rounded-2xl transition-opacity hover:opacity-90 active:opacity-80"
             style={{
               height: '48px',

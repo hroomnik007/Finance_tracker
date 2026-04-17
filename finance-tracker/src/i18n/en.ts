@@ -185,6 +185,9 @@ export const en: Translations = {
     continueWithout: 'Continue without account',
     forgotPassword: 'Forgot password?',
     createAccount: 'Create account',
+    rememberMe: 'Remember me',
+    logout: 'Sign out',
+    logoutConfirm: 'Are you sure you want to sign out?',
   },
   common: {
     save: 'Save',

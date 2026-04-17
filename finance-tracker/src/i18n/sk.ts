@@ -183,6 +183,9 @@ export const sk = {
     continueWithout: 'Pokračovať bez účtu',
     forgotPassword: 'Zabudol si heslo?',
     createAccount: 'Vytvoriť účet',
+    rememberMe: 'Zapamätať si prihlásenie',
+    logout: 'Odhlásiť sa',
+    logoutConfirm: 'Naozaj sa chceš odhlásiť?',
   },
   common: {
     save: 'Uložiť',

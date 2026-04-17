@@ -31,7 +31,14 @@ function getPageFromHash(): Page {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      if (localStorage.getItem('auth_remember') === 'true') return true
+      if (sessionStorage.getItem('auth_session') === 'true') return true
+    } catch { /* ignore */ }
+    return false
+  })
+
   const [page, setPage] = useState<Page>(getPageFromHash)
   const [authPage, setAuthPage] = useState<'login' | 'register'>('login')
   const now = new Date()
@@ -71,14 +78,38 @@ function App() {
     setYear(y)
   }
 
-  const handleLogin = () => {
+  const handleLogin = (rememberMe: boolean) => {
+    try {
+      if (rememberMe) {
+        localStorage.setItem('auth_remember', 'true')
+        localStorage.setItem('auth_guest', 'false')
+      } else {
+        sessionStorage.setItem('auth_session', 'true')
+        sessionStorage.setItem('auth_guest', 'false')
+      }
+    } catch { /* ignore */ }
     setIsAuthenticated(true)
     setPage('dashboard')
   }
 
   const handleGuest = () => {
+    try {
+      sessionStorage.setItem('auth_session', 'true')
+      sessionStorage.setItem('auth_guest', 'true')
+    } catch { /* ignore */ }
     setIsAuthenticated(true)
     setPage('dashboard')
+  }
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('auth_remember')
+      localStorage.removeItem('auth_guest')
+      sessionStorage.removeItem('auth_session')
+      sessionStorage.removeItem('auth_guest')
+    } catch { /* ignore */ }
+    setIsAuthenticated(false)
+    setAuthPage('login')
   }
 
   // Auth screens — no sidebar, no nav
@@ -88,7 +119,7 @@ function App() {
         <>
           <ToastContainer toasts={toasts} />
           <RegisterPage
-            onRegister={handleLogin}
+            onRegister={() => handleLogin(false)}
             onNavigateLogin={() => setAuthPage('login')}
             onGuest={handleGuest}
           />
@@ -149,7 +180,7 @@ function App() {
           )}
           {page === 'fixed-expenses' && <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />}
           {page === 'categories' && <CategoriesPage />}
-          {page === 'settings' && <SettingsPage />}
+          {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
         </div>
       </main>
 

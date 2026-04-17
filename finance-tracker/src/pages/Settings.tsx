@@ -84,7 +84,11 @@ const SettingRow = ({
 
 const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  onLogout?: () => void
+}
+
+export function SettingsPage({ onLogout }: SettingsPageProps) {
   const { settings: contextSettings, refreshSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
   const rawSettingsRows = useLiveQuery(() => db.settings.toArray(), [])
@@ -591,6 +595,23 @@ export function SettingsPage() {
           </div>
         </div>
       </SectionCard>
+
+      {/* ── Logout ── */}
+      {onLogout && (
+        <button
+          onClick={onLogout}
+          className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80"
+          style={{
+            height: '48px',
+            background: 'transparent',
+            border: '1px solid #F87171',
+            color: '#F87171',
+            cursor: 'pointer',
+          }}
+        >
+          {t.auth.logout}
+        </button>
+      )}
     </div>
     </div>
   )
