@@ -58,7 +58,7 @@ export function CategoriesPage() {
 
   async function handleSave() {
     if (!name.trim()) return
-    const limit = budgetLimit ? parseFloat(budgetLimit) : undefined
+    const limit = budgetLimit ? parseFloat(budgetLimit.replace(',', '.')) : undefined
 
     if (editing?.id != null) {
       await db.categories.update(editing.id, {
@@ -307,13 +307,16 @@ export function CategoriesPage() {
             </label>
             <input
               className="input-field"
-              type="number"
+              type="text"
               inputMode="decimal"
               placeholder={t.expenses.categories.limitPlaceholder}
-              min="0"
-              step="0.01"
               value={budgetLimit}
-              onChange={e => setBudgetLimit(e.target.value)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9.,]/g, '')
+                const parts = raw.split(/[,.]/)
+                const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
+                setBudgetLimit(cleaned)
+              }}
             />
           </div>
 

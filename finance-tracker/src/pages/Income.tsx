@@ -57,7 +57,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   }
 
   const handleSave = async () => {
-    const amount = parseFloat(form.amount)
+    const amount = parseFloat(form.amount.replace(',', '.'))
     if (!form.label.trim() || isNaN(amount) || amount <= 0) return
     if (editing?.id) {
       await updateIncome(editing.id, { amount, label: form.label, date: form.date, recurring: form.recurring })
@@ -78,18 +78,23 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const totalAmount = incomes.reduce((s, i) => s + i.amount, 0)
   const recurringCount = incomes.filter(i => i.recurring).length
 
-  const FormContent = () => (
+  const formContent = (
     <div className="flex flex-col gap-4">
       <div>
         <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.income.amount}
         </label>
         <input
-          type="number"
+          type="text"
           inputMode="decimal"
           placeholder="0,00"
           value={form.amount}
-          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+          onChange={e => {
+            const raw = e.target.value.replace(/[^0-9.,]/g, '')
+            const parts = raw.split(/[,.]/)
+            const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
+            setForm(f => ({ ...f, amount: cleaned }))
+          }}
           className="input-field font-mono text-2xl font-bold"
           style={{ height: '60px', fontSize: '1.5rem' }}
         />
@@ -396,7 +401,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         onClose={() => setSheetOpen(false)}
         title={editing ? t.income.editTitle : t.income.addTitle}
       >
-        <FormContent />
+        {formContent}
       </BottomSheet>
 
       <ConfirmDialog

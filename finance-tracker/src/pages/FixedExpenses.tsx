@@ -51,7 +51,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
   }
 
   async function handleSave() {
-    const amt = parseFloat(amount)
+    const amt = parseFloat(amount.replace(',', '.'))
     const day = parseInt(dayOfMonth)
     if (!label.trim() || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 31) return
 
@@ -209,13 +209,16 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
             </label>
             <input
               className="input-field font-mono font-semibold"
-              type="number"
+              type="text"
               inputMode="decimal"
-              placeholder="0.00"
-              min="0"
-              step="0.01"
+              placeholder="0,00"
               value={amount}
-              onChange={e => setAmount(e.target.value)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9.,]/g, '')
+                const parts = raw.split(/[,.]/)
+                const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
+                setAmount(cleaned)
+              }}
               style={{ fontSize: '1.1rem' }}
             />
           </div>

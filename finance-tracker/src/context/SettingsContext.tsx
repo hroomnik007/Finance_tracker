@@ -6,17 +6,36 @@ import type { AppSettings } from '../types'
 interface SettingsContextValue {
   settings: AppSettings
   refreshSettings: () => Promise<void>
+  profileName: string
+  profileAvatar: string
+  setProfile: (name: string, avatar: string) => void
 }
 
 const SettingsContext = createContext<SettingsContextValue>({
   settings: DEFAULT_SETTINGS,
   refreshSettings: async () => {},
+  profileName: '',
+  profileAvatar: '👤',
+  setProfile: () => {},
 })
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
-  // Wait for DB load before rendering — prevents language flash on startup
   const [loaded, setLoaded] = useState(false)
+
+  const [profileName, setProfileName] = useState<string>(
+    () => localStorage.getItem('profile_name') ?? ''
+  )
+  const [profileAvatar, setProfileAvatar] = useState<string>(
+    () => localStorage.getItem('profile_avatar') ?? '👤'
+  )
+
+  const setProfile = (name: string, avatar: string) => {
+    localStorage.setItem('profile_name', name)
+    localStorage.setItem('profile_avatar', avatar)
+    setProfileName(name)
+    setProfileAvatar(avatar)
+  }
 
   const loadSettings = async () => {
     const rows = await db.settings.toArray()
@@ -36,7 +55,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <SettingsContext.Provider value={{ settings, refreshSettings: loadSettings }}>
+    <SettingsContext.Provider value={{ settings, refreshSettings: loadSettings, profileName, profileAvatar, setProfile }}>
       {loaded
         ? children
         : <div style={{ minHeight: '100svh', backgroundColor: '#1E1535' }} />

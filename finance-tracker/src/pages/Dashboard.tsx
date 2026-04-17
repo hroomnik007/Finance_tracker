@@ -11,6 +11,7 @@ import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
+import { useSettingsContext } from '../context/SettingsContext'
 import { db } from '../db/database'
 import type { Page } from '../App'
 
@@ -56,6 +57,14 @@ const TOOLTIP_STYLE = {
   fontSize: 13,
 }
 
+function getGreeting(t: ReturnType<typeof useTranslation>['t']): string {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return t.dashboard.greetingMorning
+  if (hour >= 12 && hour < 18) return t.dashboard.greetingDay
+  if (hour >= 18 && hour < 22) return t.dashboard.greetingEvening
+  return t.dashboard.greetingNight
+}
+
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
   const [activePieIndex, setActivePieIndex] = useState<number | null>(null)
@@ -66,6 +75,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const { categories } = useCategories()
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
+  const { profileName, profileAvatar } = useSettingsContext()
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
@@ -144,7 +154,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       >
         {/* Top row: greeting + date */}
         <div className="flex items-center justify-between mb-3">
-          <span className="font-semibold text-[15px] text-[#E2D9F3]">{t.dashboard.greeting}</span>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize: 24 }}>{profileAvatar}</span>
+            <span className="font-semibold text-[15px] text-[#E2D9F3]">
+              {getGreeting(t)}{profileName ? `, ${profileName}` : ''}! 👋
+            </span>
+          </div>
           <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>
         </div>
 

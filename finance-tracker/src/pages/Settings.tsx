@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Upload, Info, Heart, Settings2, Database, Check } from 'lucide-react'
+import { Download, Upload, Info, Heart, Settings2, Database, Check, User } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -82,10 +82,37 @@ const SettingRow = ({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
+
 export function SettingsPage() {
-  const { settings: contextSettings, refreshSettings } = useSettingsContext()
+  const { settings: contextSettings, refreshSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
   const rawSettingsRows = useLiveQuery(() => db.settings.toArray(), [])
+
+  // ── Profile ───────────────────────────────────────────────────────────────
+  const [profileNameDraft, setProfileNameDraft] = useState(ctxName)
+  const [profileAvatarDraft, setProfileAvatarDraft] = useState(ctxAvatar)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [profileSaveOk, setProfileSaveOk] = useState(false)
+
+  function handleSaveProfile() {
+    setProfile(profileNameDraft, profileAvatarDraft)
+    setProfileSaveOk(true)
+    setTimeout(() => setProfileSaveOk(false), 2000)
+  }
+
+  function handleSavePassword() {
+    if (!newPassword || newPassword !== confirmPassword) {
+      setPasswordMsg({ type: 'err', text: t.settings.passwordMismatch })
+      return
+    }
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordMsg({ type: 'ok', text: t.settings.passwordSaved })
+    setTimeout(() => setPasswordMsg(null), 3000)
+  }
 
   // ── General settings draft ────────────────────────────────────────────────
   const [draft, setDraft] = useState<AppSettings | null>(null)
@@ -280,6 +307,118 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold text-[#E2D9F3]">{t.settings.title}</h1>
         <p className="text-sm text-[#9D84D4] mt-0.5">{t.settings.subtitle}</p>
       </div>
+
+      {/* ── Section 0: Profil ── */}
+      <SectionCard>
+        <CardHeader
+          icon={<User size={15} className="text-white" />}
+          label={t.settings.profile}
+        />
+
+        <div className="p-5 flex flex-col gap-5">
+          {/* Avatar */}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-3">{t.settings.avatar}</p>
+            <div className="flex items-center gap-4 mb-3">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 text-4xl"
+                style={{ background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)', border: '2px solid #4C3A8A' }}
+              >
+                {profileAvatarDraft}
+              </div>
+              <div className="flex-1 overflow-x-auto">
+                <div className="flex gap-2 pb-1" style={{ minWidth: 'max-content' }}>
+                  {AVATAR_OPTIONS.map(em => (
+                    <button
+                      key={em}
+                      onClick={() => setProfileAvatarDraft(em)}
+                      className="text-2xl transition-transform hover:scale-110 shrink-0"
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        border: profileAvatarDraft === em ? '2px solid #7C3AED' : '2px solid transparent',
+                        background: profileAvatarDraft === em ? 'rgba(124,58,237,0.15)' : 'var(--bg-elevated)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
+              {t.settings.name}
+            </label>
+            <input
+              type="text"
+              placeholder="Zadaj svoje meno"
+              value={profileNameDraft}
+              onChange={e => setProfileNameDraft(e.target.value)}
+              className="input-field"
+            />
+          </div>
+
+          {/* Save profile button */}
+          {profileSaveOk ? (
+            <div
+              className="w-full flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-[#34d399]"
+              style={{ backgroundColor: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', height: '48px' }}
+            >
+              <Check size={16} /> {t.settings.profileSaved}
+            </div>
+          ) : (
+            <button
+              onClick={handleSaveProfile}
+              className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
+              style={{ height: '48px' }}
+            >
+              {t.settings.saveProfile}
+            </button>
+          )}
+
+          {/* Change password */}
+          <div style={{ borderTop: '1px solid #4C3A8A33', paddingTop: '16px' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-3">{t.settings.changePassword}</p>
+            <div className="flex flex-col gap-3">
+              <input
+                type="password"
+                placeholder={t.settings.newPassword}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="input-field"
+              />
+              <input
+                type="password"
+                placeholder={t.auth.confirmPassword}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className="input-field"
+              />
+              {passwordMsg && (
+                <p
+                  className="text-xs"
+                  style={{ color: passwordMsg.type === 'ok' ? '#34d399' : '#f87171' }}
+                >
+                  {passwordMsg.text}
+                </p>
+              )}
+              <button
+                onClick={handleSavePassword}
+                className="btn-secondary self-start px-5 rounded-xl"
+                style={{ height: '40px', fontSize: '13px' }}
+              >
+                {t.settings.savePassword}
+              </button>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
 
       {/* ── Section 1: Všeobecné ── */}
       <SectionCard>

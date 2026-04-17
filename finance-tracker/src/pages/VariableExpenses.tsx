@@ -75,7 +75,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   }
 
   const handleSave = async () => {
-    const amount = parseFloat(form.amount)
+    const amount = parseFloat(form.amount.replace(',', '.'))
     if (isNaN(amount) || amount <= 0) return
 
     let catId: number
@@ -115,18 +115,23 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
   const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
 
-  const FormBody = () => (
+  const formBody = (
     <div className="flex flex-col gap-4">
       <div>
         <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
           {t.expenses.variable.amount}
         </label>
         <input
-          type="number"
+          type="text"
           inputMode="decimal"
           placeholder="0,00"
           value={form.amount}
-          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+          onChange={e => {
+            const raw = e.target.value.replace(/[^0-9.,]/g, '')
+            const parts = raw.split(/[,.]/)
+            const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
+            setForm(f => ({ ...f, amount: cleaned }))
+          }}
           className="input-field font-mono font-bold"
           style={{ height: '60px', fontSize: '1.5rem' }}
         />
@@ -519,7 +524,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         onClose={() => setSheetOpen(false)}
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
       >
-        <FormBody />
+        {formBody}
       </BottomSheet>
 
       <ConfirmDialog
