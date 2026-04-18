@@ -1,11 +1,27 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { db } from '../db/database'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 import { DEFAULT_SETTINGS } from '../types'
 import type { AppSettings } from '../types'
+
+const SETTINGS_KEY = 'app_settings'
+
+function loadSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY)
+    if (!raw) return DEFAULT_SETTINGS
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+  } catch {
+    return DEFAULT_SETTINGS
+  }
+}
+
+function persistSettings(s: AppSettings) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) } catch { /* ignore */ }
+}
 
 interface SettingsContextValue {
   settings: AppSettings
   refreshSettings: () => Promise<void>
+  updateSettings: (partial: Partial<AppSettings>) => void
   profileName: string
   profileAvatar: string
   setProfile: (name: string, avatar: string) => void
@@ -14,14 +30,14 @@ interface SettingsContextValue {
 const SettingsContext = createContext<SettingsContextValue>({
   settings: DEFAULT_SETTINGS,
   refreshSettings: async () => {},
+  updateSettings: () => {},
   profileName: '',
   profileAvatar: '👤',
   setProfile: () => {},
 })
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
-  const [loaded, setLoaded] = useState(false)
+  const [settings, setSettings] = useState<AppSettings>(loadSettings)
 
   const [profileName, setProfileName] = useState<string>(
     () => localStorage.getItem('profile_name') ?? ''
@@ -30,6 +46,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     () => localStorage.getItem('profile_avatar') ?? '👤'
   )
 
+  const updateSettings = (partial: Partial<AppSettings>) => {
+    setSettings(prev => {
+      const next = { ...prev, ...partial }
+      persistSettings(next)
+      return next
+    })
+  }
+
   const setProfile = (name: string, avatar: string) => {
     localStorage.setItem('profile_name', name)
     localStorage.setItem('profile_avatar', avatar)
@@ -37,29 +61,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setProfileAvatar(avatar)
   }
 
-  const loadSettings = async () => {
-    const rows = await db.settings.toArray()
-    const map: Record<string, string | number | boolean> = {}
-    for (const row of rows) map[row.key] = row.value
-    setSettings({
-      currency:       (map['currency'] as string)       ?? DEFAULT_SETTINGS.currency,
-      language:       (map['language'] as string)       ?? DEFAULT_SETTINGS.language,
-      dateFormat:     (map['dateFormat'] as string)     ?? DEFAULT_SETTINGS.dateFormat,
-      firstDayOfWeek: (map['firstDayOfWeek'] as string) ?? DEFAULT_SETTINGS.firstDayOfWeek,
-    })
-    setLoaded(true)
-  }
-
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
   return (
-    <SettingsContext.Provider value={{ settings, refreshSettings: loadSettings, profileName, profileAvatar, setProfile }}>
-      {loaded
-        ? children
-        : <div style={{ minHeight: '100svh', backgroundColor: '#1E1535' }} />
-      }
+    <SettingsContext.Provider
+      value={{
+        settings,
+        refreshSettings: async () => setSettings(loadSettings()),
+        updateSettings,
+        profileName,
+        profileAvatar,
+        setProfile,
+      }}
+    >
+      {children}
     </SettingsContext.Provider>
   )
 }

@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, CartesianGrid,
 } from 'recharts'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { MonthSwitcher } from '../components/MonthSwitcher'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -12,8 +11,9 @@ import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
-import { db } from '../db/database'
+import { getSummary } from '../api/transactions'
 import type { Page } from '../App'
+import type { ApiSummary } from '../types'
 
 const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
 
@@ -21,7 +21,12 @@ function getLast6Months() {
   const now = new Date()
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
-    return { month: d.getMonth() + 1, year: d.getFullYear(), label: MONTHS_SK[d.getMonth()] }
+    return {
+      month: d.getMonth() + 1,
+      year: d.getFullYear(),
+      label: MONTHS_SK[d.getMonth()],
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+    }
   })
 }
 
@@ -67,6 +72,8 @@ function getGreeting(t: ReturnType<typeof useTranslation>['t']): string {
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
   const [activePieIndex, setActivePieIndex] = useState<number | null>(null)
+  const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
+  const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
 
   const { incomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses()
@@ -83,7 +90,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const balance = totalIncome - totalExpenses
 
   const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4)
-  const getCategoryById = (id: number) => categories.find(c => c.id === id)
+  const getCategoryById = (id: string) => categories.find(c => c.id === id)
 
   const pieData = categories
     .map(cat => ({
@@ -94,35 +101,41 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     }))
     .filter(d => d.value > 0)
 
-  // Historical 6-month data
-  const last6Months = getLast6Months()
-  const chartData = useLiveQuery(async () => {
-    const [allIncomes, allVariable, allFixed] = await Promise.all([
-      db.incomes.toArray(),
-      db.variableExpenses.toArray(),
-      db.fixedExpenses.toArray(),
-    ])
-    const fixedTotal = allFixed.reduce((s, f) => s + f.amount, 0)
-    return last6Months.map(({ month: m, year: y, label }) => {
-      const prefix = `${y}-${String(m).padStart(2, '0')}`
-      const income = allIncomes.filter(i => i.date.startsWith(prefix)).reduce((s, i) => s + i.amount, 0)
-      const variable = allVariable.filter(e => e.date.startsWith(prefix)).reduce((s, e) => s + e.amount, 0)
-      return { label, income, expenses: variable + fixedTotal }
-    })
-  }, []) ?? []
+  // Historical 6-month chart via API summary
+  useEffect(() => {
+    const months = getLast6Months()
+    Promise.all(months.map(m => getSummary(m.key).catch(() => null)))
+      .then(results => {
+        setChartData(
+          months.map((m, i) => {
+            const s: ApiSummary | null = results[i]
+            return {
+              label: m.label,
+              income: s?.totalIncome ?? 0,
+              expenses: s?.totalExpenses ?? 0,
+            }
+          })
+        )
+      })
+  }, [])
 
-  // Sparkline: last 7 days variable expenses
-  const sparklineData = useLiveQuery(async () => {
+  // Sparkline: last 7 days variable expenses from current data
+  useEffect(() => {
     const days = getLast7Days()
-    const allVar = await db.variableExpenses.toArray()
-    return days.map(day => ({
-      day,
-      value: allVar.filter(e => e.date === day).reduce((s, e) => s + e.amount, 0),
-    }))
-  }, []) ?? []
+    setSparklineData(
+      days.map(day => ({
+        day,
+        value: variableExpenses.filter(e => e.date === day).reduce((s, e) => s + e.amount, 0),
+      }))
+    )
+  }, [variableExpenses])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderPieShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, index } = props
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, index } = props as {
+      cx: number; cy: number; innerRadius: number; outerRadius: number
+      startAngle: number; endAngle: number; fill: string; index: number
+    }
     return (
       <Sector
         cx={cx}
@@ -136,22 +149,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     )
   }
 
-  // Current date string
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
     <div className="flex flex-col gap-5 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
 
       {/* ── HERO CARD ── */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #1E1535 0%, #2D1F5E 50%, #1A1040 100%)',
-          border: '0.5px solid #4C3A8A',
-          borderRadius: 20,
-          padding: 20,
-        }}
-      >
-        {/* Top row: greeting + date */}
+      <div style={{ background: 'linear-gradient(135deg, #1E1535 0%, #2D1F5E 50%, #1A1040 100%)', border: '0.5px solid #4C3A8A', borderRadius: 20, padding: 20 }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span style={{ fontSize: 24 }}>{profileAvatar}</span>
@@ -162,15 +166,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>
         </div>
 
-        {/* Month switcher */}
         <div className="mb-3">
           <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
         </div>
 
-        {/* Balance label */}
         <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-1">{t.dashboard.difference}</p>
 
-        {/* Balance number + badge */}
         <div className="flex items-center gap-3 mb-3 flex-wrap">
           <p
             className="font-mono font-semibold leading-none md:text-[52px]"
@@ -189,8 +190,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </span>
         </div>
 
-        {/* Sparkline */}
-        {sparklineData.length > 0 && (
+        {sparklineData.some(d => d.value > 0) && (
           <div style={{ height: 40 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={sparklineData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
@@ -233,15 +233,11 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
         <div style={{ ...CARD, padding: 12 }}>
           <p className="text-[9px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-2 leading-snug">{t.dashboard.grossIncome}</p>
-          <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: '#34D399' }}>
-            {formatAmount(totalIncome)}
-          </p>
+          <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: '#34D399' }}>{formatAmount(totalIncome)}</p>
         </div>
       </div>
 
-      {/* ── TAB CONTENT ── */}
-
-      {/* PRÍJMY */}
+      {/* ── PRÍJMY ── */}
       {activeTab === 'income' && (
         <>
           {chartData.length > 0 && (
@@ -270,16 +266,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                 <div key={income.id} className="flex items-center justify-between"
                   style={{ background: '#231840', border: '0.5px solid #4C3A8A', borderRadius: 14, padding: 12 }}>
                   <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
-                      style={{ background: 'rgba(52,211,153,0.15)' }}>💰</span>
+                    <span className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0" style={{ background: 'rgba(52,211,153,0.15)' }}>💰</span>
                     <div>
                       <p className="text-[14px] font-medium text-[#E2D9F3]">{income.label}</p>
                       <p className="text-[12px] text-[#6B5A9E]">{formatDate(income.date)}</p>
                     </div>
                   </div>
-                  <span className="font-mono text-[14px] font-semibold text-[#34D399] shrink-0 ml-3">
-                    +{formatAmount(income.amount)}
-                  </span>
+                  <span className="font-mono text-[14px] font-semibold text-[#34D399] shrink-0 ml-3">+{formatAmount(income.amount)}</span>
                 </div>
               ))}
             </div>
@@ -292,7 +285,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </>
       )}
 
-      {/* VÝDAVKY */}
+      {/* ── VÝDAVKY ── */}
       {activeTab === 'expenses' && (
         <>
           {pieData.length > 0 && (
@@ -312,7 +305,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                       startAngle={90}
                       endAngle={-270}
                       activeShape={renderPieShape}
-                      onClick={(_: any, index: number) => setActivePieIndex(prev => prev === index ? null : index)}
+                      onClick={(_: unknown, index: number) => setActivePieIndex(prev => prev === index ? null : index)}
                       style={{ cursor: 'pointer' }}
                     >
                       {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
@@ -376,9 +369,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                         <p className="text-[12px] text-[#6B5A9E]">{formatDate(expense.date)}</p>
                       </div>
                     </div>
-                    <span className="font-mono text-[14px] font-semibold text-[#F87171] shrink-0 ml-3">
-                      -{formatAmount(expense.amount)}
-                    </span>
+                    <span className="font-mono text-[14px] font-semibold text-[#F87171] shrink-0 ml-3">-{formatAmount(expense.amount)}</span>
                   </div>
                 )
               })}
@@ -399,7 +390,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           )}
         </>
       )}
-
     </div>
   )
 }

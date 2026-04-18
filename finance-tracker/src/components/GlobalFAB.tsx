@@ -3,11 +3,11 @@ import { Plus } from 'lucide-react'
 import { BottomSheet } from './BottomSheet'
 import { useIncomes } from '../hooks/useIncomes'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
+import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import { db } from '../db/database'
 import { todayISO } from '../utils/format'
 
 type ModalType = 'income' | 'variable' | 'fixed' | 'category' | null
@@ -46,6 +46,7 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
   // ── Data hooks ────────────────────────────────────────────────────────────
   const { addIncome } = useIncomes(month, year)
   const { addVariableExpense } = useVariableExpenses(month, year)
+  const { addFixedExpense } = useFixedExpenses()
   const { categories, addCategory } = useCategories()
   const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount } = useFormatters()
@@ -106,14 +107,13 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
   async function saveVariable() {
     const amt = parseFloat(varAmt)
     if (isNaN(amt) || amt <= 0) return
-    let catId: number
+    let catId: string
     if (varNewCatMode) {
       if (!varNewCatName.trim()) return
-      const id = await addCategory({ name: varNewCatName.trim(), color: '#64748b', icon: '📦' })
-      catId = typeof id === 'number' ? id : 0
+      catId = await addCategory({ name: varNewCatName.trim(), color: '#64748b', icon: '📦', type: 'expense' })
     } else {
       if (!varCatId) return
-      catId = parseInt(varCatId)
+      catId = varCatId
       const bs = budgetStatuses.find(b => b.categoryId === catId)
       if (bs) {
         const newSpent = bs.spent + amt
@@ -130,7 +130,7 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
     const amt = parseFloat(fixAmt)
     const day = parseInt(fixDay)
     if (!fixLabel.trim() || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 31) return
-    await db.fixedExpenses.add({ label: fixLabel.trim(), amount: amt, dayOfMonth: day })
+    await addFixedExpense({ label: fixLabel.trim(), amount: amt, dayOfMonth: day })
     closeModal()
   }
 
@@ -141,13 +141,14 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
       name: catName.trim(),
       color: catColor,
       icon: catIcon,
+      type: 'expense',
       budgetLimit: limit && limit > 0 ? limit : undefined,
     })
     closeModal()
   }
 
   // ── Live budget preview (variable expense) ────────────────────────────────
-  const liveBudget = varCatId ? budgetStatuses.find(b => b.categoryId === parseInt(varCatId)) : null
+  const liveBudget = varCatId ? budgetStatuses.find(b => b.categoryId === varCatId) : null
   const liveVarAmt = parseFloat(varAmt) || 0
   const liveSpent = liveBudget ? liveBudget.spent + liveVarAmt : 0
   const liveLimit = liveBudget?.limit

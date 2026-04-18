@@ -12,6 +12,7 @@ import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
 import { RightPanel } from './components/RightPanel'
 import { useToast } from './hooks/useToast'
+import { useAuth } from './context/AuthContext'
 
 export type Page =
   | 'dashboard'
@@ -20,8 +21,6 @@ export type Page =
   | 'fixed-expenses'
   | 'categories'
   | 'settings'
-  | 'login'
-  | 'register'
 
 const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings']
 
@@ -31,13 +30,7 @@ function getPageFromHash(): Page {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      if (localStorage.getItem('auth_remember') === 'true') return true
-      if (sessionStorage.getItem('auth_session') === 'true') return true
-    } catch { /* ignore */ }
-    return false
-  })
+  const { isAuthenticated, isLoading, logout } = useAuth()
 
   const [page, setPage] = useState<Page>(getPageFromHash)
   const [authPage, setAuthPage] = useState<'login' | 'register'>('login')
@@ -46,21 +39,16 @@ function App() {
   const [year, setYear] = useState(now.getFullYear())
   const { toasts, showToast } = useToast()
 
-  // Hash routing: sync page → hash (only for app pages)
   useEffect(() => {
-    if (isAuthenticated) {
-      window.location.hash = page
-    }
+    if (isAuthenticated) window.location.hash = page
   }, [page, isAuthenticated])
 
-  // Hash routing: sync hash → page (browser back/forward)
   useEffect(() => {
     const handler = () => setPage(getPageFromHash())
     window.addEventListener('hashchange', handler)
     return () => window.removeEventListener('hashchange', handler)
   }, [])
 
-  // Desktop sidebar collapsed state — persisted in localStorage
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('sidebar-collapsed') === 'true' } catch { return false }
   })
@@ -78,62 +66,24 @@ function App() {
     setYear(y)
   }
 
-  const handleLogin = (rememberMe: boolean) => {
-    try {
-      if (rememberMe) {
-        localStorage.setItem('auth_remember', 'true')
-        localStorage.setItem('auth_guest', 'false')
-      } else {
-        sessionStorage.setItem('auth_session', 'true')
-        sessionStorage.setItem('auth_guest', 'false')
-      }
-    } catch { /* ignore */ }
-    setIsAuthenticated(true)
-    setPage('dashboard')
-  }
-
-  const handleGuest = () => {
-    try {
-      sessionStorage.setItem('auth_session', 'true')
-      sessionStorage.setItem('auth_guest', 'true')
-    } catch { /* ignore */ }
-    setIsAuthenticated(true)
-    setPage('dashboard')
-  }
-
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem('auth_remember')
-      localStorage.removeItem('auth_guest')
-      sessionStorage.removeItem('auth_session')
-      sessionStorage.removeItem('auth_guest')
-    } catch { /* ignore */ }
-    setIsAuthenticated(false)
+  const handleLogout = async () => {
+    await logout()
     setAuthPage('login')
   }
 
-  // Auth screens — no sidebar, no nav
+  if (isLoading) {
+    return <div style={{ minHeight: '100svh', backgroundColor: '#1E1535' }} />
+  }
+
   if (!isAuthenticated) {
-    if (authPage === 'register') {
-      return (
-        <>
-          <ToastContainer toasts={toasts} />
-          <RegisterPage
-            onRegister={() => handleLogin(false)}
-            onNavigateLogin={() => setAuthPage('login')}
-            onGuest={handleGuest}
-          />
-        </>
-      )
-    }
     return (
       <>
         <ToastContainer toasts={toasts} />
-        <LoginPage
-          onLogin={handleLogin}
-          onNavigateRegister={() => setAuthPage('register')}
-          onGuest={handleGuest}
-        />
+        {authPage === 'register' ? (
+          <RegisterPage onNavigateLogin={() => setAuthPage('login')} />
+        ) : (
+          <LoginPage onNavigateRegister={() => setAuthPage('register')} />
+        )}
       </>
     )
   }
@@ -145,7 +95,6 @@ function App() {
     >
       <ToastContainer toasts={toasts} />
 
-      {/* Desktop sidebar — hidden on mobile, shown on lg+ */}
       <AppNav
         current={page}
         onChange={setPage}
@@ -155,13 +104,9 @@ function App() {
         onToggle={toggleSidebar}
       />
 
-      {/* Main content scroll container */}
       <main
         className="flex-1 h-full overflow-y-auto min-w-0"
-        style={{
-          paddingTop: '16px',
-          paddingBottom: '88px',
-        }}
+        style={{ paddingTop: '16px', paddingBottom: '88px' }}
       >
         <div style={{ paddingLeft: '24px', paddingRight: '24px' }}>
           {page === 'dashboard' && (
@@ -178,18 +123,16 @@ function App() {
               showToast={showToast}
             />
           )}
-          {page === 'fixed-expenses' && <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />}
+          {page === 'fixed-expenses' && (
+            <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
+          )}
           {page === 'categories' && <CategoriesPage />}
           {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
         </div>
       </main>
 
-      {/* Desktop right panel — only on dashboard */}
-      {page === 'dashboard' && (
-        <RightPanel month={month} year={year} />
-      )}
+      {page === 'dashboard' && <RightPanel month={month} year={year} />}
 
-      {/* Mobile bottom navigation — hidden on desktop */}
       <div className="lg:hidden">
         <BottomNav current={page} onChange={setPage} />
       </div>

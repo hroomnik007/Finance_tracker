@@ -1,3 +1,6 @@
+// @deprecated This file is no longer used by the application.
+// All data is now fetched from the REST API (src/api/).
+// Do NOT add new Dexie calls here. This file is kept temporarily for reference.
 import Dexie, { type Table } from 'dexie'
 import type { Category, Income, FixedExpense, VariableExpense, AppSetting } from '../types'
 
@@ -33,9 +36,9 @@ async function seedDatabase() {
   if (categoryCount > 0) return
 
   await db.categories.bulkAdd([
-    { name: 'Jedlo', color: '#f97316', icon: '🍔', budgetLimit: 300 },
-    { name: 'Doprava', color: '#3b82f6', icon: '🚗' },
-    { name: 'Zábava', color: '#a855f7', icon: '🎉', budgetLimit: 150 },
+    { name: 'Jedlo', color: '#f97316', icon: '🍔', budgetLimit: 300, type: 'expense' as const },
+    { name: 'Doprava', color: '#3b82f6', icon: '🚗', type: 'expense' as const },
+    { name: 'Zábava', color: '#a855f7', icon: '🎉', budgetLimit: 150, type: 'expense' as const },
   ])
 
   await db.fixedExpenses.add({

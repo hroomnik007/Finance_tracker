@@ -1,21 +1,52 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/database'
-import type { FixedExpense } from '../types'
+import { useState, useEffect, useCallback } from 'react'
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
+import type { FixedExpense, ApiTransaction } from '../types'
+
+function toFixedExpense(t: ApiTransaction): FixedExpense {
+  return {
+    id: t.id,
+    label: t.description ?? '',
+    amount: t.amount,
+    dayOfMonth: 1,
+  }
+}
 
 export function useFixedExpenses() {
-  const fixedExpenses = useLiveQuery(() => db.fixedExpenses.toArray(), []) ?? []
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([])
 
-  const addFixedExpense = async (expense: Omit<FixedExpense, 'id'>) => {
-    return db.fixedExpenses.add(expense)
-  }
+  const load = useCallback(async () => {
+    try {
+      const { data } = await getTransactions({ type: 'expense', isFixed: true, limit: 200 })
+      setFixedExpenses(data.map(toFixedExpense))
+    } catch { /* guest or not authenticated */ }
+  }, [])
 
-  const updateFixedExpense = async (id: number, changes: Partial<FixedExpense>) => {
-    return db.fixedExpenses.update(id, changes)
-  }
+  useEffect(() => { load() }, [load])
 
-  const deleteFixedExpense = async (id: number) => {
-    return db.fixedExpenses.delete(id)
-  }
+  const addFixedExpense = useCallback(async (expense: Omit<FixedExpense, 'id'>): Promise<void> => {
+    const today = new Date().toISOString().split('T')[0]
+    await createTransaction({
+      type: 'expense',
+      amount: expense.amount,
+      description: expense.label,
+      date: today,
+      isFixed: true,
+    })
+    await load()
+  }, [load])
+
+  const updateFixedExpense = useCallback(async (id: string, changes: Partial<FixedExpense>): Promise<void> => {
+    await updateTransaction(id, {
+      amount: changes.amount,
+      description: changes.label,
+    })
+    await load()
+  }, [load])
+
+  const deleteFixedExpense = useCallback(async (id: string): Promise<void> => {
+    await deleteTransaction(id)
+    await load()
+  }, [load])
 
   return { fixedExpenses, addFixedExpense, updateFixedExpense, deleteFixedExpense }
 }

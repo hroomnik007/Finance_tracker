@@ -1,28 +1,64 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/database'
-import type { VariableExpense } from '../types'
+import { useState, useEffect, useCallback } from 'react'
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
+import type { VariableExpense, ApiTransaction } from '../types'
+
+function toVariableExpense(t: ApiTransaction): VariableExpense {
+  return {
+    id: t.id,
+    amount: t.amount,
+    categoryId: t.categoryId ?? '',
+    note: t.description ?? '',
+    date: t.date,
+  }
+}
 
 export function useVariableExpenses(month?: number, year?: number) {
-  const variableExpenses = useLiveQuery(async () => {
-    if (month !== undefined && year !== undefined) {
-      const start = `${year}-${String(month).padStart(2, '0')}-01`
-      const end = `${year}-${String(month).padStart(2, '0')}-31`
-      return db.variableExpenses.where('date').between(start, end, true, true).toArray()
-    }
-    return db.variableExpenses.toArray()
-  }, [month, year]) ?? []
+  const [variableExpenses, setVariableExpenses] = useState<VariableExpense[]>([])
 
-  const addVariableExpense = async (expense: Omit<VariableExpense, 'id'>) => {
-    return db.variableExpenses.add(expense)
-  }
+  const load = useCallback(async () => {
+    try {
+      const monthStr =
+        month !== undefined && year !== undefined
+          ? `${year}-${String(month).padStart(2, '0')}`
+          : undefined
+      const { data } = await getTransactions({
+        type: 'expense',
+        isFixed: false,
+        month: monthStr,
+        limit: 200,
+      })
+      setVariableExpenses(data.map(toVariableExpense))
+    } catch { /* guest or not authenticated */ }
+  }, [month, year])
 
-  const updateVariableExpense = async (id: number, changes: Partial<VariableExpense>) => {
-    return db.variableExpenses.update(id, changes)
-  }
+  useEffect(() => { load() }, [load])
 
-  const deleteVariableExpense = async (id: number) => {
-    return db.variableExpenses.delete(id)
-  }
+  const addVariableExpense = useCallback(async (expense: Omit<VariableExpense, 'id'>): Promise<void> => {
+    await createTransaction({
+      type: 'expense',
+      amount: expense.amount,
+      categoryId: expense.categoryId || null,
+      description: expense.note,
+      date: expense.date,
+      isFixed: false,
+    })
+    await load()
+  }, [load])
+
+  const updateVariableExpense = useCallback(async (id: string, changes: Partial<VariableExpense>): Promise<void> => {
+    await updateTransaction(id, {
+      amount: changes.amount,
+      categoryId: changes.categoryId ?? null,
+      description: changes.note,
+      date: changes.date,
+    })
+    await load()
+  }, [load])
+
+  const deleteVariableExpense = useCallback(async (id: string): Promise<void> => {
+    await deleteTransaction(id)
+    await load()
+  }, [load])
 
   return { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense }
 }

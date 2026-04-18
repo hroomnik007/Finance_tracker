@@ -1,28 +1,58 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/database'
-import type { Income } from '../types'
+import { useState, useEffect, useCallback } from 'react'
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
+import type { Income, ApiTransaction } from '../types'
+
+function toIncome(t: ApiTransaction): Income {
+  return {
+    id: t.id,
+    amount: t.amount,
+    label: t.description ?? '',
+    date: t.date,
+    recurring: t.isFixed,
+  }
+}
 
 export function useIncomes(month?: number, year?: number) {
-  const incomes = useLiveQuery(async () => {
-    if (month !== undefined && year !== undefined) {
-      const start = `${year}-${String(month).padStart(2, '0')}-01`
-      const end = `${year}-${String(month).padStart(2, '0')}-31`
-      return db.incomes.where('date').between(start, end, true, true).toArray()
-    }
-    return db.incomes.toArray()
-  }, [month, year]) ?? []
+  const [incomes, setIncomes] = useState<Income[]>([])
 
-  const addIncome = async (income: Omit<Income, 'id'>) => {
-    return db.incomes.add(income)
-  }
+  const load = useCallback(async () => {
+    try {
+      const monthStr =
+        month !== undefined && year !== undefined
+          ? `${year}-${String(month).padStart(2, '0')}`
+          : undefined
+      const { data } = await getTransactions({ type: 'income', month: monthStr, limit: 200 })
+      setIncomes(data.map(toIncome))
+    } catch { /* guest or not authenticated */ }
+  }, [month, year])
 
-  const updateIncome = async (id: number, changes: Partial<Income>) => {
-    return db.incomes.update(id, changes)
-  }
+  useEffect(() => { load() }, [load])
 
-  const deleteIncome = async (id: number) => {
-    return db.incomes.delete(id)
-  }
+  const addIncome = useCallback(async (income: Omit<Income, 'id'>): Promise<void> => {
+    await createTransaction({
+      type: 'income',
+      amount: income.amount,
+      description: income.label,
+      date: income.date,
+      isFixed: income.recurring,
+    })
+    await load()
+  }, [load])
+
+  const updateIncome = useCallback(async (id: string, changes: Partial<Income>): Promise<void> => {
+    await updateTransaction(id, {
+      amount: changes.amount,
+      description: changes.label,
+      date: changes.date,
+      isFixed: changes.recurring,
+    })
+    await load()
+  }, [load])
+
+  const deleteIncome = useCallback(async (id: string): Promise<void> => {
+    await deleteTransaction(id)
+    await load()
+  }, [load])
 
   return { incomes, addIncome, updateIncome, deleteIncome }
 }

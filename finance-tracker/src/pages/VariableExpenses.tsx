@@ -45,14 +45,14 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<VariableExpense | null>(null)
   const [form, setForm] = useState<VarForm>(emptyForm())
-  const [confirmId, setConfirmId] = useState<number | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
 
-  const getCategoryById = (id: number) => categories.find(c => c.id === id)
-  const getBudgetForCat = (catId: number) => budgetStatuses.find(b => b.categoryId === catId)
+  const getCategoryById = (id: string) => categories.find(c => c.id === id)
+  const getBudgetForCat = (catId: string) => budgetStatuses.find(b => b.categoryId === catId)
 
-  const selectedCatId = form.categoryId ? parseInt(form.categoryId) : null
+  const selectedCatId = form.categoryId || null
   const liveBudget = selectedCatId ? getBudgetForCat(selectedCatId) : null
   const liveAmount = parseFloat(form.amount) || 0
   const liveSpent = (liveBudget?.spent ?? 0) + (editing ? 0 : liveAmount)
@@ -78,15 +78,14 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     const amount = parseFloat(form.amount.replace(',', '.'))
     if (isNaN(amount) || amount <= 0) return
 
-    let catId: number
+    let catId: string
 
     if (newCatMode) {
       if (!newCatName.trim()) return
-      const id = await addCategory({ name: newCatName, color: '#9D84D4', icon: '📦' })
-      catId = typeof id === 'number' ? id : 0
+      catId = await addCategory({ name: newCatName, color: '#9D84D4', icon: '📦', type: 'expense' })
     } else {
       if (!form.categoryId) return
-      catId = parseInt(form.categoryId)
+      catId = form.categoryId
       const bs = getBudgetForCat(catId)
       if (bs) {
         const newSpent = bs.spent + amount

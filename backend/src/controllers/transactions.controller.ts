@@ -19,6 +19,7 @@ const updateSchema = createSchema.partial();
 const listQuerySchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   type: z.enum(["income", "expense"]).optional(),
+  isFixed: z.enum(["true", "false"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
 });
@@ -34,7 +35,7 @@ function monthRange(month: string): { start: string; end: string } {
   return { start, end: next };
 }
 
-function buildFilters(userId: string, month?: string, type?: string) {
+function buildFilters(userId: string, month?: string, type?: string, isFixed?: string) {
   const filters = [eq(transactions.userId, userId)];
   if (month) {
     const { start, end } = monthRange(month);
@@ -43,6 +44,9 @@ function buildFilters(userId: string, month?: string, type?: string) {
   }
   if (type) {
     filters.push(eq(transactions.type, type));
+  }
+  if (isFixed !== undefined) {
+    filters.push(eq(transactions.isFixed, isFixed === "true"));
   }
   return filters;
 }
@@ -54,8 +58,8 @@ export async function listTransactions(req: AuthRequest, res: Response): Promise
     return;
   }
 
-  const { month, type, limit, offset } = query.data;
-  const filters = buildFilters(req.userId!, month, type);
+  const { month, type, isFixed, limit, offset } = query.data;
+  const filters = buildFilters(req.userId!, month, type, isFixed);
 
   const [rows, [{ total }]] = await Promise.all([
     db

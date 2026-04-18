@@ -55,8 +55,8 @@ export function ExpensesPage({
   const [editingFixed, setEditingFixed] = useState<FixedExpense | null>(null)
   const [varForm, setVarForm] = useState<VarFormState>(emptyVar())
   const [fixedForm, setFixedForm] = useState<FixedFormState>(emptyFixed)
-  const [confirmVarId, setConfirmVarId] = useState<number | null>(null)
-  const [confirmFixedId, setConfirmFixedId] = useState<number | null>(null)
+  const [confirmVarId, setConfirmVarId] = useState<string | null>(null)
+  const [confirmFixedId, setConfirmFixedId] = useState<string | null>(null)
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
 
@@ -77,10 +77,10 @@ export function ExpensesPage({
   const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount } = useFormatters()
 
-  const getCategoryById = (id: number) => categories.find((c) => c.id === id)
-  const getBudgetForCategory = (catId: number) => budgetStatuses.find(b => b.categoryId === catId)
+  const getCategoryById = (id: string) => categories.find((c) => c.id === id)
+  const getBudgetForCategory = (catId: string) => budgetStatuses.find(b => b.categoryId === catId)
 
-  const selectedCatId = varForm.categoryId ? parseInt(varForm.categoryId) : null
+  const selectedCatId = varForm.categoryId || null
   const liveBudget = selectedCatId ? getBudgetForCategory(selectedCatId) : null
   const liveAmount = parseFloat(varForm.amount) || 0
   const liveSpent = (liveBudget?.spent ?? 0) + (editingVar ? 0 : liveAmount)
@@ -124,26 +124,27 @@ export function ExpensesPage({
 
     if (newCatMode) {
       if (!newCatName.trim()) return
-      const id = await addCategory({ name: newCatName, color: '#9D84D4', icon: '📦' })
-      const catId = typeof id === 'number' ? id : 0
+      const catId = await addCategory({ name: newCatName, color: '#9D84D4', icon: '📦', type: 'expense' })
       await addVariableExpense({ amount, categoryId: catId, note: varForm.note, date: varForm.date })
       setSheetOpen(false)
       return
     }
 
-    const catId = parseInt(varForm.categoryId)
-    const bs = getBudgetForCategory(catId)
-    if (bs) {
-      const newSpent = bs.spent + amount
-      const newPct = (newSpent / bs.limit) * 100
-      if (newPct >= 100 && bs.percentage < 100) showToast(`🚨 Limit pre ${bs.categoryName} bol prekročený!`)
-      else if (newPct >= 90 && bs.percentage < 90) showToast(`⚠️ Blížiš sa k limitu pre ${bs.categoryName}`)
+    const catId = varForm.categoryId
+    if (catId) {
+      const bs = getBudgetForCategory(catId)
+      if (bs) {
+        const newSpent = bs.spent + amount
+        const newPct = (newSpent / bs.limit) * 100
+        if (newPct >= 100 && bs.percentage < 100) showToast(`🚨 Limit pre ${bs.categoryName} bol prekročený!`)
+        else if (newPct >= 90 && bs.percentage < 90) showToast(`⚠️ Blížiš sa k limitu pre ${bs.categoryName}`)
+      }
     }
 
     if (editingVar?.id) {
-      await updateVariableExpense(editingVar.id, { amount, categoryId: catId, note: varForm.note, date: varForm.date })
+      await updateVariableExpense(editingVar.id, { amount, categoryId: catId || '', note: varForm.note, date: varForm.date })
     } else {
-      await addVariableExpense({ amount, categoryId: catId, note: varForm.note, date: varForm.date })
+      await addVariableExpense({ amount, categoryId: catId || '', note: varForm.note, date: varForm.date })
     }
     setSheetOpen(false)
   }
