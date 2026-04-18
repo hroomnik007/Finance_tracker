@@ -40,7 +40,7 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
-            cd /var/www/finance-tracker/Finance_tracker
+            cd /var/www/finance-tracker
             git pull origin main
             cd finance-tracker
             npm ci --prefer-offline
@@ -61,7 +61,7 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
-            cd /var/www/finance-tracker/Finance_tracker
+            cd /var/www/finance-tracker
             git pull origin main
             cd backend
             npm ci --prefer-offline
