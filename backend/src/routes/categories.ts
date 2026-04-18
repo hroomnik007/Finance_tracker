@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/authenticate";
+import { authenticateToken } from "../middleware/authenticate";
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticateToken);
 
 // GET    /api/categories
 // POST   /api/categories
