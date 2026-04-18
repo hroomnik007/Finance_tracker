@@ -1,0 +1,42 @@
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { env } from "./config/env";
+import { errorHandler } from "./middleware/errorHandler";
+import authRouter from "./routes/auth";
+import transactionsRouter from "./routes/transactions";
+import categoriesRouter from "./routes/categories";
+
+const app = express();
+
+const allowedOrigins =
+  env.NODE_ENV === "production"
+    ? ["https://financie.pedani.eu"]
+    : ["http://localhost:5173", "http://localhost:3000"];
+
+app.use(helmet());
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(cookieParser());
+
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+app.use("/api/auth", authRouter);
+app.use("/api/transactions", transactionsRouter);
+app.use("/api/categories", categoriesRouter);
+
+app.use(errorHandler);
+
+app.listen(env.PORT, () => {
+  console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
+});
+
+export default app;
