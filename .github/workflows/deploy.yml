@@ -43,6 +43,8 @@ jobs:
             cd /var/www/finance-tracker
             git pull origin main
             cd finance-tracker
+            sudo mkdir -p dist
+            sudo chown -R deploy:deploy dist
             npm ci --prefer-offline --legacy-peer-deps
             VITE_API_URL=https://api.pedani.eu npm run build
             sudo systemctl reload nginx
