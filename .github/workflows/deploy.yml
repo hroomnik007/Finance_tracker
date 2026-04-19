@@ -59,12 +59,11 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
+            cd /var/www/finance-tracker
+            git fetch origin main
+            git reset --hard origin/main
             cd /var/www/finance-tracker/backend
             npm ci --prefer-offline
-            DATABASE_URL=postgresql://finance_user:6f9b13c63a5bdeced9b940728d8e560c@localhost:5432/finance_tracker npm run db:migrate
-            cd /var/www/finance-tracker
-            docker compose build backend
-            docker compose up -d --no-deps backend
             DATABASE_URL=postgresql://finance_user:6f9b13c63a5bdeced9b940728d8e560c@localhost:5432/finance_tracker npm run db:migrate
             cd /var/www/finance-tracker
             docker compose build backend
