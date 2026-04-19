@@ -1,5 +1,4 @@
 name: Deploy to Hetzner
-
 on:
   push:
     branches:
@@ -7,7 +6,6 @@ on:
     paths:
       - 'finance-tracker/**'
       - 'backend/**'
-
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -16,7 +14,6 @@ jobs:
       changed_backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -25,7 +22,6 @@ jobs:
               - 'finance-tracker/**'
             backend:
               - 'backend/**'
-
   deploy-frontend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_frontend == 'true'
@@ -41,14 +37,14 @@ jobs:
           script: |
             set -euo pipefail
             cd /var/www/finance-tracker
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             cd finance-tracker
             sudo mkdir -p dist
             sudo chown -R deploy:deploy dist
             npm ci --prefer-offline --legacy-peer-deps
             VITE_API_URL=https://api.pedani.eu npm run build
             sudo systemctl reload nginx
-
   deploy-backend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_backend == 'true'
@@ -64,7 +60,8 @@ jobs:
           script: |
             set -euo pipefail
             cd /var/www/finance-tracker
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             cd backend
             npm ci --prefer-offline
             npm run build
