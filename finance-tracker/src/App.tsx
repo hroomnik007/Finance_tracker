@@ -57,6 +57,17 @@ function App() {
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
 
+  const [prevAuthenticated, setPrevAuthenticated] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated && !prevAuthenticated && !isLoading) {
+      // Just logged in — always start on dashboard
+      setPage('dashboard')
+      window.location.hash = 'dashboard'
+    }
+    if (!isLoading) setPrevAuthenticated(isAuthenticated)
+  }, [isAuthenticated, isLoading, prevAuthenticated])
+
   useEffect(() => {
     if (isAuthenticated) window.location.hash = page
   }, [page, isAuthenticated])
@@ -96,6 +107,8 @@ function App() {
   }
 
   const handleLogout = async () => {
+    setPage('dashboard')
+    window.location.hash = ''
     await logout()
     setAuthPage('login')
   }
