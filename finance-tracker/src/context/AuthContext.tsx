@@ -101,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (rememberMe) localStorage.setItem('auth_remember', 'true')
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
+      sessionStorage.setItem('just_logged_in', 'true')
     } catch { /* ignore */ }
   }, [])
 
@@ -112,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
+      sessionStorage.setItem('just_logged_in', 'true')
     } catch { /* ignore */ }
   }, [])
 

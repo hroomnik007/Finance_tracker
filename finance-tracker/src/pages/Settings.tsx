@@ -91,7 +91,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onLogout }: SettingsPageProps) {
-  const { settings: contextSettings, refreshSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
+  const { settings: contextSettings, refreshSettings, updateSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, refreshUser } = useAuth()
   const [deleteConfirm, setDeleteConfirm] = useState('')
@@ -188,7 +188,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       setSetting('firstDayOfWeek', d.firstDayOfWeek),
     ])
 
-    await refreshSettings()
+    updateSettings(d)
 
     setSettingsSaveOk(true)
     setTimeout(() => setSettingsSaveOk(false), 2000)

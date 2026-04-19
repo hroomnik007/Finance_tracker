@@ -57,16 +57,15 @@ function App() {
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
 
-  const [prevAuthenticated, setPrevAuthenticated] = useState(false)
-
   useEffect(() => {
-    if (isAuthenticated && !prevAuthenticated && !isLoading) {
-      // Just logged in — always start on dashboard
-      setPage('dashboard')
-      window.location.hash = 'dashboard'
+    if (isAuthenticated && !isLoading) {
+      if (sessionStorage.getItem('just_logged_in') === 'true') {
+        sessionStorage.removeItem('just_logged_in')
+        setPage('dashboard')
+        window.location.hash = 'dashboard'
+      }
     }
-    if (!isLoading) setPrevAuthenticated(isAuthenticated)
-  }, [isAuthenticated, isLoading, prevAuthenticated])
+  }, [isAuthenticated, isLoading])
 
   useEffect(() => {
     if (isAuthenticated) window.location.hash = page
