@@ -61,6 +61,7 @@ export function AdminLoginPage({ onSuccess }: AdminLoginPageProps) {
             <input
               type="text"
               autoComplete="username"
+              placeholder="Používateľské meno"
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
