@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 interface LoginPageProps {
   onNavigateRegister: () => void
+  onNavigateForgotPassword: () => void
 }
 
 const inputStyle: React.CSSProperties = {
@@ -17,7 +18,7 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 }
 
-export function LoginPage({ onNavigateRegister }: LoginPageProps) {
+export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
   const { login, loginAsGuest } = useAuth()
 
@@ -50,19 +51,11 @@ export function LoginPage({ onNavigateRegister }: LoginPageProps) {
     >
       <div className="w-full flex flex-col gap-6" style={{ maxWidth: '400px' }}>
         {/* Logo + title */}
-        <div className="flex flex-col items-center gap-3 mb-2">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl"
-            style={{
-              background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)',
-              border: '1px solid #4C3A8A',
-            }}
-          >
-            💰
-          </div>
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <img src="/logo.svg" alt="Finvu" className="w-20 h-20" />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-[#E2D9F3]">Rodinné financie</h1>
-            <p className="text-sm text-[#9D84D4] mt-1">{t.auth.login}</p>
+            <h1 className="text-3xl font-bold tracking-tight text-[#E2D9F3]">Finvu</h1>
+            <p className="text-sm text-gray-400 mt-1">Financie pod kontrolou</p>
           </div>
         </div>
 
@@ -116,17 +109,26 @@ export function LoginPage({ onNavigateRegister }: LoginPageProps) {
             />
           </div>
 
-          <div className="flex items-center gap-2 mt-2">
-            <input
-              type="checkbox"
-              id="remember"
-              checked={rememberMe}
-              onChange={e => setRememberMe(e.target.checked)}
-              style={{ width: 18, height: 18, accentColor: '#7C3AED', cursor: 'pointer' }}
-            />
-            <label htmlFor="remember" style={{ fontSize: 14, color: '#9D84D4', cursor: 'pointer' }}>
-              {t.auth.rememberMe}
-            </label>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: '#7C3AED', cursor: 'pointer' }}
+              />
+              <label htmlFor="remember" style={{ fontSize: 14, color: '#9D84D4', cursor: 'pointer' }}>
+                {t.auth.rememberMe}
+              </label>
+            </div>
+            <button
+              type="button"
+              onClick={onNavigateForgotPassword}
+              className="text-[13px] text-[#A78BFA] hover:text-[#C4B5FD] transition-colors"
+            >
+              {t.auth.forgotPassword}
+            </button>
           </div>
 
           <button

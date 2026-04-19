@@ -15,6 +15,10 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   name: varchar("name", { length: 100 }).notNull(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  verificationToken: varchar("verification_token", { length: 255 }),
+  resetToken: varchar("reset_token", { length: 255 }),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

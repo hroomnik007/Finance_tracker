@@ -29,15 +29,10 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         className="flex items-center px-5 pt-6 pb-5"
         style={{ borderBottom: '0.5px solid #4C3A8A' }}
       >
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-lg"
-          style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
-        >
-          💰
+        <div className="flex items-center gap-2">
+          <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />
+          <span className="font-bold text-lg tracking-tight text-[#E2D9F3]">Finvu</span>
         </div>
-        <span className="ml-3 text-[16px] font-bold leading-tight whitespace-nowrap text-[#E2D9F3]">
-          {t.nav.appName}
-        </span>
       </div>
 
       {/* Nav list */}

@@ -7,7 +7,14 @@ import {
   type ReactNode,
 } from 'react'
 import { setAccessToken } from '../api/client'
-import { login as apiLogin, register as apiRegister, logout as apiLogout, refreshToken, getMe } from '../api/auth'
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  refreshToken,
+  getMe,
+  deleteAccount as apiDeleteAccount,
+} from '../api/auth'
 import type { AuthUser } from '../types'
 
 interface AuthContextValue {
@@ -16,9 +23,10 @@ interface AuthContextValue {
   isLoading: boolean
   isGuest: boolean
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
-  register: (email: string, password: string, name: string) => Promise<void>
+  register: (email: string, password: string, name: string, gdprConsent: boolean) => Promise<void>
   loginAsGuest: () => void
   logout: () => Promise<void>
+  deleteAccount: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -30,6 +38,7 @@ const AuthContext = createContext<AuthContextValue>({
   register: async () => {},
   loginAsGuest: () => {},
   logout: async () => {},
+  deleteAccount: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -47,10 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_remember')
+      localStorage.removeItem('category_budget_limits')
     } catch { /* ignore */ }
   }, [isGuest])
 
-  // Restore session from httpOnly cookie on mount
   useEffect(() => {
     const guestFlag =
       sessionStorage.getItem('auth_guest') === 'true' ||
@@ -65,7 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshToken()
       .then(({ accessToken }) => {
         setAccessToken(accessToken)
-        // fetch user from /me — token is now set in the module
         return getMe()
       })
       .then(({ user: me }) => setUser(me))
@@ -73,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false))
   }, [])
 
-  // Listen for forced logout from the axios interceptor
   useEffect(() => {
     const handler = () => doLogout(false)
     window.addEventListener('auth:logout', handler)
@@ -92,11 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [])
 
-  const register = useCallback(async (email: string, password: string, name: string) => {
-    const { user: me, accessToken } = await apiRegister(email, password, name)
-    setAccessToken(accessToken)
-    setUser(me)
-    setIsGuest(false)
+  const register = useCallback(async (email: string, password: string, name: string, gdprConsent: boolean) => {
+    // Registration now sends verification email; user is NOT logged in yet
+    await apiRegister(email, password, name, gdprConsent)
   }, [])
 
   const loginAsGuest = useCallback(() => {
@@ -106,6 +111,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => doLogout(true), [doLogout])
+
+  const deleteAccount = useCallback(async () => {
+    await apiDeleteAccount()
+    await doLogout(false)
+  }, [doLogout])
 
   return (
     <AuthContext.Provider
@@ -118,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         loginAsGuest,
         logout,
+        deleteAccount,
       }}
     >
       {children}

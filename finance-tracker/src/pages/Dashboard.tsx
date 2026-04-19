@@ -76,7 +76,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
 
   const { incomes } = useIncomes(month, year)
-  const { fixedExpenses } = useFixedExpenses()
+  const { fixedExpenses } = useFixedExpenses(month, year)
   const { variableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
   const { formatAmount, formatDate } = useFormatters()

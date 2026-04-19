@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 interface RegisterPageProps {
   onNavigateLogin: () => void
+  onNavigatePrivacyPolicy: () => void
 }
 
 const inputStyle: React.CSSProperties = {
@@ -17,7 +18,7 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 }
 
-export function RegisterPage({ onNavigateLogin }: RegisterPageProps) {
+export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: RegisterPageProps) {
   const { t } = useTranslation()
   const { register, loginAsGuest } = useAuth()
 
@@ -25,8 +26,10 @@ export function RegisterPage({ onNavigateLogin }: RegisterPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [gdprConsent, setGdprConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [verificationSent, setVerificationSent] = useState(false)
 
   const [nameFocused, setNameFocused] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
@@ -39,10 +42,12 @@ export function RegisterPage({ onNavigateLogin }: RegisterPageProps) {
     if (!email) { setError('Zadaj e-mail'); return }
     if (password.length < 8) { setError('Heslo musí mať aspoň 8 znakov'); return }
     if (password !== confirmPassword) { setError('Heslá sa nezhodujú'); return }
+    if (!gdprConsent) { setError('Musíš súhlasiť so spracovaním osobných údajov'); return }
 
     setIsLoading(true)
     try {
-      await register(email, password, name.trim())
+      await register(email, password, name.trim(), gdprConsent)
+      setVerificationSent(true)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
       setError(msg ?? 'Registrácia zlyhala')
@@ -51,25 +56,42 @@ export function RegisterPage({ onNavigateLogin }: RegisterPageProps) {
     }
   }
 
+  if (verificationSent) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <div className="w-full flex flex-col items-center gap-6 text-center" style={{ maxWidth: '400px' }}>
+          <img src="/logo.svg" alt="Finvu" className="w-20 h-20" />
+          <div>
+            <p className="text-5xl mb-4">📧</p>
+            <h2 className="text-xl font-bold text-[#E2D9F3] mb-3">Skontrolujte email</h2>
+            <p className="text-[14px] text-[#B8A3E8] leading-relaxed">{t.auth.verificationSent}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onNavigateLogin}
+            className="text-[#A78BFA] hover:text-[#C4B5FD] text-sm font-medium transition-colors"
+          >
+            {t.auth.backToLogin}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
       style={{ background: 'var(--bg-primary)' }}
     >
       <div className="w-full flex flex-col gap-6" style={{ maxWidth: '400px' }}>
-        <div className="flex flex-col items-center gap-3 mb-2">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl"
-            style={{
-              background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)',
-              border: '1px solid #4C3A8A',
-            }}
-          >
-            💰
-          </div>
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <img src="/logo.svg" alt="Finvu" className="w-20 h-20" />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-[#E2D9F3]">Rodinné financie</h1>
-            <p className="text-sm text-[#9D84D4] mt-1">{t.auth.createAccount}</p>
+            <h1 className="text-3xl font-bold tracking-tight text-[#E2D9F3]">Finvu</h1>
+            <p className="text-sm text-gray-400 mt-1">Financie pod kontrolou</p>
           </div>
         </div>
 
@@ -149,9 +171,30 @@ export function RegisterPage({ onNavigateLogin }: RegisterPageProps) {
             />
           </div>
 
+          {/* GDPR consent */}
+          <div className="flex items-start gap-3 mt-1">
+            <input
+              type="checkbox"
+              id="gdpr"
+              checked={gdprConsent}
+              onChange={e => setGdprConsent(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: '#7C3AED', cursor: 'pointer', marginTop: 2, flexShrink: 0 }}
+            />
+            <label htmlFor="gdpr" style={{ fontSize: 13, color: '#9D84D4', cursor: 'pointer', lineHeight: 1.5 }}>
+              {t.auth.gdprConsent}{' '}
+              <button
+                type="button"
+                onClick={onNavigatePrivacyPolicy}
+                style={{ color: '#A78BFA', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0 }}
+              >
+                ({t.auth.privacyPolicy})
+              </button>
+            </label>
+          </div>
+
           <button
             onClick={handleRegister}
-            disabled={isLoading}
+            disabled={isLoading || !gdprConsent}
             className="w-full font-semibold text-[15px] text-white rounded-2xl transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               height: '48px',

@@ -372,29 +372,31 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         </>
       )}
 
-      {/* FAB */}
-      <button
-        onClick={openAdd}
-        style={{
-          position: 'fixed',
-          bottom: '88px',
-          right: '24px',
-          width: '56px',
-          height: '56px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
-          zIndex: 50,
-          color: 'white',
-        }}
-      >
-        <Plus size={24} strokeWidth={2.5} />
-      </button>
+      {/* FAB — hidden when form is open */}
+      {!sheetOpen && (
+        <button
+          onClick={openAdd}
+          style={{
+            position: 'fixed',
+            bottom: '88px',
+            right: '24px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
+            zIndex: 50,
+            color: 'white',
+          }}
+        >
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      )}
 
       <BottomSheet
         open={sheetOpen}

@@ -1,22 +1,45 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { register, login, refresh, logout, me } from "../controllers/auth.controller";
+import {
+  register, login, refresh, logout, me,
+  verifyEmail, forgotPassword, resetPassword, deleteAccount,
+} from "../controllers/auth.controller";
 import { authenticateToken } from "../middleware/authenticate";
 
-const authLimiter = rateLimit({
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Príliš veľa pokusov. Skúste neskôr." },
+});
+
+const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many requests, please try again later" },
+  message: { error: "Príliš veľa pokusov. Skúste neskôr." },
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Príliš veľa pokusov. Skúste neskôr." },
 });
 
 const router = Router();
 
-router.post("/register", authLimiter, register);
-router.post("/login",    authLimiter, login);
-router.post("/refresh",  authLimiter, refresh);
-router.post("/logout",   logout);
-router.get("/me",        authenticateToken, me);
+router.post("/register",        registerLimiter, register);
+router.post("/login",           loginLimiter,    login);
+router.post("/refresh",         generalLimiter,  refresh);
+router.post("/logout",          logout);
+router.get("/me",               authenticateToken, me);
+router.get("/verify-email",     generalLimiter, verifyEmail);
+router.post("/forgot-password", generalLimiter, forgotPassword);
+router.post("/reset-password",  generalLimiter, resetPassword);
+router.delete("/account",       authenticateToken, deleteAccount);
 
 export default router;

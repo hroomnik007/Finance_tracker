@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Upload, Info, Heart, Settings2, Database, Check, User } from 'lucide-react'
+import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -9,6 +9,7 @@ import { setSetting } from '../hooks/useSettings'
 import { DEFAULT_SETTINGS } from '../types'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
+import { useAuth } from '../context/AuthContext'
 import type { AppSettings } from '../types'
 
 const CURRENCIES = [
@@ -91,6 +92,10 @@ interface SettingsPageProps {
 export function SettingsPage({ onLogout }: SettingsPageProps) {
   const { settings: contextSettings, refreshSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
+  const { deleteAccount } = useAuth()
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const rawSettingsRows = useLiveQuery(() => db.settings.toArray(), [])
 
   // ── Profile ───────────────────────────────────────────────────────────────
@@ -612,6 +617,63 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           {t.auth.logout}
         </button>
       )}
+
+      {/* ── Danger zone: Zmazať účet ── */}
+      <SectionCard>
+        <CardHeader
+          icon={<Trash2 size={15} className="text-white" />}
+          label={t.settings.deleteAccount}
+        />
+        <div className="p-5 flex flex-col gap-4">
+          <p className="text-sm text-[#9D84D4] leading-relaxed">{t.settings.deleteAccountDesc}</p>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F87171]">
+              {t.settings.deleteAccountConfirmLabel}
+            </label>
+            <input
+              type="text"
+              placeholder="ZMAZAŤ"
+              value={deleteConfirm}
+              onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
+              style={{
+                background: '#1E1535',
+                border: '1px solid #7C2D2D',
+                borderRadius: 12,
+                padding: '12px 16px',
+                color: '#E2D9F3',
+                fontSize: 15,
+                width: '100%',
+                outline: 'none',
+              }}
+            />
+          </div>
+          {deleteError && (
+            <p className="text-xs text-[#F87171]">{deleteError}</p>
+          )}
+          <button
+            disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
+            onClick={async () => {
+              setIsDeleting(true)
+              try {
+                await deleteAccount()
+              } catch {
+                setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                setIsDeleting(false)
+              }
+            }}
+            className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              height: '48px',
+              background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
+              border: '1px solid #DC2626',
+              color: deleteConfirm === 'ZMAZAŤ' ? 'white' : '#F87171',
+              cursor: 'pointer',
+            }}
+          >
+            {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
+          </button>
+        </div>
+      </SectionCard>
     </div>
     </div>
   )

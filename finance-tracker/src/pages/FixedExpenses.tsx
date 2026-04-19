@@ -193,19 +193,21 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
           </div>
         </BottomSheet>
 
-        <button
-          onClick={openAdd}
-          style={{
-            position: 'fixed', bottom: '88px', right: '24px',
-            width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)', zIndex: 50, color: 'white',
-          }}
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
+        {!sheetOpen && deleteId === null && (
+          <button
+            onClick={openAdd}
+            style={{
+              position: 'fixed', bottom: '88px', right: '24px',
+              width: '56px', height: '56px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)', zIndex: 50, color: 'white',
+            }}
+          >
+            <Plus size={24} strokeWidth={2.5} />
+          </button>
+        )}
 
         <BottomSheet open={deleteId !== null} onClose={() => setDeleteId(null)} title={t.expenses.fixed.removeTitle}>
           <p className="text-sm text-[#B8A3E8] mb-6 leading-relaxed">{t.expenses.fixed.removeMessage}</p>

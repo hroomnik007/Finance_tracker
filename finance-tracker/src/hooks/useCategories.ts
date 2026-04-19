@@ -4,6 +4,18 @@ import type { Category, ApiCategory } from '../types'
 
 const BUDGET_LIMITS_KEY = 'category_budget_limits'
 
+const LEGACY_ICON_MAP: Record<string, string> = {
+  home: '🏠', utensils: '🍔', car: '🚗', heart: '💊',
+  'gamepad-2': '🎉', shirt: '👕', 'circle-ellipsis': '📦',
+  briefcase: '💰', clock: '⏱️', wallet: '💳', tag: '🏷️',
+  'shopping-cart': '🛒', coffee: '☕', bus: '🚌', plane: '✈️',
+}
+
+function normalizeIcon(icon: string | null): string {
+  if (!icon) return '📦'
+  return LEGACY_ICON_MAP[icon] ?? icon
+}
+
 function loadBudgetLimits(): Record<string, number> {
   try {
     return JSON.parse(localStorage.getItem(BUDGET_LIMITS_KEY) ?? '{}')
@@ -21,7 +33,7 @@ function toCategory(c: ApiCategory, limits: Record<string, number>): Category {
     id: c.id,
     name: c.name,
     color: c.color ?? '#9D84D4',
-    icon: c.icon ?? '📦',
+    icon: normalizeIcon(c.icon),
     type: c.type,
     budgetLimit: limits[c.id],
   }

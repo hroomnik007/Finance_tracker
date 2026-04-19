@@ -10,6 +10,12 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   BCRYPT_ROUNDS: z.coerce.number().default(12),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().default("noreply@finvu.pedani.eu"),
+  APP_URL: z.string().default("https://finvu.pedani.eu"),
 });
 
 export const env = envSchema.parse(process.env);

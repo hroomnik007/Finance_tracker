@@ -11,15 +11,19 @@ function toFixedExpense(t: ApiTransaction): FixedExpense {
   }
 }
 
-export function useFixedExpenses() {
+export function useFixedExpenses(month?: number, year?: number) {
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([])
 
   const load = useCallback(async () => {
     try {
-      const { data } = await getTransactions({ type: 'expense', isFixed: true, limit: 200 })
+      const monthStr =
+        month !== undefined && year !== undefined
+          ? `${year}-${String(month).padStart(2, '0')}`
+          : undefined
+      const { data } = await getTransactions({ type: 'expense', isFixed: true, month: monthStr, limit: 200 })
       setFixedExpenses(data.map(toFixedExpense))
     } catch { /* guest or not authenticated */ }
-  }, [])
+  }, [month, year])
 
   useEffect(() => { load() }, [load])
 

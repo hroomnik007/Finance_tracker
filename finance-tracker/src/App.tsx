@@ -10,6 +10,10 @@ import { CategoriesPage } from './pages/Categories'
 import { SettingsPage } from './pages/Settings'
 import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
+import { ForgotPasswordPage } from './pages/ForgotPassword'
+import { ResetPasswordPage } from './pages/ResetPassword'
+import { VerifyEmailPage } from './pages/VerifyEmail'
+import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
 import { RightPanel } from './components/RightPanel'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
@@ -33,7 +37,13 @@ function App() {
   const { isAuthenticated, isLoading, logout } = useAuth()
 
   const [page, setPage] = useState<Page>(getPageFromHash)
-  const [authPage, setAuthPage] = useState<'login' | 'register'>('login')
+  type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
+  const [authPage, setAuthPage] = useState<AuthPage>(() => {
+    const hash = window.location.hash
+    if (hash.startsWith('#verify-email')) return 'verify-email'
+    if (hash.startsWith('#reset-password')) return 'reset-password'
+    return 'login'
+  })
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -75,14 +85,44 @@ function App() {
     return <div style={{ minHeight: '100svh', backgroundColor: '#1E1535' }} />
   }
 
+  const getTokenFromHash = () => {
+    const query = window.location.hash.split('?')[1] ?? ''
+    return new URLSearchParams(query).get('token') ?? ''
+  }
+
   if (!isAuthenticated) {
     return (
       <>
         <ToastContainer toasts={toasts} />
-        {authPage === 'register' ? (
-          <RegisterPage onNavigateLogin={() => setAuthPage('login')} />
-        ) : (
-          <LoginPage onNavigateRegister={() => setAuthPage('register')} />
+        {authPage === 'register' && (
+          <RegisterPage
+            onNavigateLogin={() => setAuthPage('login')}
+            onNavigatePrivacyPolicy={() => setAuthPage('privacy-policy')}
+          />
+        )}
+        {authPage === 'forgot-password' && (
+          <ForgotPasswordPage onNavigateLogin={() => setAuthPage('login')} />
+        )}
+        {authPage === 'reset-password' && (
+          <ResetPasswordPage
+            token={getTokenFromHash()}
+            onNavigateLogin={() => setAuthPage('login')}
+          />
+        )}
+        {authPage === 'verify-email' && (
+          <VerifyEmailPage
+            token={getTokenFromHash()}
+            onNavigateLogin={() => setAuthPage('login')}
+          />
+        )}
+        {authPage === 'privacy-policy' && (
+          <PrivacyPolicyPage onBack={() => setAuthPage('register')} />
+        )}
+        {(authPage === 'login' || (authPage !== 'register' && authPage !== 'forgot-password' && authPage !== 'reset-password' && authPage !== 'verify-email' && authPage !== 'privacy-policy')) && (
+          <LoginPage
+            onNavigateRegister={() => setAuthPage('register')}
+            onNavigateForgotPassword={() => setAuthPage('forgot-password')}
+          />
         )}
       </>
     )
