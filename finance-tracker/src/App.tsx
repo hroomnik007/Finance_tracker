@@ -18,6 +18,8 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
 import { RightPanel } from './components/RightPanel'
 import { OnboardingTutorial, useOnboarding } from './components/OnboardingTutorial'
 import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTemplateModal'
+import { PinLock } from './components/PinLock'
+import { usePinLock } from './hooks/usePinLock'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
 
@@ -51,6 +53,7 @@ function App() {
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const { toasts, showToast } = useToast()
+  const { locked, verifyPin } = usePinLock()
   const { showOnboarding, completeOnboarding } = useOnboarding()
   const needsBudgetTemplate = useBudgetTemplate()
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
@@ -163,6 +166,7 @@ function App() {
       className="flex h-screen overflow-hidden"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh' }}
     >
+      {locked && isAuthenticated && <PinLock onVerify={verifyPin} />}
       <ToastContainer toasts={toasts} />
 
       <AppNav

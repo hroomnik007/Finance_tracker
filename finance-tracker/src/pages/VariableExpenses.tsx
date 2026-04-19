@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Edit2, Trash2, Plus } from 'lucide-react'
+import { Edit2, Trash2, Plus, FileUp } from 'lucide-react'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { MonthSwitcher } from '../components/MonthSwitcher'
+import { CsvImportModal } from '../components/CsvImportModal'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
@@ -49,6 +50,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
+  const [csvOpen, setCsvOpen] = useState(false)
 
   const getCategoryById = (id: string) => categories.find(c => c.id === id)
   const getBudgetForCat = (catId: string) => budgetStatuses.find(b => b.categoryId === catId)
@@ -232,7 +234,21 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        <button
+          onClick={() => setCsvOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 38, padding: '0 14px',
+            background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)',
+            borderRadius: 12, color: '#A78BFA', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
+          }}
+        >
+          <FileUp size={15} />
+          <span className="hidden sm:inline">Import CSV</span>
+        </button>
       </div>
+      <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
 
       {/* ── Desktop: two-panel layout ── */}

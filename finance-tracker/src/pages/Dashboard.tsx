@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, CartesianGrid,
+  BarChart, Bar,
 } from 'recharts'
 import { MonthSwitcher } from '../components/MonthSwitcher'
 import { useIncomes } from '../hooks/useIncomes'
@@ -363,6 +364,50 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               </ResponsiveContainer>
             </div>
           )}
+
+          {/* ── Month comparison BarChart ── */}
+          {chartData.length > 0 && (
+            <div style={CARD}>
+              <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-4">Porovnanie mesiacov</h3>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
+                  <Bar dataKey="income" name={t.nav.income} fill="#34D399" radius={[4,4,0,0]} />
+                  <Bar dataKey="expenses" name={t.nav.expenses} fill="#F87171" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* ── Prediction card ── */}
+          {(() => {
+            const now = new Date()
+            const daysInMonth = new Date(year, month, 0).getDate()
+            const dayOfMonth = month === now.getMonth() + 1 && year === now.getFullYear() ? now.getDate() : daysInMonth
+            const elapsed = Math.max(dayOfMonth, 1)
+            const dailyAvg = totalExpenses / elapsed
+            const prediction = dailyAvg * daysInMonth
+            const prevMonth = chartData[chartData.length - 2]
+            const prevTotal = prevMonth?.expenses ?? 0
+            const diff = prediction - prevTotal
+            if (totalExpenses === 0) return null
+            return (
+              <div style={{ ...CARD, padding: 16 }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-2">Predikcia výdavkov</p>
+                <p className="font-mono font-bold text-[22px] text-[#F87171]">{formatAmount(prediction)}</p>
+                <p className="text-[12px] text-[#9D84D4] mt-1">
+                  {dailyAvg.toFixed(2)} €/deň × {daysInMonth} dní
+                </p>
+                {prevTotal > 0 && (
+                  <p className="text-[12px] mt-1" style={{ color: diff > 0 ? '#F87171' : '#34D399' }}>
+                    {diff > 0 ? '▲' : '▼'} {formatAmount(Math.abs(diff))} oproti minulému mesiacu
+                  </p>
+                )}
+              </div>
+            )
+          })()}
 
           {last5.length > 0 ? (
             <div className="flex flex-col gap-2">

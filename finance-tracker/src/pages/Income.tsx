@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash, Plus } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash, Plus, FileUp } from 'lucide-react'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { MonthSwitcher } from '../components/MonthSwitcher'
+import { CsvImportModal } from '../components/CsvImportModal'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
@@ -39,6 +40,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const [editing, setEditing] = useState<Income | null>(null)
   const [form, setForm] = useState<FormState>(makeEmpty())
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [csvOpen, setCsvOpen] = useState(false)
 
   const openAdd = () => {
     setEditing(null)
@@ -163,7 +165,21 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
           </div>
         </div>
+        <button
+          onClick={() => setCsvOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 38, padding: '0 14px',
+            background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)',
+            borderRadius: 12, color: '#A78BFA', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
+          }}
+        >
+          <FileUp size={15} />
+          <span className="hidden sm:inline">Import CSV</span>
+        </button>
       </div>
+      <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3 fade-up" style={{ alignItems: 'stretch' }}>

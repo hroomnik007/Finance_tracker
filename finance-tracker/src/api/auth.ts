@@ -63,3 +63,8 @@ export async function adminLogin(username: string, password: string): Promise<{ 
   const { data } = await apiClient.post('/api/auth/admin-login', { username, password })
   return data
 }
+
+export async function updateWeeklyEmail(enabled: boolean): Promise<{ weeklyEmailEnabled: boolean }> {
+  const { data } = await apiClient.patch('/api/auth/weekly-email', { enabled })
+  return data
+}

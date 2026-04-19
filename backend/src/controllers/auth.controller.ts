@@ -33,8 +33,8 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-function userPublic(u: { id: string; email: string; name: string; avatarUrl?: string | null; role?: string }) {
-  return { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null, role: u.role ?? 'user' };
+function userPublic(u: { id: string; email: string; name: string; avatarUrl?: string | null; role?: string; weeklyEmailEnabled?: boolean }) {
+  return { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null, role: u.role ?? 'user', weeklyEmailEnabled: u.weeklyEmailEnabled ?? false };
 }
 
 async function issueTokens(res: Response, userId: string, email: string): Promise<string> {
@@ -163,7 +163,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
 export async function me(req: AuthRequest, res: Response): Promise<void> {
   const [user] = await db
-    .select({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role })
+    .select({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role, weeklyEmailEnabled: users.weeklyEmailEnabled })
     .from(users)
     .where(eq(users.id, req.userId!))
     .limit(1);
@@ -298,6 +298,13 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
 
   const token = signAdminToken();
   res.json({ token });
+}
+
+export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!;
+  const { enabled } = req.body as { enabled: boolean };
+  await db.update(users).set({ weeklyEmailEnabled: !!enabled }).where(eq(users.id, userId));
+  res.json({ weeklyEmailEnabled: !!enabled });
 }
 
 export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {

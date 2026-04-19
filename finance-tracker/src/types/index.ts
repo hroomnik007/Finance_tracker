@@ -71,6 +71,7 @@ export interface AuthUser {
   name: string
   avatarUrl?: string | null
   role?: string
+  weeklyEmailEnabled?: boolean
 }
 
 export interface ApiCategory {

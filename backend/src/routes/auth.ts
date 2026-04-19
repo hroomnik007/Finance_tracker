@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 import {
   register, login, refresh, logout, me,
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
-  updateAvatar, demoLogin, adminLogin,
+  updateAvatar, demoLogin, adminLogin, updateWeeklyEmail,
 } from "../controllers/auth.controller";
 import { authenticateToken } from "../middleware/authenticate";
 
@@ -43,6 +43,7 @@ router.post("/forgot-password", generalLimiter, forgotPassword);
 router.post("/reset-password",  generalLimiter, resetPassword);
 router.delete("/account",       authenticateToken, deleteAccount);
 router.patch("/avatar",         authenticateToken, updateAvatar);
+router.patch("/weekly-email",   authenticateToken, updateWeeklyEmail);
 router.get("/demo-login",       demoLogin);
 router.post("/admin-login",     loginLimiter, adminLogin);
 

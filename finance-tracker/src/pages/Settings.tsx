@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera } from 'lucide-react'
+import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, Lock, Mail } from 'lucide-react'
+import { PinSetupModal } from '../components/PinSetupModal'
+import { usePinLock } from '../hooks/usePinLock'
+import { updateWeeklyEmail } from '../api/auth'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -192,6 +195,25 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
     setSettingsSaveOk(true)
     setTimeout(() => setSettingsSaveOk(false), 2000)
+  }
+
+  // ── PIN lock ──────────────────────────────────────────────────────────────
+  const { hasPin, setupPin, removePin } = usePinLock()
+  const [pinSetupOpen, setPinSetupOpen] = useState(false)
+
+  // ── Weekly email ──────────────────────────────────────────────────────────
+  const [weeklyEmail, setWeeklyEmail] = useState(user?.weeklyEmailEnabled ?? false)
+  const [weeklyEmailSaving, setWeeklyEmailSaving] = useState(false)
+
+  async function handleWeeklyEmailToggle() {
+    setWeeklyEmailSaving(true)
+    const next = !weeklyEmail
+    try {
+      await updateWeeklyEmail(next)
+      setWeeklyEmail(next)
+    } finally {
+      setWeeklyEmailSaving(false)
+    }
   }
 
   // ── Import / Export ───────────────────────────────────────────────────────
@@ -597,6 +619,47 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </button>
           )}
         </div>
+      </SectionCard>
+
+      {/* ── Section PIN: Bezpečnosť ── */}
+      <SectionCard>
+        <CardHeader icon={<Lock size={15} className="text-white" />} label="Bezpečnosť" />
+        <SettingRow label="PIN zámok" sublabel="Automaticky zamkne aplikáciu po 5 minútach nečinnosti">
+          <button
+            onClick={() => hasPin ? removePin() : setPinSetupOpen(true)}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${hasPin ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: hasPin ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasPin ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
+        {hasPin && (
+          <div className="px-5 pb-4">
+            <button
+              onClick={() => setPinSetupOpen(true)}
+              className="btn-secondary justify-center py-2.5 text-sm w-full"
+              style={{ borderRadius: 12 }}
+            >
+              Zmeniť PIN
+            </button>
+          </div>
+        )}
+      </SectionCard>
+      <PinSetupModal open={pinSetupOpen} onClose={() => setPinSetupOpen(false)} onSetPin={setupPin} />
+
+      {/* ── Section: Týždenný report ── */}
+      <SectionCard>
+        <CardHeader icon={<Mail size={15} className="text-white" />} label="Týždenný report" />
+        <SettingRow label="Týždenný email" sublabel="Dostaneš prehľad príjmov a výdavkov každý pondelok ráno">
+          <button
+            onClick={handleWeeklyEmailToggle}
+            disabled={weeklyEmailSaving}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${weeklyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: weeklyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: weeklyEmailSaving ? 0.6 : 1 }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${weeklyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
       </SectionCard>
 
       {/* ── Section 2: Dáta ── */}

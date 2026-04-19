@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   resetTokenExpiry: timestamp("reset_token_expiry"),
   avatarUrl: text("avatar_url"),
   role: varchar("role", { length: 20 }).default("user").notNull(),
+  weeklyEmailEnabled: boolean("weekly_email_enabled").default(false).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
