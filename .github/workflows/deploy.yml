@@ -1,5 +1,4 @@
 name: Deploy to Hetzner
-
 on:
   push:
     branches:
@@ -7,7 +6,6 @@ on:
     paths:
       - 'finance-tracker/**'
       - 'backend/**'
-
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -16,7 +14,6 @@ jobs:
       changed_backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -41,7 +38,8 @@ jobs:
           script: |
             set -euo pipefail
             cd /var/www/finance-tracker
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             cd finance-tracker
             sudo mkdir -p dist
             sudo chown -R deploy:deploy dist
@@ -64,7 +62,8 @@ jobs:
           script: |
             set -euo pipefail
             cd /var/www/finance-tracker
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             cd backend
             npm ci --prefer-offline
             npm run build
