@@ -33,6 +33,7 @@
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.9.0",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.28.1",
     "tsx": "^4.19.2",

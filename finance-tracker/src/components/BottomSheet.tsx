@@ -57,7 +57,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
             borderBottom: '1px solid var(--border-subtle)',
           }}
         >
-          <h2 className="text-base font-semibold text-[#E2D9F3]">{title}</h2>
+          <h2 className="text-base font-semibold text-[#E2D9F3] pt-1 overflow-visible">{title}</h2>
           <button
             onClick={onClose}
             className="btn-icon w-8 h-8 text-[#B8A3E8] hover:text-[#E2D9F3]"
