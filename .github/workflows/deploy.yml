@@ -22,7 +22,6 @@ jobs:
               - 'finance-tracker/**'
             backend:
               - 'backend/**'
-
   deploy-frontend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_frontend == 'true'
@@ -46,7 +45,6 @@ jobs:
             npm ci --prefer-offline --legacy-peer-deps
             VITE_API_URL=https://api.pedani.eu npm run build
             sudo systemctl reload nginx
-
   deploy-backend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_backend == 'true'
