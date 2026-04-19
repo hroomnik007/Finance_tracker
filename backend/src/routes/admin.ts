@@ -1,22 +1,25 @@
-import { Router, Response, NextFunction } from "express";
-import { authenticateToken, AuthRequest } from "../middleware/authenticate";
+import { Router, Request, Response, NextFunction } from "express";
+import { verifyAdminToken } from "../lib/tokens";
 import { getStats, getUserList } from "../controllers/admin.controller";
-import { db } from "../db";
-import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
 
-async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
-  const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.userId!)).limit(1);
-  if (!user || user.role !== "admin") {
-    res.status(403).json({ error: "Admin access required" });
+function authenticateAdmin(req: Request, res: Response, next: NextFunction): void {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Admin token required" });
     return;
   }
-  next();
+  const token = header.slice(7);
+  try {
+    verifyAdminToken(token);
+    next();
+  } catch {
+    res.status(401).json({ error: "Invalid or expired admin token" });
+  }
 }
 
 const router = Router();
 
-router.use(authenticateToken, requireAdmin);
+router.use(authenticateAdmin);
 router.get("/stats", getStats);
 router.get("/users", getUserList);
 

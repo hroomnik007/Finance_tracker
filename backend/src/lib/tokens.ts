@@ -7,6 +7,11 @@ export interface AccessTokenPayload {
   email: string;
 }
 
+export interface AdminTokenPayload {
+  role: "admin";
+  sub: "admin";
+}
+
 export function signAccessToken(payload: AccessTokenPayload): string {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: "15m" });
 }
@@ -21,6 +26,16 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
 
 export function verifyRefreshToken(token: string): AccessTokenPayload {
   return jwt.verify(token, env.JWT_REFRESH_SECRET) as AccessTokenPayload;
+}
+
+export function signAdminToken(): string {
+  return jwt.sign({ role: "admin", sub: "admin" }, env.JWT_ACCESS_SECRET, { expiresIn: "4h" });
+}
+
+export function verifyAdminToken(token: string): AdminTokenPayload {
+  const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as AdminTokenPayload;
+  if (payload.role !== "admin" || payload.sub !== "admin") throw new Error("Not an admin token");
+  return payload;
 }
 
 export function hashToken(token: string): Promise<string> {

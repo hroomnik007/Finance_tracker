@@ -28,9 +28,8 @@ export type Page =
   | 'fixed-expenses'
   | 'categories'
   | 'settings'
-  | 'admin'
 
-const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'admin']
+const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings']
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.slice(1) as Page
@@ -199,7 +198,6 @@ function App() {
           )}
           {page === 'categories' && <CategoriesPage />}
           {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
-          {page === 'admin' && <AdminPage />}
         </div>
       </main>
 
@@ -224,4 +222,17 @@ function App() {
   )
 }
 
-export default App
+function Root() {
+  const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash.startsWith('#admin'))
+
+  useEffect(() => {
+    const handler = () => setIsAdminRoute(window.location.hash.startsWith('#admin'))
+    window.addEventListener('hashchange', handler)
+    return () => window.removeEventListener('hashchange', handler)
+  }, [])
+
+  if (isAdminRoute) return <AdminPage />
+  return <App />
+}
+
+export default Root

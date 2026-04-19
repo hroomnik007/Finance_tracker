@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID, timingSafeEqual } from "crypto";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { eq, and, gt } from "drizzle-orm";
@@ -9,6 +9,7 @@ import { env } from "../config/env";
 import {
   signAccessToken,
   signRefreshToken,
+  signAdminToken,
   verifyRefreshToken,
   hashToken,
   compareToken,
@@ -268,6 +269,35 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   await db.delete(refreshTokens).where(eq(refreshTokens.userId, user.id));
 
   res.json({ message: "Heslo bolo úspešne zmenené." });
+}
+
+function safeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    timingSafeEqual(bufB, bufB); // dummy comparison to keep timing similar
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
+
+export async function adminLogin(req: Request, res: Response): Promise<void> {
+  const { username, password } = req.body as { username?: string; password?: string };
+  if (!username || !password) {
+    res.status(400).json({ error: "Username and password required" });
+    return;
+  }
+
+  const userOk = safeCompare(username, env.ADMIN_USERNAME);
+  const passOk = safeCompare(password, env.ADMIN_PASSWORD);
+
+  if (!userOk || !passOk) {
+    res.status(401).json({ error: "Nesprávne prihlasovacie údaje." });
+    return;
+  }
+
+  const token = signAdminToken();
+  res.json({ token });
 }
 
 export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {

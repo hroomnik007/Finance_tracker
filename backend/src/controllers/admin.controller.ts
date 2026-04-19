@@ -1,10 +1,9 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { users, transactions } from "../db/schema";
-import { AuthRequest } from "../middleware/authenticate";
 
-export async function getStats(req: AuthRequest, res: Response): Promise<void> {
+export async function getStats(_req: Request, res: Response): Promise<void> {
   const [totalUsers] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
   const [newUsers7d] = await db.select({ count: sql<number>`count(*)::int` }).from(users)
     .where(sql`${users.createdAt} >= now() - interval '7 days'`);
@@ -20,13 +19,12 @@ export async function getStats(req: AuthRequest, res: Response): Promise<void> {
   });
 }
 
-export async function getUserList(req: AuthRequest, res: Response): Promise<void> {
+export async function getUserList(_req: Request, res: Response): Promise<void> {
   const userList = await db
     .select({
       id: users.id,
       email: users.email,
       name: users.name,
-      role: users.role,
       createdAt: users.createdAt,
       lastLoginAt: users.lastLoginAt,
       emailVerified: users.emailVerified,

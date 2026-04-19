@@ -58,3 +58,8 @@ export async function demoLogin(): Promise<{ user: import('../types').AuthUser; 
   const { data } = await apiClient.get('/api/auth/demo-login')
   return data
 }
+
+export async function adminLogin(username: string, password: string): Promise<{ token: string }> {
+  const { data } = await apiClient.post('/api/auth/admin-login', { username, password })
+  return data
+}
