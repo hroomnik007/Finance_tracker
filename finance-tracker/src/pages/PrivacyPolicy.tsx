@@ -1,8 +1,4 @@
-interface PrivacyPolicyPageProps {
-  onBack: () => void
-}
-
-export function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
+export function PrivacyPolicyPage() {
   return (
     <div
       className="min-h-screen px-4 py-8"
@@ -10,7 +6,7 @@ export function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
     >
       <div className="max-w-2xl mx-auto">
         <button
-          onClick={onBack}
+          onClick={() => window.history.back()}
           className="text-[#A78BFA] hover:text-[#C4B5FD] text-sm mb-6 transition-colors"
         >
           ← Späť

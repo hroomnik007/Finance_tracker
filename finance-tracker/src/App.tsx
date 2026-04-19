@@ -116,7 +116,7 @@ function App() {
           />
         )}
         {authPage === 'privacy-policy' && (
-          <PrivacyPolicyPage onBack={() => setAuthPage('register')} />
+          <PrivacyPolicyPage />
         )}
         {(authPage === 'login' || (authPage !== 'register' && authPage !== 'forgot-password' && authPage !== 'reset-password' && authPage !== 'verify-email' && authPage !== 'privacy-policy')) && (
           <LoginPage
