@@ -45,7 +45,7 @@ jobs:
             npm ci --prefer-offline --legacy-peer-deps
             VITE_API_URL=https://api.pedani.eu npm run build
             sudo systemctl reload nginx
-deploy-backend:
+  deploy-backend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_backend == 'true'
     runs-on: ubuntu-latest
@@ -61,6 +61,10 @@ deploy-backend:
             set -euo pipefail
             cd /var/www/finance-tracker/backend
             npm ci --prefer-offline
+            DATABASE_URL=postgresql://finance_user:6f9b13c63a5bdeced9b940728d8e560c@localhost:5432/finance_tracker npm run db:migrate
+            cd /var/www/finance-tracker
+            docker compose build backend
+            docker compose up -d --no-deps backend
             DATABASE_URL=postgresql://finance_user:6f9b13c63a5bdeced9b940728d8e560c@localhost:5432/finance_tracker npm run db:migrate
             cd /var/www/finance-tracker
             docker compose build backend
