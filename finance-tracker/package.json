@@ -19,6 +19,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-is": "^19.2.5",
+    "react-swipeable": "^7.0.2",
     "recharts": "^3.8.1",
     "vite-plugin-pwa": "^0.19.8",
     "workbox-window": "^7.4.0",

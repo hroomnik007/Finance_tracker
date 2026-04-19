@@ -2,6 +2,7 @@ import {
   pgTable,
   uuid,
   varchar,
+  text,
   timestamp,
   boolean,
   numeric,
@@ -19,6 +20,9 @@ export const users = pgTable("users", {
   verificationToken: varchar("verification_token", { length: 255 }),
   resetToken: varchar("reset_token", { length: 255 }),
   resetTokenExpiry: timestamp("reset_token_expiry"),
+  avatarUrl: text("avatar_url"),
+  role: varchar("role", { length: 20 }).default("user").notNull(),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

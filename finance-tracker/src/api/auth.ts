@@ -48,3 +48,13 @@ export async function resetPassword(token: string, newPassword: string): Promise
 export async function deleteAccount(): Promise<void> {
   await apiClient.delete('/api/auth/account')
 }
+
+export async function updateAvatar(avatarUrl: string): Promise<{ avatarUrl: string }> {
+  const { data } = await apiClient.patch('/api/auth/avatar', { avatarUrl })
+  return data
+}
+
+export async function demoLogin(): Promise<{ user: import('../types').AuthUser; accessToken: string }> {
+  const { data } = await apiClient.get('/api/auth/demo-login')
+  return data
+}

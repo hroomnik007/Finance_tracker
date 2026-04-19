@@ -20,7 +20,7 @@ const inputStyle: React.CSSProperties = {
 
 export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
-  const { login, loginAsGuest } = useAuth()
+  const { login, loginAsGuest, loginDemo } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,6 +29,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isDemoLoading, setIsDemoLoading] = useState(false)
 
   const handleLogin = async () => {
     if (!email || !password) return
@@ -158,7 +159,32 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
           </p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={async () => {
+              setIsDemoLoading(true)
+              setError(null)
+              try {
+                await loginDemo()
+              } catch {
+                setError('Demo účet nie je dostupný. Skúste neskôr.')
+              } finally {
+                setIsDemoLoading(false)
+              }
+            }}
+            disabled={isDemoLoading}
+            className="w-full font-semibold text-[14px] rounded-2xl transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{
+              height: '44px',
+              background: 'rgba(167,139,250,0.12)',
+              border: '1px solid #4C3A8A',
+              color: '#A78BFA',
+              cursor: 'pointer',
+            }}
+          >
+            {isDemoLoading ? 'Načítavam demo...' : '👀 Vyskúšať demo'}
+          </button>
           <button
             type="button"
             onClick={loginAsGuest}

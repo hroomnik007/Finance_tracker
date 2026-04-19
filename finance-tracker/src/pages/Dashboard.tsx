@@ -11,6 +11,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
+import { useAuth } from '../context/AuthContext'
 import { getSummary } from '../api/transactions'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
@@ -62,11 +63,12 @@ const TOOLTIP_STYLE = {
   fontSize: 13,
 }
 
-function getGreeting(t: ReturnType<typeof useTranslation>['t']): string {
+function getGreeting(name: string): { text: string; emoji: string } {
   const hour = new Date().getHours()
-  if (hour >= 5 && hour < 12) return t.dashboard.greetingMorning
-  if (hour >= 12 && hour < 18) return t.dashboard.greetingDay
-  return t.dashboard.greetingEvening
+  if (hour >= 5 && hour < 12) return { text: `Dobré ráno${name ? `, ${name}` : ''}`, emoji: '☀️' }
+  if (hour >= 12 && hour < 18) return { text: `Dobrý deň${name ? `, ${name}` : ''}`, emoji: '👋' }
+  if (hour >= 18 && hour < 22) return { text: `Dobrý večer${name ? `, ${name}` : ''}`, emoji: '🌙' }
+  return { text: `Dobrú noc${name ? `, ${name}` : ''}`, emoji: '😴' }
 }
 
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
@@ -82,6 +84,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
   const { profileName, profileAvatar } = useSettingsContext()
+  const { user } = useAuth()
+  const displayName = user?.name || profileName
+  const greeting = getGreeting(displayName)
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
@@ -158,9 +163,17 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       <div style={{ background: 'linear-gradient(135deg, #1E1535 0%, #2D1F5E 50%, #1A1040 100%)', border: '0.5px solid #4C3A8A', borderRadius: 20, padding: 20 }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span style={{ fontSize: 24 }}>{profileAvatar}</span>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt="avatar"
+                style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #4C3A8A', flexShrink: 0 }}
+              />
+            ) : (
+              <span style={{ fontSize: 24 }}>{profileAvatar}</span>
+            )}
             <span className="font-semibold text-[15px] text-[#E2D9F3]">
-              {getGreeting(t)}{profileName ? `, ${profileName}` : ''}! 👋
+              {greeting.text}! {greeting.emoji}
             </span>
           </div>
           <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>

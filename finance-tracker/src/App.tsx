@@ -8,6 +8,7 @@ import { VariableExpensesPage } from './pages/VariableExpenses'
 import { FixedExpensesPage } from './pages/FixedExpenses'
 import { CategoriesPage } from './pages/Categories'
 import { SettingsPage } from './pages/Settings'
+import { AdminPage } from './pages/Admin'
 import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
 import { ForgotPasswordPage } from './pages/ForgotPassword'
@@ -15,6 +16,8 @@ import { ResetPasswordPage } from './pages/ResetPassword'
 import { VerifyEmailPage } from './pages/VerifyEmail'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
 import { RightPanel } from './components/RightPanel'
+import { OnboardingTutorial, useOnboarding } from './components/OnboardingTutorial'
+import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTemplateModal'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
 
@@ -25,8 +28,9 @@ export type Page =
   | 'fixed-expenses'
   | 'categories'
   | 'settings'
+  | 'admin'
 
-const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings']
+const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'admin']
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.slice(1) as Page
@@ -48,10 +52,25 @@ function App() {
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const { toasts, showToast } = useToast()
+  const { showOnboarding, completeOnboarding } = useOnboarding()
+  const needsBudgetTemplate = useBudgetTemplate()
+  const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   useEffect(() => {
     if (isAuthenticated) window.location.hash = page
   }, [page, isAuthenticated])
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      if (needsBudgetTemplate) {
+        setShowBudgetTemplate(true)
+      } else if (showOnboarding) {
+        setShowTutorial(true)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isLoading])
 
   useEffect(() => {
     const handler = () => setPage(getPageFromHash())
@@ -168,6 +187,7 @@ function App() {
           )}
           {page === 'categories' && <CategoriesPage />}
           {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
+          {page === 'admin' && <AdminPage />}
         </div>
       </main>
 
@@ -176,6 +196,18 @@ function App() {
       <div className="lg:hidden">
         <BottomNav current={page} onChange={setPage} />
       </div>
+
+      {showBudgetTemplate && (
+        <BudgetTemplateModal
+          onComplete={() => {
+            setShowBudgetTemplate(false)
+            if (showOnboarding) setShowTutorial(true)
+          }}
+        />
+      )}
+      {showTutorial && !showBudgetTemplate && (
+        <OnboardingTutorial onComplete={() => { completeOnboarding(); setShowTutorial(false) }} />
+      )}
     </div>
   )
 }

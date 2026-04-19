@@ -142,49 +142,46 @@ export function CategoriesPage() {
             </div>
 
             {/* Mobile */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden" style={{ alignItems: 'stretch' }}>
+            <div className="flex flex-col gap-3 lg:hidden">
               {categories.map((cat, idx) => (
                 <div
                   key={cat.id}
-                  className="relative p-5 rounded-[20px] flex flex-col gap-3 group cursor-default fade-up"
+                  className="flex items-center gap-3 p-4 rounded-2xl fade-up cursor-pointer"
                   style={{
                     backgroundColor: cat.color + '12',
                     border: `1px solid ${cat.color}40`,
                     animationDelay: `${idx * 40}ms`,
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    minHeight: '64px',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-elevated)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+                  onClick={() => openEdit(cat)}
                 >
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center text-3xl" style={{ backgroundColor: cat.color + '30' }}>
-                      {cat.icon}
-                    </div>
-                    <p className="text-sm font-semibold text-[#E2D9F3] text-center leading-snug">{cat.name}</p>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: cat.color + '30' }}>
+                    {cat.icon}
                   </div>
-                  <div className="flex justify-center">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#E2D9F3] leading-snug">{cat.name}</p>
                     {cat.budgetLimit != null ? (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: cat.color + '22', color: cat.color }}>
+                      <span className="text-xs font-semibold" style={{ color: cat.color }}>
                         {formatAmount(cat.budgetLimit)}
                       </span>
                     ) : (
-                      <span className="text-xs text-[#9D84D4] italic">{t.expenses.categories.noLimit}</span>
+                      <span className="text-xs text-[#9D84D4]">{t.expenses.categories.noLimit}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => openEdit(cat)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
-                      style={{ backgroundColor: '#32265A', color: '#B8A3E8' }}
+                      className="flex items-center justify-center rounded-xl text-[#9D84D4]"
+                      style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.05)' }}
                     >
-                      <Pencil size={12} /> {t.common.edit}
+                      <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => setDeleteId(cat.id!)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors"
-                      style={{ backgroundColor: '#32265A', color: '#B8A3E8' }}
+                      className="flex items-center justify-center rounded-xl text-[#9D84D4]"
+                      style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.05)' }}
                     >
-                      <Trash2 size={12} /> {t.common.delete}
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>

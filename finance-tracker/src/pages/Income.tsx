@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash, Plus } from 'lucide-react'
+import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -221,66 +222,59 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           {/* Mobile/Tablet: card list */}
           <div className="flex flex-col gap-2.5 lg:hidden">
             {sorted.map((income: Income, idx: number) => (
-              <div
-                key={income.id}
-                className="flex items-center justify-between px-4 py-4 rounded-[18px] cursor-pointer transition-all duration-150 fade-up"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--shadow-card)',
-                  animationDelay: `${idx * 40}ms`,
-                  minHeight: '64px',
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-medium)'
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-subtle)'
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-                }}
-                onClick={() => openEdit(income)}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: 'rgba(52,211,153,0.15)' }}
-                  >
-                    <Calendar size={18} style={{ color: '#34d399' }} />
+              <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)}>
+                <div
+                  className="flex items-center justify-between px-4 py-4 rounded-[18px] cursor-pointer transition-all duration-150 fade-up"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    boxShadow: 'var(--shadow-card)',
+                    animationDelay: `${idx * 40}ms`,
+                    minHeight: '64px',
+                  }}
+                  onClick={() => openEdit(income)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: 'rgba(52,211,153,0.15)' }}
+                    >
+                      <Calendar size={18} style={{ color: '#34d399' }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{income.label}</p>
+                      <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(income.date)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{income.label}</p>
-                    <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(income.date)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="font-mono font-semibold text-sm text-[#34d399]">
-                      {formatAmount(income.amount)}
-                    </span>
-                    {income.recurring && (
-                      <span
-                        className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
-                        style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#60a5fa' }}
-                      >
-                        <Repeat size={9} /> {t.income.recurringBadge}
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-mono font-semibold text-sm text-[#34d399]">
+                        {formatAmount(income.amount)}
                       </span>
-                    )}
+                      {income.recurring && (
+                        <span
+                          className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
+                          style={{ backgroundColor: 'rgba(96,165,250,0.12)', color: '#60a5fa' }}
+                        >
+                          <Repeat size={9} /> {t.income.recurringBadge}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => openEdit(income)}
+                      className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => setConfirmId(income.id!)}
+                      className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => openEdit(income)}
-                    className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => setConfirmId(income.id!)}
-                    className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]"
-                  >
-                    <Trash2 size={14} />
-                  </button>
                 </div>
-              </div>
+              </SwipeableRow>
             ))}
           </div>
 

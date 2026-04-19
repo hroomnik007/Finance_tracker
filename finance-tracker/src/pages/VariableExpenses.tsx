@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Edit2, Trash2, Plus } from 'lucide-react'
+import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -426,66 +427,59 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                   const cat = getCategoryById(e.categoryId)
                   const bs = cat?.id ? getBudgetForCat(cat.id) : null
                   return (
-                    <div
-                      key={e.id}
-                      className="px-4 py-3.5 rounded-[18px] cursor-pointer transition-all duration-150"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        border: '1px solid var(--border-subtle)',
-                        boxShadow: 'var(--shadow-card)',
-                        minHeight: '64px',
-                      }}
-                      onMouseEnter={el => {
-                        (el.currentTarget as HTMLElement).style.borderColor = 'var(--border-medium)'
-                        ;(el.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
-                      }}
-                      onMouseLeave={el => {
-                        (el.currentTarget as HTMLElement).style.borderColor = 'var(--border-subtle)'
-                        ;(el.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-                      }}
-                      onClick={() => openEdit(e)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
-                            style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
-                          >
-                            {cat?.icon ?? '📦'}
+                    <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)}>
+                      <div
+                        className="px-4 py-3.5 rounded-[18px] cursor-pointer transition-all duration-150"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-subtle)',
+                          boxShadow: 'var(--shadow-card)',
+                          minHeight: '64px',
+                        }}
+                        onClick={() => openEdit(e)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
+                              style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
+                            >
+                              {cat?.icon ?? '📦'}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-[#E2D9F3] leading-snug">
+                                {e.note || cat?.name || t.expenses.variable.defaultExpense}
+                              </p>
+                              <p className="text-xs text-[#9D84D4] mt-0.5">{cat?.name}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-[#E2D9F3] leading-snug">
-                              {e.note || cat?.name || t.expenses.variable.defaultExpense}
-                            </p>
-                            <p className="text-xs text-[#9D84D4] mt-0.5">{cat?.name}</p>
+                          <div className="flex items-center gap-1.5" onClick={ev => ev.stopPropagation()}>
+                            <span className="font-mono font-semibold text-sm text-[#f87171] whitespace-nowrap">
+                              -{formatAmount(e.amount)}
+                            </span>
+                            <button onClick={() => openEdit(e)}
+                              className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
+                              <Edit2 size={13} />
+                            </button>
+                            <button onClick={() => setConfirmId(e.id!)}
+                              className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
+                              <Trash2 size={13} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5" onClick={ev => ev.stopPropagation()}>
-                          <span className="font-mono font-semibold text-sm text-[#f87171] whitespace-nowrap">
-                            -{formatAmount(e.amount)}
-                          </span>
-                          <button onClick={() => openEdit(e)}
-                            className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
-                            <Edit2 size={13} />
-                          </button>
-                          <button onClick={() => setConfirmId(e.id!)}
-                            className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        {bs && (
+                          <div className="mt-2.5 h-1 rounded-full overflow-hidden"
+                            style={{ backgroundColor: '#32265A' }}>
+                            <div className="h-full rounded-full"
+                              style={{
+                                width: `${Math.min(bs.percentage, 100)}%`,
+                                backgroundColor: cat?.color ?? '#9D84D4',
+                                boxShadow: `0 0 6px ${cat?.color ?? '#9D84D4'}`,
+                              }} />
+                          </div>
+                        )}
                       </div>
-                      {bs && (
-                        <div className="mt-2.5 h-1 rounded-full overflow-hidden"
-                          style={{ backgroundColor: '#32265A' }}>
-                          <div className="h-full rounded-full"
-                            style={{
-                              width: `${Math.min(bs.percentage, 100)}%`,
-                              backgroundColor: cat?.color ?? '#9D84D4',
-                              boxShadow: `0 0 6px ${cat?.color ?? '#9D84D4'}`,
-                            }} />
-                        </div>
-                      )}
-                    </div>
+                    </SwipeableRow>
                   )
                 })}
               </div>

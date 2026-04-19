@@ -14,6 +14,7 @@ import {
   refreshToken,
   getMe,
   deleteAccount as apiDeleteAccount,
+  demoLogin as apiDemoLogin,
 } from '../api/auth'
 import type { AuthUser } from '../types'
 
@@ -23,10 +24,12 @@ interface AuthContextValue {
   isLoading: boolean
   isGuest: boolean
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
+  loginDemo: () => Promise<void>
   register: (email: string, password: string, name: string, gdprConsent: boolean) => Promise<void>
   loginAsGuest: () => void
   logout: () => Promise<void>
   deleteAccount: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -35,10 +38,12 @@ const AuthContext = createContext<AuthContextValue>({
   isLoading: true,
   isGuest: false,
   login: async () => {},
+  loginDemo: async () => {},
   register: async () => {},
   loginAsGuest: () => {},
   logout: async () => {},
   deleteAccount: async () => {},
+  refreshUser: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -99,6 +104,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [])
 
+  const loginDemo = useCallback(async () => {
+    const { user: me, accessToken } = await apiDemoLogin()
+    setAccessToken(accessToken)
+    setUser(me)
+    setIsGuest(false)
+    try {
+      sessionStorage.removeItem('auth_guest')
+      localStorage.removeItem('auth_guest')
+    } catch { /* ignore */ }
+  }, [])
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const { user: me } = await getMe()
+      setUser(me)
+    } catch { /* ignore */ }
+  }, [])
+
   const register = useCallback(async (email: string, password: string, name: string, gdprConsent: boolean) => {
     // Registration now sends verification email; user is NOT logged in yet
     await apiRegister(email, password, name, gdprConsent)
@@ -125,10 +148,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isGuest,
         login,
+        loginDemo,
         register,
         loginAsGuest,
         logout,
         deleteAccount,
+        refreshUser,
       }}
     >
       {children}

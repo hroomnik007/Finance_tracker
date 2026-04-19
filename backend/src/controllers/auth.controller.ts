@@ -32,8 +32,8 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-function userPublic(u: { id: string; email: string; name: string }) {
-  return { id: u.id, email: u.email, name: u.name };
+function userPublic(u: { id: string; email: string; name: string; avatarUrl?: string | null; role?: string }) {
+  return { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null, role: u.role ?? 'user' };
 }
 
 async function issueTokens(res: Response, userId: string, email: string): Promise<string> {
@@ -42,6 +42,7 @@ async function issueTokens(res: Response, userId: string, email: string): Promis
   const tokenHash = await hashToken(refreshToken);
 
   await db.insert(refreshTokens).values({ userId, tokenHash, expiresAt: refreshTokenExpiry() });
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
   res.cookie(REFRESH_COOKIE, refreshToken, REFRESH_COOKIE_OPTIONS);
   return accessToken;
 }
@@ -161,13 +162,37 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
 export async function me(req: AuthRequest, res: Response): Promise<void> {
   const [user] = await db
-    .select({ id: users.id, email: users.email, name: users.name })
+    .select({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role })
     .from(users)
     .where(eq(users.id, req.userId!))
     .limit(1);
 
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
   res.json({ user: userPublic(user) });
+}
+
+export async function updateAvatar(req: AuthRequest, res: Response): Promise<void> {
+  const { avatarUrl } = req.body as { avatarUrl?: string };
+  if (!avatarUrl || typeof avatarUrl !== 'string') {
+    res.status(400).json({ error: "avatarUrl is required" });
+    return;
+  }
+  if (avatarUrl.length > 2 * 1024 * 1024) {
+    res.status(413).json({ error: "Avatar too large (max 2MB)" });
+    return;
+  }
+  await db.update(users).set({ avatarUrl, updatedAt: new Date() }).where(eq(users.id, req.userId!));
+  res.json({ success: true, avatarUrl });
+}
+
+export async function demoLogin(req: Request, res: Response): Promise<void> {
+  const [user] = await db.select().from(users).where(eq(users.email, "demo@finvu.sk")).limit(1);
+  if (!user) {
+    res.status(404).json({ error: "Demo account not available. Run db:seed-demo first." });
+    return;
+  }
+  const accessToken = await issueTokens(res, user.id, user.email);
+  res.json({ user: userPublic(user), accessToken });
 }
 
 export async function verifyEmail(req: Request, res: Response): Promise<void> {

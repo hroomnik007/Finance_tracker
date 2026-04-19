@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2 } from 'lucide-react'
+import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -10,6 +10,7 @@ import { DEFAULT_SETTINGS } from '../types'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import { updateAvatar } from '../api/auth'
 import type { AppSettings } from '../types'
 
 const CURRENCIES = [
@@ -92,15 +93,17 @@ interface SettingsPageProps {
 export function SettingsPage({ onLogout }: SettingsPageProps) {
   const { settings: contextSettings, refreshSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
-  const { deleteAccount } = useAuth()
+  const { deleteAccount, user, refreshUser } = useAuth()
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const rawSettingsRows = useLiveQuery(() => db.settings.toArray(), [])
 
   // ── Profile ───────────────────────────────────────────────────────────────
-  const [profileNameDraft, setProfileNameDraft] = useState(ctxName)
+  const [profileNameDraft, setProfileNameDraft] = useState(user?.name || ctxName)
   const [profileAvatarDraft, setProfileAvatarDraft] = useState(ctxAvatar)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(user?.avatarUrl ?? null)
+  const [photoUploading, setPhotoUploading] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
@@ -110,6 +113,36 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     setProfile(profileNameDraft, profileAvatarDraft)
     setProfileSaveOk(true)
     setTimeout(() => setProfileSaveOk(false), 2000)
+  }
+
+  function handlePhotoUpload() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Obrázok je príliš veľký. Maximálna veľkosť je 2 MB.')
+        return
+      }
+      setPhotoUploading(true)
+      const reader = new FileReader()
+      reader.onload = async (ev) => {
+        const base64 = ev.target?.result as string
+        try {
+          await updateAvatar(base64)
+          setPhotoUrl(base64)
+          await refreshUser()
+        } catch {
+          alert('Nepodarilo sa nahrať fotku.')
+        } finally {
+          setPhotoUploading(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+    input.click()
   }
 
   function handleSavePassword() {
@@ -325,12 +358,73 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         />
 
         <div className="p-5 flex flex-col gap-5">
-          {/* Avatar */}
+          {/* Profile photo */}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-3">Profilová fotka</p>
+            <div className="flex items-center gap-4">
+              <div
+                onClick={handlePhotoUpload}
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  border: '2px solid #4C3A8A',
+                  background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)',
+                }}
+              >
+                {photoUrl ? (
+                  <img src={photoUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+                    {profileNameDraft ? profileNameDraft[0].toUpperCase() : '👤'}
+                  </div>
+                )}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(0,0,0,0.4)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  opacity: photoUploading ? 1 : 0,
+                  transition: 'opacity 0.2s',
+                }}>
+                  {photoUploading ? <span style={{ color: 'white', fontSize: 12 }}>...</span> : <Camera size={20} color="white" />}
+                </div>
+                <div className="photo-overlay" style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(0,0,0,0.4)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0'}
+                >
+                  <Camera size={20} color="white" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-[#E2D9F3] font-medium">{profileNameDraft || 'Váš profil'}</p>
+                <p className="text-xs text-[#9D84D4] mt-0.5">{user?.email}</p>
+                <button
+                  onClick={handlePhotoUpload}
+                  className="text-xs text-[#A78BFA] mt-2 underline underline-offset-2"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Zmeniť fotku
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Emoji Avatar */}
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-3">{t.settings.avatar}</p>
             <div className="flex items-center gap-4 mb-3">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 text-4xl"
+                className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-3xl"
                 style={{ background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)', border: '2px solid #4C3A8A' }}
               >
                 {profileAvatarDraft}
