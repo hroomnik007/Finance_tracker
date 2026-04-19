@@ -7,6 +7,11 @@ import {
 } from '../api/admin'
 
 export function AdminPage() {
+  useEffect(() => {
+    document.title = 'Finvu Admin'
+    return () => { document.title = 'Finvu' }
+  }, [])
+
   const [hasToken, setHasToken] = useState(() => !!getAdminToken())
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
