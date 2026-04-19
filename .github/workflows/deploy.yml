@@ -45,7 +45,7 @@ jobs:
             npm ci --prefer-offline --legacy-peer-deps
             VITE_API_URL=https://api.pedani.eu npm run build
             sudo systemctl reload nginx
- deploy-backend:
+  deploy-backend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed_backend == 'true'
     runs-on: ubuntu-latest
