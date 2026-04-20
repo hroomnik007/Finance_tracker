@@ -158,6 +158,28 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
+  // Daily avg and biggest expense
+  const now = new Date()
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const dayOfMonth = (month === now.getMonth() + 1 && year === now.getFullYear()) ? now.getDate() : daysInMonth
+  const dailyAvgExpense = dayOfMonth > 0 ? totalExpenses / dayOfMonth : 0
+
+  const biggestExpense = variableExpenses.reduce<typeof variableExpenses[0] | null>((max, e) =>
+    (!max || e.amount > max.amount) ? e : max, null)
+
+  // Monthly challenge: spend less than previous month
+  const prevMonthData = chartData[chartData.length - 2]
+  const monthChallengeTarget = prevMonthData?.expenses ?? 0
+  const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
+
+  // Motivational messages based on balance
+  const motivationalMsg = (() => {
+    if (balance > 0 && balance > totalIncome * 0.3) return { msg: 'Skvelá práca! Ušetrili ste viac ako 30% príjmov.', color: '#34D399' }
+    if (balance < 0) return { msg: 'Pozor — výdavky prevyšujú príjmy. Skúste obmedziť variabilné výdavky.', color: '#F87171' }
+    if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: 'Výborné! Váš denný priemer je pod 20 €.', color: '#A78BFA' }
+    return null
+  })()
+
   return (
     <div className="flex flex-col gap-5 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
 
@@ -178,7 +200,14 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               {greeting.text}! {greeting.emoji}
             </span>
           </div>
-          <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>
+          <div className="flex items-center gap-2">
+            {(user?.currentStreak ?? 0) > 0 && (
+              <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,146,60,0.15)', color: '#FB923C' }}>
+                🔥 {user!.currentStreak}
+              </span>
+            )}
+            <span className="text-[11px] text-[#6B5A9E]">{todayStr}</span>
+          </div>
         </div>
 
         <div className="mb-3">
@@ -241,16 +270,26 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       </div>
 
       {/* ── STAT CARDS ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div style={{ ...CARD, padding: 12 }}>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-2 leading-snug">{t.dashboard.totalExpenses}</p>
-          <p className="font-mono font-medium text-[#F87171] text-[18px] leading-tight">{formatAmount(totalExpenses)}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <div style={{ ...CARD, padding: 10 }}>
+          <p className="text-[8px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-1.5 leading-snug">{t.dashboard.totalExpenses}</p>
+          <p className="font-mono font-medium text-[#F87171] text-[15px] leading-tight">{formatAmount(totalExpenses)}</p>
         </div>
-        <div style={{ ...CARD, padding: 12 }}>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-2 leading-snug">{t.dashboard.grossIncome}</p>
-          <p className="font-mono font-medium text-[18px] leading-tight" style={{ color: '#34D399' }}>{formatAmount(totalIncome)}</p>
+        <div style={{ ...CARD, padding: 10 }}>
+          <p className="text-[8px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-1.5 leading-snug">{t.dashboard.grossIncome}</p>
+          <p className="font-mono font-medium text-[15px] leading-tight" style={{ color: '#34D399' }}>{formatAmount(totalIncome)}</p>
+        </div>
+        <div style={{ ...CARD, padding: 10 }}>
+          <p className="text-[8px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-1.5 leading-snug">Ø / deň</p>
+          <p className="font-mono font-medium text-[#A78BFA] text-[15px] leading-tight">{formatAmount(dailyAvgExpense)}</p>
         </div>
       </div>
+
+      {motivationalMsg && (
+        <div style={{ ...CARD, padding: 12, borderColor: motivationalMsg.color + '55' }}>
+          <p className="text-[13px]" style={{ color: motivationalMsg.color }}>{motivationalMsg.msg}</p>
+        </div>
+      )}
 
       {/* ── PRÍJMY ── */}
       {activeTab === 'income' && (
@@ -382,24 +421,48 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             </div>
           )}
 
+          {/* ── Biggest expense + monthly challenge ── */}
+          {biggestExpense && (
+            <div style={{ ...CARD, padding: 14 }}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-2">Najväčší výdavok</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0"
+                    style={{ background: (getCategoryById(biggestExpense.categoryId)?.color ?? '#9D84D4') + '33' }}>
+                    {getCategoryById(biggestExpense.categoryId)?.icon ?? '📦'}
+                  </span>
+                  <div>
+                    <p className="text-[13px] font-medium text-[#E2D9F3]">{biggestExpense.note || getCategoryById(biggestExpense.categoryId)?.name || 'Výdavok'}</p>
+                    <p className="text-[11px] text-[#6B5A9E]">{formatDate(biggestExpense.date)}</p>
+                  </div>
+                </div>
+                <span className="font-mono text-[15px] font-bold text-[#F87171] shrink-0 ml-3">-{formatAmount(biggestExpense.amount)}</span>
+              </div>
+            </div>
+          )}
+
+          {monthChallengeTarget > 0 && (
+            <div style={{ ...CARD, padding: 14 }}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-2">Mesačná výzva</p>
+              <p className="text-[13px] text-[#E2D9F3] mb-2">Minutie menej ako {formatAmount(monthChallengeTarget)}</p>
+              <div style={{ background: '#1A1030', borderRadius: 6, height: 8, overflow: 'hidden' }}>
+                <div style={{ width: `${Math.round(challengeProgress * 100)}%`, height: '100%', borderRadius: 6, background: challengeProgress < 0.8 ? '#34D399' : challengeProgress < 1 ? '#F59E0B' : '#F87171', transition: 'width 0.4s' }} />
+              </div>
+              <p className="text-[11px] text-[#9D84D4] mt-1.5">{formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)</p>
+            </div>
+          )}
+
           {/* ── Prediction card ── */}
-          {(() => {
-            const now = new Date()
-            const daysInMonth = new Date(year, month, 0).getDate()
-            const dayOfMonth = month === now.getMonth() + 1 && year === now.getFullYear() ? now.getDate() : daysInMonth
-            const elapsed = Math.max(dayOfMonth, 1)
-            const dailyAvg = totalExpenses / elapsed
-            const prediction = dailyAvg * daysInMonth
-            const prevMonth = chartData[chartData.length - 2]
-            const prevTotal = prevMonth?.expenses ?? 0
+          {totalExpenses > 0 && (() => {
+            const prediction = dailyAvgExpense * daysInMonth
+            const prevTotal = prevMonthData?.expenses ?? 0
             const diff = prediction - prevTotal
-            if (totalExpenses === 0) return null
             return (
               <div style={{ ...CARD, padding: 16 }}>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4] mb-2">Predikcia výdavkov</p>
                 <p className="font-mono font-bold text-[22px] text-[#F87171]">{formatAmount(prediction)}</p>
                 <p className="text-[12px] text-[#9D84D4] mt-1">
-                  {dailyAvg.toFixed(2)} €/deň × {daysInMonth} dní
+                  {dailyAvgExpense.toFixed(2)} €/deň × {daysInMonth} dní
                 </p>
                 {prevTotal > 0 && (
                   <p className="text-[12px] mt-1" style={{ color: diff > 0 ? '#F87171' : '#34D399' }}>

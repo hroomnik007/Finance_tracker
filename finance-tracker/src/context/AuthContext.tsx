@@ -16,6 +16,7 @@ import {
   deleteAccount as apiDeleteAccount,
   demoLogin as apiDemoLogin,
   googleLogin as apiGoogleLogin,
+  updateUserSettings,
 } from '../api/auth'
 import type { AuthUser } from '../types'
 
@@ -32,6 +33,8 @@ interface AuthContextValue {
   logout: () => Promise<void>
   deleteAccount: () => Promise<void>
   refreshUser: () => Promise<void>
+  completeOnboarding: () => Promise<void>
+  updateMonthlyEmail: (enabled: boolean) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -47,6 +50,8 @@ const AuthContext = createContext<AuthContextValue>({
   logout: async () => {},
   deleteAccount: async () => {},
   refreshUser: async () => {},
+  completeOnboarding: async () => {},
+  updateMonthlyEmail: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -157,6 +162,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await doLogout(false)
   }, [doLogout])
 
+  const completeOnboarding = useCallback(async () => {
+    await updateUserSettings({ onboardingComplete: true })
+    setUser(prev => prev ? { ...prev, onboardingComplete: true } : prev)
+  }, [])
+
+  const updateMonthlyEmail = useCallback(async (enabled: boolean) => {
+    await updateUserSettings({ monthlyEmailEnabled: enabled })
+    setUser(prev => prev ? { ...prev, monthlyEmailEnabled: enabled } : prev)
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -172,6 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         deleteAccount,
         refreshUser,
+        completeOnboarding,
+        updateMonthlyEmail,
       }}
     >
       {children}

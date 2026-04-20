@@ -72,6 +72,11 @@ export interface AuthUser {
   avatarUrl?: string | null
   role?: string
   weeklyEmailEnabled?: boolean
+  monthlyEmailEnabled?: boolean
+  onboardingComplete?: boolean
+  currentStreak?: number
+  longestStreak?: number
+  badges?: string[]
 }
 
 export interface ApiCategory {

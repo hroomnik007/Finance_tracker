@@ -7,6 +7,7 @@ import {
   boolean,
   numeric,
   date,
+  integer,
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -24,6 +25,12 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   role: varchar("role", { length: 20 }).default("user").notNull(),
   weeklyEmailEnabled: boolean("weekly_email_enabled").default(false).notNull(),
+  monthlyEmailEnabled: boolean("monthly_email_enabled").default(false).notNull(),
+  onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  longestStreak: integer("longest_streak").default(0).notNull(),
+  lastActivityDate: date("last_activity_date"),
+  badges: text("badges").array().default(sql`ARRAY[]::text[]`).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -77,9 +84,21 @@ export const transactions = pgTable(
   (t) => [check("transactions_type_check", sql`${t.type} IN ('income', 'expense')`)]
 );
 
+export const sharedReports = pgTable("shared_reports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  data: text("data").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
+export type SharedReport = typeof sharedReports.$inferSelect;

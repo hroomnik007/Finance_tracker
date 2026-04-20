@@ -34,8 +34,19 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-function userPublic(u: { id: string; email: string; name: string; avatarUrl?: string | null; role?: string; weeklyEmailEnabled?: boolean }) {
-  return { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null, role: u.role ?? 'user', weeklyEmailEnabled: u.weeklyEmailEnabled ?? false };
+function userPublic(u: {
+  id: string; email: string; name: string; avatarUrl?: string | null; role?: string;
+  weeklyEmailEnabled?: boolean; monthlyEmailEnabled?: boolean; onboardingComplete?: boolean;
+  currentStreak?: number; longestStreak?: number; badges?: string[];
+}) {
+  return {
+    id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null,
+    role: u.role ?? 'user', weeklyEmailEnabled: u.weeklyEmailEnabled ?? false,
+    monthlyEmailEnabled: u.monthlyEmailEnabled ?? false,
+    onboardingComplete: u.onboardingComplete ?? false,
+    currentStreak: u.currentStreak ?? 0, longestStreak: u.longestStreak ?? 0,
+    badges: u.badges ?? [],
+  };
 }
 
 async function issueTokens(res: Response, userId: string, email: string): Promise<string> {
@@ -168,7 +179,12 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
 export async function me(req: AuthRequest, res: Response): Promise<void> {
   const [user] = await db
-    .select({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role, weeklyEmailEnabled: users.weeklyEmailEnabled })
+    .select({
+      id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl,
+      role: users.role, weeklyEmailEnabled: users.weeklyEmailEnabled,
+      monthlyEmailEnabled: users.monthlyEmailEnabled, onboardingComplete: users.onboardingComplete,
+      currentStreak: users.currentStreak, longestStreak: users.longestStreak, badges: users.badges,
+    })
     .from(users)
     .where(eq(users.id, req.userId!))
     .limit(1);
@@ -312,6 +328,19 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
   res.json({ weeklyEmailEnabled: !!enabled });
 }
 
+export async function updateUserSettings(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!;
+  const { onboardingComplete, monthlyEmailEnabled } = req.body as {
+    onboardingComplete?: boolean;
+    monthlyEmailEnabled?: boolean;
+  };
+  const update: Record<string, unknown> = { updatedAt: new Date() };
+  if (typeof onboardingComplete === 'boolean') update.onboardingComplete = onboardingComplete;
+  if (typeof monthlyEmailEnabled === 'boolean') update.monthlyEmailEnabled = monthlyEmailEnabled;
+  await db.update(users).set(update).where(eq(users.id, userId));
+  res.json({ success: true });
+}
+
 export async function googleAuth(req: Request, res: Response): Promise<void> {
   const { accessToken } = req.body as { accessToken?: string };
   if (!accessToken) {
@@ -356,7 +385,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date() };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [] };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCategories } from '../hooks/useCategories'
+import { useAuth } from '../context/AuthContext'
 
 interface Template {
   id: string
@@ -54,11 +55,12 @@ const TEMPLATES: Template[] = [
   },
 ]
 
-const STORAGE_KEY = 'budget_template_done'
-
 export function useBudgetTemplate() {
-  const done = localStorage.getItem(STORAGE_KEY)
-  return !done
+  const { user, isGuest } = useAuth()
+  if (isGuest) return false
+  // If user has completed onboarding (backend flag), skip template
+  if (user?.onboardingComplete) return false
+  return true
 }
 
 interface BudgetTemplateModalProps {
@@ -80,14 +82,12 @@ export function BudgetTemplateModal({ onComplete }: BudgetTemplateModalProps) {
         await addCategory({ name: cat.name, icon: cat.icon, color: cat.color, type: 'expense', budgetLimit: cat.budgetLimit })
       }
     } finally {
-      localStorage.setItem(STORAGE_KEY, 'true')
       setLoading(false)
       onComplete()
     }
   }
 
   function handleSkip() {
-    localStorage.setItem(STORAGE_KEY, 'true')
     onComplete()
   }
 

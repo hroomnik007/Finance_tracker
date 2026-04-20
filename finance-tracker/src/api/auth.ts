@@ -74,6 +74,23 @@ export async function googleLogin(accessToken: string): Promise<{ user: import('
   return data
 }
 
+export async function updateUserSettings(settings: {
+  onboardingComplete?: boolean
+  monthlyEmailEnabled?: boolean
+}): Promise<void> {
+  await apiClient.patch('/api/auth/settings', settings)
+}
+
+export async function createSharedReport(data: string, expiresInHours?: number): Promise<{ token: string }> {
+  const { data: res } = await apiClient.post('/api/reports', { data, expiresInHours })
+  return res
+}
+
+export async function getSharedReport(token: string): Promise<{ data: string }> {
+  const { data } = await apiClient.get(`/api/reports/${token}`)
+  return data
+}
+
 export async function scanReceipt(imageFile: File): Promise<{ amount: number | null; date: string | null; rawText: string }> {
   const formData = new FormData()
   formData.append('image', imageFile)

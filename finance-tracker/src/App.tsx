@@ -9,6 +9,7 @@ import { FixedExpensesPage } from './pages/FixedExpenses'
 import { CategoriesPage } from './pages/Categories'
 import { SettingsPage } from './pages/Settings'
 import { AdminPage } from './pages/Admin'
+import { SharedReportPage } from './pages/SharedReport'
 import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
 import { ForgotPasswordPage } from './pages/ForgotPassword'
@@ -44,7 +45,7 @@ function App() {
   const { isAuthenticated, isLoading, logout } = useAuth()
   const now2 = new Date()
   const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now2.getMonth() + 1, now2.getFullYear())
-  useFixedExpenseNotifications(allFixedExpenses)
+  useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
 
   const [page, setPage] = useState<Page>(getPageFromHash)
   type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
@@ -231,16 +232,24 @@ function App() {
   )
 }
 
+function getReportToken(): string | null {
+  const hash = window.location.hash
+  if (hash.startsWith('#report/')) return hash.slice('#report/'.length) || null
+  return null
+}
+
 function Root() {
-  const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.hash.startsWith('#admin'))
+  const [routeKey, setRouteKey] = useState(() => window.location.hash)
 
   useEffect(() => {
-    const handler = () => setIsAdminRoute(window.location.hash.startsWith('#admin'))
+    const handler = () => setRouteKey(window.location.hash)
     window.addEventListener('hashchange', handler)
     return () => window.removeEventListener('hashchange', handler)
   }, [])
 
-  if (isAdminRoute) return <AdminPage />
+  if (routeKey.startsWith('#admin')) return <AdminPage />
+  const reportToken = getReportToken()
+  if (reportToken) return <SharedReportPage token={reportToken} />
   return <App />
 }
 

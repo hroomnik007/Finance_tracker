@@ -2,7 +2,7 @@ import { Response } from "express";
 import { and, eq, gte, lt, sql, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { transactions, categories } from "../db/schema";
+import { transactions, categories, users } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 
 const createSchema = z.object({
@@ -114,7 +114,8 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
     .returning();
 
   const withCategory = await fetchWithCategory(row.id);
-  res.status(201).json({ data: normalizeAmount(withCategory) });
+  const newBadges = await updateStreakAndBadges(req.userId!, body.data.date);
+  res.status(201).json({ data: normalizeAmount(withCategory), newBadges });
 }
 
 export async function updateTransaction(req: AuthRequest, res: Response): Promise<void> {
@@ -266,4 +267,59 @@ async function fetchWithCategory(id: string) {
 
 function normalizeAmount<T extends { amount: unknown }>(row: T): T {
   return { ...row, amount: parseFloat(row.amount as string) };
+}
+
+const BADGE_DEFS: { id: string; check: (txCount: number, streak: number, longestStreak: number) => boolean }[] = [
+  { id: 'first_transaction',  check: (n) => n >= 1 },
+  { id: 'streak_7',           check: (_, s) => s >= 7 },
+  { id: 'streak_30',          check: (_, s) => s >= 30 },
+  { id: 'transactions_10',    check: (n) => n >= 10 },
+  { id: 'transactions_50',    check: (n) => n >= 50 },
+  { id: 'transactions_100',   check: (n) => n >= 100 },
+];
+
+async function updateStreakAndBadges(userId: string, txDate: string): Promise<string[]> {
+  const [user] = await db.select({
+    currentStreak: users.currentStreak,
+    longestStreak: users.longestStreak,
+    lastActivityDate: users.lastActivityDate,
+    badges: users.badges,
+  }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) return [];
+
+  const today = txDate;
+  const last = user.lastActivityDate;
+  let streak = user.currentStreak ?? 0;
+
+  if (!last) {
+    streak = 1;
+  } else if (last === today) {
+    // same day — no change
+  } else {
+    const dayDiff = Math.round((new Date(today).getTime() - new Date(last).getTime()) / 86400000);
+    streak = dayDiff === 1 ? streak + 1 : 1;
+  }
+
+  const longest = Math.max(user.longestStreak ?? 0, streak);
+
+  const [{ txCount }] = await db.select({ txCount: count() }).from(transactions).where(eq(transactions.userId, userId));
+  const n = Number(txCount);
+
+  const earned = new Set(user.badges ?? []);
+  const newBadges: string[] = [];
+  for (const { id, check } of BADGE_DEFS) {
+    if (!earned.has(id) && check(n, streak, longest)) {
+      earned.add(id);
+      newBadges.push(id);
+    }
+  }
+
+  await db.update(users).set({
+    currentStreak: streak,
+    longestStreak: longest,
+    lastActivityDate: today,
+    badges: Array.from(earned),
+  }).where(eq(users.id, userId));
+
+  return newBadges;
 }

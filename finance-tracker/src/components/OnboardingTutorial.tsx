@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronRight } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 interface OnboardingStep {
   title: string
@@ -31,19 +32,20 @@ const STEPS: OnboardingStep[] = [
   },
 ]
 
-const STORAGE_KEY = 'onboarding_complete'
-
 export function useOnboarding() {
+  const { user, isLoading, isGuest, completeOnboarding: saveOnboarding } = useAuth()
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
-    const done = localStorage.getItem(STORAGE_KEY)
-    if (!done) setShowOnboarding(true)
-  }, [])
+    if (isLoading) return
+    if (isGuest) { setShowOnboarding(false); return }
+    if (user && !user.onboardingComplete) setShowOnboarding(true)
+    else setShowOnboarding(false)
+  }, [user, isLoading, isGuest])
 
-  function completeOnboarding() {
-    localStorage.setItem(STORAGE_KEY, 'true')
+  async function completeOnboarding() {
     setShowOnboarding(false)
+    await saveOnboarding()
   }
 
   return { showOnboarding, completeOnboarding }

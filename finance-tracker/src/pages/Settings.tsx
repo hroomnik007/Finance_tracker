@@ -4,7 +4,7 @@ import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
-import { updateWeeklyEmail } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport } from '../api/auth'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -97,7 +97,7 @@ interface SettingsPageProps {
 export function SettingsPage({ onLogout }: SettingsPageProps) {
   const { settings: contextSettings, refreshSettings, updateSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
-  const { deleteAccount, user, refreshUser } = useAuth()
+  const { deleteAccount, user, refreshUser, updateMonthlyEmail } = useAuth()
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -226,6 +226,21 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       setWeeklyEmail(next)
     } finally {
       setWeeklyEmailSaving(false)
+    }
+  }
+
+  // ── Monthly email ─────────────────────────────────────────────────────────
+  const [monthlyEmail, setMonthlyEmail] = useState(user?.monthlyEmailEnabled ?? false)
+  const [monthlyEmailSaving, setMonthlyEmailSaving] = useState(false)
+
+  async function handleMonthlyEmailToggle() {
+    setMonthlyEmailSaving(true)
+    const next = !monthlyEmail
+    try {
+      await updateMonthlyEmail(next)
+      setMonthlyEmail(next)
+    } finally {
+      setMonthlyEmailSaving(false)
     }
   }
 
@@ -367,6 +382,38 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     a.download = 'rodinne-financie-export.csv'
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function handleShareReport() {
+    const [cats, incomes, fixed, variable] = await Promise.all([
+      db.categories.toArray(),
+      db.incomes.toArray(),
+      db.fixedExpenses.toArray(),
+      db.variableExpenses.toArray(),
+    ])
+    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
+    const totalExpenses = fixed.reduce((s, f) => s + f.amount, 0) + variable.reduce((s, v) => s + v.amount, 0)
+    const byCategory = cats
+      .map(cat => {
+        const total = variable.filter(v => v.categoryId === cat.id).reduce((s, v) => s + v.amount, 0)
+        return { name: cat.name, color: cat.color, total, percentage: totalExpenses > 0 ? Math.round(total / totalExpenses * 100) : 0 }
+      })
+      .filter(c => c.total > 0)
+    const data = JSON.stringify({
+      title: 'Finvu — Finančný prehľad',
+      totalIncome, totalExpenses,
+      balance: totalIncome - totalExpenses,
+      byCategory,
+      generatedAt: new Date().toISOString(),
+    })
+    try {
+      const { token } = await createSharedReport(data, 24 * 7)
+      const url = `${window.location.origin}${window.location.pathname}#report/${token}`
+      await navigator.clipboard.writeText(url)
+      alert(`Odkaz bol skopírovaný do schránky:\n${url}`)
+    } catch {
+      alert('Nepodarilo sa vytvoriť zdieľaný odkaz.')
+    }
   }
 
   const firstDayOfWeekOptions = [
@@ -674,10 +721,10 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         </SettingRow>
       </SectionCard>
 
-      {/* ── Section: Týždenný report ── */}
+      {/* ── Section: Týždenný + mesačný report ── */}
       <SectionCard>
-        <CardHeader icon={<Mail size={15} className="text-white" />} label="Týždenný report" />
-        <SettingRow label="Týždenný email" sublabel="Dostaneš prehľad príjmov a výdavkov každý pondelok ráno">
+        <CardHeader icon={<Mail size={15} className="text-white" />} label="Email reporty" />
+        <SettingRow label="Týždenný email" sublabel="Prehľad príjmov a výdavkov každý pondelok ráno">
           <button
             onClick={handleWeeklyEmailToggle}
             disabled={weeklyEmailSaving}
@@ -687,7 +734,48 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${weeklyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </SettingRow>
+        <SettingRow label="Mesačný email" sublabel="Súhrn predchádzajúceho mesiaca, 1. deň v mesiaci o 9:00">
+          <button
+            onClick={handleMonthlyEmailToggle}
+            disabled={monthlyEmailSaving}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${monthlyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: monthlyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: monthlyEmailSaving ? 0.6 : 1 }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${monthlyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
       </SectionCard>
+
+      {/* ── Section: Úspechy a štatistiky ── */}
+      {user && (user.badges?.length ?? 0) > 0 && (
+        <SectionCard>
+          <CardHeader icon={<span style={{ fontSize: 14 }}>🏅</span>} label="Odznaky" />
+          <div className="p-4 flex flex-wrap gap-2">
+            {(user.badges ?? []).map(badge => {
+              const BADGE_LABELS: Record<string, { emoji: string; label: string }> = {
+                first_transaction:  { emoji: '🎉', label: 'Prvá transakcia' },
+                streak_7:           { emoji: '🔥', label: '7-dňová séria' },
+                streak_30:          { emoji: '⚡', label: '30-dňová séria' },
+                transactions_10:    { emoji: '📊', label: '10 transakcií' },
+                transactions_50:    { emoji: '💪', label: '50 transakcií' },
+                transactions_100:   { emoji: '🏆', label: '100 transakcií' },
+              }
+              const def = BADGE_LABELS[badge] ?? { emoji: '🏅', label: badge }
+              return (
+                <span key={badge} className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full"
+                  style={{ background: 'rgba(167,139,250,0.15)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.3)' }}>
+                  {def.emoji} {def.label}
+                </span>
+              )
+            })}
+          </div>
+          {(user.longestStreak ?? 0) > 0 && (
+            <div className="px-4 pb-4">
+              <p className="text-[12px] text-[#9D84D4]">Najdlhšia séria: <span className="text-[#FB923C] font-semibold">🔥 {user.longestStreak} dní</span></p>
+            </div>
+          )}
+        </SectionCard>
+      )}
 
       {/* ── Section 2: Dáta ── */}
       <SectionCard>
@@ -732,6 +820,16 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               CSV
             </button>
           </div>
+
+          {user && (
+            <button
+              onClick={handleShareReport}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80 w-full"
+              style={{ backgroundColor: '#0EA5E9' }}
+            >
+              🔗 Zdieľať prehľad
+            </button>
+          )}
 
           <button
             onClick={handleImport}

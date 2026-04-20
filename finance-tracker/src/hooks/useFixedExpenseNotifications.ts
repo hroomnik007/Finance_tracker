@@ -35,8 +35,9 @@ export function setNotificationsEnabled(enabled: boolean) {
   } catch { /* ignore */ }
 }
 
-export function useFixedExpenseNotifications(fixedExpenses: FixedExpense[]) {
+export function useFixedExpenseNotifications(fixedExpenses: FixedExpense[], isAuthenticated = false) {
   useEffect(() => {
+    if (!isAuthenticated) return
     if (!getNotificationsEnabled()) return
     if (!('Notification' in window)) return
 
@@ -67,5 +68,5 @@ export function useFixedExpenseNotifications(fixedExpenses: FixedExpense[]) {
     }
 
     checkAndNotify()
-  }, [fixedExpenses])
+  }, [fixedExpenses, isAuthenticated])
 }
