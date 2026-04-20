@@ -21,7 +21,7 @@ const inputStyle: React.CSSProperties = {
 
 export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: RegisterPageProps) {
   const { t } = useTranslation()
-  const { register, loginAsGuest, loginWithGoogle } = useAuth()
+  const { register, loginWithGoogle } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -263,13 +263,6 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
                 Pokračovať cez Google
               </>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={loginAsGuest}
-            className="text-[13px] text-[#6B5A9E] hover:text-[#9D84D4] transition-colors underline underline-offset-2"
-          >
-            {t.auth.continueWithout}
           </button>
         </div>
       </div>

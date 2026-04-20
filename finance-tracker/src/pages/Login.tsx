@@ -21,7 +21,7 @@ const inputStyle: React.CSSProperties = {
 
 export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
-  const { login, loginAsGuest, loginDemo, loginWithGoogle } = useAuth()
+  const { login, loginDemo, loginWithGoogle } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -230,13 +230,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             }}
           >
             {isDemoLoading ? 'Načítavam demo...' : '👀 Vyskúšať demo'}
-          </button>
-          <button
-            type="button"
-            onClick={loginAsGuest}
-            className="text-[13px] text-[#6B5A9E] hover:text-[#9D84D4] transition-colors underline underline-offset-2"
-          >
-            {t.auth.continueWithout}
           </button>
         </div>
       </div>

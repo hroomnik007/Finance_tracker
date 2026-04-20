@@ -12,6 +12,7 @@ import { AdminPage } from './pages/Admin'
 import { SharedReportPage } from './pages/SharedReport'
 import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
+import { DemoLoginPage } from './pages/DemoLogin'
 import { ForgotPasswordPage } from './pages/ForgotPassword'
 import { ResetPasswordPage } from './pages/ResetPassword'
 import { VerifyEmailPage } from './pages/VerifyEmail'
@@ -48,13 +49,19 @@ function App() {
   useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
 
   const [page, setPage] = useState<Page>(getPageFromHash)
-  type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
-  const [authPage, setAuthPage] = useState<AuthPage>(() => {
+  type AuthPage = 'login' | 'register' | 'demo-login' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
+
+  function getAuthPageFromHash(): AuthPage {
     const hash = window.location.hash
+    if (hash === '#register') return 'register'
+    if (hash === '#login') return 'login'
+    if (hash === '#demo-login') return 'demo-login'
     if (hash.startsWith('#verify-email')) return 'verify-email'
     if (hash.startsWith('#reset-password')) return 'reset-password'
     return 'login'
-  })
+  }
+
+  const [authPage, setAuthPage] = useState<AuthPage>(getAuthPageFromHash)
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
@@ -91,10 +98,14 @@ function App() {
   }, [isAuthenticated, isLoading])
 
   useEffect(() => {
-    const handler = () => setPage(getPageFromHash())
+    const handler = () => {
+      setPage(getPageFromHash())
+      if (!isAuthenticated) setAuthPage(getAuthPageFromHash())
+    }
     window.addEventListener('hashchange', handler)
     return () => window.removeEventListener('hashchange', handler)
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('sidebar-collapsed') === 'true' } catch { return false }
@@ -129,37 +140,43 @@ function App() {
     return new URLSearchParams(query).get('token') ?? ''
   }
 
+  function goAuthPage(p: AuthPage) {
+    setAuthPage(p)
+    if (p === 'login') window.location.hash = 'login'
+    else if (p === 'register') window.location.hash = 'register'
+    else if (p === 'demo-login') window.location.hash = 'demo-login'
+  }
+
   if (!isAuthenticated) {
     return (
       <>
         <ToastContainer toasts={toasts} />
+        {authPage === 'demo-login' && <DemoLoginPage />}
         {authPage === 'register' && (
           <RegisterPage
-            onNavigateLogin={() => setAuthPage('login')}
+            onNavigateLogin={() => goAuthPage('login')}
             onNavigatePrivacyPolicy={() => setAuthPage('privacy-policy')}
           />
         )}
         {authPage === 'forgot-password' && (
-          <ForgotPasswordPage onNavigateLogin={() => setAuthPage('login')} />
+          <ForgotPasswordPage onNavigateLogin={() => goAuthPage('login')} />
         )}
         {authPage === 'reset-password' && (
           <ResetPasswordPage
             token={getTokenFromHash()}
-            onNavigateLogin={() => setAuthPage('login')}
+            onNavigateLogin={() => goAuthPage('login')}
           />
         )}
         {authPage === 'verify-email' && (
           <VerifyEmailPage
             token={getTokenFromHash()}
-            onNavigateLogin={() => setAuthPage('login')}
+            onNavigateLogin={() => goAuthPage('login')}
           />
         )}
-        {authPage === 'privacy-policy' && (
-          <PrivacyPolicyPage />
-        )}
-        {(authPage === 'login' || (authPage !== 'register' && authPage !== 'forgot-password' && authPage !== 'reset-password' && authPage !== 'verify-email' && authPage !== 'privacy-policy')) && (
+        {authPage === 'privacy-policy' && <PrivacyPolicyPage />}
+        {authPage === 'login' && (
           <LoginPage
-            onNavigateRegister={() => setAuthPage('register')}
+            onNavigateRegister={() => goAuthPage('register')}
             onNavigateForgotPassword={() => setAuthPage('forgot-password')}
           />
         )}
