@@ -244,6 +244,12 @@ textarea.input-field {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* ── Date input calendar icon ── */
+.date-input-styled::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(200deg);
+  cursor: pointer;
+}
+
 /* ── Custom date input ── */
 .date-input-wrapper:focus-within {
   border-color: rgba(99, 102, 241, 0.6) !important;

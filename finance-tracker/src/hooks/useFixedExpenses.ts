@@ -3,11 +3,12 @@ import { getTransactions, createTransaction, updateTransaction, deleteTransactio
 import type { FixedExpense, ApiTransaction } from '../types'
 
 function toFixedExpense(t: ApiTransaction): FixedExpense {
+  const day = t.date ? new Date(t.date + 'T12:00:00').getDate() : 1
   return {
     id: t.id,
     label: t.description ?? '',
     amount: t.amount,
-    dayOfMonth: 1,
+    dayOfMonth: day,
   }
 }
 

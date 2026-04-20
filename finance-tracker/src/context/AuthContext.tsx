@@ -15,6 +15,7 @@ import {
   getMe,
   deleteAccount as apiDeleteAccount,
   demoLogin as apiDemoLogin,
+  googleLogin as apiGoogleLogin,
 } from '../api/auth'
 import type { AuthUser } from '../types'
 
@@ -25,6 +26,7 @@ interface AuthContextValue {
   isGuest: boolean
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
   loginDemo: () => Promise<void>
+  loginWithGoogle: (accessToken: string) => Promise<void>
   register: (email: string, password: string, name: string, gdprConsent: boolean) => Promise<void>
   loginAsGuest: () => void
   logout: () => Promise<void>
@@ -39,6 +41,7 @@ const AuthContext = createContext<AuthContextValue>({
   isGuest: false,
   login: async () => {},
   loginDemo: async () => {},
+  loginWithGoogle: async () => {},
   register: async () => {},
   loginAsGuest: () => {},
   logout: async () => {},
@@ -117,6 +120,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [])
 
+  const loginWithGoogle = useCallback(async (googleAccessToken: string) => {
+    const { user: me, accessToken } = await apiGoogleLogin(googleAccessToken)
+    setAccessToken(accessToken)
+    setUser(me)
+    setIsGuest(false)
+    try {
+      sessionStorage.removeItem('auth_guest')
+      localStorage.removeItem('auth_guest')
+      sessionStorage.setItem('just_logged_in', 'true')
+    } catch { /* ignore */ }
+  }, [])
+
   const refreshUser = useCallback(async () => {
     try {
       const { user: me } = await getMe()
@@ -151,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isGuest,
         login,
         loginDemo,
+        loginWithGoogle,
         register,
         loginAsGuest,
         logout,

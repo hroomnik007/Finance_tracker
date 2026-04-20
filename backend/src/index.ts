@@ -9,6 +9,7 @@ import authRouter from "./routes/auth";
 import transactionsRouter from "./routes/transactions";
 import categoriesRouter from "./routes/categories";
 import adminRouter from "./routes/admin";
+import ocrRouter from "./routes/ocr";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/ocr", ocrRouter);
 
 app.use(errorHandler);
 

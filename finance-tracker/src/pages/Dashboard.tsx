@@ -5,6 +5,7 @@ import {
   BarChart, Bar,
 } from 'recharts'
 import { MonthSwitcher } from '../components/MonthSwitcher'
+import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -408,6 +409,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               </div>
             )
           })()}
+
+          {/* ── Heatmapa výdavkov ── */}
+          <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
 
           {last5.length > 0 ? (
             <div className="flex flex-col gap-2">

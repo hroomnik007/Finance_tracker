@@ -22,6 +22,8 @@ import { PinLock } from './components/PinLock'
 import { usePinLock } from './hooks/usePinLock'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
+import { useFixedExpenses } from './hooks/useFixedExpenses'
+import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
 
 export type Page =
   | 'dashboard'
@@ -40,6 +42,9 @@ function getPageFromHash(): Page {
 
 function App() {
   const { isAuthenticated, isLoading, logout } = useAuth()
+  const now2 = new Date()
+  const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now2.getMonth() + 1, now2.getFullYear())
+  useFixedExpenseNotifications(allFixedExpenses)
 
   const [page, setPage] = useState<Page>(getPageFromHash)
   type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'

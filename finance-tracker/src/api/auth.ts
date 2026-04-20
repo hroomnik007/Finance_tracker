@@ -68,3 +68,17 @@ export async function updateWeeklyEmail(enabled: boolean): Promise<{ weeklyEmail
   const { data } = await apiClient.patch('/api/auth/weekly-email', { enabled })
   return data
 }
+
+export async function googleLogin(accessToken: string): Promise<{ user: import('../types').AuthUser; accessToken: string }> {
+  const { data } = await apiClient.post('/api/auth/google', { accessToken })
+  return data
+}
+
+export async function scanReceipt(imageFile: File): Promise<{ amount: number | null; date: string | null; rawText: string }> {
+  const formData = new FormData()
+  formData.append('image', imageFile)
+  const { data } = await apiClient.post('/api/ocr/scan', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}

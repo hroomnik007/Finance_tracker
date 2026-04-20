@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, Lock, Mail } from 'lucide-react'
+import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, Lock, Mail, Bell } from 'lucide-react'
+import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
 import { updateWeeklyEmail } from '../api/auth'
@@ -200,6 +201,18 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   // ── PIN lock ──────────────────────────────────────────────────────────────
   const { hasPin, setupPin, removePin } = usePinLock()
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  const [notificationsEnabled, setNotificationsEnabledState] = useState(getNotificationsEnabled)
+
+  function handleNotificationsToggle() {
+    const next = !notificationsEnabled
+    setNotificationsEnabledState(next)
+    setNotificationsEnabled(next)
+    if (next && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }
 
   // ── Weekly email ──────────────────────────────────────────────────────────
   const [weeklyEmail, setWeeklyEmail] = useState(user?.weeklyEmailEnabled ?? false)
@@ -646,6 +659,20 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         )}
       </SectionCard>
       <PinSetupModal open={pinSetupOpen} onClose={() => setPinSetupOpen(false)} onSetPin={setupPin} />
+
+      {/* ── Section: Notifikácie ── */}
+      <SectionCard>
+        <CardHeader icon={<Bell size={15} className="text-white" />} label="Notifikácie" />
+        <SettingRow label="Pripomienky fixných výdavkov" sublabel="Upozornenie v deň splatnosti fixného výdavku">
+          <button
+            onClick={handleNotificationsToggle}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${notificationsEnabled ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: notificationsEnabled ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${notificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
+      </SectionCard>
 
       {/* ── Section: Týždenný report ── */}
       <SectionCard>

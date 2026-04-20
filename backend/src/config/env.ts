@@ -18,6 +18,7 @@ const envSchema = z.object({
   APP_URL: z.string().default("https://finvu.pedani.eu"),
   ADMIN_USERNAME: z.string().min(1).default("admin"),
   ADMIN_PASSWORD: z.string().min(1).default("changeme"),
+  GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

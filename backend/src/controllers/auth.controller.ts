@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
 import { users, refreshTokens, categories, transactions } from "../db/schema";
 import { env } from "../config/env";
@@ -68,7 +69,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 
   const [user] = await db
     .insert(users)
-    .values({ email, passwordHash, name, emailVerified: false, verificationToken })
+    .values({ email, passwordHash: passwordHash, name, emailVerified: false, verificationToken })
     .returning({ id: users.id, email: users.email, name: users.name });
 
   await db.insert(categories).values(
@@ -95,6 +96,10 @@ export async function login(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (!user.passwordHash) {
+    res.status(401).json({ error: "Tento účet používa Google prihlásenie." });
+    return;
+  }
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Nesprávne prihlasovacie údaje." });
@@ -305,6 +310,59 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
   const { enabled } = req.body as { enabled: boolean };
   await db.update(users).set({ weeklyEmailEnabled: !!enabled }).where(eq(users.id, userId));
   res.json({ weeklyEmailEnabled: !!enabled });
+}
+
+export async function googleAuth(req: Request, res: Response): Promise<void> {
+  const { accessToken } = req.body as { accessToken?: string };
+  if (!accessToken) {
+    res.status(400).json({ error: "accessToken is required" });
+    return;
+  }
+
+  let googleId: string;
+  let email: string;
+  let name: string;
+
+  try {
+    const userinfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!userinfoRes.ok) {
+      res.status(401).json({ error: "Neplatný Google token." });
+      return;
+    }
+    const info = await userinfoRes.json() as { sub: string; email: string; name: string; email_verified: boolean };
+    if (!info.email || !info.sub) {
+      res.status(401).json({ error: "Neplatný Google token." });
+      return;
+    }
+    googleId = info.sub;
+    email = info.email;
+    name = info.name || email.split("@")[0];
+  } catch {
+    res.status(401).json({ error: "Nepodarilo sa overiť Google token." });
+    return;
+  }
+
+  let [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+  if (!user) {
+    const [newUser] = await db
+      .insert(users)
+      .values({ email, passwordHash: null, name, emailVerified: true, googleId })
+      .returning({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role, weeklyEmailEnabled: users.weeklyEmailEnabled });
+
+    await db.insert(categories).values(
+      DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
+    );
+
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date() };
+  } else if (!user.googleId) {
+    await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
+  }
+
+  const accessJwt = await issueTokens(res, user.id, user.email);
+  res.json({ user: userPublic(user), accessToken: accessJwt });
 }
 
 export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {

@@ -14,8 +14,9 @@ import { sql } from "drizzle-orm";
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  passwordHash: varchar("password_hash", { length: 255 }),
   name: varchar("name", { length: 100 }).notNull(),
+  googleId: varchar("google_id", { length: 255 }),
   emailVerified: boolean("email_verified").default(false).notNull(),
   verificationToken: varchar("verification_token", { length: 255 }),
   resetToken: varchar("reset_token", { length: 255 }),

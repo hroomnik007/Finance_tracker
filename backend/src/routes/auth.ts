@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 import {
   register, login, refresh, logout, me,
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
-  updateAvatar, demoLogin, adminLogin, updateWeeklyEmail,
+  updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth,
 } from "../controllers/auth.controller";
 import { authenticateToken } from "../middleware/authenticate";
 
@@ -46,5 +46,6 @@ router.patch("/avatar",         authenticateToken, updateAvatar);
 router.patch("/weekly-email",   authenticateToken, updateWeeklyEmail);
 router.get("/demo-login",       demoLogin);
 router.post("/admin-login",     loginLimiter, adminLogin);
+router.post("/google",          loginLimiter, googleAuth);
 
 export default router;
