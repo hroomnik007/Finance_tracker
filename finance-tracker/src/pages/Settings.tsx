@@ -176,7 +176,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         language:       (map['language'] as string)       ?? DEFAULT_SETTINGS.language,
         dateFormat:     (map['dateFormat'] as string)     ?? DEFAULT_SETTINGS.dateFormat,
         firstDayOfWeek: (map['firstDayOfWeek'] as string) ?? DEFAULT_SETTINGS.firstDayOfWeek,
-        theme:          (contextSettings.theme)           ?? DEFAULT_SETTINGS.theme,
       })
     }
   }, [rawSettingsRows])
@@ -191,7 +190,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       setSetting('language',       d.language),
       setSetting('dateFormat',     d.dateFormat),
       setSetting('firstDayOfWeek', d.firstDayOfWeek),
-      setSetting('theme',          d.theme ?? 'dark'),
     ])
 
     updateSettings(d)
@@ -663,29 +661,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               <option key={d.value} value={d.value}>{d.label}</option>
             ))}
           </select>
-        </SettingRow>
-
-        <SettingRow label="Farebná téma" sublabel="Prepínanie medzi tmavým a svetlým režimom">
-          <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-            {(['dark', 'light'] as const).map(t2 => (
-              <button
-                key={t2}
-                onClick={() => {
-                  setDraft(d => ({ ...(d ?? currentDraft), theme: t2 }))
-                  updateSettings({ theme: t2 })
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={{
-                  background: (currentDraft.theme ?? 'dark') === t2 ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : 'transparent',
-                  color: (currentDraft.theme ?? 'dark') === t2 ? 'white' : 'var(--text-muted)',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                {t2 === 'dark' ? '🌙 Tmavá' : '☀️ Svetlá'}
-              </button>
-            ))}
-          </div>
         </SettingRow>
 
         {/* Save button */}

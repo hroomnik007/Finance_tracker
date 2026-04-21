@@ -18,7 +18,6 @@ export function useSettings(): AppSettings {
     language:       (map['language'] as string)       ?? DEFAULT_SETTINGS.language,
     dateFormat:     (map['dateFormat'] as string)     ?? DEFAULT_SETTINGS.dateFormat,
     firstDayOfWeek: (map['firstDayOfWeek'] as string) ?? DEFAULT_SETTINGS.firstDayOfWeek,
-    theme:          ((map['theme'] as string)         ?? DEFAULT_SETTINGS.theme) as 'dark' | 'light',
   }
 }
 
