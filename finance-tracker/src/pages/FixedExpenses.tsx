@@ -89,10 +89,6 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
               <span className="empty-state-emoji">📦</span>
               <p className="empty-state-title">{t.expenses.fixed.noExpenses}</p>
               <p className="empty-state-subtitle">{t.expenses.fixed.noExpensesSubtitle}</p>
-              <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 16, padding: '10px 24px' }}>
-                <Plus size={16} />
-                {t.common.add}
-              </button>
             </div>
           ) : (
             <div>
@@ -194,7 +190,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
           </div>
         </BottomSheet>
 
-        {!sheetOpen && deleteId === null && fixedExpenses.length > 0 && (
+        {!sheetOpen && deleteId === null && (
           <button
             onClick={openAdd}
             style={{

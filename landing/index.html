@@ -45,8 +45,50 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(76,58,138,0.4);
     }
+    [data-theme="light"] {
+      --bg: #F0EDF8;
+      --bg-card: #F5F2FC;
+      --bg-surface: #EDE8F8;
+      --primary: #3C3489;
+      --accent: #7C3AED;
+      --accent2: #6D28D9;
+      --text: #1A1035;
+      --muted: #4A3F7A;
+      --border: #C8BEE8;
+    }
+    [data-theme="light"] nav {
+      background: rgba(240,237,248,0.9);
+      border-bottom-color: rgba(200,190,232,0.6);
+    }
+    [data-theme="light"] .hero::before {
+      background: radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%);
+    }
+    [data-theme="light"] .hero h1 {
+      background: linear-gradient(135deg, #1A1035 30%, #7C3AED 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    [data-theme="light"] .feature-card,
+    [data-theme="light"] .stat-card,
+    [data-theme="light"] .pricing-card {
+      background: var(--bg-card);
+      border-color: var(--border);
+      box-shadow: 0 2px 8px rgba(60,52,137,0.08);
+    }
+    [data-theme="light"] .footer {
+      background: #EDE8F8;
+      border-top-color: var(--border);
+    }
+
     .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: var(--text); text-decoration: none; }
     .nav-logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #7C3AED, #3C3489); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-theme-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3);
+      cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .nav-theme-btn:hover { background: rgba(124,58,237,0.22); }
     .nav-cta {
       background: linear-gradient(135deg, #7C3AED, #6D28D9);
       color: white; border: none; border-radius: 12px;
@@ -250,7 +292,10 @@
     <div class="nav-logo-icon">💰</div>
     Finvu
   </a>
-  <a href="https://finvu.pedani.eu/#register" class="nav-cta">Začať zadarmo →</a>
+  <div class="nav-right">
+    <button class="nav-theme-btn" id="themeToggle" title="Prepnúť tému" aria-label="Prepnúť tému">🌙</button>
+    <a href="https://finvu.pedani.eu/#register" class="nav-cta">Začať zadarmo →</a>
+  </div>
 </nav>
 
 <!-- Hero -->
@@ -417,6 +462,28 @@
 </footer>
 
 <script>
+  // Theme toggle
+  (function() {
+    const saved = localStorage.getItem('finvu-theme') || 'dark';
+    if (saved === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeToggle').textContent = '☀️';
+    }
+  })();
+
+  document.getElementById('themeToggle').addEventListener('click', function() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      document.documentElement.removeAttribute('data-theme');
+      this.textContent = '🌙';
+      localStorage.setItem('finvu-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      this.textContent = '☀️';
+      localStorage.setItem('finvu-theme', 'light');
+    }
+  });
+
   // Scroll reveal
   const observer = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
