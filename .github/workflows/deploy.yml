@@ -38,15 +38,16 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
-            cd /var/www/finance-tracker
+            cd /var/www/finance-tracker-repo
             git fetch origin main
             git reset --hard origin/main
-            cd /var/www/finance-tracker/finance-tracker
-            sudo mkdir -p dist
-            sudo chown -R deploy:deploy dist
+            cd /var/www/finance-tracker-repo/finance-tracker
             npm ci --prefer-offline --legacy-peer-deps
             VITE_API_URL=https://api.pedani.eu VITE_BASE_URL=/ npm run build
-            cp /var/www/finance-tracker/landing/index.html /var/www/landing/index.html 2>/dev/null || true
+            sudo mkdir -p /var/www/finance-tracker/finance-tracker/dist
+            sudo chown -R deploy:deploy /var/www/finance-tracker/finance-tracker/dist
+            cp -r dist/* /var/www/finance-tracker/finance-tracker/dist/
+            cp /var/www/finance-tracker-repo/landing/index.html /var/www/landing/index.html 2>/dev/null || true
             sudo systemctl reload nginx
   deploy-backend:
     needs: detect-changes
@@ -62,12 +63,12 @@ jobs:
           port: 22
           script: |
             set -euo pipefail
-            cd /var/www/finance-tracker
+            cd /var/www/finance-tracker-repo
             git fetch origin main
             git reset --hard origin/main
-            cd /var/www/finance-tracker/backend
+            cd /var/www/finance-tracker-repo/backend
             npm ci --prefer-offline
             DATABASE_URL=postgresql://finance_user:6f9b13c63a5bdeced9b940728d8e560c@localhost:5432/finance_tracker npm run db:migrate
-            cd /var/www/finance-tracker
+            cd /var/www/finance-tracker-repo
             docker compose build backend
             docker compose up -d --no-deps backend
