@@ -46,37 +46,71 @@
       border-bottom: 1px solid rgba(76,58,138,0.4);
     }
     [data-theme="light"] {
-      --bg: #F0EDF8;
-      --bg-card: #F5F2FC;
-      --bg-surface: #EDE8F8;
+      --bg: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-surface: #F7F7F8;
       --primary: #3C3489;
       --accent: #7C3AED;
       --accent2: #6D28D9;
-      --text: #1A1035;
-      --muted: #4A3F7A;
-      --border: #C8BEE8;
+      --text: #111111;
+      --muted: #666666;
+      --border: #E5E5E5;
+    }
+    [data-theme="light"] body {
+      background: #FFFFFF;
     }
     [data-theme="light"] nav {
-      background: rgba(240,237,248,0.9);
-      border-bottom-color: rgba(200,190,232,0.6);
+      background: rgba(255,255,255,0.92);
+      border-bottom-color: #E5E5E5;
+    }
+    [data-theme="light"] .hero {
+      background: #FFFFFF;
     }
     [data-theme="light"] .hero::before {
-      background: radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(124,58,237,0.06) 0%, transparent 70%);
     }
     [data-theme="light"] .hero h1 {
-      background: linear-gradient(135deg, #1A1035 30%, #7C3AED 100%);
+      background: linear-gradient(135deg, #111111 30%, #7C3AED 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    [data-theme="light"] .hero p {
+      color: #666666;
+    }
+    [data-theme="light"] .hero-badge {
+      background: rgba(124,58,237,0.08);
+      border-color: rgba(124,58,237,0.2);
+      color: #7C3AED;
+    }
+    [data-theme="light"] .features,
+    [data-theme="light"] .stats-section,
+    [data-theme="light"] .testimonials {
+      background: #F7F7F8;
     }
     [data-theme="light"] .feature-card,
     [data-theme="light"] .stat-card,
-    [data-theme="light"] .pricing-card {
-      background: var(--bg-card);
-      border-color: var(--border);
-      box-shadow: 0 2px 8px rgba(60,52,137,0.08);
+    [data-theme="light"] .pricing-card,
+    [data-theme="light"] .testimonial-card {
+      background: #FFFFFF;
+      border-color: #E5E5E5;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    [data-theme="light"] .feature-card p,
+    [data-theme="light"] .testimonial-card p {
+      color: #666666;
+    }
+    [data-theme="light"] .stat-card .stat-value {
+      color: #111111;
     }
     [data-theme="light"] .footer {
-      background: #EDE8F8;
-      border-top-color: var(--border);
+      background: #F7F7F8;
+      border-top-color: #E5E5E5;
+      color: #666666;
+    }
+    [data-theme="light"] .footer a {
+      color: #666666;
+    }
+    [data-theme="light"] .footer a:hover {
+      color: #7C3AED;
     }
 
     .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: var(--text); text-decoration: none; }
