@@ -102,10 +102,16 @@ export function CategoriesPage() {
         </div>
 
         {categories.length === 0 ? (
-          <div className="card flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-5xl mb-4">🏷️</span>
-            <p className="text-[#B8A3E8] font-medium text-sm">{t.expenses.categories.noCategories}</p>
-            <p className="text-[#9D84D4] text-xs mt-1">{t.expenses.categories.noCategoriesSubtitle}</p>
+          <div className="card">
+            <div className="empty-state">
+              <span className="empty-state-emoji">🏷️</span>
+              <p className="empty-state-title">{t.expenses.categories.noCategories}</p>
+              <p className="empty-state-subtitle">{t.expenses.categories.noCategoriesSubtitle}</p>
+              <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 16, padding: '10px 24px' }}>
+                <Plus size={16} />
+                {t.common.add}
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -197,9 +203,7 @@ export function CategoriesPage() {
         >
           <div className="flex flex-col gap-5">
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
-                {t.expenses.categories.nameLabel}
-              </label>
+              <label className="form-label">{t.expenses.categories.nameLabel}</label>
               <input
                 className="input-field"
                 placeholder={t.expenses.categories.namePlaceholder}
@@ -210,9 +214,7 @@ export function CategoriesPage() {
 
             {!editing && (
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
-                  Typ
-                </label>
+                <label className="form-label">Typ</label>
                 <div className="flex gap-2">
                   {(['expense', 'income'] as const).map(type => (
                     <button
@@ -233,7 +235,7 @@ export function CategoriesPage() {
             )}
 
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
+              <label className="form-label">
                 {t.expenses.categories.iconLabel} <span className="text-[#E2D9F3] ml-2 text-sm not-uppercase">{icon}</span>
               </label>
               <div className="grid grid-cols-8 gap-1.5">
@@ -254,9 +256,7 @@ export function CategoriesPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
-                {t.expenses.categories.colorLabel}
-              </label>
+              <label className="form-label">{t.expenses.categories.colorLabel}</label>
               <div className="flex flex-wrap gap-2.5">
                 {PRESET_COLORS.map(c => (
                   <button
@@ -275,7 +275,7 @@ export function CategoriesPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
+              <label className="form-label">
                 {t.expenses.categories.limitLabel}{' '}
                 <span className="text-[#9D84D4]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
               </label>
@@ -295,14 +295,14 @@ export function CategoriesPage() {
             </div>
 
             <div className="flex gap-3 pt-1">
-              <button onClick={closeSheet} className="btn-secondary flex-1 justify-center rounded-2xl" style={{ height: '48px' }}>
+              <button onClick={closeSheet} className="btn-secondary flex-1 justify-center rounded-2xl" style={{ height: '52px' }}>
                 {t.common.cancel}
               </button>
               <button
                 onClick={handleSave}
                 disabled={!name.trim()}
                 className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ height: '48px' }}
+                style={{ height: '52px' }}
               >
                 {editing ? t.common.save : t.common.add}
               </button>
@@ -310,7 +310,7 @@ export function CategoriesPage() {
           </div>
         </BottomSheet>
 
-        {!sheetOpen && deleteId === null && (
+        {!sheetOpen && deleteId === null && categories.length > 0 && (
           <button
             onClick={openAdd}
             style={{
@@ -320,6 +320,7 @@ export function CategoriesPage() {
               border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)', zIndex: 50, color: 'white',
+              transition: 'all 0.2s ease',
             }}
           >
             <Plus size={24} strokeWidth={2.5} />

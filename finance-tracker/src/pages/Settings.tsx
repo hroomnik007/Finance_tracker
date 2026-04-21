@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, Lock, Mail, Bell } from 'lucide-react'
+import { Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, Lock, Mail, Bell } from 'lucide-react'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
@@ -789,34 +789,34 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleExport}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#7C3AED' }}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
             >
-              <Download size={14} />
+              <span>📄</span>
               JSON
             </button>
             <button
               onClick={handleExportPDF}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#EF4444' }}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
             >
-              <Download size={14} />
+              <span>📊</span>
               PDF
             </button>
             <button
               onClick={handleExportXLSX}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#22C55E' }}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
             >
-              <Download size={14} />
+              <span>📈</span>
               XLSX
             </button>
             <button
               onClick={handleExportCSV}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#3B82F6' }}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
             >
-              <Download size={14} />
+              <span>📋</span>
               CSV
             </button>
           </div>
@@ -824,8 +824,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           {user && (
             <button
               onClick={handleShareReport}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-80 w-full"
-              style={{ backgroundColor: '#0EA5E9' }}
+              className="btn-primary w-full justify-center py-3 rounded-2xl"
             >
               🔗 Zdieľať prehľad
             </button>

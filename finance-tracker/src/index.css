@@ -95,15 +95,14 @@ body {
   border-radius: 20px;
   border: 0.5px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
-  padding: 16px;
-  transition: all 150ms ease;
+  padding: 20px;
+  transition: all 0.2s ease;
 }
 
 .card-hover:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-medium);
-  transition: all 150ms ease;
-
+  transition: all 0.2s ease;
 }
 
 /* ── Button system ── */
@@ -195,17 +194,17 @@ body {
 /* ── Input fields ── */
 .input-field {
   width: 100%;
-  background: var(--bg-elevated);
+  background: rgba(255,255,255,0.05);
   color: var(--text-primary);
   border-radius: 14px;
   padding: 0 16px;
-  height: 48px;
+  height: 52px;
   font-size: 15px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   border: 1px solid var(--border-subtle);
   outline: none;
   line-height: 1.5;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 /* Textarea variant — override height */
@@ -217,31 +216,37 @@ textarea.input-field {
 
 .input-field::placeholder {
   color: var(--text-muted);
+  opacity: 0.4;
 }
 
 .input-field:focus {
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  background: rgba(255,255,255,0.08);
+  border-color: transparent;
+  border-left: 3px solid #7C3AED;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4);
+  padding-left: 14px;
 }
 
 .select-field {
-  background: var(--bg-elevated);
+  background: rgba(255,255,255,0.05);
   color: var(--text-primary);
   border-radius: 12px;
-  height: 44px;
+  height: 52px;
   padding: 0 16px;
   font-size: 14px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   border: 1px solid var(--border-subtle);
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
   appearance: auto;
 }
 
 .select-field:focus {
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  background: rgba(255,255,255,0.08);
+  border-color: transparent;
+  border-left: 3px solid #7C3AED;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4);
 }
 
 /* ── Date input calendar icon ── */
@@ -321,6 +326,84 @@ textarea.input-field {
 .stagger-3 { animation-delay: 120ms; }
 .stagger-4 { animation-delay: 180ms; }
 .stagger-5 { animation-delay: 240ms; }
+
+/* ── Amount input (large centered) ── */
+.amount-input {
+  height: 72px !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+}
+
+/* ── Form label ── */
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-state-emoji {
+  font-size: 64px;
+  line-height: 1;
+  animation: float 3s ease-in-out infinite;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-state-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 240px;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Category row hover (desktop) ── */
+.category-row .action-buttons {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.category-row:hover .action-buttons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Date input wrapper focus ── */
+.date-input-wrapper:focus-within {
+  border-color: transparent !important;
+  border-left: 3px solid #7C3AED !important;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
 
 /* ── Hide number input spinners ── */
 input[type=number]::-webkit-outer-spin-button,

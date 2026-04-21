@@ -154,7 +154,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
 
   const formBody = (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* OCR scan button */}
       <div className="flex justify-end">
         <button
@@ -167,6 +167,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.35)',
             borderRadius: 10, color: '#A78BFA', fontSize: 12, fontWeight: 600,
             cursor: 'pointer', fontFamily: 'inherit', opacity: ocrLoading ? 0.6 : 1,
+            transition: 'all 0.2s ease',
           }}
         >
           <Camera size={14} />
@@ -184,9 +185,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       )}
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          {t.expenses.variable.amount}
-        </label>
+        <label className="form-label">{t.expenses.variable.amount}</label>
         <input
           type="text"
           inputMode="decimal"
@@ -198,8 +197,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
             setForm(f => ({ ...f, amount: cleaned }))
           }}
-          className="input-field font-mono font-bold"
-          style={{ height: '60px', fontSize: '1.5rem' }}
+          className="input-field amount-input font-mono"
         />
       </div>
 
@@ -224,9 +222,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       )}
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          {t.expenses.variable.category}
-        </label>
+        <label className="form-label">{t.expenses.variable.category}</label>
         {!newCatMode ? (
           <select
             value={form.categoryId}
@@ -260,9 +256,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          {t.expenses.variable.note}
-        </label>
+        <label className="form-label">{t.expenses.variable.note}</label>
         <input
           type="text"
           placeholder={t.expenses.variable.notePlaceholder}
@@ -273,9 +267,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          {t.expenses.variable.date}
-        </label>
+        <label className="form-label">{t.expenses.variable.date}</label>
         <DateInput
           value={form.date}
           onChange={date => setForm(f => ({ ...f, date }))}
@@ -285,7 +277,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       <button
         onClick={handleSave}
         className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '48px', marginTop: '4px' }}
+        style={{ height: '52px', marginTop: '4px' }}
       >
         {editing ? t.expenses.variable.saveChanges : t.expenses.variable.add}
       </button>
@@ -404,10 +396,14 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           }}
         >
           {sortedAll.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-3">
-              <span className="text-5xl">🧾</span>
-              <p className="text-[#E2D9F3] font-semibold">{t.expenses.variable.noExpenses}</p>
-              <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
+            <div className="empty-state" style={{ padding: '48px 24px' }}>
+              <span className="empty-state-emoji">💸</span>
+              <p className="empty-state-title">{t.expenses.variable.noExpenses}</p>
+              <p className="empty-state-subtitle">{t.expenses.variable.noExpensesSubtitle}</p>
+              <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 16, padding: '10px 24px' }}>
+                <Plus size={16} />
+                {t.expenses.variable.add}
+              </button>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -491,10 +487,16 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       {/* ── Mobile: date-grouped cards ── */}
       <div className="flex flex-col gap-4 lg:hidden">
         {sortedDates.length === 0 ? (
-          <div className="card flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <span className="text-5xl">🧾</span>
-            <p className="text-[#E2D9F3] font-semibold">{t.expenses.variable.noExpenses}</p>
-            <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
+          <div className="card">
+            <div className="empty-state">
+              <span className="empty-state-emoji">💸</span>
+              <p className="empty-state-title">{t.expenses.variable.noExpenses}</p>
+              <p className="empty-state-subtitle">{t.expenses.variable.noExpensesSubtitle}</p>
+              <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 16, padding: '10px 24px' }}>
+                <Plus size={16} />
+                {t.expenses.variable.add}
+              </button>
+            </div>
           </div>
         ) : (
           sortedDates.map(date => (
@@ -568,8 +570,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         )}
       </div>
 
-      {/* FAB — hidden when form is open */}
-      {!sheetOpen && confirmId === null && (
+      {/* FAB — hidden when form is open or empty state */}
+      {!sheetOpen && confirmId === null && sortedAll.length > 0 && (
         <button
           onClick={openAdd}
           style={{
@@ -588,6 +590,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
             zIndex: 50,
             color: 'white',
+            transition: 'all 0.2s ease',
           }}
         >
           <Plus size={24} strokeWidth={2.5} />

@@ -35,10 +35,9 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
 
   return (
     <>
-      {/* Výdavky submenu — bottom sheet style */}
+      {/* Výdavky submenu */}
       {expensesMenuOpen && (
         <>
-          {/* backdrop */}
           <div
             className="fixed inset-0 z-40"
             style={{ background: 'rgba(0,0,0,0.4)' }}
@@ -81,15 +80,18 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         </>
       )}
 
-      {/* Bottom navigation bar — pill style */}
+      {/* Bottom navigation bar */}
       <nav
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          padding: '8px 24px 16px',
-          background: '#1A1230',
+          padding: '8px 16px 16px',
+          background: 'rgba(13,10,26,0.85)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
@@ -144,17 +146,18 @@ function NavPill({
         flexDirection: 'column',
         alignItems: 'center',
         gap: '3px',
-        padding: '8px 16px',
+        padding: '6px 14px',
         borderRadius: '999px',
-        background: active ? '#2D1F5E' : 'transparent',
-        color: active ? '#A78BFA' : '#6B5A9E',
+        background: active ? 'rgba(124,58,237,0.25)' : 'transparent',
+        color: active ? 'white' : 'rgba(167,139,250,0.5)',
         cursor: 'pointer',
         border: 'none',
         fontSize: '10px',
         fontFamily: 'inherit',
         fontWeight: active ? 600 : 400,
-        transition: 'all 150ms ease',
+        transition: 'all 0.2s ease',
         minWidth: '60px',
+        opacity: active ? 1 : 0.8,
       }}
     >
       {icon}

@@ -20,7 +20,6 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
     }
   }, [open])
 
-  // Fix 4: ESC closes the sheet
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => {
@@ -33,31 +32,44 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 fade-in flex items-end sm:items-center justify-center px-4 sm:px-0">
+    <div className="fixed inset-0 z-50 fade-in flex items-end sm:items-center justify-center sm:px-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        className="absolute inset-0 backdrop-blur-md"
+        style={{ background: 'rgba(0,0,0,0.6)' }}
         onClick={onClose}
       />
 
-      {/* Sheet — px-4 on outer container ensures 16px margin on each side on mobile */}
+      {/* Sheet */}
       <div
-        className="relative w-full max-h-[92svh] overflow-y-auto slide-up rounded-[24px] sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in"
+        className="relative w-full max-h-[92svh] overflow-y-auto slide-up sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in"
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
           boxShadow: 'var(--shadow-elevated)',
+          borderRadius: '24px 24px 0 0',
         }}
       >
+        {/* Drag handle — mobile only */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div style={{
+            width: 40,
+            height: 4,
+            borderRadius: 2,
+            background: 'rgba(255,255,255,0.2)',
+          }} />
+        </div>
+
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-5 sticky top-0 z-10 rounded-t-[24px]"
+          className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderBottom: '1px solid var(--border-subtle)',
+            borderRadius: '24px 24px 0 0',
           }}
         >
-          <h2 className="text-base font-semibold text-[#E2D9F3] pt-1 overflow-visible">{title}</h2>
+          <h2 className="text-base font-semibold text-[#E2D9F3] overflow-visible">{title}</h2>
           <button
             onClick={onClose}
             className="btn-icon w-8 h-8 text-[#B8A3E8] hover:text-[#E2D9F3]"
@@ -67,7 +79,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 pb-8 md:px-6 md:pb-6">{children}</div>
+        <div className="px-6 py-5 pb-8 md:pb-6">{children}</div>
       </div>
     </div>
   )

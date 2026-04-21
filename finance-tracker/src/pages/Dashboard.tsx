@@ -181,7 +181,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   })()
 
   return (
-    <div className="flex flex-col gap-5 pb-4" style={{ paddingLeft: 0, paddingRight: 0 }}>
+    <div className="flex flex-col gap-5 pb-4 w-full" style={{ paddingLeft: 0, paddingRight: 0, maxWidth: '900px', margin: '0 auto' }}>
 
       {/* ── HERO CARD ── */}
       <div style={{ background: 'linear-gradient(135deg, #1E1535 0%, #2D1F5E 50%, #1A1040 100%)', border: '0.5px solid #4C3A8A', borderRadius: 20, padding: 20 }}>
@@ -271,22 +271,35 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-3 gap-2">
-        <div style={{ ...CARD, padding: 10 }}>
-          <p className="text-[8px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-1.5 leading-snug">{t.dashboard.totalExpenses}</p>
-          <p className="font-mono font-medium text-[#F87171] text-[15px] leading-tight">{formatAmount(totalExpenses)}</p>
+        <div style={{ ...CARD, padding: 14, minHeight: 80, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] leading-snug">{t.dashboard.totalExpenses}</p>
+          <p className="font-mono font-bold text-[#F87171] leading-tight mt-1"
+            style={{ fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+            {formatAmount(totalExpenses)}
+          </p>
         </div>
-        <div style={{ ...CARD, padding: 10 }}>
-          <p className="text-[8px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-1.5 leading-snug">{t.dashboard.grossIncome}</p>
-          <p className="font-mono font-medium text-[15px] leading-tight" style={{ color: '#34D399' }}>{formatAmount(totalIncome)}</p>
+        <div style={{ ...CARD, padding: 14, minHeight: 80, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] leading-snug">{t.dashboard.grossIncome}</p>
+          <p className="font-mono font-bold leading-tight mt-1" style={{ color: '#34D399', fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+            {formatAmount(totalIncome)}
+          </p>
         </div>
-        <div style={{ ...CARD, padding: 10 }}>
-          <p className="text-[8px] font-semibold uppercase tracking-[0.05em] text-[#9D84D4] mb-1.5 leading-snug">Ø / deň</p>
-          <p className="font-mono font-medium text-[#A78BFA] text-[15px] leading-tight">{formatAmount(dailyAvgExpense)}</p>
+        <div style={{ ...CARD, padding: 14, minHeight: 80, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] leading-snug">Ø / deň</p>
+          <p className="font-mono font-bold text-[#A78BFA] leading-tight mt-1"
+            style={{ fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+            {formatAmount(dailyAvgExpense)}
+          </p>
         </div>
       </div>
 
       {motivationalMsg && (
-        <div style={{ ...CARD, padding: 12, borderColor: motivationalMsg.color + '55' }}>
+        <div style={{
+          ...CARD,
+          padding: '12px 16px',
+          borderColor: motivationalMsg.color + '55',
+          borderLeft: `4px solid ${motivationalMsg.color}`,
+        }}>
           <p className="text-[13px]" style={{ color: motivationalMsg.color }}>{motivationalMsg.msg}</p>
         </div>
       )}
@@ -345,7 +358,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           {pieData.length > 0 && (
             <div style={CARD}>
               <h3 className="text-[16px] font-medium text-[#E2D9F3] mb-3">{t.dashboard.expensesByCategory}</h3>
-              <div className="relative" style={{ height: 220 }}>
+              <div className="relative" style={{ height: 'clamp(220px, 30vw, 320px)' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
