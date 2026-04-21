@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Edit2, Trash2, Plus, FileUp, Camera } from 'lucide-react'
-import { scanReceipt } from '../api/auth'
+import { Edit2, Trash2, Plus, FileUp } from 'lucide-react'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -52,8 +51,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
   const [csvOpen, setCsvOpen] = useState(false)
-  const [ocrLoading, setOcrLoading] = useState(false)
-  const [ocrWarning, setOcrWarning] = useState(false)
 
   const getCategoryById = (id: string) => categories.find(c => c.id === id)
   const getBudgetForCat = (catId: string) => budgetStatuses.find(b => b.categoryId === catId)
@@ -70,40 +67,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     setForm(emptyForm())
     setNewCatMode(false)
     setNewCatName('')
-    setOcrWarning(false)
     setSheetOpen(true)
-  }
-
-  const handleOcrScan = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.capture = 'environment'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      setOcrLoading(true)
-      setOcrWarning(false)
-      try {
-        const result = await scanReceipt(file)
-        if (result.amount !== null) {
-          setForm(f => ({ ...f, amount: String(result.amount) }))
-        }
-        if (result.date !== null) {
-          setForm(f => ({ ...f, date: result.date! }))
-        }
-        if (result.amount !== null || result.date !== null) {
-          setOcrWarning(true)
-        } else {
-          showToast('Nepodarilo sa rozpoznať účtenku')
-        }
-      } catch {
-        showToast('Nepodarilo sa rozpoznať účtenku')
-      } finally {
-        setOcrLoading(false)
-      }
-    }
-    input.click()
   }
 
   const openEdit = (e: VariableExpense) => {
@@ -155,35 +119,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
   const formBody = (
     <div className="flex flex-col gap-5">
-      {/* OCR scan button */}
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleOcrScan}
-          disabled={ocrLoading}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            height: 34, padding: '0 12px',
-            background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.35)',
-            borderRadius: 10, color: '#A78BFA', fontSize: 12, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'inherit', opacity: ocrLoading ? 0.6 : 1,
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Camera size={14} />
-          {ocrLoading ? 'Skenujem...' : 'Skenovať účtenku'}
-        </button>
-      </div>
-
-      {ocrWarning && (
-        <div style={{
-          background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)',
-          borderRadius: 10, padding: '8px 12px', fontSize: 12, color: '#FBBF24',
-        }}>
-          Naskenované hodnoty môžu byť nepresné — skontrolujte ich pred uložením.
-        </div>
-      )}
-
       <div>
         <label className="form-label">{t.expenses.variable.amount}</label>
         <input

@@ -17,6 +17,7 @@ import {
   demoLogin as apiDemoLogin,
   googleLogin as apiGoogleLogin,
   updateUserSettings,
+  pinLogin as apiPinLogin,
 } from '../api/auth'
 import type { AuthUser } from '../types'
 
@@ -28,6 +29,8 @@ interface AuthContextValue {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
   loginDemo: () => Promise<void>
   loginWithGoogle: (accessToken: string) => Promise<void>
+  loginWithPin: (email: string, pin: string) => Promise<void>
+  loginWithToken: (user: AuthUser, accessToken: string) => void
   register: (email: string, password: string, name: string, gdprConsent: boolean) => Promise<void>
   loginAsGuest: () => void
   logout: () => Promise<void>
@@ -45,6 +48,8 @@ const AuthContext = createContext<AuthContextValue>({
   login: async () => {},
   loginDemo: async () => {},
   loginWithGoogle: async () => {},
+  loginWithPin: async () => {},
+  loginWithToken: () => {},
   register: async () => {},
   loginAsGuest: () => {},
   logout: async () => {},
@@ -137,6 +142,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [])
 
+  const loginWithPin = useCallback(async (email: string, pin: string) => {
+    const { user: me, accessToken } = await apiPinLogin(email, pin)
+    setAccessToken(accessToken)
+    setUser(me)
+    setIsGuest(false)
+    try {
+      sessionStorage.removeItem('auth_guest')
+      localStorage.removeItem('auth_guest')
+      sessionStorage.setItem('just_logged_in', 'true')
+    } catch { /* ignore */ }
+  }, [])
+
+  const loginWithToken = useCallback((me: AuthUser, accessToken: string) => {
+    setAccessToken(accessToken)
+    setUser(me)
+    setIsGuest(false)
+    try {
+      sessionStorage.removeItem('auth_guest')
+      localStorage.removeItem('auth_guest')
+      sessionStorage.setItem('just_logged_in', 'true')
+    } catch { /* ignore */ }
+  }, [])
+
   const refreshUser = useCallback(async () => {
     try {
       const { user: me } = await getMe()
@@ -182,6 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         loginDemo,
         loginWithGoogle,
+        loginWithPin,
+        loginWithToken,
         register,
         loginAsGuest,
         logout,

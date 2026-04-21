@@ -91,11 +91,35 @@ export async function getSharedReport(token: string): Promise<{ data: string }> 
   return data
 }
 
-export async function scanReceipt(imageFile: File): Promise<{ amount: number | null; date: string | null; rawText: string }> {
-  const formData = new FormData()
-  formData.append('image', imageFile)
-  const { data } = await apiClient.post('/api/ocr/scan', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+export async function pinLogin(email: string, pin: string): Promise<{ user: import('../types').AuthUser; accessToken: string }> {
+  const { data } = await apiClient.post('/api/auth/pin-login', { email, pin })
+  return data
+}
+
+export async function savePin(pin: string): Promise<void> {
+  await apiClient.patch('/api/auth/pin', { pin })
+}
+
+export async function deletePin(): Promise<void> {
+  await apiClient.delete('/api/auth/pin')
+}
+
+export async function webauthnRegisterOptions(): Promise<object> {
+  const { data } = await apiClient.get('/api/auth/webauthn/register-options')
+  return data
+}
+
+export async function webauthnRegisterVerify(body: object): Promise<{ success: boolean }> {
+  const { data } = await apiClient.post('/api/auth/webauthn/register-verify', body)
+  return data
+}
+
+export async function webauthnAuthenticateOptions(email?: string): Promise<object> {
+  const { data } = await apiClient.get('/api/auth/webauthn/authenticate-options', { params: email ? { email } : {} })
+  return data
+}
+
+export async function webauthnAuthenticateVerify(body: object): Promise<{ user: import('../types').AuthUser; accessToken: string }> {
+  const { data } = await apiClient.post('/api/auth/webauthn/authenticate-verify', body)
   return data
 }

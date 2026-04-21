@@ -66,6 +66,44 @@
   --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
+[data-theme="light"] {
+  --bg-primary: #F0EDF8;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F5F3FF;
+  --bg-base: #F0EDF8;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F5F3FF;
+  --bg-hover: #EDE9FF;
+
+  --border-subtle: #DDD6FE;
+  --border-medium: #C4B5FD;
+
+  --accent: #7C3AED;
+  --accent-strong: #6D28D9;
+  --accent-muted: #A78BFA;
+  --accent-from: #7C3AED;
+  --accent-to: #6D28D9;
+  --accent-solid: #7C3AED;
+  --accent-light: rgba(124, 58, 237, 0.1);
+
+  --text-primary: #1E1535;
+  --text-secondary: #4C3A8A;
+  --text-muted: #6B5A9E;
+  --text-hint: #9D84D4;
+
+  --positive: #059669;
+  --negative: #DC2626;
+  --warning: #D97706;
+
+  --color-income: #059669;
+  --color-expense: #DC2626;
+  --color-neutral: #6B5A9E;
+  --color-warning: #D97706;
+
+  --shadow-card: 0 2px 12px rgba(124, 58, 237, 0.08);
+  --shadow-elevated: 0 4px 24px rgba(124, 58, 237, 0.12);
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -413,4 +451,52 @@ input[type=number]::-webkit-inner-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .input-field {
+  background: rgba(0,0,0,0.04);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .input-field:focus {
+  background: rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .input-field::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+[data-theme="light"] .select-field {
+  background: rgba(0,0,0,0.04);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .select-field:focus {
+  background: rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .date-input-wrapper:focus-within {
+  background: rgba(0,0,0,0.06) !important;
+}
+
+[data-theme="light"] .btn-secondary {
+  color: var(--text-secondary);
+  border-color: var(--border-medium);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: rgba(124, 58, 237, 0.06);
+  color: var(--accent-strong);
+}
+
+[data-theme="light"] .card {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
 }

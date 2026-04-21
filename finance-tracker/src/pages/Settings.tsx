@@ -4,7 +4,7 @@ import { Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, 
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
-import { updateWeeklyEmail, createSharedReport } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport, savePin, deletePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -176,6 +176,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         language:       (map['language'] as string)       ?? DEFAULT_SETTINGS.language,
         dateFormat:     (map['dateFormat'] as string)     ?? DEFAULT_SETTINGS.dateFormat,
         firstDayOfWeek: (map['firstDayOfWeek'] as string) ?? DEFAULT_SETTINGS.firstDayOfWeek,
+        theme:          (contextSettings.theme)           ?? DEFAULT_SETTINGS.theme,
       })
     }
   }, [rawSettingsRows])
@@ -190,6 +191,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       setSetting('language',       d.language),
       setSetting('dateFormat',     d.dateFormat),
       setSetting('firstDayOfWeek', d.firstDayOfWeek),
+      setSetting('theme',          d.theme ?? 'dark'),
     ])
 
     updateSettings(d)
@@ -201,6 +203,9 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   // ── PIN lock ──────────────────────────────────────────────────────────────
   const { hasPin, setupPin, removePin } = usePinLock()
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
+  const [webauthnSupported] = useState(() => typeof window !== 'undefined' && !!window.PublicKeyCredential)
+  const [webauthnRegistering, setWebauthnRegistering] = useState(false)
+  const [webauthnMsg, setWebauthnMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   // ── Notifications ─────────────────────────────────────────────────────────
   const [notificationsEnabled, setNotificationsEnabledState] = useState(getNotificationsEnabled)
@@ -660,6 +665,29 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           </select>
         </SettingRow>
 
+        <SettingRow label="Farebná téma" sublabel="Prepínanie medzi tmavým a svetlým režimom">
+          <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
+            {(['dark', 'light'] as const).map(t2 => (
+              <button
+                key={t2}
+                onClick={() => {
+                  setDraft(d => ({ ...(d ?? currentDraft), theme: t2 }))
+                  updateSettings({ theme: t2 })
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{
+                  background: (currentDraft.theme ?? 'dark') === t2 ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : 'transparent',
+                  color: (currentDraft.theme ?? 'dark') === t2 ? 'white' : 'var(--text-muted)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {t2 === 'dark' ? '🌙 Tmavá' : '☀️ Svetlá'}
+              </button>
+            ))}
+          </div>
+        </SettingRow>
+
         {/* Save button */}
         <div className="px-5 py-4" style={{ borderTop: '1px solid #4C3A8A33' }}>
           {settingsSaveOk ? (
@@ -686,7 +714,14 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         <CardHeader icon={<Lock size={15} className="text-white" />} label="Bezpečnosť" />
         <SettingRow label="PIN zámok" sublabel="Automaticky zamkne aplikáciu po 5 minútach nečinnosti">
           <button
-            onClick={() => hasPin ? removePin() : setPinSetupOpen(true)}
+            onClick={async () => {
+              if (hasPin) {
+                removePin()
+                try { await deletePin() } catch { /* ignore — local PIN is removed */ }
+              } else {
+                setPinSetupOpen(true)
+              }
+            }}
             className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${hasPin ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
             style={{ border: hasPin ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
           >
@@ -704,8 +739,51 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </button>
           </div>
         )}
+        {webauthnSupported && (
+          <div className="px-5 pb-5" style={{ borderTop: '1px solid #4C3A8A33', paddingTop: 16 }}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-3">Biometrické prihlásenie</p>
+            <p className="text-xs text-[#B8A3E8] mb-3">Prihlasujte sa pomocou odtlačku prsta alebo Face ID bez zadávania hesla.</p>
+            <button
+              onClick={async () => {
+                setWebauthnRegistering(true)
+                setWebauthnMsg(null)
+                try {
+                  const { startRegistration } = await import('@simplewebauthn/browser')
+                  const options = await webauthnRegisterOptions()
+                  const response = await startRegistration({ optionsJSON: options as any })
+                  await webauthnRegisterVerify(response as any)
+                  setWebauthnMsg({ type: 'ok', text: 'Biometrický kľúč bol zaregistrovaný.' })
+                  const email = user?.email ?? ''
+                  if (email) localStorage.setItem(`webauthn_enabled_${email}`, '1')
+                } catch (e: unknown) {
+                  setWebauthnMsg({ type: 'err', text: (e as Error)?.message ?? 'Registrácia zlyhala.' })
+                } finally {
+                  setWebauthnRegistering(false)
+                }
+              }}
+              disabled={webauthnRegistering}
+              className="btn-secondary justify-center py-2.5 text-sm w-full"
+              style={{ borderRadius: 12, opacity: webauthnRegistering ? 0.6 : 1 }}
+            >
+              🔐 {webauthnRegistering ? 'Registrujem...' : 'Zaregistrovať zariadenie'}
+            </button>
+            {webauthnMsg && (
+              <p className="text-xs mt-2" style={{ color: webauthnMsg.type === 'ok' ? '#34d399' : '#f87171' }}>
+                {webauthnMsg.text}
+              </p>
+            )}
+          </div>
+        )}
       </SectionCard>
-      <PinSetupModal open={pinSetupOpen} onClose={() => setPinSetupOpen(false)} onSetPin={setupPin} />
+      <PinSetupModal
+        open={pinSetupOpen}
+        onClose={() => setPinSetupOpen(false)}
+        onSetPin={async (pin) => {
+          setupPin(pin)
+          try { await savePin(pin) } catch { /* ignore — local PIN is set */ }
+          if (user?.email) localStorage.setItem(`pin_enabled_${user.email}`, '1')
+        }}
+      />
 
       {/* ── Section: Notifikácie ── */}
       <SectionCard>

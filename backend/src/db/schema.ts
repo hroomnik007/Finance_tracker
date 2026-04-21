@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   lastActivityDate: date("last_activity_date"),
   badges: text("badges").array().default(sql`ARRAY[]::text[]`).notNull(),
   lastLoginAt: timestamp("last_login_at"),
+  pinHash: varchar("pin_hash", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -84,6 +85,20 @@ export const transactions = pgTable(
   (t) => [check("transactions_type_check", sql`${t.type} IN ('income', 'expense')`)]
 );
 
+export const webauthnCredentials = pgTable("webauthn_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  credentialId: text("credential_id").notNull().unique(),
+  publicKey: text("public_key").notNull(),
+  counter: integer("counter").notNull().default(0),
+  deviceType: varchar("device_type", { length: 32 }),
+  backedUp: boolean("backed_up").default(false).notNull(),
+  name: varchar("name", { length: 100 }).default("Biometrický kľúč").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const sharedReports = pgTable("shared_reports", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid("user_id")
@@ -102,3 +117,5 @@ export type NewCategory = typeof categories.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type SharedReport = typeof sharedReports.$inferSelect;
+export type WebAuthnCredential = typeof webauthnCredentials.$inferSelect;
+export type NewWebAuthnCredential = typeof webauthnCredentials.$inferInsert;

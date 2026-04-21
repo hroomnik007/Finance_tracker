@@ -42,6 +42,7 @@ export interface AppSettings {
   language: string
   dateFormat: string
   firstDayOfWeek: string
+  theme: 'dark' | 'light'
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -49,6 +50,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'sk',
   dateFormat: 'DD.MM.YYYY',
   firstDayOfWeek: 'monday',
+  theme: 'dark',
 }
 
 export interface BudgetStatus {

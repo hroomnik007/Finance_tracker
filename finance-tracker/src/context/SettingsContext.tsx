@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { DEFAULT_SETTINGS } from '../types'
 import type { AppSettings } from '../types'
 
@@ -16,6 +16,10 @@ function loadSettings(): AppSettings {
 
 function persistSettings(s: AppSettings) {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) } catch { /* ignore */ }
+}
+
+function applyTheme(theme: 'dark' | 'light') {
+  document.documentElement.setAttribute('data-theme', theme)
 }
 
 interface SettingsContextValue {
@@ -37,7 +41,15 @@ const SettingsContext = createContext<SettingsContextValue>({
 })
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(loadSettings)
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const s = loadSettings()
+    applyTheme(s.theme ?? 'dark')
+    return s
+  })
+
+  useEffect(() => {
+    applyTheme(settings.theme ?? 'dark')
+  }, [settings.theme])
 
   const [profileName, setProfileName] = useState<string>(
     () => localStorage.getItem('profile_name') ?? ''

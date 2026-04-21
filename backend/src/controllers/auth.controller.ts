@@ -5,7 +5,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
-import { users, refreshTokens, categories, transactions } from "../db/schema";
+import { users, refreshTokens, categories, transactions, webauthnCredentials } from "../db/schema";
 import { env } from "../config/env";
 import {
   signAccessToken,
@@ -385,7 +385,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [] };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }
@@ -401,5 +401,48 @@ export async function deleteAccount(req: AuthRequest, res: Response): Promise<vo
   await db.delete(users).where(eq(users.id, userId));
 
   res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path });
+  res.json({ success: true });
+}
+
+// ── PIN login ──────────────────────────────────────────────────────────────
+
+export async function pinLogin(req: Request, res: Response): Promise<void> {
+  const { email, pin } = req.body as { email?: string; pin?: string };
+  if (!email || !pin || typeof pin !== 'string' || pin.length !== 4) {
+    res.status(400).json({ error: "Neplatná požiadavka." });
+    return;
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!user || !user.pinHash) {
+    res.status(401).json({ error: "PIN prihlásenie nie je aktivované." });
+    return;
+  }
+
+  const valid = await bcrypt.compare(pin, user.pinHash);
+  if (!valid) {
+    res.status(401).json({ error: "Nesprávny PIN." });
+    return;
+  }
+
+  const accessToken = await issueTokens(res, user.id, user.email);
+  res.json({ user: userPublic(user), accessToken });
+}
+
+export async function updatePin(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!;
+  const { pin } = req.body as { pin?: string };
+  if (!pin || typeof pin !== 'string' || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    res.status(400).json({ error: "PIN musí byť 4-miestne číslo." });
+    return;
+  }
+  const pinHash = await bcrypt.hash(pin, env.BCRYPT_ROUNDS);
+  await db.update(users).set({ pinHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  res.json({ success: true });
+}
+
+export async function removePin(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!;
+  await db.update(users).set({ pinHash: null, updatedAt: new Date() }).where(eq(users.id, userId));
   res.json({ success: true });
 }
