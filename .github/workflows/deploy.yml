@@ -6,6 +6,7 @@ on:
     paths:
       - 'finance-tracker/**'
       - 'backend/**'
+      - 'landing/**'
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -20,6 +21,7 @@ jobs:
           filters: |
             frontend:
               - 'finance-tracker/**'
+              - 'landing/**'
             backend:
               - 'backend/**'
   deploy-frontend:
@@ -39,11 +41,12 @@ jobs:
             cd /var/www/finance-tracker
             git fetch origin main
             git reset --hard origin/main
-            cd finance-tracker
+            cd /var/www/finance-tracker/finance-tracker
             sudo mkdir -p dist
             sudo chown -R deploy:deploy dist
             npm ci --prefer-offline --legacy-peer-deps
-            VITE_API_URL=https://api.pedani.eu npm run build
+            VITE_API_URL=https://api.pedani.eu VITE_BASE_URL=/ npm run build
+            cp /var/www/finance-tracker/landing/index.html /var/www/landing/index.html 2>/dev/null || true
             sudo systemctl reload nginx
   deploy-backend:
     needs: detect-changes
