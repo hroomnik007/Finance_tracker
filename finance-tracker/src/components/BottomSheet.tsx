@@ -43,12 +43,11 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
 
       {/* Sheet — flex column so footer is always outside scroll area */}
       <div
-        className="relative w-full slide-up sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in flex flex-col"
+        className="relative w-full slide-up rounded-t-[24px] sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
           boxShadow: 'var(--shadow-elevated)',
-          borderRadius: '24px 24px 0 0',
           maxHeight: '92svh',
         }}
       >
