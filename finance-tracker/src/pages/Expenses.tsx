@@ -264,13 +264,6 @@ export function ExpensesPage({
         />
       </div>
 
-      <button
-        onClick={handleSaveVar}
-        className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '52px', marginTop: '4px' }}
-      >
-        {editingVar ? 'Uložiť zmeny' : 'Pridať výdavok'}
-      </button>
     </div>
   )
 
@@ -315,13 +308,6 @@ export function ExpensesPage({
           className="input-field"
         />
       </div>
-      <button
-        onClick={handleSaveFixed}
-        className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '52px', marginTop: '4px' }}
-      >
-        {editingFixed ? 'Uložiť zmeny' : 'Pridať fixný výdavok'}
-      </button>
     </div>
   )
 
@@ -663,13 +649,47 @@ export function ExpensesPage({
       </button>
 
       {/* Modals */}
-      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)}
-        title={editingVar ? 'Upraviť výdavok' : 'Pridať výdavok'}>
+      <BottomSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title={editingVar ? 'Upraviť výdavok' : 'Pridať výdavok'}
+        footer={
+          <button
+            onClick={handleSaveVar}
+            style={{
+              width: '100%', height: '56px', borderRadius: '16px',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              fontSize: '16px', fontWeight: 600, color: 'white',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            {editingVar ? 'Uložiť zmeny' : 'Pridať výdavok'}
+          </button>
+        }
+      >
         <VarExpenseFormBody />
       </BottomSheet>
 
-      <BottomSheet open={fixedSheetOpen} onClose={() => setFixedSheetOpen(false)}
-        title={editingFixed ? 'Upraviť fixný výdavok' : 'Pridať fixný výdavok'}>
+      <BottomSheet
+        open={fixedSheetOpen}
+        onClose={() => setFixedSheetOpen(false)}
+        title={editingFixed ? 'Upraviť fixný výdavok' : 'Pridať fixný výdavok'}
+        footer={
+          <button
+            onClick={handleSaveFixed}
+            style={{
+              width: '100%', height: '56px', borderRadius: '16px',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              fontSize: '16px', fontWeight: 600, color: 'white',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            {editingFixed ? 'Uložiť zmeny' : 'Pridať fixný výdavok'}
+          </button>
+        }
+      >
         <FixedExpenseFormBody />
       </BottomSheet>
 

@@ -6,9 +6,10 @@ interface BottomSheetProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  footer?: React.ReactNode
 }
 
-export function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, title, children, footer }: BottomSheetProps) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -40,18 +41,19 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         onClick={onClose}
       />
 
-      {/* Sheet */}
+      {/* Sheet — flex column so footer is always outside scroll area */}
       <div
-        className="relative w-full max-h-[92svh] overflow-y-auto slide-up sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in"
+        className="relative w-full slide-up sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in flex flex-col"
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
           boxShadow: 'var(--shadow-elevated)',
           borderRadius: '24px 24px 0 0',
+          maxHeight: '92svh',
         }}
       >
         {/* Drag handle — mobile only */}
-        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+        <div className="flex justify-center pt-3 pb-1 sm:hidden flex-shrink-0">
           <div style={{
             width: 40,
             height: 4,
@@ -62,11 +64,10 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
 
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
+          className="flex items-center justify-between px-6 py-4 flex-shrink-0"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderBottom: '1px solid var(--border-subtle)',
-            borderRadius: '24px 24px 0 0',
           }}
         >
           <h2 className="text-base font-semibold text-[#E2D9F3] overflow-visible">{title}</h2>
@@ -78,8 +79,27 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 pb-8 md:pb-6">{children}</div>
+        {/* Body — scrollable */}
+        <div
+          className="px-6 py-5 overflow-y-auto flex-1"
+          style={{ paddingBottom: footer ? '8px' : '24px' }}
+        >
+          {children}
+        </div>
+
+        {/* Footer — pinned outside scroll, always visible */}
+        {footer && (
+          <div
+            className="flex-shrink-0 px-4 pt-3"
+            style={{
+              paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+              backgroundColor: 'var(--bg-surface)',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   )

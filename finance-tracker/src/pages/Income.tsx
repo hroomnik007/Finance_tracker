@@ -133,13 +133,6 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           }`} />
         </button>
       </div>
-      <button
-        onClick={handleSave}
-        className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '52px', marginTop: '4px' }}
-      >
-        {editing ? t.income.saveChanges : t.income.add}
-      </button>
     </div>
   )
 
@@ -436,6 +429,20 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           open={sheetOpen}
           onClose={() => setSheetOpen(false)}
           title={editing ? t.income.editTitle : t.income.addTitle}
+          footer={
+            <button
+              onClick={handleSave}
+              style={{
+                width: '100%', height: '56px', borderRadius: '16px',
+                background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                fontSize: '16px', fontWeight: 600, color: 'white',
+                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {editing ? t.income.saveChanges : t.income.add}
+            </button>
+          }
         >
           {formContent}
         </BottomSheet>

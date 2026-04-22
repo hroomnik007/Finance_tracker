@@ -200,6 +200,33 @@ export function CategoriesPage() {
           open={sheetOpen}
           onClose={closeSheet}
           title={editing ? t.expenses.categories.editTitle : t.expenses.categories.newTitle}
+          footer={
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={closeSheet}
+                style={{
+                  flex: 1, height: '56px', borderRadius: '16px',
+                  background: 'transparent', color: '#9D84D4', fontSize: '14px',
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!name.trim()}
+                style={{
+                  flex: 1, height: '56px', borderRadius: '16px',
+                  background: name.trim() ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : 'rgba(124,58,237,0.35)',
+                  fontSize: '16px', fontWeight: 600, color: 'white',
+                  border: 'none', cursor: name.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {editing ? t.common.save : t.common.add}
+              </button>
+            </div>
+          }
         >
           <div className="flex flex-col gap-5">
             <div>
@@ -294,19 +321,6 @@ export function CategoriesPage() {
               />
             </div>
 
-            <div className="flex gap-3 pt-1">
-              <button onClick={closeSheet} className="btn-secondary flex-1 justify-center rounded-2xl" style={{ height: '52px' }}>
-                {t.common.cancel}
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!name.trim()}
-                className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ height: '52px' }}
-              >
-                {editing ? t.common.save : t.common.add}
-              </button>
-            </div>
           </div>
         </BottomSheet>
 
@@ -327,20 +341,38 @@ export function CategoriesPage() {
           </button>
         )}
 
-        <BottomSheet open={deleteId !== null} onClose={() => setDeleteId(null)} title={t.expenses.categories.removeTitle}>
-          <p className="text-sm text-[#B8A3E8] mb-6 leading-relaxed">{t.expenses.categories.removeMessage}</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteId(null)} className="btn-secondary flex-1 justify-center rounded-2xl" style={{ height: '48px' }}>
-              {t.common.cancel}
-            </button>
-            <button
-              onClick={() => deleteId !== null && handleDelete(deleteId)}
-              className="btn-danger flex-1 justify-center rounded-2xl"
-              style={{ height: '48px' }}
-            >
-              {t.expenses.categories.remove}
-            </button>
-          </div>
+        <BottomSheet
+          open={deleteId !== null}
+          onClose={() => setDeleteId(null)}
+          title={t.expenses.categories.removeTitle}
+          footer={
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setDeleteId(null)}
+                style={{
+                  flex: 1, height: '56px', borderRadius: '16px',
+                  background: 'transparent', color: '#9D84D4', fontSize: '14px',
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={() => deleteId !== null && handleDelete(deleteId)}
+                style={{
+                  flex: 1, height: '56px', borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  fontSize: '16px', fontWeight: 600, color: 'white',
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {t.expenses.categories.remove}
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-[#B8A3E8] leading-relaxed">{t.expenses.categories.removeMessage}</p>
         </BottomSheet>
       </div>
     </div>
