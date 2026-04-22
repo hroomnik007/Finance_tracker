@@ -434,6 +434,32 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
+        footer={
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => setSheetOpen(false)}
+              style={{
+                flex: 1, height: '56px', borderRadius: '16px',
+                background: 'transparent', color: '#9D84D4', fontSize: '14px',
+                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {t.common.cancel}
+            </button>
+            <button
+              onClick={handleSave}
+              style={{
+                flex: 1, height: '56px', borderRadius: '16px',
+                background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                fontSize: '16px', fontWeight: 600, color: 'white',
+                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {editing ? t.common.save : t.common.add}
+            </button>
+          </div>
+        }
       >
         <div className="flex flex-col gap-5">
           <div>
@@ -528,14 +554,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
               onChange={date => setForm(f => ({ ...f, date }))}
             />
           </div>
-
-          <button
-            onClick={handleSave}
-            className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-            style={{ height: '52px', marginTop: '4px' }}
-          >
-            {editing ? t.expenses.variable.saveChanges : t.expenses.variable.add}
-          </button>
         </div>
       </BottomSheet>
 
