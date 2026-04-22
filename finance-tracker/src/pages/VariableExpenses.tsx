@@ -117,111 +117,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
   const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
 
-  const formBody = (
-    <div className="flex flex-col gap-5">
-      <div>
-        <label className="form-label">{t.expenses.variable.amount}</label>
-        <input
-          type="text"
-          inputMode="decimal"
-          placeholder="0,00"
-          value={form.amount}
-          onChange={e => {
-            const raw = e.target.value.replace(/[^0-9,]/g, '')
-            if ((raw.match(/,/g) || []).length > 1) return
-            setForm(f => ({ ...f, amount: raw }))
-          }}
-          onKeyDown={e => {
-            const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-            if (!allowed.includes(e.key)) e.preventDefault()
-          }}
-          className="input-field amount-input font-mono"
-        />
-      </div>
-
-      {livePct !== null && liveLimit && (
-        <div
-          className="rounded-2xl p-3.5"
-          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-        >
-          <div className="flex justify-between text-xs mb-2">
-            <span className="text-[#B8A3E8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
-            <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
-          </div>
-          <div className="h-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
-            <div className="h-full progress-fill"
-              style={{
-                width: `${livePct}%`,
-                backgroundColor: liveBudgetBarColor,
-                borderRadius: '2px',
-              }} />
-          </div>
-        </div>
-      )}
-
-      <div>
-        <label className="form-label">{t.expenses.variable.category}</label>
-        {!newCatMode ? (
-          <select
-            value={form.categoryId}
-            onChange={e => {
-              if (e.target.value === '__new__') { setNewCatMode(true); setForm(f => ({ ...f, categoryId: '' })) }
-              else setForm(f => ({ ...f, categoryId: e.target.value }))
-            }}
-            className="input-field cursor-pointer"
-          >
-            <option value="">{t.expenses.variable.selectCategory}</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-            <option value="__new__">{t.expenses.variable.newCategory}</option>
-          </select>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder={t.expenses.variable.newCategoryName}
-              value={newCatName}
-              onChange={e => setNewCatName(e.target.value)}
-              className="input-field flex-1"
-            />
-            <button
-              onClick={() => { setNewCatMode(false); setNewCatName('') }}
-              className="btn-secondary px-3 rounded-xl shrink-0"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="form-label">{t.expenses.variable.note}</label>
-        <input
-          type="text"
-          placeholder={t.expenses.variable.notePlaceholder}
-          value={form.note}
-          onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-          className="input-field"
-        />
-      </div>
-
-      <div>
-        <label className="form-label">{t.expenses.variable.date}</label>
-        <DateInput
-          value={form.date}
-          onChange={date => setForm(f => ({ ...f, date }))}
-        />
-      </div>
-
-      <button
-        onClick={handleSave}
-        className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-        style={{ height: '52px', marginTop: '4px' }}
-      >
-        {editing ? t.expenses.variable.saveChanges : t.expenses.variable.add}
-      </button>
-    </div>
-  )
-
   return (
     <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
     <div className="flex flex-col gap-5 pb-4">
@@ -540,7 +435,108 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         onClose={() => setSheetOpen(false)}
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
       >
-        {formBody}
+        <div className="flex flex-col gap-5">
+          <div>
+            <label className="form-label">{t.expenses.variable.amount}</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={form.amount}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setForm(f => ({ ...f, amount: raw }))
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
+              className="input-field amount-input font-mono"
+            />
+          </div>
+
+          {livePct !== null && liveLimit && (
+            <div
+              className="rounded-2xl p-3.5"
+              style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
+            >
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-[#B8A3E8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
+                <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+              </div>
+              <div className="h-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
+                <div className="h-full progress-fill"
+                  style={{
+                    width: `${livePct}%`,
+                    backgroundColor: liveBudgetBarColor,
+                    borderRadius: '2px',
+                  }} />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="form-label">{t.expenses.variable.category}</label>
+            {!newCatMode ? (
+              <select
+                value={form.categoryId}
+                onChange={e => {
+                  if (e.target.value === '__new__') { setNewCatMode(true); setForm(f => ({ ...f, categoryId: '' })) }
+                  else setForm(f => ({ ...f, categoryId: e.target.value }))
+                }}
+                className="input-field cursor-pointer"
+              >
+                <option value="">{t.expenses.variable.selectCategory}</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                <option value="__new__">{t.expenses.variable.newCategory}</option>
+              </select>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={t.expenses.variable.newCategoryName}
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  className="input-field flex-1"
+                />
+                <button
+                  onClick={() => { setNewCatMode(false); setNewCatName('') }}
+                  className="btn-secondary px-3 rounded-xl shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="form-label">{t.expenses.variable.note}</label>
+            <input
+              type="text"
+              placeholder={t.expenses.variable.notePlaceholder}
+              value={form.note}
+              onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="form-label">{t.expenses.variable.date}</label>
+            <DateInput
+              value={form.date}
+              onChange={date => setForm(f => ({ ...f, date }))}
+            />
+          </div>
+
+          <button
+            onClick={handleSave}
+            className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
+            style={{ height: '52px', marginTop: '4px' }}
+          >
+            {editing ? t.expenses.variable.saveChanges : t.expenses.variable.add}
+          </button>
+        </div>
       </BottomSheet>
 
       <ConfirmDialog
