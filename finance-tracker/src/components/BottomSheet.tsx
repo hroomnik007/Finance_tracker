@@ -91,7 +91,7 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
           <div
             className="flex-shrink-0 px-4 pt-3"
             style={{
-              paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+              paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
               backgroundColor: 'var(--bg-surface)',
               borderTop: '1px solid rgba(255,255,255,0.08)',
             }}
