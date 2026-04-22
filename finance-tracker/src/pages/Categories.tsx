@@ -313,10 +313,13 @@ export function CategoriesPage() {
                 placeholder={t.expenses.categories.limitPlaceholder}
                 value={budgetLimit}
                 onChange={e => {
-                  const raw = e.target.value.replace(/[^0-9.,]/g, '')
-                  const parts = raw.split(/[,.]/)
-                  const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
-                  setBudgetLimit(cleaned)
+                  const raw = e.target.value.replace(/[^0-9,]/g, '')
+                  if ((raw.match(/,/g) || []).length > 1) return
+                  setBudgetLimit(raw)
+                }}
+                onKeyDown={e => {
+                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                  if (!allowed.includes(e.key)) e.preventDefault()
                 }}
               />
             </div>

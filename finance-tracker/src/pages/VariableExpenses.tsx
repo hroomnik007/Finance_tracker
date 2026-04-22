@@ -127,10 +127,13 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           placeholder="0,00"
           value={form.amount}
           onChange={e => {
-            const raw = e.target.value.replace(/[^0-9.,]/g, '')
-            const parts = raw.split(/[,.]/)
-            const cleaned = parts.length > 2 ? parts[0] + ',' + parts.slice(1).join('') : raw
-            setForm(f => ({ ...f, amount: cleaned }))
+            const raw = e.target.value.replace(/[^0-9,]/g, '')
+            if ((raw.match(/,/g) || []).length > 1) return
+            setForm(f => ({ ...f, amount: raw }))
+          }}
+          onKeyDown={e => {
+            const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+            if (!allowed.includes(e.key)) e.preventDefault()
           }}
           className="input-field amount-input font-mono"
         />

@@ -82,7 +82,7 @@ export function ExpensesPage({
 
   const selectedCatId = varForm.categoryId || null
   const liveBudget = selectedCatId ? getBudgetForCategory(selectedCatId) : null
-  const liveAmount = parseFloat(varForm.amount) || 0
+  const liveAmount = parseFloat(varForm.amount.replace(',', '.')) || 0
   const liveSpent = (liveBudget?.spent ?? 0) + (editingVar ? 0 : liveAmount)
   const liveLimit = liveBudget?.limit
   const livePct = liveLimit ? Math.min((liveSpent / liveLimit) * 100, 100) : null
@@ -119,7 +119,7 @@ export function ExpensesPage({
   }
 
   const handleSaveVar = async () => {
-    const amount = parseFloat(varForm.amount)
+    const amount = parseFloat(varForm.amount.replace(',', '.'))
     if (isNaN(amount) || amount <= 0 || !varForm.categoryId) return
 
     if (newCatMode) {
@@ -150,7 +150,7 @@ export function ExpensesPage({
   }
 
   const handleSaveFixed = async () => {
-    const amount = parseFloat(fixedForm.amount)
+    const amount = parseFloat(fixedForm.amount.replace(',', '.'))
     const dayOfMonth = parseInt(fixedForm.dayOfMonth)
     if (!fixedForm.label.trim() || isNaN(amount) || amount <= 0) return
     if (editingFixed?.id) {
@@ -172,144 +172,6 @@ export function ExpensesPage({
   const sortedVariableExpenses = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date))
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
 
-  const VarExpenseFormBody = () => (
-    <div className="flex flex-col gap-4">
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Suma
-        </label>
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="0,00"
-          value={varForm.amount}
-          onChange={e => setVarForm(f => ({ ...f, amount: e.target.value }))}
-          className="input-field font-mono font-bold"
-          style={{ height: '60px', fontSize: '1.5rem' }}
-        />
-      </div>
-
-      {livePct !== null && liveLimit && (
-        <div
-          className="rounded-2xl p-3.5"
-          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-        >
-          <div className="flex justify-between text-xs mb-2">
-            <span className="text-[#B8A3E8]">Rozpočet: {liveBudget?.categoryName}</span>
-            <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
-          </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#32265A' }}>
-            <div className="h-full rounded-full progress-fill"
-              style={{ width: `${livePct}%`, backgroundColor: getBudgetBarColor(livePct) }} />
-          </div>
-        </div>
-      )}
-
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Kategória
-        </label>
-        {!newCatMode ? (
-          <select
-            value={varForm.categoryId}
-            onChange={e => {
-              if (e.target.value === '__new__') { setNewCatMode(true); setVarForm(f => ({ ...f, categoryId: '' })) }
-              else setVarForm(f => ({ ...f, categoryId: e.target.value }))
-            }}
-            className="input-field cursor-pointer"
-          >
-            <option value="">-- Vybrať kategóriu --</option>
-            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}
-            <option value="__new__">+ Nová kategória</option>
-          </select>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Názov novej kategórie"
-              value={newCatName}
-              onChange={e => setNewCatName(e.target.value)}
-              className="input-field flex-1"
-            />
-            <button
-              onClick={() => { setNewCatMode(false); setNewCatName('') }}
-              className="btn-secondary px-3 rounded-xl shrink-0"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Poznámka (nepovinná)
-        </label>
-        <input
-          type="text"
-          placeholder="napr. Večera v reštaurácii"
-          value={varForm.note}
-          onChange={e => setVarForm(f => ({ ...f, note: e.target.value }))}
-          className="input-field"
-        />
-      </div>
-
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Dátum
-        </label>
-        <DateInput
-          value={varForm.date}
-          onChange={date => setVarForm(f => ({ ...f, date }))}
-        />
-      </div>
-
-    </div>
-  )
-
-  const FixedExpenseFormBody = () => (
-    <div className="flex flex-col gap-4">
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Názov
-        </label>
-        <input
-          type="text"
-          placeholder="napr. Nájom"
-          value={fixedForm.label}
-          onChange={e => setFixedForm(f => ({ ...f, label: e.target.value }))}
-          className="input-field"
-        />
-      </div>
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Suma
-        </label>
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="0,00"
-          value={fixedForm.amount}
-          onChange={e => setFixedForm(f => ({ ...f, amount: e.target.value }))}
-          className="input-field font-mono font-bold"
-          style={{ height: '60px', fontSize: '1.5rem' }}
-        />
-      </div>
-      <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-          Deň v mesiaci
-        </label>
-        <input
-          type="number"
-          min="1"
-          max="31"
-          value={fixedForm.dayOfMonth}
-          onChange={e => setFixedForm(f => ({ ...f, dayOfMonth: e.target.value }))}
-          className="input-field"
-        />
-      </div>
-    </div>
-  )
 
   return (
     <div className="flex flex-col gap-4 lg:gap-5 pb-4">
@@ -668,7 +530,105 @@ export function ExpensesPage({
           </button>
         }
       >
-        <VarExpenseFormBody />
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Suma
+            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={varForm.amount}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setVarForm(f => ({ ...f, amount: raw }))
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
+              className="input-field font-mono font-bold"
+              style={{ height: '60px', fontSize: '1.5rem' }}
+            />
+          </div>
+
+          {livePct !== null && liveLimit && (
+            <div
+              className="rounded-2xl p-3.5"
+              style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
+            >
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-[#B8A3E8]">Rozpočet: {liveBudget?.categoryName}</span>
+                <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#32265A' }}>
+                <div className="h-full rounded-full progress-fill"
+                  style={{ width: `${livePct}%`, backgroundColor: getBudgetBarColor(livePct) }} />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Kategória
+            </label>
+            {!newCatMode ? (
+              <select
+                value={varForm.categoryId}
+                onChange={e => {
+                  if (e.target.value === '__new__') { setNewCatMode(true); setVarForm(f => ({ ...f, categoryId: '' })) }
+                  else setVarForm(f => ({ ...f, categoryId: e.target.value }))
+                }}
+                className="input-field cursor-pointer"
+              >
+                <option value="">-- Vybrať kategóriu --</option>
+                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}
+                <option value="__new__">+ Nová kategória</option>
+              </select>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Názov novej kategórie"
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  className="input-field flex-1"
+                />
+                <button
+                  onClick={() => { setNewCatMode(false); setNewCatName('') }}
+                  className="btn-secondary px-3 rounded-xl shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Poznámka (nepovinná)
+            </label>
+            <input
+              type="text"
+              placeholder="napr. Večera v reštaurácii"
+              value={varForm.note}
+              onChange={e => setVarForm(f => ({ ...f, note: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Dátum
+            </label>
+            <DateInput
+              value={varForm.date}
+              onChange={date => setVarForm(f => ({ ...f, date }))}
+            />
+          </div>
+        </div>
       </BottomSheet>
 
       <BottomSheet
@@ -690,7 +650,56 @@ export function ExpensesPage({
           </button>
         }
       >
-        <FixedExpenseFormBody />
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Názov
+            </label>
+            <input
+              type="text"
+              placeholder="napr. Nájom"
+              value={fixedForm.label}
+              onChange={e => setFixedForm(f => ({ ...f, label: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Suma
+            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={fixedForm.amount}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setFixedForm(f => ({ ...f, amount: raw }))
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
+              className="input-field font-mono font-bold"
+              style={{ height: '60px', fontSize: '1.5rem' }}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
+              Deň v mesiaci
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="31"
+              value={fixedForm.dayOfMonth}
+              onChange={e => setFixedForm(f => ({ ...f, dayOfMonth: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+        </div>
       </BottomSheet>
 
       <ConfirmDialog open={confirmVarId !== null}

@@ -98,14 +98,14 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
 
   // ── Save handlers ─────────────────────────────────────────────────────────
   async function saveIncome() {
-    const amt = parseFloat(incAmt)
+    const amt = parseFloat(incAmt.replace(',', '.'))
     if (!incLabel.trim() || isNaN(amt) || amt <= 0) return
     await addIncome({ amount: amt, label: incLabel.trim(), date: incDate, recurring: incRecurring })
     closeModal()
   }
 
   async function saveVariable() {
-    const amt = parseFloat(varAmt)
+    const amt = parseFloat(varAmt.replace(',', '.'))
     if (isNaN(amt) || amt <= 0) return
     let catId: string
     if (varNewCatMode) {
@@ -127,7 +127,7 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
   }
 
   async function saveFixed() {
-    const amt = parseFloat(fixAmt)
+    const amt = parseFloat(fixAmt.replace(',', '.'))
     const day = parseInt(fixDay)
     if (!fixLabel.trim() || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 31) return
     await addFixedExpense({ label: fixLabel.trim(), amount: amt, dayOfMonth: day })
@@ -136,7 +136,7 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
 
   async function saveCategory() {
     if (!catName.trim()) return
-    const limit = catBudgetLimit ? parseFloat(catBudgetLimit) : undefined
+    const limit = catBudgetLimit ? parseFloat(catBudgetLimit.replace(',', '.')) : undefined
     await addCategory({
       name: catName.trim(),
       color: catColor,
@@ -149,7 +149,7 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
 
   // ── Live budget preview (variable expense) ────────────────────────────────
   const liveBudget = varCatId ? budgetStatuses.find(b => b.categoryId === varCatId) : null
-  const liveVarAmt = parseFloat(varAmt) || 0
+  const liveVarAmt = parseFloat(varAmt.replace(',', '.')) || 0
   const liveSpent = liveBudget ? liveBudget.spent + liveVarAmt : 0
   const liveLimit = liveBudget?.limit
   const livePct = liveLimit ? Math.min((liveSpent / liveLimit) * 100, 100) : null
@@ -190,9 +190,17 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
               {t.income.amount}
             </label>
             <input
-              type="number" inputMode="decimal" placeholder="0,00"
+              type="text" inputMode="decimal" placeholder="0,00"
               value={incAmt}
-              onChange={e => setIncAmt(e.target.value)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setIncAmt(raw)
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
               className="input-field font-mono font-bold"
               style={{ height: '60px', fontSize: '1.5rem' }}
             />
@@ -260,9 +268,17 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
               {t.expenses.variable.amount}
             </label>
             <input
-              type="number" inputMode="decimal" placeholder="0,00"
+              type="text" inputMode="decimal" placeholder="0,00"
               value={varAmt}
-              onChange={e => setVarAmt(e.target.value)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setVarAmt(raw)
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
               className="input-field font-mono font-bold"
               style={{ height: '60px', fontSize: '1.5rem' }}
             />
@@ -378,9 +394,17 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
             </label>
             <input
               className="input-field font-mono font-semibold"
-              type="number" inputMode="decimal" placeholder="0.00" min="0" step="0.01"
+              type="text" inputMode="decimal" placeholder="0,00"
               value={fixAmt}
-              onChange={e => setFixAmt(e.target.value)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setFixAmt(raw)
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
               style={{ fontSize: '1.1rem' }}
             />
           </div>
@@ -478,11 +502,18 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
             </label>
             <input
               className="input-field"
-              type="number" inputMode="decimal"
+              type="text" inputMode="decimal"
               placeholder={t.expenses.categories.limitPlaceholder}
-              min="0" step="0.01"
               value={catBudgetLimit}
-              onChange={e => setCatBudgetLimit(e.target.value)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setCatBudgetLimit(raw)
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
             />
           </div>
 
