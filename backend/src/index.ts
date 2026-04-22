@@ -23,7 +23,15 @@ const allowedOrigins =
 app.use(helmet());
 app.use(
   cors({
-    origin: allowedOrigins,
+    // Use a function so that requests without an Origin header (PWA standalone
+    // mode on some mobile browsers) are allowed through instead of rejected.
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed`));
+      }
+    },
     credentials: true,
   })
 );
