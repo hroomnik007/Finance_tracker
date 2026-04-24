@@ -12,7 +12,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRONTEND_SRC="${REPO_ROOT}/finance-tracker"
 BACKEND_SRC="${REPO_ROOT}/backend"
 
-FRONTEND_DEST="/var/www/finance-tracker/dist"
+FRONTEND_DEST="/var/www/finance-tracker/finance-tracker/dist"
 BACKEND_DEST="/var/www/finance-tracker-api"
 
 API_NAME="finance-tracker-api"
@@ -41,7 +41,7 @@ ok "Code up to date ($(git rev-parse --short HEAD))"
 deploy_frontend() {
     log "Building frontend..."
     cd "${FRONTEND_SRC}"
-    rm -rf node_modules/.tmp
+    rm -rf node_modules/.tmp .tsbuildinfo
     npm ci --prefer-offline --legacy-peer-deps
     npm run build
     ok "Frontend built → ${FRONTEND_SRC}/dist"
