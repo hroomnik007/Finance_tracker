@@ -197,15 +197,30 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── HEADER ROW ── */}
       <div className="flex items-center justify-between gap-3">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-[#6B5A9E] hidden sm:block">{todayStr}</span>
-          <button
-            onClick={() => setRefreshKey(k => k + 1)}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
-          >
-            Aktualizovať
-          </button>
+        <button
+          onClick={() => setRefreshKey(k => k + 1)}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
+        >
+          Aktualizovať
+        </button>
+      </div>
+
+      {/* ── GREETING ROW ── */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-[#4C3A8A]" />
+          ) : (
+            <span className="text-xl">{profileAvatar}</span>
+          )}
+          <span className="text-base font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
+          {(user?.currentStreak ?? 0) > 0 && (
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0">
+              🔥 {user!.currentStreak}
+            </span>
+          )}
         </div>
+        <span className="text-xs text-[#6B5A9E] hidden sm:block">{todayStr}</span>
       </div>
 
       {/* ── HERO 3 CARDS ── */}
@@ -213,19 +228,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
         {/* Saldo */}
         <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08] flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#4C3A8A] shrink-0" />
-            ) : (
-              <span className="text-lg">{profileAvatar}</span>
-            )}
-            <span className="text-sm font-medium text-[#E2D9F3] truncate">{greeting.text}! {greeting.emoji}</span>
-            {(user?.currentStreak ?? 0) > 0 && (
-              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] ml-auto shrink-0">
-                🔥 {user!.currentStreak}
-              </span>
-            )}
-          </div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">Zostatok</p>
           <p className={`font-bold text-2xl font-mono leading-none ${balance >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
             {formatAmount(balance)}
@@ -391,7 +393,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                       <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
                         <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
                         <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
+                        <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                         <Bar dataKey="income" name={t.nav.income} fill="#34D399" radius={[4,4,0,0]} />
                         <Bar dataKey="expenses" name={t.nav.expenses} fill="#F87171" radius={[4,4,0,0]} />
                       </BarChart>

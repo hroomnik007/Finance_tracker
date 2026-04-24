@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Upload, Info, Heart, Settings2, Database, Check, User, Trash2, Camera, Lock, Bell } from 'lucide-react'
+import { Upload, Info, Heart, Settings2, Database, Check, Trash2, Bell } from 'lucide-react'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { PinSetupModal } from '../components/PinSetupModal'
-import { usePinLock } from '../hooks/usePinLock'
-import { updateWeeklyEmail, createSharedReport, savePin, deletePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport } from '../api/auth'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -14,7 +12,6 @@ import { DEFAULT_SETTINGS } from '../types'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
-import { updateAvatar } from '../api/auth'
 import type { AppSettings } from '../types'
 
 const CURRENCIES = [
@@ -88,89 +85,18 @@ const SettingRow = ({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
-
-const BADGE_LABELS: Record<string, { emoji: string; label: string }> = {
-  first_transaction: { emoji: '🎉', label: 'Prvá transakcia' },
-  streak_7:          { emoji: '🔥', label: '7-dňová séria' },
-  streak_30:         { emoji: '⚡', label: '30-dňová séria' },
-  transactions_10:   { emoji: '📊', label: '10 transakcií' },
-  transactions_50:   { emoji: '💪', label: '50 transakcií' },
-  transactions_100:  { emoji: '🏆', label: '100 transakcií' },
-}
-
 interface SettingsPageProps {
   onLogout?: () => void
 }
 
 export function SettingsPage({ onLogout }: SettingsPageProps) {
-  const { settings: contextSettings, refreshSettings, updateSettings, profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
+  const { settings: contextSettings, refreshSettings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
-  const { deleteAccount, user, refreshUser, updateMonthlyEmail } = useAuth()
+  const { deleteAccount, user, updateMonthlyEmail } = useAuth()
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const rawSettingsRows = useLiveQuery(() => db.settings.toArray(), [])
-
-  // ── Tab ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile')
-
-  // ── Profile ───────────────────────────────────────────────────────────────
-  const [profileNameDraft, setProfileNameDraft] = useState(user?.name || ctxName)
-  const [profileAvatarDraft, setProfileAvatarDraft] = useState(ctxAvatar)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(user?.avatarUrl ?? null)
-  const [photoUploading, setPhotoUploading] = useState(false)
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordMsg, setPasswordMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
-  const [profileSaveOk, setProfileSaveOk] = useState(false)
-
-  function handleSaveProfile() {
-    setProfile(profileNameDraft, profileAvatarDraft)
-    setProfileSaveOk(true)
-    setTimeout(() => setProfileSaveOk(false), 2000)
-  }
-
-  function handlePhotoUpload() {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Obrázok je príliš veľký. Maximálna veľkosť je 2 MB.')
-        return
-      }
-      setPhotoUploading(true)
-      const reader = new FileReader()
-      reader.onload = async (ev) => {
-        const base64 = ev.target?.result as string
-        try {
-          await updateAvatar(base64)
-          setPhotoUrl(base64)
-          await refreshUser()
-        } catch {
-          alert('Nepodarilo sa nahrať fotku.')
-        } finally {
-          setPhotoUploading(false)
-        }
-      }
-      reader.readAsDataURL(file)
-    }
-    input.click()
-  }
-
-  function handleSavePassword() {
-    if (!newPassword || newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'err', text: t.settings.passwordMismatch })
-      return
-    }
-    setNewPassword('')
-    setConfirmPassword('')
-    setPasswordMsg({ type: 'ok', text: t.settings.passwordSaved })
-    setTimeout(() => setPasswordMsg(null), 3000)
-  }
 
   // ── General settings draft ────────────────────────────────────────────────
   const [draft, setDraft] = useState<AppSettings | null>(null)
@@ -205,13 +131,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     setSettingsSaveOk(true)
     setTimeout(() => setSettingsSaveOk(false), 2000)
   }
-
-  // ── PIN lock ──────────────────────────────────────────────────────────────
-  const { hasPin, setupPin, removePin } = usePinLock()
-  const [pinSetupOpen, setPinSetupOpen] = useState(false)
-  const [webauthnSupported] = useState(() => typeof window !== 'undefined' && !!window.PublicKeyCredential)
-  const [webauthnRegistering, setWebauthnRegistering] = useState(false)
-  const [webauthnMsg, setWebauthnMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   // ── Notifications ─────────────────────────────────────────────────────────
   const [notificationsEnabled, setNotificationsEnabledState] = useState(getNotificationsEnabled)
@@ -437,551 +356,257 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   return (
     <div className="w-full flex flex-col gap-5 pb-4">
 
-      {/* Tab navigation */}
-      <div className="flex gap-2">
-        {(['profile', 'settings'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 sm:flex-none sm:px-8 h-10 rounded-full text-sm font-semibold transition-all border cursor-pointer font-[inherit] ${
-              activeTab === tab
-                ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-            }`}
+      {/* Preferences card */}
+      <SectionCard>
+        <CardHeader icon={<Settings2 size={15} className="text-white" />} label={t.settings.general} />
+
+        <SettingRow label={t.settings.currency}>
+          <select
+            value={currentDraft.currency}
+            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), currency: e.target.value }))}
+            className="select-field"
           >
-            {tab === 'profile' ? t.settings.profile : t.settings.title}
-          </button>
-        ))}
-      </div>
+            {CURRENCIES.map(c => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </SettingRow>
 
-      {/* ── TAB 1: Profil ── */}
-      {activeTab === 'profile' && (
-        <div className="flex flex-col gap-5">
+        <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
+          <select
+            value={currentDraft.language}
+            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), language: e.target.value }))}
+            className="select-field"
+          >
+            {LANGUAGES.map(l => (
+              <option key={l.value} value={l.value}>{l.label}</option>
+            ))}
+          </select>
+        </SettingRow>
 
-          {/* Hero */}
-          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-4 sm:gap-6 py-2">
+        <SettingRow label={t.settings.dateFormat}>
+          <select
+            value={currentDraft.dateFormat}
+            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), dateFormat: e.target.value }))}
+            className="select-field"
+          >
+            {DATE_FORMATS.map(f => (
+              <option key={f.value} value={f.value}>{f.label}</option>
+            ))}
+          </select>
+        </SettingRow>
+
+        <SettingRow label={t.settings.firstDayOfWeek}>
+          <select
+            value={currentDraft.firstDayOfWeek}
+            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), firstDayOfWeek: e.target.value }))}
+            className="select-field"
+          >
+            {firstDayOfWeekOptions.map(d => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+        </SettingRow>
+
+        <div className="px-5 py-4" style={{ borderTop: '1px solid #4C3A8A33' }}>
+          {settingsSaveOk ? (
             <div
-              onClick={handlePhotoUpload}
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                position: 'relative',
-                cursor: 'pointer',
-                flexShrink: 0,
-                overflow: 'hidden',
-                border: '2px solid #4C3A8A',
-                background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)',
-              }}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-[#34d399]"
+              style={{ backgroundColor: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', height: '48px' }}
             >
-              {photoUrl ? (
-                <img src={photoUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>
-                  {profileAvatarDraft || (profileNameDraft ? profileNameDraft[0].toUpperCase() : '👤')}
-                </div>
-              )}
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'rgba(0,0,0,0.4)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: photoUploading ? 1 : 0,
-                transition: 'opacity 0.2s',
-              }}>
-                {photoUploading ? <span style={{ color: 'white', fontSize: 12 }}>...</span> : <Camera size={20} color="white" />}
-              </div>
-              <div
-                className="photo-overlay"
-                style={{
-                  position: 'absolute', inset: 0,
-                  background: 'rgba(0,0,0,0.4)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  opacity: 0, transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0'}
-              >
-                <Camera size={20} color="white" />
-              </div>
+              <Check size={16} /> {t.settings.saved}
             </div>
-
-            <div className="flex flex-col items-center sm:items-start">
-              <p className="text-xl font-bold text-[#E2D9F3]">{profileNameDraft || 'Váš profil'}</p>
-              <p className="text-sm text-[#9D84D4] mt-0.5">{user?.email}</p>
-              <button
-                onClick={handlePhotoUpload}
-                className="text-xs text-[#A78BFA] mt-1.5 underline underline-offset-2 bg-transparent border-0 cursor-pointer p-0 font-[inherit]"
-              >
-                Zmeniť fotku
-              </button>
-            </div>
-          </div>
-
-          {/* Emoji avatar picker */}
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-3xl"
-              style={{ background: 'linear-gradient(135deg, #7C3AED22, #6D28D922)', border: '2px solid #4C3A8A' }}
+          ) : (
+            <button
+              onClick={saveSettings}
+              className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
+              style={{ height: '48px' }}
             >
-              {profileAvatarDraft}
-            </div>
-            <div className="flex-1 overflow-x-auto">
-              <div className="flex gap-2 pb-1" style={{ minWidth: 'max-content' }}>
-                {AVATAR_OPTIONS.map(em => (
-                  <button
-                    key={em}
-                    onClick={() => setProfileAvatarDraft(em)}
-                    className="text-2xl transition-transform hover:scale-110 shrink-0 cursor-pointer"
-                    style={{
-                      width: 44, height: 44, borderRadius: 12,
-                      border: profileAvatarDraft === em ? '2px solid #7C3AED' : '2px solid transparent',
-                      background: profileAvatarDraft === em ? 'rgba(124,58,237,0.15)' : 'var(--bg-elevated)',
-                    }}
-                  >
-                    {em}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Profile card */}
-          <SectionCard>
-            <CardHeader icon={<User size={15} className="text-white" />} label={t.settings.profile} />
-            <div className="p-5 flex flex-col gap-4">
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2">
-                  {t.settings.name}
-                </label>
-                <input
-                  type="text"
-                  placeholder="Zadaj svoje meno"
-                  value={profileNameDraft}
-                  onChange={e => setProfileNameDraft(e.target.value)}
-                  className="input-field"
-                />
-              </div>
-              {profileSaveOk ? (
-                <div
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-[#34d399]"
-                  style={{ backgroundColor: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', height: '48px' }}
-                >
-                  <Check size={16} /> {t.settings.profileSaved}
-                </div>
-              ) : (
-                <button
-                  onClick={handleSaveProfile}
-                  className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-                  style={{ height: '48px' }}
-                >
-                  {t.settings.saveProfile}
-                </button>
-              )}
-            </div>
-          </SectionCard>
-
-          {/* Security card */}
-          <SectionCard>
-            <CardHeader icon={<Lock size={15} className="text-white" />} label="Bezpečnosť" />
-
-            {/* Change password */}
-            <div className="p-5 flex flex-col gap-3" style={{ borderBottom: '1px solid #4C3A8A33' }}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4]">
-                {t.settings.changePassword}
-              </p>
-              <input
-                type="password"
-                placeholder={t.settings.newPassword}
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                className="input-field"
-              />
-              <input
-                type="password"
-                placeholder={t.auth.confirmPassword}
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                className="input-field"
-              />
-              {passwordMsg && (
-                <p className="text-xs" style={{ color: passwordMsg.type === 'ok' ? '#34d399' : '#f87171' }}>
-                  {passwordMsg.text}
-                </p>
-              )}
-              <button
-                onClick={handleSavePassword}
-                className="btn-secondary self-start px-5 rounded-xl"
-                style={{ height: '40px', fontSize: '13px' }}
-              >
-                {t.settings.savePassword}
-              </button>
-            </div>
-
-            {/* PIN */}
-            <SettingRow label="PIN zámok" sublabel="Automaticky zamkne aplikáciu po 5 minútach nečinnosti">
-              <button
-                onClick={async () => {
-                  if (hasPin) {
-                    removePin()
-                    try { await deletePin() } catch { /* ignore — local PIN is removed */ }
-                  } else {
-                    setPinSetupOpen(true)
-                  }
-                }}
-                className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${hasPin ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-                style={{ border: hasPin ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
-              >
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasPin ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
-            </SettingRow>
-            {hasPin && (
-              <div className="px-5 pb-4">
-                <button
-                  onClick={() => setPinSetupOpen(true)}
-                  className="btn-secondary justify-center py-2.5 text-sm w-full"
-                  style={{ borderRadius: 12 }}
-                >
-                  Zmeniť PIN
-                </button>
-              </div>
-            )}
-
-            {/* WebAuthn */}
-            {webauthnSupported && (
-              <div className="px-5 pb-5" style={{ borderTop: '1px solid #4C3A8A33', paddingTop: 16 }}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-3">Biometrické prihlásenie</p>
-                <p className="text-xs text-[#B8A3E8] mb-3">Prihlasujte sa pomocou odtlačku prsta alebo Face ID bez zadávania hesla.</p>
-                <button
-                  onClick={async () => {
-                    setWebauthnRegistering(true)
-                    setWebauthnMsg(null)
-                    try {
-                      const { startRegistration } = await import('@simplewebauthn/browser')
-                      const options = await webauthnRegisterOptions()
-                      const response = await startRegistration({ optionsJSON: options as any })
-                      await webauthnRegisterVerify(response as any)
-                      setWebauthnMsg({ type: 'ok', text: 'Biometrický kľúč bol zaregistrovaný.' })
-                      const email = user?.email ?? ''
-                      if (email) localStorage.setItem(`webauthn_enabled_${email}`, '1')
-                    } catch (e: unknown) {
-                      setWebauthnMsg({ type: 'err', text: (e as Error)?.message ?? 'Registrácia zlyhala.' })
-                    } finally {
-                      setWebauthnRegistering(false)
-                    }
-                  }}
-                  disabled={webauthnRegistering}
-                  className="btn-secondary justify-center py-2.5 text-sm w-full"
-                  style={{ borderRadius: 12, opacity: webauthnRegistering ? 0.6 : 1 }}
-                >
-                  🔐 {webauthnRegistering ? 'Registrujem...' : 'Zaregistrovať zariadenie'}
-                </button>
-                {webauthnMsg && (
-                  <p className="text-xs mt-2" style={{ color: webauthnMsg.type === 'ok' ? '#34d399' : '#f87171' }}>
-                    {webauthnMsg.text}
-                  </p>
-                )}
-              </div>
-            )}
-          </SectionCard>
-
-          {/* Achievements */}
-          {user && (user.badges?.length ?? 0) > 0 && (
-            <SectionCard>
-              <CardHeader icon={<span style={{ fontSize: 14 }}>🏅</span>} label="Odznaky" />
-              <div className="p-4 flex flex-wrap gap-2">
-                {(user.badges ?? []).map(badge => {
-                  const def = BADGE_LABELS[badge] ?? { emoji: '🏅', label: badge }
-                  return (
-                    <span
-                      key={badge}
-                      className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full"
-                      style={{ background: 'rgba(167,139,250,0.15)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.3)' }}
-                    >
-                      {def.emoji} {def.label}
-                    </span>
-                  )
-                })}
-              </div>
-              {(user.longestStreak ?? 0) > 0 && (
-                <div className="px-4 pb-4">
-                  <p className="text-[12px] text-[#9D84D4]">
-                    Najdlhšia séria: <span className="text-[#FB923C] font-semibold">🔥 {user.longestStreak} dní</span>
-                  </p>
-                </div>
-              )}
-            </SectionCard>
+              {t.settings.save}
+            </button>
           )}
         </div>
-      )}
+      </SectionCard>
 
-      {/* ── TAB 2: Nastavenia ── */}
-      {activeTab === 'settings' && (
-        <div className="flex flex-col gap-5">
+      {/* Notifications card */}
+      <SectionCard>
+        <CardHeader icon={<Bell size={15} className="text-white" />} label="Notifikácie" />
+        <SettingRow label="Pripomienky fixných výdavkov" sublabel="Upozornenie v deň splatnosti fixného výdavku">
+          <button
+            onClick={handleNotificationsToggle}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${notificationsEnabled ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: notificationsEnabled ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${notificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
+        <SettingRow label="Týždenný email" sublabel="Prehľad príjmov a výdavkov každý pondelok ráno">
+          <button
+            onClick={handleWeeklyEmailToggle}
+            disabled={weeklyEmailSaving}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${weeklyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: weeklyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: weeklyEmailSaving ? 0.6 : 1 }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${weeklyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
+        <SettingRow label="Mesačný email" sublabel="Súhrn predchádzajúceho mesiaca, 1. deň v mesiaci o 9:00">
+          <button
+            onClick={handleMonthlyEmailToggle}
+            disabled={monthlyEmailSaving}
+            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${monthlyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
+            style={{ border: monthlyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: monthlyEmailSaving ? 0.6 : 1 }}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${monthlyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </SettingRow>
+      </SectionCard>
 
-          {/* Preferences card */}
-          <SectionCard>
-            <CardHeader icon={<Settings2 size={15} className="text-white" />} label={t.settings.general} />
-
-            <SettingRow label={t.settings.currency}>
-              <select
-                value={currentDraft.currency}
-                onChange={e => setDraft(d => ({ ...(d ?? currentDraft), currency: e.target.value }))}
-                className="select-field"
-              >
-                {CURRENCIES.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
-              <select
-                value={currentDraft.language}
-                onChange={e => setDraft(d => ({ ...(d ?? currentDraft), language: e.target.value }))}
-                className="select-field"
-              >
-                {LANGUAGES.map(l => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <SettingRow label={t.settings.dateFormat}>
-              <select
-                value={currentDraft.dateFormat}
-                onChange={e => setDraft(d => ({ ...(d ?? currentDraft), dateFormat: e.target.value }))}
-                className="select-field"
-              >
-                {DATE_FORMATS.map(f => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <SettingRow label={t.settings.firstDayOfWeek}>
-              <select
-                value={currentDraft.firstDayOfWeek}
-                onChange={e => setDraft(d => ({ ...(d ?? currentDraft), firstDayOfWeek: e.target.value }))}
-                className="select-field"
-              >
-                {firstDayOfWeekOptions.map(d => (
-                  <option key={d.value} value={d.value}>{d.label}</option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <div className="px-5 py-4" style={{ borderTop: '1px solid #4C3A8A33' }}>
-              {settingsSaveOk ? (
-                <div
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-[#34d399]"
-                  style={{ backgroundColor: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', height: '48px' }}
-                >
-                  <Check size={16} /> {t.settings.saved}
-                </div>
-              ) : (
-                <button
-                  onClick={saveSettings}
-                  className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-                  style={{ height: '48px' }}
-                >
-                  {t.settings.save}
-                </button>
-              )}
-            </div>
-          </SectionCard>
-
-          {/* Notifications card */}
-          <SectionCard>
-            <CardHeader icon={<Bell size={15} className="text-white" />} label="Notifikácie" />
-            <SettingRow label="Pripomienky fixných výdavkov" sublabel="Upozornenie v deň splatnosti fixného výdavku">
-              <button
-                onClick={handleNotificationsToggle}
-                className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${notificationsEnabled ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-                style={{ border: notificationsEnabled ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
-              >
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${notificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
-            </SettingRow>
-            <SettingRow label="Týždenný email" sublabel="Prehľad príjmov a výdavkov každý pondelok ráno">
-              <button
-                onClick={handleWeeklyEmailToggle}
-                disabled={weeklyEmailSaving}
-                className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${weeklyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-                style={{ border: weeklyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: weeklyEmailSaving ? 0.6 : 1 }}
-              >
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${weeklyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
-            </SettingRow>
-            <SettingRow label="Mesačný email" sublabel="Súhrn predchádzajúceho mesiaca, 1. deň v mesiaci o 9:00">
-              <button
-                onClick={handleMonthlyEmailToggle}
-                disabled={monthlyEmailSaving}
-                className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${monthlyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-                style={{ border: monthlyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: monthlyEmailSaving ? 0.6 : 1 }}
-              >
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${monthlyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
-            </SettingRow>
-          </SectionCard>
-
-          {/* Data card */}
-          <SectionCard>
-            <CardHeader icon={<Database size={15} className="text-white" />} label={t.settings.data} />
-            <div className="p-5 flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={handleExport}
-                  className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-                  style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-                >
-                  <span>📄</span> JSON
-                </button>
-                <button
-                  onClick={handleExportPDF}
-                  className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-                  style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-                >
-                  <span>📊</span> PDF
-                </button>
-                <button
-                  onClick={handleExportXLSX}
-                  className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-                  style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-                >
-                  <span>📈</span> XLSX
-                </button>
-                <button
-                  onClick={handleExportCSV}
-                  className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-                  style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-                >
-                  <span>📋</span> CSV
-                </button>
-              </div>
-
-              {user && (
-                <button onClick={handleShareReport} className="btn-primary w-full justify-center py-3 rounded-2xl">
-                  🔗 Zdieľať prehľad
-                </button>
-              )}
-
-              <button onClick={handleImport} className="btn-secondary w-full justify-center py-3">
-                <Upload size={15} />
-                {t.settings.importJSON}
-              </button>
-
-              {importError && <p className="text-xs text-[#f87171] text-center mt-1">{importError}</p>}
-              {importOk && <p className="text-xs text-[#34d399] text-center mt-1">{t.settings.importSuccess}</p>}
-
-              <p className="text-xs text-[#9D84D4] text-center pt-1">{t.settings.exportNote}</p>
-            </div>
-          </SectionCard>
-
-          {/* About card */}
-          <SectionCard>
-            <CardHeader icon={<Info size={15} className="text-white" />} label={t.settings.about} />
-            <div className="px-5 py-5 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-[#E2D9F3]">{t.nav.appName}</p>
-                <span
-                  className="text-xs px-2.5 py-1 rounded-full font-mono font-medium"
-                  style={{ backgroundColor: 'rgba(167,139,250,0.12)', color: '#A78BFA' }}
-                >
-                  {t.settings.version}
-                </span>
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <div className="flex items-start gap-2.5">
-                  <Info size={13} style={{ color: '#9D84D4' }} className="mt-0.5 shrink-0" />
-                  <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.storedLocally}</p>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <Heart size={13} style={{ color: '#f87171' }} className="mt-0.5 shrink-0" />
-                  <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.madeWith}</p>
-                </div>
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Logout */}
-          {onLogout && (
+      {/* Data card */}
+      <SectionCard>
+        <CardHeader icon={<Database size={15} className="text-white" />} label={t.settings.data} />
+        <div className="p-5 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={onLogout}
-              className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 cursor-pointer font-[inherit]"
-              style={{
-                height: '48px',
-                background: 'transparent',
-                border: '1px solid #F87171',
-                color: '#F87171',
-              }}
+              onClick={handleExport}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
             >
-              {t.auth.logout}
+              <span>📄</span> JSON
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
+            >
+              <span>📊</span> PDF
+            </button>
+            <button
+              onClick={handleExportXLSX}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
+            >
+              <span>📈</span> XLSX
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
+              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
+            >
+              <span>📋</span> CSV
+            </button>
+          </div>
+
+          {user && (
+            <button onClick={handleShareReport} className="btn-primary w-full justify-center py-3 rounded-2xl">
+              🔗 Zdieľať prehľad
             </button>
           )}
 
-          {/* Danger zone */}
-          <SectionCard>
-            <CardHeader icon={<Trash2 size={15} className="text-white" />} label={t.settings.deleteAccount} />
-            <div className="p-5 flex flex-col gap-4">
-              <p className="text-sm text-[#9D84D4] leading-relaxed">{t.settings.deleteAccountDesc}</p>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F87171]">
-                  {t.settings.deleteAccountConfirmLabel}
-                </label>
-                <input
-                  type="text"
-                  placeholder="ZMAZAŤ"
-                  value={deleteConfirm}
-                  onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
-                  style={{
-                    background: '#1E1535',
-                    border: '1px solid #7C2D2D',
-                    borderRadius: 12,
-                    padding: '12px 16px',
-                    color: '#E2D9F3',
-                    fontSize: 15,
-                    width: '100%',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              {deleteError && <p className="text-xs text-[#F87171]">{deleteError}</p>}
-              <button
-                disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
-                onClick={async () => {
-                  setIsDeleting(true)
-                  try {
-                    await deleteAccount()
-                  } catch {
-                    setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
-                    setIsDeleting(false)
-                  }
-                }}
-                className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer font-[inherit]"
-                style={{
-                  height: '48px',
-                  background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
-                  border: '1px solid #DC2626',
-                  color: deleteConfirm === 'ZMAZAŤ' ? 'white' : '#F87171',
-                }}
-              >
-                {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
-              </button>
-            </div>
-          </SectionCard>
+          <button onClick={handleImport} className="btn-secondary w-full justify-center py-3">
+            <Upload size={15} />
+            {t.settings.importJSON}
+          </button>
+
+          {importError && <p className="text-xs text-[#f87171] text-center mt-1">{importError}</p>}
+          {importOk && <p className="text-xs text-[#34d399] text-center mt-1">{t.settings.importSuccess}</p>}
+
+          <p className="text-xs text-[#9D84D4] text-center pt-1">{t.settings.exportNote}</p>
         </div>
+      </SectionCard>
+
+      {/* About card */}
+      <SectionCard>
+        <CardHeader icon={<Info size={15} className="text-white" />} label={t.settings.about} />
+        <div className="px-5 py-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-[#E2D9F3]">{t.nav.appName}</p>
+            <span
+              className="text-xs px-2.5 py-1 rounded-full font-mono font-medium"
+              style={{ backgroundColor: 'rgba(167,139,250,0.12)', color: '#A78BFA' }}
+            >
+              {t.settings.version}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-start gap-2.5">
+              <Info size={13} style={{ color: '#9D84D4' }} className="mt-0.5 shrink-0" />
+              <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.storedLocally}</p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <Heart size={13} style={{ color: '#f87171' }} className="mt-0.5 shrink-0" />
+              <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.madeWith}</p>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Logout */}
+      {onLogout && (
+        <button
+          onClick={onLogout}
+          className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 cursor-pointer font-[inherit]"
+          style={{
+            height: '48px',
+            background: 'transparent',
+            border: '1px solid #F87171',
+            color: '#F87171',
+          }}
+        >
+          {t.auth.logout}
+        </button>
       )}
 
-      {/* PinSetupModal outside tabs — always mounted */}
-      <PinSetupModal
-        open={pinSetupOpen}
-        onClose={() => setPinSetupOpen(false)}
-        onSetPin={async (pin) => {
-          setupPin(pin)
-          try { await savePin(pin) } catch { /* ignore — local PIN is set */ }
-          if (user?.email) localStorage.setItem(`pin_enabled_${user.email}`, '1')
-        }}
-      />
+      {/* Danger zone */}
+      <SectionCard>
+        <CardHeader icon={<Trash2 size={15} className="text-white" />} label={t.settings.deleteAccount} />
+        <div className="p-5 flex flex-col gap-4">
+          <p className="text-sm text-[#9D84D4] leading-relaxed">{t.settings.deleteAccountDesc}</p>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F87171]">
+              {t.settings.deleteAccountConfirmLabel}
+            </label>
+            <input
+              type="text"
+              placeholder="ZMAZAŤ"
+              value={deleteConfirm}
+              onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
+              style={{
+                background: '#1E1535',
+                border: '1px solid #7C2D2D',
+                borderRadius: 12,
+                padding: '12px 16px',
+                color: '#E2D9F3',
+                fontSize: 15,
+                width: '100%',
+                outline: 'none',
+              }}
+            />
+          </div>
+          {deleteError && <p className="text-xs text-[#F87171]">{deleteError}</p>}
+          <button
+            disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
+            onClick={async () => {
+              setIsDeleting(true)
+              try {
+                await deleteAccount()
+              } catch {
+                setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                setIsDeleting(false)
+              }
+            }}
+            className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer font-[inherit]"
+            style={{
+              height: '48px',
+              background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
+              border: '1px solid #DC2626',
+              color: deleteConfirm === 'ZMAZAŤ' ? 'white' : '#F87171',
+            }}
+          >
+            {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
+          </button>
+        </div>
+      </SectionCard>
     </div>
   )
 }

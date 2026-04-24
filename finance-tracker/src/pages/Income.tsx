@@ -12,7 +12,7 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { Translations } from '../i18n'
 import { todayISO } from '../utils/format'
-import { getSummary } from '../api/transactions'
+import { getTransactions } from '../api/transactions'
 import type { Income } from '../types'
 
 const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
@@ -145,14 +145,19 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
 
   useEffect(() => {
     const months = getLast12Months()
-    Promise.all(months.map(m => getSummary(m.key).catch(() => null)))
-      .then(results => {
-        setYearlyData(months.map((m, i) => ({
-          label: m.label,
-          total: results[i]?.totalIncome ?? 0,
-        })))
-        setPrevMonthTotal(results[10]?.totalIncome ?? null)
-      })
+    Promise.all(
+      months.map(m =>
+        getTransactions({ type: 'income', month: m.key, limit: 200 })
+          .catch(() => ({ data: [] as Array<{ amount: number }>, total: 0 }))
+      )
+    ).then(results => {
+      setYearlyData(months.map((m, i) => ({
+        label: m.label,
+        total: results[i].data.reduce((s, t) => s + t.amount, 0),
+      })))
+      const prevTotal = results[10].data.reduce((s, t) => s + t.amount, 0)
+      setPrevMonthTotal(prevTotal > 0 ? prevTotal : null)
+    })
   }, [])
 
   const openAdd = () => {
@@ -232,7 +237,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           </button>
           <button
             onClick={openAdd}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold cursor-pointer shrink-0 transition-all duration-200 border-none"
+            className="hidden lg:flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold cursor-pointer shrink-0 transition-all duration-200 border-none"
           >
             <Plus size={15} />
             <span className="hidden sm:inline">{t.income.add}</span>
@@ -244,7 +249,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       {/* Hero 3 cards */}
       <div className="grid grid-cols-3 gap-3 fade-up">
         {/* Total */}
-        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08] min-h-[80px]">
+        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
             <TrendingUp size={16} className="text-[#34d399]" />
           </div>
@@ -263,7 +268,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         </div>
 
         {/* Count */}
-        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08] min-h-[80px]">
+        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#A78BFA]/15 shrink-0">
             <Hash size={16} className="text-[#A78BFA]" />
           </div>
@@ -276,7 +281,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         </div>
 
         {/* Average */}
-        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08] min-h-[80px]">
+        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#60a5fa]/15 shrink-0">
             <Repeat size={16} className="text-[#60a5fa]" />
           </div>

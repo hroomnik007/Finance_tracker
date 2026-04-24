@@ -53,7 +53,6 @@ function getWeekGroup(dateStr: string, today: Date): WeekGroup {
   return 'older'
 }
 
-const MONTH_NAMES_SK = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 export function VariableExpensesPage({ month, year, onMonthChange, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
@@ -165,33 +164,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const weekGroups = (['this-week', 'last-week', 'older'] as const)
     .filter(g => weekGroupMap.get(g)!.length > 0)
     .map(g => ({ group: g, items: weekGroupMap.get(g)! }))
-
-  // Heatmap
-  const daysInMonth = new Date(year, month, 0).getDate()
-  const firstDow = new Date(year, month - 1, 1).getDay()
-  const startOffset = firstDow === 0 ? 6 : firstDow - 1
-  const dailyTotals: Record<number, number> = {}
-  for (const e of variableExpenses) {
-    const d = new Date(e.date + 'T00:00:00').getDate()
-    dailyTotals[d] = (dailyTotals[d] ?? 0) + e.amount
-  }
-  const maxDaily = Math.max(...Object.values(dailyTotals), 1)
-  const totalCellCount = Math.ceil((startOffset + daysInMonth) / 7) * 7
-  const heatCells: (number | null)[] = [
-    ...Array<null>(startOffset).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-    ...Array<null>(totalCellCount - startOffset - daysInMonth).fill(null),
-  ]
-
-  const getCellColor = (day: number | null): string => {
-    if (day === null) return 'transparent'
-    const amount = dailyTotals[day] ?? 0
-    if (amount === 0) return 'rgba(255,255,255,0.05)'
-    const intensity = amount / maxDaily
-    if (intensity < 0.33) return 'rgba(124,58,237,0.2)'
-    if (intensity < 0.67) return 'rgba(124,58,237,0.6)'
-    return 'rgba(124,58,237,1)'
-  }
 
   const weekLabel = (g: WeekGroup) =>
     g === 'this-week' ? t.expenses.variable.thisWeek
@@ -552,42 +524,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         )}
       </div>
 
-      {/* Heatmap */}
-      <div
-        className="rounded-2xl p-5"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-card)',
-        }}
-      >
-        <p
-          className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] pb-3 mb-3"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          {t.expenses.variable.activityTitle}
-        </p>
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {['P', 'U', 'S', 'Š', 'P', 'S', 'N'].map((d, i) => (
-            <div key={i} className="text-center text-[9px] font-medium text-[#9D84D4]/60">{d}</div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {heatCells.map((day, i) => (
-            <div
-              key={i}
-              className="aspect-square rounded-sm"
-              style={{ backgroundColor: getCellColor(day) }}
-              title={
-                day !== null && (dailyTotals[day] ?? 0) > 0
-                  ? `${day}. ${MONTH_NAMES_SK[month - 1]} ${year}: ${formatAmount(dailyTotals[day])}`
-                  : undefined
-              }
-            />
-          ))}
-        </div>
-      </div>
-
       {/* FAB — mobile only */}
       {!sheetOpen && confirmId === null && variableExpenses.length > 0 && (
         <button
@@ -682,6 +618,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                   else setForm(f => ({ ...f, categoryId: e.target.value }))
                 }}
                 className="input-field cursor-pointer"
+                style={{ backgroundColor: 'var(--bg-elevated)', color: '#E2D9F3' }}
               >
                 <option value="">{t.expenses.variable.selectCategory}</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}

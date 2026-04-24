@@ -178,7 +178,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
         <div className={`flex py-3 ${collapsed ? 'flex-col items-center gap-3 px-2 pb-4' : 'flex-row items-center justify-between px-4 pb-4'}`}>
           {/* User avatar */}
           <button
-            onClick={() => onChange('settings')}
+            onClick={() => onChange('profile')}
             className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 cursor-pointer"
             style={{ background: '#7C3AED' }}
             title={user?.name ?? ''}
