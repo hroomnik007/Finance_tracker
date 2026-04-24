@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Edit2, Trash2, Plus, FileUp } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Edit2, Trash2, Plus, FileUp, TrendingUp, TrendingDown } from 'lucide-react'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -12,6 +12,7 @@ import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { todayISO } from '../utils/format'
+import { getTransactions } from '../api/transactions'
 import type { VariableExpense, BudgetStatus } from '../types'
 
 interface VariableExpensesPageProps {
@@ -28,6 +29,8 @@ interface VarForm {
   date: string
 }
 
+type WeekGroup = 'this-week' | 'last-week' | 'older'
+
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
 
 const getBudgetBarColor = (pct: number) => {
@@ -35,6 +38,22 @@ const getBudgetBarColor = (pct: number) => {
   if (pct >= 80) return 'var(--warning)'
   return 'var(--accent)'
 }
+
+function getWeekGroup(dateStr: string, today: Date): WeekGroup {
+  const date = new Date(dateStr + 'T00:00:00')
+  const todayStart = new Date(today)
+  todayStart.setHours(0, 0, 0, 0)
+  const dow = todayStart.getDay() === 0 ? 6 : todayStart.getDay() - 1
+  const startOfWeek = new Date(todayStart)
+  startOfWeek.setDate(todayStart.getDate() - dow)
+  const startOfLastWeek = new Date(startOfWeek)
+  startOfLastWeek.setDate(startOfWeek.getDate() - 7)
+  if (date >= startOfWeek) return 'this-week'
+  if (date >= startOfLastWeek) return 'last-week'
+  return 'older'
+}
+
+const MONTH_NAMES_SK = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 export function VariableExpensesPage({ month, year, onMonthChange, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
@@ -51,6 +70,17 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [newCatMode, setNewCatMode] = useState(false)
   const [newCatName, setNewCatName] = useState('')
   const [csvOpen, setCsvOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
+
+  useEffect(() => {
+    const prevMonth = month === 1 ? 12 : month - 1
+    const prevYear = month === 1 ? year - 1 : year
+    const monthStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
+    getTransactions({ type: 'expense', isFixed: false, month: monthStr, limit: 200 })
+      .then(({ data }) => setPrevMonthTotal(data.reduce((s, e) => s + e.amount, 0)))
+      .catch(() => {})
+  }, [month, year])
 
   const getCategoryById = (id: string) => categories.find(c => c.id === id)
   const getBudgetForCat = (catId: string) => budgetStatuses.find(b => b.categoryId === catId)
@@ -61,6 +91,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const liveSpent = (liveBudget?.spent ?? 0) + (editing ? 0 : liveAmount)
   const liveLimit = liveBudget?.limit
   const livePct = liveLimit ? Math.min((liveSpent / liveLimit) * 100, 100) : null
+  const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
 
   const openAdd = () => {
     setEditing(null)
@@ -106,46 +137,161 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     setSheetOpen(false)
   }
 
-  const grouped = variableExpenses.reduce<Record<string, VariableExpense[]>>((acc, e) => {
-    acc[e.date] = acc[e.date] ?? []
-    acc[e.date].push(e)
-    return acc
-  }, {})
-  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
-  const sortedAll = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date))
-  const hasAnyNote = sortedAll.some(e => e.note && e.note.trim() !== '')
+  // Hero card data
+  const totalAmount = variableExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const count = variableExpenses.length
+  const avgAmount = count > 0 ? totalAmount / count : 0
+  const changeVsPrev = prevMonthTotal !== null && prevMonthTotal > 0
+    ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
 
-  const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
+  // Filter pills — only categories that have expenses this month
+  const categoriesWithExpenses = categories.filter(c => variableExpenses.some(e => e.categoryId === c.id))
+
+  // Filtered + sorted list (used by both desktop table and mobile groups)
+  const filteredSorted = [...(activeCategory
+    ? variableExpenses.filter(e => e.categoryId === activeCategory)
+    : variableExpenses
+  )].sort((a, b) => b.date.localeCompare(a.date))
+  const hasAnyNote = filteredSorted.some(e => e.note && e.note.trim() !== '')
+
+  // Mobile: weekly groups
+  const today = new Date()
+  const weekGroupMap = new Map<WeekGroup, VariableExpense[]>([
+    ['this-week', []],
+    ['last-week', []],
+    ['older', []],
+  ])
+  for (const e of filteredSorted) weekGroupMap.get(getWeekGroup(e.date, today))!.push(e)
+  const weekGroups = (['this-week', 'last-week', 'older'] as const)
+    .filter(g => weekGroupMap.get(g)!.length > 0)
+    .map(g => ({ group: g, items: weekGroupMap.get(g)! }))
+
+  // Heatmap
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const firstDow = new Date(year, month - 1, 1).getDay()
+  const startOffset = firstDow === 0 ? 6 : firstDow - 1
+  const dailyTotals: Record<number, number> = {}
+  for (const e of variableExpenses) {
+    const d = new Date(e.date + 'T00:00:00').getDate()
+    dailyTotals[d] = (dailyTotals[d] ?? 0) + e.amount
+  }
+  const maxDaily = Math.max(...Object.values(dailyTotals), 1)
+  const totalCellCount = Math.ceil((startOffset + daysInMonth) / 7) * 7
+  const heatCells: (number | null)[] = [
+    ...Array<null>(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ...Array<null>(totalCellCount - startOffset - daysInMonth).fill(null),
+  ]
+
+  const getCellColor = (day: number | null): string => {
+    if (day === null) return 'transparent'
+    const amount = dailyTotals[day] ?? 0
+    if (amount === 0) return 'rgba(255,255,255,0.05)'
+    const intensity = amount / maxDaily
+    if (intensity < 0.33) return 'rgba(124,58,237,0.2)'
+    if (intensity < 0.67) return 'rgba(124,58,237,0.6)'
+    return 'rgba(124,58,237,1)'
+  }
+
+  const weekLabel = (g: WeekGroup) =>
+    g === 'this-week' ? t.expenses.variable.thisWeek
+    : g === 'last-week' ? t.expenses.variable.lastWeek
+    : t.expenses.variable.older
 
   return (
-    <div className="w-full" style={{maxWidth: "900px", margin: "0 auto"}}>
-    <div className="flex flex-col gap-5 pb-4">
+    <div className="w-full flex flex-col gap-5 lg:gap-6 pb-4">
+
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <button
-          onClick={() => setCsvOpen(true)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            height: 38, padding: '0 14px',
-            background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.3)',
-            borderRadius: 12, color: '#A78BFA', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
-          }}
-        >
-          <FileUp size={15} />
-          <span className="hidden sm:inline">Import CSV</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCsvOpen(true)}
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.3)] text-[#A78BFA] text-[13px] font-semibold cursor-pointer shrink-0 font-[inherit]"
+          >
+            <FileUp size={15} />
+            <span className="hidden sm:inline">Import CSV</span>
+          </button>
+          <button
+            onClick={openAdd}
+            className="hidden lg:flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[#7C3AED] text-white text-[13px] font-semibold cursor-pointer shrink-0 border-0 font-[inherit]"
+          >
+            <Plus size={15} />
+            {t.expenses.variable.add}
+          </button>
+        </div>
       </div>
+
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
+      {/* Hero 3 cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-2xl p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
+            {t.expenses.variable.totalTitle}
+          </p>
+          <p className="text-2xl font-bold text-[#f87171] font-mono">{formatAmount(totalAmount)}</p>
+          {changeVsPrev !== null && (
+            <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${changeVsPrev >= 0 ? 'text-[#f87171]' : 'text-emerald-400'}`}>
+              {changeVsPrev >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              {Math.abs(changeVsPrev).toFixed(1)}% {t.expenses.variable.vsLastMonth}
+            </div>
+          )}
+        </div>
 
-      {/* ── Desktop: two-panel layout ── */}
-      <div className="hidden lg:grid lg:grid-cols-[35fr_65fr] lg:gap-5">
+        <div className="rounded-2xl p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
+            {t.expenses.variable.countTitle}
+          </p>
+          <p className="text-2xl font-bold text-[#E2D9F3]">{count}</p>
+          <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.itemsThisMonth}</p>
+        </div>
 
-        {/* Left: Category & Budget panel */}
+        <div className="rounded-2xl p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
+            {t.expenses.variable.avgExpense}
+          </p>
+          <p className="text-2xl font-bold text-[#E2D9F3] font-mono">{formatAmount(avgAmount)}</p>
+          <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.perItem}</p>
+        </div>
+      </div>
+
+      {/* Filter pills */}
+      {categoriesWithExpenses.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer font-[inherit] ${
+              activeCategory === null
+                ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
+                : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
+            }`}
+          >
+            {t.expenses.variable.allCategories}
+          </button>
+          {categoriesWithExpenses.map(c => (
+            <button
+              key={c.id}
+              onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
+              className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] ${
+                activeCategory === c.id
+                  ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
+                  : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
+              }`}
+            >
+              <span>{c.icon}</span>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop: 2-column layout */}
+      <div className="hidden lg:grid lg:grid-cols-[35fr_65fr] lg:gap-6">
+
+        {/* Left: Budget panel */}
         <div
-          className="rounded-[20px] p-5 flex flex-col"
+          className="rounded-2xl p-5 flex flex-col"
           style={{
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
@@ -197,14 +343,15 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                         {Math.round(bs.percentage)}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden mb-2"
-                      style={{ backgroundColor: '#32265A' }}>
-                      <div className="h-full rounded-full progress-fill"
+                    <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: '#32265A' }}>
+                      <div
+                        className="h-full rounded-full progress-fill"
                         style={{
                           width: `${pct}%`,
                           backgroundColor: bs.categoryColor,
                           boxShadow: `0 0 8px ${bs.categoryColor}`,
-                        }} />
+                        }}
+                      />
                     </div>
                     <p className="text-[#9D84D4]" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
                       {formatAmount(bs.spent)} {t.common.of} {formatAmount(bs.limit)}
@@ -221,14 +368,14 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
         {/* Right: Expense table */}
         <div
-          className="rounded-[20px] overflow-hidden"
+          className="rounded-2xl overflow-hidden"
           style={{
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
             boxShadow: 'var(--shadow-card)',
           }}
         >
-          {sortedAll.length === 0 ? (
+          {filteredSorted.length === 0 ? (
             <div className="empty-state" style={{ padding: '48px 24px' }}>
               <span className="empty-state-emoji">💸</span>
               <p className="empty-state-title">{t.expenses.variable.noExpenses}</p>
@@ -240,86 +387,87 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-            <table className="w-full text-sm" style={{ minWidth: '480px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
-                  <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.category_col}</th>
-                  {hasAnyNote && <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>}
-                  <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.amount_col}</th>
-                  <th className="px-5 py-4 text-center text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.actions_col}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedAll.map((e: VariableExpense) => {
-                  const cat = getCategoryById(e.categoryId)
-                  const bs = cat?.id ? getBudgetForCat(cat.id) : null
-                  return (
-                    <tr
-                      key={e.id}
-                      className="cursor-pointer transition-all duration-150"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', height: '56px' }}
-                      onMouseEnter={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)' }}
-                      onMouseLeave={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-                      onClick={() => openEdit(e)}
-                    >
-                      <td className="px-5 py-3.5 text-[#9D84D4] whitespace-nowrap">{formatDate(e.date)}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <span
-                            className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shrink-0"
-                            style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
-                          >
-                            {cat?.icon ?? '📦'}
-                          </span>
-                          <div>
-                            <p className="text-[#B8A3E8] text-xs font-medium leading-snug">{cat?.name ?? '—'}</p>
-                            {bs && (
-                              <div className="w-14 h-1 rounded-full mt-0.5 overflow-hidden"
-                                style={{ backgroundColor: '#32265A' }}>
-                                <div className="h-full rounded-full"
-                                  style={{
-                                    width: `${Math.min(bs.percentage, 100)}%`,
-                                    backgroundColor: cat?.color ?? '#9D84D4',
-                                  }} />
-                              </div>
-                            )}
+              <table className="w-full text-sm" style={{ minWidth: '480px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
+                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.category_col}</th>
+                    {hasAnyNote && <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>}
+                    <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.amount_col}</th>
+                    <th className="px-5 py-4 text-center text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.actions_col}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSorted.map((e: VariableExpense) => {
+                    const cat = getCategoryById(e.categoryId)
+                    const bs = cat?.id ? getBudgetForCat(cat.id) : null
+                    return (
+                      <tr
+                        key={e.id}
+                        className="cursor-pointer transition-all duration-150"
+                        style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', height: '56px' }}
+                        onMouseEnter={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)' }}
+                        onMouseLeave={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                        onClick={() => openEdit(e)}
+                      >
+                        <td className="px-5 py-3.5 text-[#9D84D4] whitespace-nowrap">{formatDate(e.date)}</td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shrink-0"
+                              style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
+                            >
+                              {cat?.icon ?? '📦'}
+                            </span>
+                            <div>
+                              <p className="text-[#B8A3E8] text-xs font-medium leading-snug">{cat?.name ?? '—'}</p>
+                              {bs && (
+                                <div className="w-14 h-1 rounded-full mt-0.5 overflow-hidden" style={{ backgroundColor: '#32265A' }}>
+                                  <div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${Math.min(bs.percentage, 100)}%`,
+                                      backgroundColor: cat?.color ?? '#9D84D4',
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      {hasAnyNote && (
-                        <td className="px-5 py-3.5" style={{ color: e.note ? '#B8A3E8' : '#4C3A8A' }}>
-                          {e.note || '—'}
                         </td>
-                      )}
-                      <td className="px-5 py-3.5 text-right">
-                        <span className="font-mono font-semibold text-[#f87171] whitespace-nowrap">
-                          -{formatAmount(e.amount)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-center" onClick={ev => ev.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => openEdit(e)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
-                            <Edit2 size={14} />
-                          </button>
-                          <button onClick={() => setConfirmId(e.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        {hasAnyNote && (
+                          <td className="px-5 py-3.5" style={{ color: e.note ? '#B8A3E8' : '#4C3A8A' }}>
+                            {e.note || '—'}
+                          </td>
+                        )}
+                        <td className="px-5 py-3.5 text-right">
+                          <span className="font-mono font-semibold text-[#f87171] whitespace-nowrap">
+                            -{formatAmount(e.amount)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-center" onClick={ev => ev.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-2">
+                            <button onClick={() => openEdit(e)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
+                              <Edit2 size={14} />
+                            </button>
+                            <button onClick={() => setConfirmId(e.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Mobile: date-grouped cards ── */}
+      {/* Mobile: week-grouped cards */}
       <div className="flex flex-col gap-4 lg:hidden">
-        {sortedDates.length === 0 ? (
+        {filteredSorted.length === 0 ? (
           <div className="card">
             <div className="empty-state">
               <span className="empty-state-emoji">💸</span>
@@ -332,13 +480,13 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             </div>
           </div>
         ) : (
-          sortedDates.map(date => (
-            <div key={date}>
+          weekGroups.map(({ group, items }) => (
+            <div key={group}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2.5 px-1">
-                {formatDate(date)}
+                {weekLabel(group)}
               </p>
               <div className="flex flex-col gap-2">
-                {grouped[date].map((e: VariableExpense) => {
+                {items.map((e: VariableExpense) => {
                   const cat = getCategoryById(e.categoryId)
                   const bs = cat?.id ? getBudgetForCat(cat.id) : null
                   return (
@@ -365,7 +513,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                               <p className="text-sm font-medium text-[#E2D9F3] leading-snug">
                                 {e.note || cat?.name || t.expenses.variable.defaultExpense}
                               </p>
-                              <p className="text-xs text-[#9D84D4] mt-0.5">{cat?.name}</p>
+                              <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(e.date)}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5" onClick={ev => ev.stopPropagation()}>
@@ -383,14 +531,15 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                           </div>
                         </div>
                         {bs && (
-                          <div className="mt-2.5 h-1 rounded-full overflow-hidden"
-                            style={{ backgroundColor: '#32265A' }}>
-                            <div className="h-full rounded-full"
+                          <div className="mt-2.5 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#32265A' }}>
+                            <div
+                              className="h-full rounded-full"
                               style={{
                                 width: `${Math.min(bs.percentage, 100)}%`,
                                 backgroundColor: cat?.color ?? '#9D84D4',
                                 boxShadow: `0 0 6px ${cat?.color ?? '#9D84D4'}`,
-                              }} />
+                              }}
+                            />
                           </div>
                         )}
                       </div>
@@ -403,27 +552,50 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         )}
       </div>
 
-      {/* FAB — hidden when form is open or empty state */}
-      {!sheetOpen && confirmId === null && sortedAll.length > 0 && (
+      {/* Heatmap */}
+      <div
+        className="rounded-2xl p-5"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <p
+          className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] pb-3 mb-3"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
+          {t.expenses.variable.activityTitle}
+        </p>
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {['P', 'U', 'S', 'Š', 'P', 'S', 'N'].map((d, i) => (
+            <div key={i} className="text-center text-[9px] font-medium text-[#9D84D4]/60">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {heatCells.map((day, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-sm"
+              style={{ backgroundColor: getCellColor(day) }}
+              title={
+                day !== null && (dailyTotals[day] ?? 0) > 0
+                  ? `${day}. ${MONTH_NAMES_SK[month - 1]} ${year}: ${formatAmount(dailyTotals[day])}`
+                  : undefined
+              }
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* FAB — mobile only */}
+      {!sheetOpen && confirmId === null && variableExpenses.length > 0 && (
         <button
           onClick={openAdd}
+          className="lg:hidden fixed bottom-[88px] right-6 w-14 h-14 rounded-full border-0 cursor-pointer flex items-center justify-center text-white z-50 transition-all"
           style={{
-            position: 'fixed',
-            bottom: '88px',
-            right: '24px',
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
             background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
-            zIndex: 50,
-            color: 'white',
-            transition: 'all 0.2s ease',
           }}
         >
           <Plus size={24} strokeWidth={2.5} />
@@ -492,12 +664,10 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                 <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
               </div>
               <div className="h-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
-                <div className="h-full progress-fill"
-                  style={{
-                    width: `${livePct}%`,
-                    backgroundColor: liveBudgetBarColor,
-                    borderRadius: '2px',
-                  }} />
+                <div
+                  className="h-full progress-fill"
+                  style={{ width: `${livePct}%`, backgroundColor: liveBudgetBarColor, borderRadius: '2px' }}
+                />
               </div>
             </div>
           )}
@@ -563,7 +733,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         onConfirm={async () => { if (confirmId !== null) { await deleteVariableExpense(confirmId); setConfirmId(null) } }}
         onCancel={() => setConfirmId(null)}
       />
-    </div>
     </div>
   )
 }
