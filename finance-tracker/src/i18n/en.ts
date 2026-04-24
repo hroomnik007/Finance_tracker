@@ -70,6 +70,14 @@ export const en: Translations = {
     amount_col: 'Amount',
     recurring_col: 'Recurring',
     actions_col: 'Actions',
+    avgLabel: 'Average',
+    perItem: 'per item',
+    yearlyChart: 'Income — last 12 months',
+    recurringSection: 'Recurring income',
+    noRecurring: 'No recurring income',
+    thisWeek: 'This week',
+    lastWeek: 'Last week',
+    older: 'Older',
   },
   expenses: {
     variable: {

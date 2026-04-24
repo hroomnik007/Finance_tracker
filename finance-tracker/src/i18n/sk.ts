@@ -68,6 +68,14 @@ export const sk = {
     amount_col: 'Suma',
     recurring_col: 'Opakujúci sa',
     actions_col: 'Akcie',
+    avgLabel: 'Priemer',
+    perItem: 'na položku',
+    yearlyChart: 'Príjmy za posledných 12 mesiacov',
+    recurringSection: 'Pravidelné príjmy',
+    noRecurring: 'Žiadne pravidelné príjmy',
+    thisWeek: 'Tento týždeň',
+    lastWeek: 'Minulý týždeň',
+    older: 'Staršie',
   },
   expenses: {
     variable: {
