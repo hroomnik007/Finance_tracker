@@ -42,7 +42,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd /var/www/finance-tracker-repo/finance-tracker
-            rm -rf node_modules/.tmp .tsbuildinfo
+            rm -rf /var/www/finance-tracker-repo/finance-tracker/node_modules
             npm ci --prefer-offline --legacy-peer-deps
             export PATH="$PATH:./node_modules/.bin"
             VITE_API_URL=https://api.pedani.eu VITE_BASE_URL=/ npm run build
