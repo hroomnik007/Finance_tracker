@@ -41,7 +41,7 @@ ok "Code up to date ($(git rev-parse --short HEAD))"
 deploy_frontend() {
     log "Building frontend..."
     cd "${FRONTEND_SRC}"
-    npm ci --prefer-offline
+    npm ci --prefer-offline --legacy-peer-deps
     npm run build
     ok "Frontend built → ${FRONTEND_SRC}/dist"
 
