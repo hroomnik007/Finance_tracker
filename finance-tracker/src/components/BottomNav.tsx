@@ -47,7 +47,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             ref={menuRef}
             className="fixed z-50"
             style={{
-              bottom: '88px',
+              bottom: 'calc(env(safe-area-inset-bottom) + 80px)',
               left: '50%',
               transform: 'translateX(-50%)',
               width: 'min(220px, 60vw)',
@@ -80,22 +80,22 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         </>
       )}
 
-      {/* Bottom navigation bar */}
+      {/* Bottom navigation bar — floating pill */}
       <nav
         style={{
           position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: '8px 16px 16px',
-          background: 'rgba(13,10,26,0.85)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          bottom: 'max(env(safe-area-inset-bottom), 8px)',
+          left: '8px',
+          right: '8px',
+          padding: '8px',
+          background: '#1A1230',
+          borderRadius: '20px',
+          border: '0.5px solid #4C3A8A',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
           zIndex: 50,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
       >
         <NavPill

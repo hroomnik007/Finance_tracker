@@ -43,7 +43,7 @@ function getPageFromHash(): Page {
 }
 
 function App() {
-  const { isAuthenticated, isLoading, logout } = useAuth()
+  const { isAuthenticated, isLoading, logout, user } = useAuth()
   const now2 = new Date()
   const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now2.getMonth() + 1, now2.getFullYear())
   useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
@@ -108,13 +108,13 @@ function App() {
   }, [isAuthenticated])
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    try { return localStorage.getItem('sidebar-collapsed') === 'true' } catch { return false }
+    try { return localStorage.getItem('sidebar_collapsed') === 'true' } catch { return false }
   })
 
   const toggleSidebar = () => {
     setSidebarCollapsed(prev => {
       const next = !prev
-      try { localStorage.setItem('sidebar-collapsed', String(next)) } catch { /* ignore */ }
+      try { localStorage.setItem('sidebar_collapsed', String(next)) } catch { /* ignore */ }
       return next
     })
   }
@@ -186,7 +186,7 @@ function App() {
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
+      className="h-screen overflow-hidden relative"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh' }}
     >
       {locked && isAuthenticated && <PinLock onVerify={verifyPin} />}
@@ -201,34 +201,60 @@ function App() {
         onToggle={toggleSidebar}
       />
 
-      <main
-        className="flex-1 h-full overflow-y-auto min-w-0"
-        style={{ paddingTop: '16px', paddingBottom: '88px' }}
+      {/* Mobile top bar */}
+      <div
+        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-14"
+        style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid #4C3A8A' }}
       >
-        <div style={{ paddingLeft: '24px', paddingRight: '24px' }}>
-          {page === 'dashboard' && (
-            <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
-          )}
-          {page === 'income' && (
-            <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
-          )}
-          {page === 'variable-expenses' && (
-            <VariableExpensesPage
-              month={month}
-              year={year}
-              onMonthChange={handleMonthChange}
-              showToast={showToast}
-            />
-          )}
-          {page === 'fixed-expenses' && (
-            <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
-          )}
-          {page === 'categories' && <CategoriesPage />}
-          {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
+        <div className="flex items-center gap-2">
+          <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />
+          <span className="font-bold text-lg tracking-tight text-[#E2D9F3]">Finvu</span>
         </div>
-      </main>
+        <button
+          onClick={() => setPage('settings')}
+          className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+          style={{ background: '#7C3AED' }}
+        >
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white text-sm font-bold">
+              {user?.name?.[0]?.toUpperCase() ?? '?'}
+            </span>
+          )}
+        </button>
+      </div>
 
-      {page === 'dashboard' && <RightPanel month={month} year={year} />}
+      {/* Main content + RightPanel wrapper */}
+      <div
+        className={`flex h-screen transition-all duration-200 ease-in-out ${sidebarCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[240px]'}`}
+      >
+        <main className="flex-1 h-full overflow-y-auto min-w-0 pt-14 lg:pt-4 pb-20 lg:pb-0">
+          <div className="px-6">
+            {page === 'dashboard' && (
+              <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
+            )}
+            {page === 'income' && (
+              <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
+            )}
+            {page === 'variable-expenses' && (
+              <VariableExpensesPage
+                month={month}
+                year={year}
+                onMonthChange={handleMonthChange}
+                showToast={showToast}
+              />
+            )}
+            {page === 'fixed-expenses' && (
+              <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
+            )}
+            {page === 'categories' && <CategoriesPage />}
+            {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
+          </div>
+        </main>
+
+        {page === 'dashboard' && <RightPanel month={month} year={year} />}
+      </div>
 
       <div className="lg:hidden">
         <BottomNav current={page} onChange={setPage} />

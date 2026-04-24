@@ -1,10 +1,12 @@
 import {
-  ChevronDown, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon,
+  ChevronLeft, ChevronRight as ChevronRightIcon,
+  ChevronDown, ChevronRight,
   LayoutDashboard, TrendingUp, CreditCard, Settings,
   Receipt, Lock, Tag,
 } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
+import { useAuth } from '../context/AuthContext'
 
 interface AppNavProps {
   current: Page
@@ -19,53 +21,65 @@ const EXPENSE_CHILDREN: Page[] = ['variable-expenses', 'fixed-expenses', 'catego
 
 export function AppNav({ current, onChange, month, year, collapsed, onToggle }: AppNavProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const expensesActive = EXPENSE_CHILDREN.includes(current)
-  const expensesOpen = expensesActive
+  const expensesOpen = expensesActive && !collapsed
 
-  const SidebarContent = ({ mobile }: { mobile?: boolean }) => (
-    <>
-      {/* App header */}
-      <div className="flex items-center px-5 pt-6 pb-5" style={{ borderBottom: '0.5px solid #4C3A8A' }}>
-        <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />
-          <span className="font-bold text-lg tracking-tight text-[#E2D9F3]">Finvu</span>
-        </div>
+  return (
+    <aside
+      className="hidden lg:flex flex-col fixed top-0 left-0 h-screen z-40 overflow-hidden"
+      style={{
+        width: collapsed ? '64px' : '240px',
+        transition: 'width 0.2s ease-in-out',
+        background: 'var(--bg-card)',
+        borderRight: '0.5px solid var(--border-subtle)',
+      }}
+    >
+      {/* Logo */}
+      <div
+        className={`flex items-center pt-6 pb-5 ${collapsed ? 'justify-center px-3' : 'px-5'}`}
+        style={{ borderBottom: '0.5px solid #4C3A8A' }}
+      >
+        <img src="/logo.svg" alt="Finvu" className="w-8 h-8 shrink-0" />
+        {!collapsed && (
+          <span className="ml-2 font-bold text-lg tracking-tight text-[#E2D9F3] whitespace-nowrap">Finvu</span>
+        )}
       </div>
 
-      {/* Gradient divider below logo */}
+      {/* Gradient divider */}
       <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(124,58,237,0.4) 0%, rgba(124,58,237,0) 100%)', margin: '0 0 4px 0' }} />
 
-      {/* Nav list */}
-      <nav className="flex flex-col px-3 pt-2 flex-1 overflow-y-auto scrollbar-hide">
+      {/* Nav */}
+      <nav className="flex flex-col px-2 pt-2 flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
 
         <SideNavItem
           active={current === 'dashboard'}
-          onClick={() => { onChange('dashboard'); if (mobile) onToggle() }}
+          onClick={() => onChange('dashboard')}
           icon={<LayoutDashboard size={18} />}
-        >
-          {t.nav.overview}
-        </SideNavItem>
+          label={t.nav.overview}
+          collapsed={collapsed}
+        />
 
         <SideNavItem
           active={current === 'income'}
-          onClick={() => { onChange('income'); if (mobile) onToggle() }}
+          onClick={() => onChange('income')}
           icon={<TrendingUp size={18} />}
-        >
-          {t.nav.income}
-        </SideNavItem>
+          label={t.nav.income}
+          collapsed={collapsed}
+        />
 
-        {/* Výdavky — auto-collapse group */}
-        <div className="mb-0.5">
+        {/* Expenses group */}
+        <div className="mb-0.5 relative group">
           <button
-            onClick={() => { onChange('variable-expenses'); if (mobile) onToggle() }}
-            className="w-full flex items-center gap-2 px-3 rounded-xl transition-all duration-150 cursor-pointer text-left"
+            onClick={() => onChange('variable-expenses')}
+            className={`w-full flex items-center rounded-xl transition-all duration-150 cursor-pointer text-left ${collapsed ? 'justify-center px-0 py-3' : 'gap-2 px-3'}`}
             style={{
               backgroundColor: expensesActive ? 'rgba(124,58,237,0.15)' : 'transparent',
               color: expensesActive ? '#A78BFA' : '#9D84D4',
               fontSize: '15px',
               fontWeight: expensesActive ? 600 : 400,
               minHeight: '44px',
-              borderLeft: expensesActive ? '3px solid #7C3AED' : '3px solid transparent',
+              borderLeft: collapsed ? 'none' : (expensesActive ? '3px solid #7C3AED' : '3px solid transparent'),
             }}
             onMouseEnter={e => {
               if (!expensesActive) {
@@ -80,123 +94,127 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle }: 
               }
             }}
           >
-            <span className="flex items-center justify-center shrink-0"
-              style={{ color: expensesActive ? '#A78BFA' : '#9D84D4', opacity: expensesActive ? 1 : 0.6 }}>
+            <span
+              className="flex items-center justify-center shrink-0"
+              style={{ color: expensesActive ? '#A78BFA' : '#9D84D4', opacity: expensesActive ? 1 : 0.6 }}
+            >
               <CreditCard size={18} />
             </span>
-            <span className="flex-1 whitespace-nowrap">{t.nav.expenses}</span>
-            {expensesOpen
-              ? <ChevronDown size={13} />
-              : <ChevronRight size={13} />
-            }
+            {!collapsed && (
+              <>
+                <span className="flex-1 whitespace-nowrap">{t.nav.expenses}</span>
+                {expensesOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+              </>
+            )}
           </button>
 
-          <div
-            className="overflow-hidden"
-            style={{
-              maxHeight: expensesOpen ? '200px' : '0px',
-              transition: 'max-height 0.25s ease-in-out',
-            }}
-          >
-            <div className="flex flex-col pt-0.5 pb-1 pl-2">
-              <SideChildItem
-                active={current === 'variable-expenses'}
-                onClick={() => { onChange('variable-expenses'); if (mobile) onToggle() }}
-                icon={<Receipt size={15} />}
-              >
-                {t.nav.variable}
-              </SideChildItem>
-              <SideChildItem
-                active={current === 'fixed-expenses'}
-                onClick={() => { onChange('fixed-expenses'); if (mobile) onToggle() }}
-                icon={<Lock size={15} />}
-              >
-                {t.nav.fixed}
-              </SideChildItem>
-              <SideChildItem
-                active={current === 'categories'}
-                onClick={() => { onChange('categories'); if (mobile) onToggle() }}
-                icon={<Tag size={15} />}
-              >
-                {t.nav.categories}
-              </SideChildItem>
+          {collapsed && (
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-[#2D1F5E] border border-[#6B5A9E] text-[#E2D9F3] text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
+              {t.nav.expenses}
             </div>
-          </div>
+          )}
+
+          {!collapsed && (
+            <div
+              className="overflow-hidden"
+              style={{ maxHeight: expensesOpen ? '200px' : '0px', transition: 'max-height 0.25s ease-in-out' }}
+            >
+              <div className="flex flex-col pt-0.5 pb-1 pl-2">
+                <SideChildItem
+                  active={current === 'variable-expenses'}
+                  onClick={() => onChange('variable-expenses')}
+                  icon={<Receipt size={15} />}
+                  label={t.nav.variable}
+                />
+                <SideChildItem
+                  active={current === 'fixed-expenses'}
+                  onClick={() => onChange('fixed-expenses')}
+                  icon={<Lock size={15} />}
+                  label={t.nav.fixed}
+                />
+                <SideChildItem
+                  active={current === 'categories'}
+                  onClick={() => onChange('categories')}
+                  icon={<Tag size={15} />}
+                  label={t.nav.categories}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <SideNavItem
           active={current === 'settings'}
-          onClick={() => { onChange('settings'); if (mobile) onToggle() }}
+          onClick={() => onChange('settings')}
           icon={<Settings size={18} />}
-        >
-          {t.nav.settings}
-        </SideNavItem>
+          label={t.nav.settings}
+          collapsed={collapsed}
+        />
       </nav>
 
-      {/* Bottom: current month pill badge */}
-      <div className="mt-auto px-4 py-4" style={{ borderTop: '0.5px solid #4C3A8A' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '4px 10px',
-          borderRadius: 20,
-          background: 'rgba(124,58,237,0.12)',
-          border: '1px solid rgba(124,58,237,0.25)',
-        }}>
-          <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6B5A9E' }}>
-            {t.nav.currentMonth}
-          </span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA' }}>
-            {t.months[month - 1]} {year}
-          </span>
+      {/* Bottom: month badge + avatar + toggle */}
+      <div className="mt-auto" style={{ borderTop: '0.5px solid #4C3A8A' }}>
+        {!collapsed && (
+          <div className="px-4 pt-3 pb-1">
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 10px',
+              borderRadius: 20,
+              background: 'rgba(124,58,237,0.12)',
+              border: '1px solid rgba(124,58,237,0.25)',
+            }}>
+              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6B5A9E' }}>
+                {t.nav.currentMonth}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA' }}>
+                {t.months[month - 1]} {year}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className={`flex py-3 ${collapsed ? 'flex-col items-center gap-3 px-2 pb-4' : 'flex-row items-center justify-between px-4 pb-4'}`}>
+          {/* User avatar */}
+          <button
+            onClick={() => onChange('settings')}
+            className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 cursor-pointer"
+            style={{ background: '#7C3AED' }}
+            title={user?.name ?? ''}
+          >
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white text-sm font-bold">
+                {user?.name?.[0]?.toUpperCase() ?? '?'}
+              </span>
+            )}
+          </button>
+
+          {/* Toggle button */}
+          <button
+            onClick={onToggle}
+            className="flex items-center justify-center w-7 h-7 rounded-full cursor-pointer shrink-0"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '0.5px solid var(--border-subtle)',
+              color: 'var(--text-hint)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card-hover)'
+              ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card)'
+              ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-hint)'
+            }}
+          >
+            {collapsed ? <ChevronRightIcon size={12} /> : <ChevronLeft size={12} />}
+          </button>
         </div>
       </div>
-    </>
-  )
-
-  return (
-    <>
-      {/* ── Desktop toggle button ── */}
-      <button
-        onClick={onToggle}
-        className="hidden lg:flex fixed top-1/2 -translate-y-1/2 z-50 items-center justify-center w-7 h-7 rounded-full shadow-lg cursor-pointer"
-        style={{
-          left: collapsed ? '4px' : '258px',
-          transition: 'left 0.3s ease-in-out',
-          backgroundColor: 'var(--bg-card)',
-          border: '0.5px solid var(--border-subtle)',
-          color: 'var(--text-hint)',
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card-hover)'
-          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card)'
-          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-hint)'
-        }}
-      >
-        {collapsed ? <ChevronRightIcon size={12} /> : <ChevronLeft size={12} />}
-      </button>
-
-      {/* ── Desktop sidebar ── */}
-      <aside
-        className="hidden lg:flex flex-col flex-shrink-0 h-screen overflow-hidden"
-        style={{
-          width: collapsed ? '0px' : '280px',
-          transition: 'width 0.3s ease-in-out',
-          borderRight: collapsed ? 'none' : '0.5px solid var(--border-subtle)',
-        }}
-      >
-        <div
-          className="w-[280px] flex flex-col h-full flex-shrink-0"
-          style={{ background: 'var(--bg-card)' }}
-        >
-          <SidebarContent />
-        </div>
-      </aside>
-    </>
+    </aside>
   )
 }
 
@@ -206,44 +224,56 @@ function SideNavItem({
   active,
   onClick,
   icon,
-  children,
+  label,
+  collapsed = false,
 }: {
   active: boolean
   onClick: () => void
   icon: React.ReactNode
-  children: React.ReactNode
+  label: string
+  collapsed?: boolean
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-2 px-3 rounded-xl mb-0.5 transition-all duration-150 cursor-pointer text-left"
-      style={{
-        backgroundColor: active ? 'rgba(124,58,237,0.15)' : 'transparent',
-        color: active ? '#A78BFA' : '#9D84D4',
-        fontSize: '15px',
-        fontWeight: active ? 600 : 400,
-        minHeight: '44px',
-        borderLeft: active ? '3px solid #7C3AED' : '3px solid transparent',
-      }}
-      onMouseEnter={e => {
-        if (!active) {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.05)'
-          ;(e.currentTarget as HTMLButtonElement).style.color = '#E2D9F3'
-        }
-      }}
-      onMouseLeave={e => {
-        if (!active) {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
-          ;(e.currentTarget as HTMLButtonElement).style.color = '#9D84D4'
-        }
-      }}
-    >
-      <span className="flex items-center justify-center shrink-0"
-        style={{ color: active ? '#A78BFA' : '#9D84D4', opacity: active ? 1 : 0.6 }}>
-        {icon}
-      </span>
-      <span className="whitespace-nowrap">{children}</span>
-    </button>
+    <div className="relative group mb-0.5">
+      <button
+        onClick={onClick}
+        className={`w-full flex items-center rounded-xl transition-all duration-150 cursor-pointer text-left ${collapsed ? 'justify-center px-0 py-3' : 'gap-2 px-3'}`}
+        style={{
+          backgroundColor: active ? 'rgba(124,58,237,0.15)' : 'transparent',
+          color: active ? '#A78BFA' : '#9D84D4',
+          fontSize: '15px',
+          fontWeight: active ? 600 : 400,
+          minHeight: '44px',
+          borderLeft: collapsed ? 'none' : (active ? '3px solid #7C3AED' : '3px solid transparent'),
+        }}
+        onMouseEnter={e => {
+          if (!active) {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.05)'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#E2D9F3'
+          }
+        }}
+        onMouseLeave={e => {
+          if (!active) {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#9D84D4'
+          }
+        }}
+      >
+        <span
+          className="flex items-center justify-center shrink-0"
+          style={{ color: active ? '#A78BFA' : '#9D84D4', opacity: active ? 1 : 0.6 }}
+        >
+          {icon}
+        </span>
+        {!collapsed && <span className="whitespace-nowrap">{label}</span>}
+      </button>
+
+      {collapsed && (
+        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-[#2D1F5E] border border-[#6B5A9E] text-[#E2D9F3] text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
+          {label}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -251,12 +281,12 @@ function SideChildItem({
   active,
   onClick,
   icon,
-  children,
+  label,
 }: {
   active: boolean
   onClick: () => void
   icon: React.ReactNode
-  children: React.ReactNode
+  label: string
 }) {
   return (
     <button
@@ -283,11 +313,13 @@ function SideChildItem({
         }
       }}
     >
-      <span className="flex items-center justify-center shrink-0"
-        style={{ color: active ? '#A78BFA' : '#6B5A9E', opacity: active ? 1 : 0.6 }}>
+      <span
+        className="flex items-center justify-center shrink-0"
+        style={{ color: active ? '#A78BFA' : '#6B5A9E', opacity: active ? 1 : 0.6 }}
+      >
         {icon}
       </span>
-      <span className="whitespace-nowrap">{children}</span>
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   )
 }
