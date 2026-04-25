@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import { setAccessToken } from '../api/client'
+import { setAccessToken, setInitializingAuth } from '../api/client'
 import {
   login as apiLogin,
   register as apiRegister,
@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    setInitializingAuth(true)
     refreshToken()
       .then(({ accessToken }) => {
         setAccessToken(accessToken)
@@ -96,7 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .then(({ user: me }) => setUser(me))
       .catch(() => { /* no valid session */ })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        setInitializingAuth(false)
+        setIsLoading(false)
+      })
   }, [])
 
   useEffect(() => {

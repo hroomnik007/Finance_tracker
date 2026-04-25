@@ -3,6 +3,7 @@ import axios from 'axios'
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 let accessToken: string | null = null
+let initializingAuth = false
 
 export function setAccessToken(token: string | null) {
   accessToken = token
@@ -10,6 +11,10 @@ export function setAccessToken(token: string | null) {
 
 export function getAccessToken(): string | null {
   return accessToken
+}
+
+export function setInitializingAuth(value: boolean) {
+  initializingAuth = value
 }
 
 export const apiClient = axios.create({
@@ -69,7 +74,9 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null)
       setAccessToken(null)
-      window.dispatchEvent(new Event('auth:logout'))
+      if (!initializingAuth) {
+        window.dispatchEvent(new Event('auth:logout'))
+      }
       return Promise.reject(refreshError)
     } finally {
       isRefreshing = false
