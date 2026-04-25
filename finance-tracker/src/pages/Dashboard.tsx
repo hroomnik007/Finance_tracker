@@ -19,20 +19,31 @@ import { getSummary } from '../api/transactions'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
+import type { Translations } from '../i18n/sk'
 
-const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
+function isPhotoUrl(url: string | null | undefined): url is string {
+  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
+}
 
-function getLast6Months() {
+function getLast6Months(monthsShort: string[]) {
   const now = new Date()
   return Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
     return {
       month: d.getMonth() + 1,
       year: d.getFullYear(),
-      label: MONTHS_SK[d.getMonth()],
+      label: monthsShort[d.getMonth()],
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
     }
   })
+}
+
+function getGreeting(name: string, t: Translations): { text: string; emoji: string } {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return { text: `${t.dashboard.greetingMorning}${name ? `, ${name}` : ''}`, emoji: '☀️' }
+  if (hour >= 12 && hour < 18) return { text: `${t.dashboard.greetingDay}${name ? `, ${name}` : ''}`, emoji: '👋' }
+  if (hour >= 18 && hour < 22) return { text: `${t.dashboard.greetingEvening}${name ? `, ${name}` : ''}`, emoji: '🌙' }
+  return { text: `${t.dashboard.greetingNight}${name ? `, ${name}` : ''}`, emoji: '😴' }
 }
 
 function getLast7Days(): string[] {
@@ -60,13 +71,6 @@ const TOOLTIP_STYLE = {
   fontSize: 13,
 }
 
-function getGreeting(name: string): { text: string; emoji: string } {
-  const hour = new Date().getHours()
-  if (hour >= 5 && hour < 12) return { text: `Dobré ráno${name ? `, ${name}` : ''}`, emoji: '☀️' }
-  if (hour >= 12 && hour < 18) return { text: `Dobrý deň${name ? `, ${name}` : ''}`, emoji: '👋' }
-  if (hour >= 18 && hour < 22) return { text: `Dobrý večer${name ? `, ${name}` : ''}`, emoji: '🌙' }
-  return { text: `Dobrú noc${name ? `, ${name}` : ''}`, emoji: '😴' }
-}
 
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
@@ -82,10 +86,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
-  const { profileName, profileAvatar } = useSettingsContext()
+  const { profileName } = useSettingsContext()
   const { user } = useAuth()
   const displayName = user?.name || profileName
-  const greeting = getGreeting(displayName)
+  const greeting = getGreeting(displayName, t)
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
@@ -110,7 +114,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
 
   useEffect(() => {
-    const months = getLast6Months()
+    const months = getLast6Months(t.monthsShort)
     Promise.all(months.map(m => getSummary(m.key).catch(() => null)))
       .then(results => {
         setChartData(
@@ -184,9 +188,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     .sort((a, b) => a.daysUntil - b.daysUntil)
 
   const motivationalMsg = (() => {
-    if (balance > 0 && balance > totalIncome * 0.3) return { msg: 'Skvelá práca! Ušetrili ste viac ako 30% príjmov.', color: '#34D399' }
-    if (balance < 0) return { msg: 'Pozor — výdavky prevyšujú príjmy. Skúste obmedziť variabilné výdavky.', color: '#F87171' }
-    if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: 'Výborné! Váš denný priemer je pod 20 €.', color: '#A78BFA' }
+    if (balance > 0 && balance > totalIncome * 0.3) return { msg: t.dashboard.motivationalGood, color: '#34D399' }
+    if (balance < 0) return { msg: t.dashboard.motivationalBad, color: '#F87171' }
+    if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: t.dashboard.motivationalAvg, color: '#A78BFA' }
     return null
   })()
 
@@ -197,7 +201,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       <div className="flex items-center gap-2">
         <span className="text-xl font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
         {(user?.currentStreak ?? 0) > 0 && (
-          <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0">
+          <span
+            className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0 cursor-default"
+            title={`${user!.currentStreak} ${t.dashboard.streakTooltip}`}
+          >
             🔥 {user!.currentStreak}
           </span>
         )}
@@ -209,7 +216,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const heroCards = (
     <>
       <div className="bg-[#2A1F4A] rounded-2xl p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">Zostatok</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.dashboard.balance}</p>
         <p className={`font-bold text-3xl font-mono leading-none ${balance >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
           {formatAmount(balance)}
         </p>
@@ -239,7 +246,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         {incomeChange !== null && (
           <div className={`flex items-center gap-1 text-xs font-medium ${incomeChange >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
             {incomeChange >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-            <span>{Math.abs(incomeChange).toFixed(1)}% oproti minulému mesiacu</span>
+            <span>{Math.abs(incomeChange).toFixed(1)}% {t.dashboard.vsLastMonth}</span>
           </div>
         )}
       </div>
@@ -250,7 +257,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         {expensesChange !== null && (
           <div className={`flex items-center gap-1 text-xs font-medium ${expensesChange <= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
             {expensesChange >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-            <span>{Math.abs(expensesChange).toFixed(1)}% oproti minulému mesiacu</span>
+            <span>{Math.abs(expensesChange).toFixed(1)}% {t.dashboard.vsLastMonth}</span>
           </div>
         )}
       </div>
@@ -260,17 +267,17 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const statsStrip = (
     <div className="bg-white/[0.06] rounded-2xl border border-white/5 grid grid-cols-3 gap-px overflow-hidden">
       <div className="flex flex-col items-center py-3 px-4 text-center bg-[#2A1F4A]">
-        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">Ø / deň</p>
+        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">{t.dashboard.dailyAvg}</p>
         <p className="font-mono font-semibold text-[#A78BFA] text-sm">{formatAmount(dailyAvgExpense)}</p>
       </div>
       <div className="flex flex-col items-center py-3 px-4 text-center bg-[#2A1F4A]">
-        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">Najväčší výdavok</p>
+        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">{t.dashboard.biggestExpense}</p>
         <p className="font-mono font-semibold text-[#F87171] text-sm">
           {biggestExpense ? formatAmount(biggestExpense.amount) : '—'}
         </p>
       </div>
       <div className="flex flex-col items-center py-3 px-4 text-center bg-[#2A1F4A]">
-        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">Transakcií</p>
+        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">{t.dashboard.transactions}</p>
         <p className="font-semibold text-[#E2D9F3] text-sm">{variableExpenses.length}</p>
       </div>
     </div>
@@ -361,7 +368,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             </ResponsiveContainer>
           </div>
           <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-4">Porovnanie mesiacov</h3>
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-4">{t.dashboard.monthComparison}</h3>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
@@ -443,14 +450,14 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     <>
       {upcomingFixed.length > 0 && (
         <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">Nadchádzajúce platby</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.upcomingPayments}</p>
           <div className="flex flex-col gap-3">
             {upcomingFixed.map(fe => (
               <div key={fe.id ?? fe.label} className="flex items-center justify-between">
                 <div className="min-w-0">
                   <p className="text-sm text-[#E2D9F3] truncate">{fe.label}</p>
                   <p className="text-xs text-[#6B5A9E]">
-                    {fe.daysUntil === 0 ? 'Dnes' : fe.daysUntil === 1 ? 'Zajtra' : `Za ${fe.daysUntil} dní`}
+                    {fe.daysUntil === 0 ? t.dashboard.today : fe.daysUntil === 1 ? t.dashboard.tomorrow : t.dashboard.inDays.replace('{n}', String(fe.daysUntil))}
                   </p>
                 </div>
                 <span className="font-mono text-sm font-semibold text-[#F87171] shrink-0 ml-3">
@@ -462,7 +469,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
       )}
       <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">Rozpočet</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.budget}</p>
         {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => {
           const barColor = b.percentage >= 90 ? '#F87171' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
           return (
@@ -483,12 +490,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         })}
         {budgetStatuses.filter(b => b.limit > 0).length === 0 && (
           <div className="flex items-center justify-between">
-            <p className="text-xs text-[#6B5A9E]">Žiadne limity nastavené</p>
+            <p className="text-xs text-[#6B5A9E]">{t.dashboard.noLimits}</p>
             <button
               onClick={() => onNavigate('categories')}
               className="text-xs text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 px-2 py-1 rounded-lg hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
             >
-              Nastaviť
+              {t.dashboard.setLimits}
             </button>
           </div>
         )}
@@ -507,28 +514,28 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         const diff = prediction - prevTotal
         return (
           <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">Predikcia výdavkov</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">{t.dashboard.expensePrediction}</p>
             <p className="font-mono font-bold text-2xl text-[#F87171]">{formatAmount(prediction)}</p>
             <p className="text-xs text-[#9D84D4] mt-1">
               {dailyAvgExpense.toFixed(2)} €/deň × {daysInMonth} dní
             </p>
             {prevTotal > 0 && (
               <p className={`text-xs mt-1 ${diff > 0 ? 'text-[#F87171]' : 'text-[#34D399]'}`}>
-                {diff > 0 ? '▲' : '▼'} {formatAmount(Math.abs(diff))} oproti minulému mesiacu
+                {diff > 0 ? '▲' : '▼'} {formatAmount(Math.abs(diff))} {t.dashboard.vsLastMonth}
               </p>
             )}
           </div>
         )
       })()}
       <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">Porovnanie mesiacov</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.monthComparison}</p>
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-[#9D84D4]">Tento mesiac</span>
+            <span className="text-xs text-[#9D84D4]">{t.dashboard.thisMonth}</span>
             <span className="text-sm font-mono font-semibold text-[#F87171]">-{formatAmount(totalExpenses)}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-[#9D84D4]">Minulý mesiac</span>
+            <span className="text-xs text-[#9D84D4]">{t.dashboard.lastMonth}</span>
             <span className="text-sm font-mono text-[#E2D9F3]">-{formatAmount(prevMonthData?.expenses ?? 0)}</span>
           </div>
           {(prevMonthData?.expenses ?? 0) > 0 && (() => {
@@ -536,7 +543,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             const isUp = totalExpenses > (prevMonthData?.expenses ?? 0)
             return (
               <div className={`text-xs font-semibold mt-1 ${isUp ? 'text-[#F87171]' : 'text-[#34D399]'}`}>
-                {isUp ? '↑' : '↓'} {Math.abs(Number(diff))}% vs minulý mesiac
+                {isUp ? '↑' : '↓'} {Math.abs(Number(diff))}% {t.dashboard.vsLastMonth}
               </div>
             )
           })()}
@@ -544,8 +551,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       </div>
       {monthChallengeTarget > 0 && (
         <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">Mesačná výzva</p>
-          <p className="text-sm text-[#E2D9F3] mb-2">Minutie menej ako {formatAmount(monthChallengeTarget)}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">{t.dashboard.monthlyChallenge}</p>
+          <p className="text-sm text-[#E2D9F3] mb-2">{t.dashboard.spendLessThan} {formatAmount(monthChallengeTarget)}</p>
           <div className="bg-[#1A1030] rounded-full h-2 overflow-hidden">
             <div
               className={`h-full rounded-full transition-[width] duration-[400ms] ${
@@ -612,7 +619,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           onClick={() => setRefreshKey(k => k + 1)}
           className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
         >
-          Aktualizovať
+          {t.dashboard.refresh}
         </button>
       </div>
 
@@ -623,10 +630,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       >
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-[#4C3A8A]" />
+            {isPhotoUrl(user?.avatarUrl) ? (
+              <img src={user!.avatarUrl!} alt="" className="w-8 h-8 rounded-full object-cover border border-[#4C3A8A]" />
+            ) : user?.avatarUrl ? (
+              <span className="w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0" style={{ background: 'rgba(124,58,237,0.2)' }}>{user.avatarUrl}</span>
             ) : (
-              <span className="text-xl">{profileAvatar}</span>
+              <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ background: '#7C3AED' }}>{user?.name?.[0]?.toUpperCase() ?? '?'}</span>
             )}
             <span className="text-xl font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
             {(user?.currentStreak ?? 0) > 0 && (

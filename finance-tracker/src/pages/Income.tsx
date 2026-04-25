@@ -15,14 +15,12 @@ import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
 import type { Income } from '../types'
 
-const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
-
-function getLast12Months() {
+function getLast12Months(monthsShort: string[]) {
   const now = new Date()
   return Array.from({ length: 12 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
     return {
-      label: MONTHS_SK[d.getMonth()],
+      label: monthsShort[d.getMonth()],
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
     }
   })
@@ -145,7 +143,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const [allIncomeData, setAllIncomeData] = useState<{ date: string; amount: number }[]>([])
 
   useEffect(() => {
-    const months = getLast12Months()
+    const months = getLast12Months(t.monthsShort)
     getTransactions({ type: 'income', limit: 5000 })
       .then(({ data }) => {
         setYearlyData(months.map(m => ({
@@ -501,18 +499,18 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           {/* Card 1: Ročný príjem */}
           <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
             <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📅 Ročný príjem {year}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📅 {t.income.yearlyIncomeTitle} {year}</p>
             </div>
             <div className="px-4 py-4">
               <p className="font-mono font-bold text-2xl text-[#34d399] mb-1">{formatAmount(yearlyIncome)}</p>
-              <p className="text-xs text-[#9D84D4]">Celkový príjem za rok {year}</p>
+              <p className="text-xs text-[#9D84D4]">{t.income.yearlyIncomeDesc} {year}</p>
             </div>
           </div>
 
           {/* Card 2: Opakujúce sa príjmy */}
           <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
             <div className="px-4 pt-4 pb-3 border-b border-white/[0.06] flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">🔁 Opakujúce sa</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">🔁 {t.income.recurringCard}</p>
               <span className="text-xs text-[#9D84D4] font-mono">{recurringIncomes.length}×</span>
             </div>
             {recurringIncomes.length === 0 ? (
@@ -535,7 +533,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                   className="flex items-center justify-between px-4 py-3"
                   style={{ borderTop: '1px solid rgba(167,139,250,0.15)', background: 'rgba(167,139,250,0.05)' }}
                 >
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9D84D4]">Mesačne</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9D84D4]">{t.income.monthly}</span>
                   <span className="font-mono font-bold text-sm text-[#34d399]">{formatAmount(recurringMonthlyTotal)}</span>
                 </div>
               </>
@@ -545,14 +543,14 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           {/* Card 3: Prognóza */}
           <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
             <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📈 Ročná prognóza</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📈 {t.income.annualForecast}</p>
             </div>
             <div className="px-4 py-4 flex flex-col gap-2">
               <p className="font-mono font-bold text-2xl text-[#A78BFA]">{formatAmount(yearlyProjection)}</p>
               <p className="text-xs text-[#9D84D4]">
                 {recurringIncomes.length > 0
-                  ? `${recurringIncomes.length} opak. príjmov × 12 mesiacov`
-                  : 'Žiadne opakujúce sa príjmy'}
+                  ? t.income.recurringTimesMonths.replace('{n}', String(recurringIncomes.length))
+                  : t.income.noRecurring}
               </p>
             </div>
           </div>

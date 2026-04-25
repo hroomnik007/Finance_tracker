@@ -489,7 +489,7 @@ export function SettingsPage() {
 
           {/* Section 1: Všeobecné */}
           <SectionCard>
-            <SectionHeader emoji="👤" label="Všeobecné" />
+            <SectionHeader emoji="👤" label={t.settings.generalSection} />
             <div className="divide-y divide-white/[0.04]">
               <SettingRow label={t.settings.currency}>
                 <select
@@ -531,28 +531,14 @@ export function SettingsPage() {
                 </select>
               </SettingRow>
 
-              <SettingRow label="Prvý deň mesiaca" sublabel="Deň 1 – 28">
-                <input
-                  type="number"
-                  min={1}
-                  max={28}
-                  value={settings.firstDayOfMonth ?? 1}
-                  onChange={e => {
-                    const val = Math.max(1, Math.min(28, parseInt(e.target.value, 10) || 1))
-                    updateSettings({ firstDayOfMonth: val })
-                  }}
-                  className="input-field"
-                  style={{ width: 80, height: 40, fontSize: 14, textAlign: 'center', padding: '0 8px' }}
-                />
-              </SettingRow>
             </div>
           </SectionCard>
 
           {/* Section 2: Vzhľad & Téma */}
           <SectionCard>
-            <SectionHeader emoji="🎨" label="Vzhľad & Téma" />
+            <SectionHeader emoji="🎨" label={t.settings.appearanceSection} />
             <div className="divide-y divide-white/[0.04]">
-              <SettingRow label="Téma" sublabel="Farebné schéma aplikácie">
+              <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
                 <div className="flex gap-1.5">
                   {(['dark', 'light', 'system'] as const).map(th => (
                     <button
@@ -571,7 +557,7 @@ export function SettingsPage() {
                 </div>
               </SettingRow>
 
-              <SettingRow label="Akcentová farba">
+              <SettingRow label={t.settings.accentColor}>
                 <div className="flex gap-2">
                   {ACCENT_COLORS.map(c => (
                     <button
@@ -593,7 +579,7 @@ export function SettingsPage() {
                 </div>
               </SettingRow>
 
-              <SettingRow label="Kompaktný režim" sublabel="Menšie karty a zmenšené písmo">
+              <SettingRow label={t.settings.compactMode} sublabel={t.settings.compactModeSubtitle}>
                 <Toggle checked={compactMode} onChange={handleCompactToggle} />
               </SettingRow>
             </div>
@@ -601,13 +587,13 @@ export function SettingsPage() {
 
           {/* Section 3: Notifikácie */}
           <SectionCard>
-            <SectionHeader emoji="🔔" label="Notifikácie" />
+            <SectionHeader emoji="🔔" label={t.settings.notificationsSection} />
             <div className="divide-y divide-white/[0.04]">
-              <SettingRow label="Pripomienky fixných výdavkov" sublabel="Upozornenie v deň splatnosti fixného výdavku">
+              <SettingRow label={t.settings.fixedReminders} sublabel={t.settings.fixedRemindersSubtitle}>
                 <Toggle checked={notificationsEnabled} onChange={handleNotificationsToggle} />
               </SettingRow>
 
-              <SettingRow label="Upozornenia na rozpočet" sublabel="Notifikácia keď kategória dosiahne 80 % limitu">
+              <SettingRow label={t.settings.budgetWarnings} sublabel={t.settings.budgetWarningsSubtitle}>
                 <Toggle
                   checked={budgetWarnings}
                   onChange={() => {
@@ -618,7 +604,7 @@ export function SettingsPage() {
                 />
               </SettingRow>
 
-              <SettingRow label="Mesačné pripomienky" sublabel="Pripomienka na konci mesiaca skontrolovať súhrn">
+              <SettingRow label={t.settings.monthlyReminders} sublabel={t.settings.monthlyRemindersSubtitle}>
                 <Toggle
                   checked={monthlySummary}
                   onChange={() => {
@@ -629,16 +615,16 @@ export function SettingsPage() {
                 />
               </SettingRow>
 
-              <SettingRow label="Týždenný email" sublabel="Prehľad príjmov a výdavkov každý pondelok ráno">
+              <SettingRow label={t.settings.weeklyEmailLabel} sublabel={t.settings.weeklyEmailSubtitle}>
                 <Toggle checked={weeklyEmail} onChange={handleWeeklyEmailToggle} disabled={weeklyEmailSaving} />
               </SettingRow>
 
-              <SettingRow label="Mesačný email" sublabel="Súhrn predchádzajúceho mesiaca, 1. deň v mesiaci o 9:00">
+              <SettingRow label={t.settings.monthlyEmailLabel} sublabel={t.settings.monthlyEmailSubtitle}>
                 <Toggle checked={monthlyEmail} onChange={handleMonthlyEmailToggle} disabled={monthlyEmailSaving} />
               </SettingRow>
             </div>
             <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
-              <p className="text-xs text-[#6B5A9E]">Notifikácie fungujú len keď je aplikácia otvorená</p>
+              <p className="text-xs text-[#6B5A9E]">{t.settings.notificationsNote}</p>
             </div>
           </SectionCard>
 
@@ -649,7 +635,7 @@ export function SettingsPage() {
 
           {/* Section 4: Dáta */}
           <SectionCard>
-            <SectionHeader emoji="💾" label="Dáta" />
+            <SectionHeader emoji="💾" label={t.settings.data} />
             <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
 
               <div>
@@ -695,26 +681,26 @@ export function SettingsPage() {
           {/* Section 5: Danger Zone */}
           <div className="bg-red-500/5 border border-red-500/30 rounded-2xl overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-red-500/20">
-              <p className="text-xs uppercase tracking-wider text-red-400/70 font-semibold">⚠️ Nebezpečná zóna</p>
+              <p className="text-xs uppercase tracking-wider text-red-400/70 font-semibold">⚠️ {t.settings.dangerZone}</p>
             </div>
             <div className="p-5 flex flex-col gap-2.5">
               <button
                 onClick={() => { setDangerAction('expenses'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-left"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-center justify-center"
               >
-                🗑️ Vymazať všetky výdavky
+                🗑️ {t.settings.deleteExpenses}
               </button>
               <button
                 onClick={() => { setDangerAction('incomes'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-left"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-center justify-center"
               >
-                🗑️ Vymazať všetky príjmy
+                🗑️ {t.settings.deleteIncomes}
               </button>
               <button
                 onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-left"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-center justify-center"
               >
-                💥 Reset aplikácie — vymazať všetko
+                💥 {t.settings.resetApp}
               </button>
             </div>
           </div>
