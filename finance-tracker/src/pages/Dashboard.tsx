@@ -439,7 +439,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   ) : null
 
   const heatmapCard = (
-    <div className="bg-[#2A1F4A] rounded-2xl p-3 border border-white/5">
+    <div className="bg-[#2A1F4A] rounded-2xl p-3 border border-white/5" style={{ alignSelf: 'start' }}>
       <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
     </div>
   )
@@ -690,7 +690,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
         {/* RIGHT — sticky panel */}
         <div
-          style={{ position: 'sticky', top: '24px', alignSelf: 'start', background: '#0d0920', borderLeft: '2px solid #1e1535', padding: '20px 16px' }}
+          style={{ background: '#0d0920', borderLeft: '2px solid #1e1535', padding: '16px', position: 'sticky', top: '0', alignSelf: 'start' }}
           className="flex flex-col gap-4"
         >
           {rightPanelCards}
