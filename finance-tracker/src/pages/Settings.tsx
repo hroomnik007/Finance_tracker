@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { X, Upload } from 'lucide-react'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport } from '../api/auth'
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { useSettingsContext } from '../context/SettingsContext'
@@ -38,6 +36,42 @@ const ACCENT_COLORS = [
   { name: 'Oranžová', value: '#F59E0B' },
   { name: 'Ružová', value: '#EC4899' },
   { name: 'Červená', value: '#EF4444' },
+]
+
+const CHANGELOG = [
+  {
+    version: 'v1.1.0',
+    date: 'Apr 2026',
+    items: [
+      'Nový dizajn stránky Nastavenia',
+      'Dashboard: heatmapa, predikcia výdavkov, porovnanie mesiacov',
+      'Profil: avatar, séria aktivít, odznaky',
+      'PIN zamok a WebAuthn passkeys',
+      'Zdieľané reporty s verejným odkazom',
+    ],
+  },
+  {
+    version: 'v1.0.1',
+    date: 'Mar 2026',
+    items: [
+      'Opravené načítanie po F5 (auth race condition)',
+      'Mobilný layout — obsah sa viac neposúva vpravo',
+      'Heatmapa výdavkov — správna výška buniek',
+      'Opravené TypeScript chyby v grafoch príjmov',
+    ],
+  },
+  {
+    version: 'v1.0.0',
+    date: 'Feb 2026',
+    items: [
+      'Úvodné vydanie aplikácie Finvu',
+      'Sledovanie príjmov a variabilných výdavkov',
+      'Fixné výdavky a kategórie s limitmi',
+      'Export do JSON, CSV, PDF',
+      'Dashboard s grafmi a štatistikami',
+      'PWA podpora — offline, inštalácia',
+    ],
+  },
 ]
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -79,9 +113,12 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       onClick={onChange}
       disabled={disabled}
       className={`w-11 h-6 rounded-full transition-all duration-200 relative flex-shrink-0 ${
-        checked ? 'bg-violet-500' : 'bg-[#32265A]'
-      } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-      style={{ border: checked ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+      }`}
+      style={{
+        background: checked ? 'var(--accent-color)' : '#32265A',
+        border: checked ? '1px solid var(--accent-color)' : '1px solid #4C3A8A',
+      }}
     >
       <div
         className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
@@ -150,10 +187,11 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     const savedTheme = loadLocalPref<string>('theme_preference', 'dark')
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
     const savedCompact = loadLocalPref<boolean>('compact_mode', false)
-    document.documentElement.setAttribute('data-theme', savedTheme)
-    document.documentElement.style.setProperty('--accent-strong', savedAccent)
-    if (savedCompact) document.body.classList.add('compact')
-    else document.body.classList.remove('compact')
+    const html = document.documentElement
+    html.classList.remove('dark', 'light')
+    if (savedTheme !== 'system') html.classList.add(savedTheme)
+    html.style.setProperty('--accent-color', savedAccent)
+    html.classList.toggle('compact', savedCompact)
   }, [])
 
   // ── Section 2: Appearance ─────────────────────────────────────────────────
@@ -170,20 +208,22 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   function handleThemeChange(next: 'dark' | 'light' | 'system') {
     setThemeState(next)
     saveLocalPref('theme_preference', next)
-    document.documentElement.setAttribute('data-theme', next)
+    const html = document.documentElement
+    html.classList.remove('dark', 'light')
+    if (next !== 'system') html.classList.add(next)
   }
 
   function handleAccentChange(color: string) {
     setAccentColorState(color)
     saveLocalPref('accent_color', color)
-    document.documentElement.style.setProperty('--accent-strong', color)
+    document.documentElement.style.setProperty('--accent-color', color)
   }
 
   function handleCompactToggle() {
     const next = !compactMode
     setCompactModeState(next)
     saveLocalPref('compact_mode', next)
-    document.body.classList.toggle('compact', next)
+    document.documentElement.classList.toggle('compact', next)
   }
 
   // ── Section 3: Notifications ──────────────────────────────────────────────
@@ -258,7 +298,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       const { data: transactions } = await getTransactions({ limit: 10000 })
       const incomes = transactions.filter(t => t.type === 'income')
       const rows = incomes.map(t =>
-        `${t.date},"${(t.description ?? '').replace(/"/g, "'")}", ${t.amount}`
+        `${t.date},"${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
       )
       downloadBlob(
         new Blob([['Dátum,Popis,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
@@ -286,40 +326,8 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     }
   }
 
-  async function handleExportPDF() {
-    try {
-      setExportError(null)
-      const [{ data: transactions }, { data: categories }] = await Promise.all([
-        getTransactions({ limit: 10000 }),
-        getCategories(),
-      ])
-      const doc = new jsPDF()
-      doc.setFontSize(16)
-      doc.text('Finvu — Finančný prehľad', 14, 18)
-      doc.setFontSize(10)
-      doc.text(`Exportované: ${new Date().toLocaleDateString('sk-SK')}`, 14, 26)
-      const incomes = transactions.filter(t => t.type === 'income')
-      const expenses = transactions.filter(t => t.type === 'expense')
-      const totalIncome = incomes.reduce((s, t) => s + t.amount, 0)
-      const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0)
-      autoTable(doc, {
-        startY: 32,
-        head: [['Typ', 'Popis', 'Kategória', 'Suma (€)']],
-        body: [
-          ...incomes.map(t => ['Príjem', t.description ?? '—', '—', t.amount.toFixed(2)]),
-          ...expenses.map(t => {
-            const cat = categories.find(c => c.id === t.categoryId)
-            return ['Výdavok', t.description ?? '—', cat?.name ?? '—', (-t.amount).toFixed(2)]
-          }),
-          ['', '', 'Zostatok', (totalIncome - totalExpenses).toFixed(2)],
-        ],
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [124, 58, 237] },
-      })
-      doc.save('finvu-export.pdf')
-    } catch {
-      setExportError('Export zlyhal. Skúste znova.')
-    }
+  function handleExportPDF() {
+    window.print()
   }
 
   async function handleShareReport() {
@@ -332,11 +340,25 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       const totalExpenses = allT.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
       const byCategory = cats
         .map(cat => {
-          const total = allT.filter(tx => tx.categoryId === cat.id && tx.type === 'expense').reduce((s, tx) => s + tx.amount, 0)
-          return { name: cat.name, color: cat.color ?? '#9D84D4', total, percentage: totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0 }
+          const total = allT
+            .filter(tx => tx.categoryId === cat.id && tx.type === 'expense')
+            .reduce((s, tx) => s + tx.amount, 0)
+          return {
+            name: cat.name,
+            color: cat.color ?? '#9D84D4',
+            total,
+            percentage: totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0,
+          }
         })
         .filter(c => c.total > 0)
-      const data = JSON.stringify({ title: 'Finvu — Finančný prehľad', totalIncome, totalExpenses, balance: totalIncome - totalExpenses, byCategory, generatedAt: new Date().toISOString() })
+      const data = JSON.stringify({
+        title: 'Finvu — Finančný prehľad',
+        totalIncome,
+        totalExpenses,
+        balance: totalIncome - totalExpenses,
+        byCategory,
+        generatedAt: new Date().toISOString(),
+      })
       const { token } = await createSharedReport(data, 24 * 7)
       const url = `${window.location.origin}${window.location.pathname}#report/${token}`
       await navigator.clipboard.writeText(url)
@@ -466,7 +488,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* ── LEFT COLUMN: sections 1, 2, 3 ── */}
+        {/* ── LEFT COLUMN ── */}
         <div className="flex flex-col gap-6">
 
           {/* Section 1: Všeobecné */}
@@ -542,9 +564,10 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
                       onClick={() => handleThemeChange(th)}
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                         theme === th
-                          ? 'bg-violet-600 text-white'
+                          ? 'text-white'
                           : 'bg-white/5 text-[#9D84D4] border border-white/10 hover:bg-white/10'
                       }`}
+                      style={theme === th ? { background: 'var(--accent-color)' } : undefined}
                     >
                       {th === 'dark' ? '🌙 Dark' : th === 'light' ? '☀️ Light' : '⚙️ System'}
                     </button>
@@ -560,7 +583,11 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
                       onClick={() => handleAccentChange(c.value)}
                       title={c.name}
                       className="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
-                      style={{ backgroundColor: c.value, outline: accentColor === c.value ? `2px solid ${c.value}` : 'none', outlineOffset: 2 }}
+                      style={{
+                        backgroundColor: c.value,
+                        outline: accentColor === c.value ? `2px solid ${c.value}` : 'none',
+                        outlineOffset: 2,
+                      }}
                     >
                       {accentColor === c.value && (
                         <div className="w-2 h-2 rounded-full bg-white/80" />
@@ -621,7 +648,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
         </div>
 
-        {/* ── RIGHT COLUMN: sections 4, 5 ── */}
+        {/* ── RIGHT COLUMN ── */}
         <div className="flex flex-col gap-6">
 
           {/* Section 4: Dáta */}
@@ -636,7 +663,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
                     📄 Exportovať JSON
                   </button>
                   <button onClick={handleExportPDF} className="btn-secondary justify-center py-2.5 text-sm">
-                    📊 Exportovať PDF
+                    🖨️ Tlačiť / PDF
                   </button>
                   <button onClick={handleExportCSVIncome} className="btn-secondary justify-center py-2.5 text-sm">
                     📋 CSV — Príjmy
@@ -664,7 +691,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               </div>
 
               <p className="text-xs text-[#6B5A9E] text-center">
-                Dáta sú uložené lokálne v tvojom prehliadači. Exportuj pravidelne pre zálohovanie.
+                Dáta sú uložené na serveri. Exportuj pravidelne pre zálohovanie.
               </p>
             </div>
           </SectionCard>
@@ -799,7 +826,8 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               <button
                 onClick={() => handleImportConfirm('merge')}
                 disabled={importLoading}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition-colors cursor-pointer disabled:opacity-60"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-colors cursor-pointer disabled:opacity-60"
+                style={{ background: 'var(--accent-color)' }}
               >
                 {importLoading ? 'Importujem...' : 'Zlúčiť s existujúcimi'}
               </button>
@@ -877,18 +905,37 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-semibold text-[#E2D9F3]">O aplikácii</h2>
               <button onClick={() => setShowAbout(false)} className="btn-icon"><X size={16} /></button>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-[#E2D9F3]">Finvu</p>
-                <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-violet-500/15 text-violet-300">v1.0.0</span>
+            <div className="flex flex-col items-center mb-5">
+              <div
+                className="w-[52px] h-[52px] rounded-xl flex items-center justify-center mb-3 shrink-0"
+                style={{ background: 'var(--accent-color)' }}
+              >
+                <span className="text-white font-bold text-2xl leading-none">F</span>
               </div>
-              <p className="text-xs text-[#B8A3E8] leading-relaxed">Vytvorené s ❤️ pomocou React + Vite + Dexie.js</p>
-              <p className="text-xs text-[#B8A3E8] leading-relaxed">Všetky dáta lokálne v prehliadači</p>
+              <p className="text-base font-bold text-[#E2D9F3]">Finvu</p>
+              <span className="text-xs mt-1.5 font-mono px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
+                v1.1.0
+              </span>
             </div>
+            <div className="flex flex-col gap-3 mb-5">
+              <div className="flex items-start gap-3">
+                <span className="text-base leading-none mt-0.5">🔒</span>
+                <p className="text-xs text-[#B8A3E8] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-base leading-none mt-0.5">🔧</span>
+                <p className="text-xs text-[#B8A3E8] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-base leading-none mt-0.5">🌐</span>
+                <p className="text-xs text-[#B8A3E8] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
+              </div>
+            </div>
+            <p className="text-xs text-center text-[#6B5A9E]">© 2024–2026 Finvu · pedani.eu</p>
           </div>
         </div>
       )}
@@ -901,31 +948,39 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         >
           <div
             className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in"
+            style={{ maxHeight: '80vh', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-semibold text-[#E2D9F3]">Changelog</h2>
               <button onClick={() => setShowChangelog(false)} className="btn-icon"><X size={16} /></button>
             </div>
-            <div className="flex flex-col gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-mono font-semibold text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-full">v1.0.0</span>
-                  <span className="text-xs text-[#6B5A9E]">2025</span>
+            <div className="flex flex-col gap-5">
+              {CHANGELOG.map((entry, i) => (
+                <div key={entry.version}>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span
+                      className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
+                        i === 0 ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-[#9D84D4]'
+                      }`}
+                    >
+                      {entry.version}
+                    </span>
+                    <span className="text-xs text-[#6B5A9E]">{entry.date}</span>
+                  </div>
+                  <ul className="flex flex-col gap-1.5">
+                    {entry.items.map(item => (
+                      <li key={item} className="flex items-start gap-2 text-xs text-[#B8A3E8]">
+                        <span className="text-[#6B5A9E] mt-px shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {i < CHANGELOG.length - 1 && (
+                    <div className="mt-4 border-t border-white/[0.06]" />
+                  )}
                 </div>
-                <ul className="flex flex-col gap-1">
-                  {[
-                    'Úvodné vydanie aplikácie Finvu',
-                    'Sledovanie príjmov a variabilných výdavkov',
-                    'Fixné výdavky a kategórie',
-                    'Export do JSON, CSV, PDF',
-                    'Dashboard s grafmi a štatistikami',
-                    'PWA podpora (offline, inštalácia)',
-                  ].map(item => (
-                    <li key={item} className="text-xs text-[#B8A3E8]">• {item}</li>
-                  ))}
-                </ul>
-              </div>
+              ))}
             </div>
           </div>
         </div>

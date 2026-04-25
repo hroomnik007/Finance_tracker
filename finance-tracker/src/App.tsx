@@ -27,6 +27,20 @@ import { useAuth } from './context/AuthContext'
 import { useFixedExpenses } from './hooks/useFixedExpenses'
 import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
 
+// Initialize appearance preferences from localStorage before first render
+;(() => {
+  try {
+    const html = document.documentElement
+    const accent = JSON.parse(localStorage.getItem('accent_color') ?? 'null') as string | null
+    const compact = JSON.parse(localStorage.getItem('compact_mode') ?? 'false') as boolean
+    const theme = JSON.parse(localStorage.getItem('theme_preference') ?? '"dark"') as string
+    if (accent) html.style.setProperty('--accent-color', accent)
+    html.classList.toggle('compact', compact)
+    html.classList.remove('dark', 'light')
+    if (theme !== 'system') html.classList.add(theme)
+  } catch { /* ignore */ }
+})()
+
 export type Page =
   | 'dashboard'
   | 'income'

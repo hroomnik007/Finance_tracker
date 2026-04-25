@@ -36,6 +36,7 @@
   /* Accent */
   --accent: #A78BFA;
   --accent-strong: #7C3AED;
+  --accent-color: #7C3AED;
   --accent-muted: #6B5A9E;
 
   /* Legacy accent aliases */
@@ -118,7 +119,7 @@ body {
 
 /* ── Button system ── */
 .btn-primary {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: var(--accent-color);
   color: white;
   border-radius: 16px;
   padding: 10px 20px;
@@ -135,9 +136,9 @@ body {
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  opacity: 0.88;
   transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
 }
 
 .btn-primary:active {
@@ -233,8 +234,8 @@ textarea.input-field {
 .input-field:focus {
   background: rgba(255,255,255,0.08);
   border-color: transparent;
-  border-left: 3px solid #7C3AED;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4);
+  border-left: 3px solid var(--accent-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-color) 40%, transparent);
   padding-left: 14px;
 }
 
@@ -256,8 +257,8 @@ textarea.input-field {
 .select-field:focus {
   background: rgba(255,255,255,0.08);
   border-color: transparent;
-  border-left: 3px solid #7C3AED;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4);
+  border-left: 3px solid var(--accent-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
 
 /* ── Date input calendar icon ── */
@@ -411,8 +412,8 @@ textarea.input-field {
 /* ── Date input wrapper focus ── */
 .date-input-wrapper:focus-within {
   border-color: transparent !important;
-  border-left: 3px solid #7C3AED !important;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4) !important;
+  border-left: 3px solid var(--accent-color) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-color) 40%, transparent) !important;
   background: rgba(255,255,255,0.08) !important;
 }
 
@@ -424,5 +425,41 @@ input[type=number]::-webkit-inner-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* ── Compact mode ── */
+html.compact body {
+  font-size: 13px;
+}
+
+html.compact .card {
+  padding: 12px;
+}
+
+/* ── Light theme ── */
+html.light {
+  --bg-primary: #f4f2ff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #ece8ff;
+  --bg-base: #f4f2ff;
+  --bg-surface: #ffffff;
+  --bg-elevated: #e8e3ff;
+  --bg-hover: #e8e3ff;
+  --text-primary: #1a1035;
+  --text-secondary: #3d2e8a;
+  --text-muted: #6b5a9e;
+  --text-hint: #9d84d4;
+  --border-subtle: #c9bef5;
+  --border-medium: #a78bfa;
+}
+
+html.light body,
+html.light #root {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+html.light main {
+  background: var(--bg-primary) !important;
 }
 
