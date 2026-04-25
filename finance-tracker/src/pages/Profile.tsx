@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Pencil, TrendingUp, TrendingDown, Calendar, Tag } from 'lucide-react'
+import { X, Check, Pencil } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
 import { updateAvatar, savePin, deletePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
@@ -164,12 +164,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2"
       onClick={onClose}
     >
       <div
-        className="relative overflow-y-auto w-[900px] max-w-[calc(100vw-16px)] max-h-[94vh] rounded-[24px]"
-        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}
+        className="relative w-full max-w-[860px] max-h-[94vh] rounded-[20px] overflow-hidden flex flex-col"
+        style={{ background: '#0f0a1e', border: '1px solid var(--border-subtle)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Close */}
@@ -181,6 +181,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           <X size={14} style={{ color: 'var(--text-muted)' }} />
         </button>
 
+        <div className="overflow-y-auto flex-1">
         {/* Hero */}
         <div
           className="flex flex-col items-center gap-3 pt-7 pb-5 px-6"
@@ -241,7 +242,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         </div>
 
         {/* Body — 2-column grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-7">
 
           {/* LEFT column */}
           <div className="flex flex-col gap-4">
@@ -257,12 +258,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 </p>
               </div>
               <div className="px-4 pb-4 pt-3 flex flex-col gap-3">
-                <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
                   {AVATAR_OPTIONS.map(em => (
                     <button
                       key={em}
                       onClick={() => { setProfileAvatarDraft(em); setPhotoUrl(null) }}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 cursor-pointer transition-transform hover:scale-110"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer transition-transform hover:scale-110"
                       style={{
                         border: profileAvatarDraft === em && !photoUrl ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
                         background: profileAvatarDraft === em && !photoUrl ? 'rgba(124,58,237,0.2)' : 'var(--bg-elevated)',
@@ -296,7 +297,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   <button
                     onClick={() => { handleSaveProfile() }}
                     className="w-full h-10 rounded-xl text-sm font-semibold text-white cursor-pointer"
-                    style={{ background: 'var(--accent-color)' }}
+                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                   >
                     Uložiť profil
                   </button>
@@ -314,16 +315,15 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   📊 Štatistiky účtu
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-px" style={{ background: 'var(--border-subtle)' }}>
+              <div className="grid grid-cols-2 gap-3 p-3">
                 {[
-                  { icon: <TrendingUp size={14} />, label: 'PRÍJMY', value: stats ? String(stats.incomeCount) : '—', color: '#10b981' },
-                  { icon: <TrendingDown size={14} />, label: 'VÝDAVKY', value: stats ? String(stats.expenseCount) : '—', color: '#f87171' },
-                  { icon: <Calendar size={14} />, label: 'PRVÝ ZÁZNAM', value: stats?.firstDate ? formatDate(stats.firstDate) : '—', color: 'var(--accent-color)' },
-                  { icon: <Tag size={14} />, label: 'KATEGÓRIE', value: stats ? String(stats.categoryCount) : '—', color: '#60a5fa' },
+                  { label: 'PRÍJMY', value: stats ? String(stats.incomeCount) : '—', color: '#10b981' },
+                  { label: 'VÝDAVKY', value: stats ? String(stats.expenseCount) : '—', color: '#f87171' },
+                  { label: 'PRVÝ ZÁZNAM', value: stats?.firstDate ? formatDate(stats.firstDate) : '—', color: 'var(--accent-color)' },
+                  { label: 'KATEGÓRIE', value: stats ? String(stats.categoryCount) : '—', color: '#60a5fa' },
                 ].map((s, i) => (
-                  <div key={i} className="flex flex-col gap-1.5 px-4 py-3" style={{ background: 'var(--bg-card)' }}>
-                    <span style={{ color: s.color }}>{s.icon}</span>
-                    <p className="font-mono font-bold text-2xl" style={{ color: s.color }}>{s.value}</p>
+                  <div key={i} className="flex flex-col gap-1 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <p className="font-bold text-[20px] leading-tight" style={{ color: s.color }}>{s.value}</p>
                     <p className="text-[11px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
                   </div>
                 ))}
@@ -537,7 +537,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               </div>
               <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                 {lastTransactions.length === 0 ? (
-                  <p className="px-4 py-4 text-sm" style={{ color: 'var(--text-muted)' }}>Zatiaľ žiadne záznamy.</p>
+                  <div className="flex flex-col items-center justify-center gap-2 py-6">
+                    <span style={{ fontSize: 28, opacity: 0.4 }}>📋</span>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Zatiaľ žiadne záznamy.</p>
+                  </div>
                 ) : (
                   lastTransactions.map(tx => (
                     <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
@@ -589,13 +592,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     <span
                       key={badge}
                       title={BADGE_DESCRIPTIONS[badge] ?? badge}
-                      className="text-sm font-medium px-3 py-2 rounded-full cursor-default"
-                      style={{
-                        background: 'rgba(167,139,250,0.12)',
-                        color: 'var(--accent-color)',
-                        border: '1px solid rgba(167,139,250,0.25)',
-                        lineHeight: 1.4,
-                      }}
+                      className="text-sm font-medium px-3 py-1 rounded-full cursor-default"
+                      style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)' }}
                     >
                       {BADGE_LABELS[badge] ?? badge}
                     </span>
@@ -613,14 +611,16 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {onLogout && (
               <button
                 onClick={() => setLogoutConfirm(true)}
-                className="w-full py-3 rounded-2xl text-sm font-semibold cursor-pointer transition-opacity hover:opacity-80"
-                style={{ border: '1px solid rgba(248,113,113,0.35)', color: '#F87171', background: 'transparent' }}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-opacity hover:opacity-80"
+                style={{ border: '1px solid rgba(248,113,113,0.3)', color: '#f87171', background: 'transparent' }}
               >
                 Odhlásiť sa
               </button>
             )}
           </div>
         </div>
+
+        </div>{/* end overflow-y-auto */}
 
         <PinSetupModal
           open={pinSetupOpen}

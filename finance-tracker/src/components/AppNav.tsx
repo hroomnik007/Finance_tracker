@@ -16,6 +16,8 @@ interface AppNavProps {
   collapsed: boolean
   onToggle: () => void
   onOpenProfile: () => void
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
 const EXPENSE_CHILDREN: Page[] = ['variable-expenses', 'fixed-expenses', 'categories']
@@ -24,15 +26,28 @@ function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
-export function AppNav({ current, onChange, month, year, collapsed, onToggle, onOpenProfile }: AppNavProps) {
+export function AppNav({ current, onChange, month, year, collapsed, onToggle, onOpenProfile, mobileOpen, onMobileClose }: AppNavProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const expensesActive = EXPENSE_CHILDREN.includes(current)
   const expensesOpen = expensesActive && !collapsed
 
+  function handleChange(p: Page) {
+    onChange(p)
+    onMobileClose?.()
+  }
+
   return (
+    <>
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={onMobileClose}
+        />
+      )}
     <aside
-      className="hidden lg:flex flex-col fixed top-0 left-0 h-screen z-40 overflow-hidden"
+      className={`${mobileOpen ? 'flex' : 'hidden'} lg:flex flex-col fixed top-0 left-0 h-screen z-50 overflow-hidden`}
       style={{
         width: collapsed ? '64px' : '240px',
         transition: 'width 0.2s ease-in-out',
@@ -59,7 +74,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
 
         <SideNavItem
           active={current === 'dashboard'}
-          onClick={() => onChange('dashboard')}
+          onClick={() => handleChange('dashboard')}
           icon={<LayoutDashboard size={18} />}
           label={t.nav.overview}
           collapsed={collapsed}
@@ -67,7 +82,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
 
         <SideNavItem
           active={current === 'income'}
-          onClick={() => onChange('income')}
+          onClick={() => handleChange('income')}
           icon={<TrendingUp size={18} />}
           label={t.nav.income}
           collapsed={collapsed}
@@ -76,7 +91,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
         {/* Expenses group */}
         <div className="mb-0.5 relative group">
           <button
-            onClick={() => onChange('variable-expenses')}
+            onClick={() => handleChange('variable-expenses')}
             className={`w-full flex items-center rounded-xl transition-all duration-150 cursor-pointer text-left ${collapsed ? 'justify-center px-0 py-3' : 'gap-2 px-3'}`}
             style={{
               backgroundColor: expensesActive ? 'rgba(124,58,237,0.15)' : 'transparent',
@@ -127,19 +142,19 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
               <div className="flex flex-col pt-0.5 pb-1 pl-2">
                 <SideChildItem
                   active={current === 'variable-expenses'}
-                  onClick={() => onChange('variable-expenses')}
+                  onClick={() => handleChange('variable-expenses')}
                   icon={<Receipt size={15} />}
                   label={t.nav.variable}
                 />
                 <SideChildItem
                   active={current === 'fixed-expenses'}
-                  onClick={() => onChange('fixed-expenses')}
+                  onClick={() => handleChange('fixed-expenses')}
                   icon={<Lock size={15} />}
                   label={t.nav.fixed}
                 />
                 <SideChildItem
                   active={current === 'categories'}
-                  onClick={() => onChange('categories')}
+                  onClick={() => handleChange('categories')}
                   icon={<Tag size={15} />}
                   label={t.nav.categories}
                 />
@@ -150,7 +165,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
 
         <SideNavItem
           active={current === 'settings'}
-          onClick={() => onChange('settings')}
+          onClick={() => handleChange('settings')}
           icon={<Settings size={18} />}
           label={t.nav.settings}
           collapsed={collapsed}
@@ -222,6 +237,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
         </div>
       </div>
     </aside>
+    </>
   )
 }
 
