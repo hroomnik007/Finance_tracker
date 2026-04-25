@@ -85,6 +85,11 @@ npm run preview   # preview buildu
 - `src/db/database.ts` je deprecated — nepoužívať, nereferencovať
 - Token nikdy do localStorage — iba pamäť (access) + httpOnly cookie (refresh)
 
+### Deploy
+- Server: pedani.eu (Hetzner CX23), deploy cez SSH → `./deploy.sh frontend`
+- `.npmrc` má `legacy-peer-deps=true` kvôli vite-plugin-pwa@1.2/vite@8 konfliktu
+- Po každej zmene: `git add -A && git commit -m "<popis>" && git push origin main && git push gitea main` → SSH → `./deploy.sh frontend`
+
 ### Štýl práce
 - Surgical changes — meniť len čo je potrebné, nič navyše
 - Pred implementáciou: krátky plán čo sa zmení a prečo
@@ -96,3 +101,9 @@ npm run preview   # preview buildu
 - Frontend volá REST API cez axios klienta, nie Dexie
 - Auth: WebAuthn + Google OAuth + PIN + JWT/httpOnly cookies
 - database.ts je deprecated
+
+## Serverové poznámky (pedani.eu)
+- NIKDY nespúšťať build/deploy príkazy ako root (sudo) — spôsobuje permission problémy
+- Ak nastane EACCES/permission denied: `sudo chown -R deploy:deploy /var/www/finance-tracker-repo /var/www/finance-tracker`
+- .env súbor pre frontend: `/var/www/finance-tracker-repo/finance-tracker/.env` s `VITE_API_URL=https://api.pedani.eu`
+- Backend .env: `/var/www/finance-tracker-api/.env`
