@@ -66,7 +66,7 @@ deploy_frontend() {
 deploy_backend() {
     log "Building backend..."
     cd "${BACKEND_SRC}"
-    npm ci --prefer-offline --omit=dev
+    npm ci --prefer-offline
     npm run build
     ok "Backend built → ${BACKEND_SRC}/dist"
 
