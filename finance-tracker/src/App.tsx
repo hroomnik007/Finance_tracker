@@ -8,7 +8,7 @@ import { VariableExpensesPage } from './pages/VariableExpenses'
 import { FixedExpensesPage } from './pages/FixedExpenses'
 import { CategoriesPage } from './pages/Categories'
 import { SettingsPage } from './pages/Settings'
-import { ProfilePage } from './pages/Profile'
+import { ProfileModal } from './pages/Profile'
 import { AdminPage } from './pages/Admin'
 import { SharedReportPage } from './pages/SharedReport'
 import { LoginPage } from './pages/Login'
@@ -35,9 +35,8 @@ export type Page =
   | 'fixed-expenses'
   | 'categories'
   | 'settings'
-  | 'profile'
 
-const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'profile']
+const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings']
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.slice(1) as Page
@@ -73,6 +72,7 @@ function App() {
   const needsBudgetTemplate = useBudgetTemplate()
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -201,6 +201,7 @@ function App() {
         year={year}
         collapsed={sidebarCollapsed}
         onToggle={toggleSidebar}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
 
       {/* Mobile top bar */}
@@ -213,7 +214,7 @@ function App() {
           <span className="font-bold text-lg tracking-tight text-[#E2D9F3]">Finvu</span>
         </div>
         <button
-          onClick={() => setPage('profile')}
+          onClick={() => setIsProfileOpen(true)}
           className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0"
           style={{ background: '#7C3AED' }}
         >
@@ -252,7 +253,6 @@ function App() {
             )}
             {page === 'categories' && <CategoriesPage />}
             {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
-            {page === 'profile' && <ProfilePage />}
           </div>
         </main>
 
@@ -274,6 +274,8 @@ function App() {
       {showTutorial && !showBudgetTemplate && (
         <OnboardingTutorial onComplete={() => { completeOnboarding(); setShowTutorial(false) }} />
       )}
+
+      {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} />}
     </div>
   )
 }
