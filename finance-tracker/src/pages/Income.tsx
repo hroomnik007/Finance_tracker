@@ -245,7 +245,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
       {/* Hero 3 cards */}
-      <div className="grid grid-cols-3 gap-3 fade-up">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 fade-up">
         {/* Total */}
         <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">

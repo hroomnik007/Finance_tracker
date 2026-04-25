@@ -230,7 +230,8 @@ function App() {
 
       {/* Main content + RightPanel wrapper */}
       <div
-        className={`flex h-screen transition-all duration-200 ease-in-out ${sidebarCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[240px]'}`}
+        className="flex h-screen transition-all duration-200 ease-in-out"
+        style={{ marginLeft: window.innerWidth >= 1024 ? (sidebarCollapsed ? '64px' : '240px') : '0' }}
       >
         <main className="flex-1 h-full overflow-y-auto min-w-0 pt-14 lg:pt-4 pb-20 lg:pb-0">
           <div className="p-6 pt-4 lg:pt-6">
