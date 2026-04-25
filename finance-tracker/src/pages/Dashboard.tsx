@@ -383,9 +383,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   )
 
   const pieChartCard = pieData.length > 0 ? (
-    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5 min-h-[320px]">
+    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5" style={{ alignSelf: 'start' }}>
       <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.expensesByCategory}</h3>
-      <div className="relative" style={{ height: 'clamp(220px, 30vw, 320px)' }}>
+      <div className="relative" style={{ height: 200, margin: '0 auto' }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -616,7 +616,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── DESKTOP TOP BAR — desktop only ── */}
       <div
         className="hidden lg:flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '16px 0', marginBottom: '24px' }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '16px 0', marginBottom: '24px', position: 'sticky', top: 0, zIndex: 10, background: '#0f0a1e' }}
       >
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
