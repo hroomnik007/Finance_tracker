@@ -5,17 +5,27 @@ import { db } from "../db";
 import { categories, transactions } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 
+type CategoryRow = typeof categories.$inferSelect;
+function normalizeCategory(row: CategoryRow) {
+  return {
+    ...row,
+    budgetLimit: row.budgetLimit != null ? Number(row.budgetLimit) : null,
+  };
+}
+
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(["income", "expense"]),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   icon: z.string().max(50).optional(),
+  budgetLimit: z.number().positive().nullable().optional(),
 });
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   icon: z.string().max(50).optional(),
+  budgetLimit: z.number().positive().nullable().optional(),
 });
 
 export async function listCategories(req: AuthRequest, res: Response): Promise<void> {
@@ -25,7 +35,7 @@ export async function listCategories(req: AuthRequest, res: Response): Promise<v
     .where(eq(categories.userId, req.userId!))
     .orderBy(categories.type, categories.name);
 
-  res.json({ data: rows });
+  res.json({ data: rows.map(normalizeCategory) });
 }
 
 export async function createCategory(req: AuthRequest, res: Response): Promise<void> {
@@ -35,12 +45,13 @@ export async function createCategory(req: AuthRequest, res: Response): Promise<v
     return;
   }
 
+  const { budgetLimit: bl, ...rest } = body.data
   const [row] = await db
     .insert(categories)
-    .values({ ...body.data, userId: req.userId! })
+    .values({ ...rest, userId: req.userId!, budgetLimit: bl != null ? String(bl) : null })
     .returning();
 
-  res.status(201).json({ data: row });
+  res.status(201).json({ data: normalizeCategory(row) });
 }
 
 export async function updateCategory(req: AuthRequest, res: Response): Promise<void> {
@@ -72,13 +83,18 @@ export async function updateCategory(req: AuthRequest, res: Response): Promise<v
     return;
   }
 
+  const { budgetLimit: bl, ...fields } = body.data
+  const setData = {
+    ...fields,
+    ...(body.data.budgetLimit !== undefined ? { budgetLimit: bl != null ? String(bl) : null } : {}),
+  }
   const [updated] = await db
     .update(categories)
-    .set(body.data)
+    .set(setData)
     .where(and(eq(categories.id, id), eq(categories.userId, req.userId!)))
     .returning();
 
-  res.json({ data: updated });
+  res.json({ data: normalizeCategory(updated) });
 }
 
 export async function deleteCategory(req: AuthRequest, res: Response): Promise<void> {

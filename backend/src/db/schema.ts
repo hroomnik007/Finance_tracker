@@ -59,6 +59,7 @@ export const categories = pgTable(
     color: varchar("color", { length: 7 }),
     icon: varchar("icon", { length: 50 }),
     isDefault: boolean("is_default").default(false).notNull(),
+    budgetLimit: numeric("budget_limit"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [check("categories_type_check", sql`${t.type} IN ('income', 'expense')`)]
