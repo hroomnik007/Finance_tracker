@@ -10,7 +10,15 @@ interface ExpenseHeatmapProps {
 
 const DAYS_SK = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne']
 
-function getDayColor(amount: number, maxAmount: number): string {
+function getDayColor(amount: number, maxAmount: number, isLight: boolean): string {
+  if (isLight) {
+    if (amount === 0) return '#E8E7F0'
+    const ratio = amount / maxAmount
+    if (ratio < 0.25) return '#C4B8E8'
+    if (ratio < 0.5) return '#9B82D4'
+    if (ratio < 0.75) return '#7C3AED'
+    return '#5B21B6'
+  }
   if (amount === 0) return '#1A1030'
   const ratio = amount / maxAmount
   if (ratio < 0.25) return '#3C3489'
@@ -22,6 +30,7 @@ function getDayColor(amount: number, maxAmount: number): string {
 export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
   const { formatAmount, formatDate } = useFormatters()
   const [tooltip, setTooltip] = useState<{ date: string; amount: number; x: number; y: number } | null>(null)
+  const isLight = document.documentElement.classList.contains('light')
 
   const daysInMonth = new Date(year, month, 0).getDate()
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay()
@@ -55,23 +64,23 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
   return (
     <div
       style={{
-        background: '#2A1F4A',
-        border: '0.5px solid #4C3A8A',
+        background: 'var(--bg-card)',
+        border: '0.5px solid var(--border-subtle)',
         borderRadius: 20,
         padding: 16,
       }}
     >
-      <h3 style={{ fontSize: 16, fontWeight: 500, color: '#E2D9F3', marginBottom: 12 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 12 }}>
         Heatmapa výdavkov
       </h3>
-      <p style={{ fontSize: 11, color: '#9D84D4', marginBottom: 12, textTransform: 'capitalize' }}>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'capitalize' }}>
         {monthLabel}
       </p>
 
       {/* Day headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
         {DAYS_SK.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 10, color: '#6B5A9E', fontWeight: 600, padding: '2px 0' }}>
+          <div key={d} style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-hint)', fontWeight: 600, padding: '2px 0' }}>
             {d}
           </div>
         ))}
@@ -87,7 +96,7 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
               }
               const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
               const amount = dailyTotals[dateStr] || 0
-              const color = getDayColor(amount, maxAmount)
+              const color = getDayColor(amount, maxAmount, isLight)
               const isToday = dateStr === new Date().toISOString().split('T')[0]
 
               return (
@@ -133,11 +142,14 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
 
       {/* Legend */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
-        <span style={{ fontSize: 10, color: '#6B5A9E' }}>Menej</span>
-        {['#1A1030', '#3C3489', '#6D28D9', '#7C3AED', '#A78BFA'].map(c => (
+        <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>Menej</span>
+        {(isLight
+          ? ['#E8E7F0', '#C4B8E8', '#9B82D4', '#7C3AED', '#5B21B6']
+          : ['#1A1030', '#3C3489', '#6D28D9', '#7C3AED', '#A78BFA']
+        ).map(c => (
           <div key={c} style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: c }} />
         ))}
-        <span style={{ fontSize: 10, color: '#6B5A9E' }}>Viac</span>
+        <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>Viac</span>
       </div>
 
       {/* Tooltip (portal-like fixed position) */}
@@ -148,12 +160,12 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
             left: tooltip.x,
             top: tooltip.y,
             transform: 'translateX(-50%) translateY(-100%)',
-            background: '#32265A',
-            border: '1px solid #4C3A8A',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: 8,
             padding: '6px 10px',
             fontSize: 12,
-            color: '#E2D9F3',
+            color: 'var(--text-primary)',
             pointerEvents: 'none',
             zIndex: 9999,
             whiteSpace: 'nowrap',

@@ -142,15 +142,17 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const [csvOpen, setCsvOpen] = useState(false)
   const [yearlyData, setYearlyData] = useState<{ label: string; total: number }[]>([])
   const [prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
+  const [allIncomeData, setAllIncomeData] = useState<{ date: string; amount: number }[]>([])
 
   useEffect(() => {
     const months = getLast12Months()
-    getTransactions({ type: 'income', limit: 1000 })
+    getTransactions({ type: 'income', limit: 5000 })
       .then(({ data }) => {
         setYearlyData(months.map(m => ({
           label: m.label,
           total: data.filter(t => (t.date ?? '').startsWith(m.key)).reduce((s, t) => s + t.amount, 0),
         })))
+        setAllIncomeData(data.map(t => ({ date: t.date ?? '', amount: t.amount })))
         const prevKey = months[10].key
         const prevTotal = data.filter(t => (t.date ?? '').startsWith(prevKey)).reduce((s, t) => s + t.amount, 0)
         setPrevMonthTotal(prevTotal > 0 ? prevTotal : null)
@@ -222,12 +224,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const yearlyProjection = recurringMonthlyTotal * 12
 
-  const yearlyIncome = yearlyData
-    .filter((_, i) => {
-      const months = getLast12Months()
-      return months[i]?.key.startsWith(String(year))
-    })
-    .reduce((s, d) => s + d.total, 0)
+  const yearlyIncome = allIncomeData
+    .filter(r => r.date.startsWith(String(year)))
+    .reduce((s, r) => s + r.amount, 0)
 
   return (
     <div className="w-full flex flex-col gap-5 lg:gap-6 pb-4">

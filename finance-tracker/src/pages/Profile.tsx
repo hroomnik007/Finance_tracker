@@ -12,9 +12,19 @@ import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
 
+const BADGE_LABELS: Record<string, string> = {
+  first_transaction: 'Prvá transakcia 🎉',
+  transactions_10: '10 transakcií 🔥',
+  transactions_50: '50 transakcií 💎',
+  transactions_100: '100 transakcií 🏆',
+  streak_7: '7 dní v rade 📅',
+  streak_30: 'Mesiac v rade 🗓️',
+  savings_goal: 'Cieľ splnený ✅',
+}
+
 interface Stats {
-  totalIncome: number
-  totalExpenses: number
+  incomeCount: number
+  expenseCount: number
   firstDate: string | null
   categoryCount: number
 }
@@ -23,7 +33,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
   const { user, refreshUser } = useAuth()
-  const { formatAmount, formatDate } = useFormatters()
+  const { formatDate } = useFormatters()
 
   const [profileNameDraft, setProfileNameDraft] = useState(user?.name || ctxName)
   const [profileAvatarDraft, setProfileAvatarDraft] = useState(ctxAvatar)
@@ -56,12 +66,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       getTransactions({ limit: 10000 }),
       getCategories(),
     ]).then(([{ data: txs }, { data: cats }]) => {
-      const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-      const expenses = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
       const sorted = [...txs].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
       setStats({
-        totalIncome: income,
-        totalExpenses: expenses,
+        incomeCount: txs.filter(t => t.type === 'income').length,
+        expenseCount: txs.filter(t => t.type === 'expense').length,
         firstDate: sorted[0]?.date ?? null,
         categoryCount: cats.length,
       })
@@ -283,14 +291,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 {[
                   {
                     icon: <TrendingUp size={14} />,
-                    label: 'Príjmy celkom',
-                    value: stats ? formatAmount(stats.totalIncome) : '—',
+                    label: 'Príjmy (záznamy)',
+                    value: stats ? String(stats.incomeCount) : '—',
                     color: '#10b981',
                   },
                   {
                     icon: <TrendingDown size={14} />,
-                    label: 'Výdavky celkom',
-                    value: stats ? formatAmount(stats.totalExpenses) : '—',
+                    label: 'Výdavky (záznamy)',
+                    value: stats ? String(stats.expenseCount) : '—',
                     color: '#f87171',
                   },
                   {
@@ -312,7 +320,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     style={{ background: 'var(--bg-card)' }}
                   >
                     <span style={{ color: s.color }}>{s.icon}</span>
-                    <p className="font-mono font-bold text-sm" style={{ color: s.color }}>{s.value}</p>
+                    <p className="font-mono font-bold text-xl" style={{ color: s.color }}>{s.value}</p>
                     <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
                   </div>
                 ))}
@@ -482,7 +490,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       className="text-xs font-medium px-3 py-1.5 rounded-full"
                       style={{ background: 'rgba(167,139,250,0.15)', color: 'var(--accent-color)', border: '1px solid rgba(167,139,250,0.3)' }}
                     >
-                      {badge}
+                      {BADGE_LABELS[badge] ?? badge}
                     </span>
                   ))}
                 </div>

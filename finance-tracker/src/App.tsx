@@ -227,7 +227,7 @@ function App() {
       {/* Mobile top bar */}
       <div
         className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-14"
-        style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid #4C3A8A' }}
+        style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border-subtle)' }}
       >
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />

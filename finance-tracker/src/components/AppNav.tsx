@@ -32,7 +32,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
       style={{
         width: collapsed ? '64px' : '240px',
         transition: 'width 0.2s ease-in-out',
-        background: 'var(--bg-card)',
+        background: 'var(--sidebar-bg)',
         borderRight: '0.5px solid var(--border-subtle)',
       }}
     >
@@ -154,7 +154,7 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
       </nav>
 
       {/* Bottom: month badge + avatar + toggle */}
-      <div className="mt-auto" style={{ borderTop: '0.5px solid #4C3A8A' }}>
+      <div className="mt-auto" style={{ borderTop: '0.5px solid var(--border-subtle)' }}>
         {!collapsed && (
           <div className="px-4 pt-3 pb-1">
             <div style={{
