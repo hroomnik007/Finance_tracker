@@ -233,7 +233,7 @@ function App() {
         className="flex h-screen transition-all duration-200 ease-in-out"
         style={{ marginLeft: window.innerWidth >= 1024 ? (sidebarCollapsed ? '64px' : '240px') : '0' }}
       >
-        <main className="flex-1 h-full overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0">
+        <main className="flex-1 h-full overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0" style={{ background: '#0f0a1e' }}>
           <div className="p-6 pt-4 lg:pt-6 w-full">
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />

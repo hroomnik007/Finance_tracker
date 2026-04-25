@@ -621,7 +621,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT — grid, hidden on mobile
       ════════════════════════════════════════ */}
-      <div className="hidden lg:grid gap-6 items-start" style={{ gridTemplateColumns: '1fr minmax(280px, 320px)' }}>
+      <div className="hidden lg:grid gap-6 items-start" style={{ gridTemplateColumns: '1fr 300px' }}>
 
         {/* LEFT — all main content */}
         <div className="flex flex-col gap-6">
@@ -639,7 +639,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
 
         {/* RIGHT — sticky panel */}
-        <div style={{position:'sticky', top:'24px', alignSelf:'start'}} className="flex flex-col gap-4">
+        <div style={{position:'sticky', top:'24px', alignSelf:'start', minHeight:'100%'}} className="flex flex-col gap-4">
           {rightPanelCards}
         </div>
 
