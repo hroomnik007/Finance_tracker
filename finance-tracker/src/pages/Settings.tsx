@@ -1,18 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { Upload, Info, Heart, Settings2, Database, Check, Trash2, Bell } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Upload } from 'lucide-react'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport } from '../api/auth'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
-import { db } from '../db/database'
-import { setSetting } from '../hooks/useSettings'
-import { DEFAULT_SETTINGS } from '../types'
+import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
+import { getCategories } from '../api/categories'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
-import type { AppSettings } from '../types'
+import type { ApiTransaction, ApiCategory } from '../types'
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const CURRENCIES = [
   { value: 'EUR', label: '€ Euro' },
@@ -32,56 +31,108 @@ const DATE_FORMATS = [
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
 ]
 
-// ── Sub-components ──────────────────────────────────────────────────────────
+const ACCENT_COLORS = [
+  { name: 'Violet', value: '#7C3AED' },
+  { name: 'Modrá', value: '#3B82F6' },
+  { name: 'Zelená', value: '#10B981' },
+  { name: 'Oranžová', value: '#F59E0B' },
+  { name: 'Ružová', value: '#EC4899' },
+  { name: 'Červená', value: '#EF4444' },
+]
 
-const SectionCard = ({ children }: { children: React.ReactNode }) => (
-  <div
-    className="rounded-[20px]"
-    style={{
-      backgroundColor: 'var(--bg-surface)',
-      border: '1px solid var(--border-subtle)',
-      boxShadow: 'var(--shadow-card)',
-    }}
-  >
-    {children}
-  </div>
-)
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-const CardHeader = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
-  <div
-    className="flex items-center gap-3 px-5 pt-4 pb-4"
-    style={{ borderBottom: '1px solid var(--border-subtle)' }}
-  >
-    <div
-      className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-      style={{ background: 'linear-gradient(135deg, #A78BFA, #7C3AED)' }}
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-[#1a1035] border border-white/10 rounded-2xl overflow-hidden">
+      {children}
+    </div>
+  )
+}
+
+function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
+  return (
+    <div className="px-5 pt-4 pb-3 border-b border-white/[0.06]">
+      <p className="text-xs uppercase tracking-wider text-purple-300/60 font-semibold">
+        {emoji} {label}
+      </p>
+    </div>
+  )
+}
+
+function SettingRow({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-5 py-3.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-[#E2D9F3]">{label}</p>
+        {sublabel && <p className="text-xs text-[#9D84D4] mt-0.5">{sublabel}</p>}
+      </div>
+      <div className="flex-shrink-0">{children}</div>
+    </div>
+  )
+}
+
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      disabled={disabled}
+      className={`w-11 h-6 rounded-full transition-all duration-200 relative flex-shrink-0 ${
+        checked ? 'bg-violet-500' : 'bg-[#32265A]'
+      } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+      style={{ border: checked ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
     >
-      {icon}
-    </div>
-    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#B8A3E8]">{label}</p>
-  </div>
-)
+      <div
+        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  )
+}
 
-const SettingRow = ({
-  label,
-  sublabel,
-  children,
-}: {
-  label: string
-  sublabel?: string
-  children: React.ReactNode
-}) => (
-  <div
-    className="flex items-center justify-between gap-4 px-5 py-4"
-    style={{ borderBottom: '1px solid #4C3A8A33' }}
-  >
-    <div className="min-w-0 flex-1">
-      <p className="text-sm font-medium text-[#E2D9F3]">{label}</p>
-      {sublabel && <p className="text-xs text-[#9D84D4] mt-0.5">{sublabel}</p>}
-    </div>
-    <div className="flex-shrink-0">{children}</div>
-  </div>
-)
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function loadLocalPref<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === null) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+function saveLocalPref(key: string, value: unknown) {
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* ignore */ }
+}
+
+// ── Import types ──────────────────────────────────────────────────────────────
+
+interface ImportFileData {
+  transactions: ApiTransaction[]
+  categories: ApiCategory[]
+}
+
+interface ImportPreview {
+  data: ImportFileData
+  incomeCount: number
+  expenseCount: number
+  fixedCount: number
+  categoryCount: number
+}
+
+type DangerAction = 'expenses' | 'incomes' | 'reset'
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -90,50 +141,59 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onLogout }: SettingsPageProps) {
-  const { settings: contextSettings, refreshSettings, updateSettings } = useSettingsContext()
+  const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail } = useAuth()
-  const [deleteConfirm, setDeleteConfirm] = useState('')
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const rawSettingsRows = useLiveQuery(() => db.settings.toArray(), [])
 
-  // ── General settings draft ────────────────────────────────────────────────
-  const [draft, setDraft] = useState<AppSettings | null>(null)
-  const draftInitialized = useRef(false)
-  const [settingsSaveOk, setSettingsSaveOk] = useState(false)
-
+  // Apply saved appearance preferences on mount
   useEffect(() => {
-    if (rawSettingsRows !== undefined && !draftInitialized.current) {
-      draftInitialized.current = true
-      const map: Record<string, string | number | boolean> = {}
-      for (const row of rawSettingsRows) map[row.key] = row.value
-      setDraft({
-        currency:       (map['currency'] as string)       ?? DEFAULT_SETTINGS.currency,
-        language:       (map['language'] as string)       ?? DEFAULT_SETTINGS.language,
-        dateFormat:     (map['dateFormat'] as string)     ?? DEFAULT_SETTINGS.dateFormat,
-        firstDayOfWeek: (map['firstDayOfWeek'] as string) ?? DEFAULT_SETTINGS.firstDayOfWeek,
-      })
-    }
-  }, [rawSettingsRows])
+    const savedTheme = loadLocalPref<string>('theme_preference', 'dark')
+    const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
+    const savedCompact = loadLocalPref<boolean>('compact_mode', false)
+    document.documentElement.setAttribute('data-theme', savedTheme)
+    document.documentElement.style.setProperty('--accent-strong', savedAccent)
+    if (savedCompact) document.body.classList.add('compact')
+    else document.body.classList.remove('compact')
+  }, [])
 
-  const currentDraft = draft ?? contextSettings
+  // ── Section 2: Appearance ─────────────────────────────────────────────────
+  const [theme, setThemeState] = useState<'dark' | 'light' | 'system'>(() =>
+    loadLocalPref<'dark' | 'light' | 'system'>('theme_preference', 'dark')
+  )
+  const [accentColor, setAccentColorState] = useState<string>(() =>
+    loadLocalPref<string>('accent_color', '#7C3AED')
+  )
+  const [compactMode, setCompactModeState] = useState<boolean>(() =>
+    loadLocalPref<boolean>('compact_mode', false)
+  )
 
-  async function saveSettings() {
-    const d = draft ?? currentDraft
-    await Promise.all([
-      setSetting('currency',       d.currency),
-      setSetting('language',       d.language),
-      setSetting('dateFormat',     d.dateFormat),
-      setSetting('firstDayOfWeek', d.firstDayOfWeek),
-    ])
-    updateSettings(d)
-    setSettingsSaveOk(true)
-    setTimeout(() => setSettingsSaveOk(false), 2000)
+  function handleThemeChange(next: 'dark' | 'light' | 'system') {
+    setThemeState(next)
+    saveLocalPref('theme_preference', next)
+    document.documentElement.setAttribute('data-theme', next)
   }
 
-  // ── Notifications ─────────────────────────────────────────────────────────
+  function handleAccentChange(color: string) {
+    setAccentColorState(color)
+    saveLocalPref('accent_color', color)
+    document.documentElement.style.setProperty('--accent-strong', color)
+  }
+
+  function handleCompactToggle() {
+    const next = !compactMode
+    setCompactModeState(next)
+    saveLocalPref('compact_mode', next)
+    document.body.classList.toggle('compact', next)
+  }
+
+  // ── Section 3: Notifications ──────────────────────────────────────────────
   const [notificationsEnabled, setNotificationsEnabledState] = useState(getNotificationsEnabled)
+  const [weeklyEmail, setWeeklyEmail] = useState(user?.weeklyEmailEnabled ?? false)
+  const [weeklyEmailSaving, setWeeklyEmailSaving] = useState(false)
+  const [monthlyEmail, setMonthlyEmail] = useState(user?.monthlyEmailEnabled ?? false)
+  const [monthlyEmailSaving, setMonthlyEmailSaving] = useState(false)
+  const [budgetWarnings, setBudgetWarningsState] = useState(() => loadLocalPref<boolean>('budget_warnings_enabled', true))
+  const [monthlySummary, setMonthlySummaryState] = useState(() => loadLocalPref<boolean>('monthly_summary_enabled', false))
 
   function handleNotificationsToggle() {
     const next = !notificationsEnabled
@@ -143,10 +203,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       Notification.requestPermission()
     }
   }
-
-  // ── Weekly email ──────────────────────────────────────────────────────────
-  const [weeklyEmail, setWeeklyEmail] = useState(user?.weeklyEmailEnabled ?? false)
-  const [weeklyEmailSaving, setWeeklyEmailSaving] = useState(false)
 
   async function handleWeeklyEmailToggle() {
     setWeeklyEmailSaving(true)
@@ -159,10 +215,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     }
   }
 
-  // ── Monthly email ─────────────────────────────────────────────────────────
-  const [monthlyEmail, setMonthlyEmail] = useState(user?.monthlyEmailEnabled ?? false)
-  const [monthlyEmailSaving, setMonthlyEmailSaving] = useState(false)
-
   async function handleMonthlyEmailToggle() {
     setMonthlyEmailSaving(true)
     const next = !monthlyEmail
@@ -174,169 +226,117 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     }
   }
 
-  // ── Import / Export ───────────────────────────────────────────────────────
-  const [importError, setImportError] = useState<string | null>(null)
-  const [importOk, setImportOk] = useState(false)
+  // ── Section 4: Export ─────────────────────────────────────────────────────
+  const [exportError, setExportError] = useState<string | null>(null)
 
-  async function handleExport() {
-    const [cats, incomes, fixed, variable, settingsRows] = await Promise.all([
-      db.categories.toArray(),
-      db.incomes.toArray(),
-      db.fixedExpenses.toArray(),
-      db.variableExpenses.toArray(),
-      db.settings.toArray(),
-    ])
-    const payload = JSON.stringify(
-      { categories: cats, incomes, fixedExpenses: fixed, variableExpenses: variable, settings: settingsRows },
-      null,
-      2
-    )
-    const blob = new Blob([payload], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `rodinne-financie-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+  async function handleExportJSON() {
+    try {
+      setExportError(null)
+      const [{ data: transactions }, { data: categories }] = await Promise.all([
+        getTransactions({ limit: 10000 }),
+        getCategories(),
+      ])
+      const payload = {
+        version: '2',
+        exportedAt: new Date().toISOString(),
+        transactions,
+        categories,
+        settings,
+      }
+      downloadBlob(
+        new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+        `finvu-export-${new Date().toISOString().split('T')[0]}.json`
+      )
+    } catch {
+      setExportError('Export zlyhal. Skúste znova.')
+    }
   }
 
-  function handleImport() {
-    setImportError(null)
-    setImportOk(false)
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json,application/json'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      try {
-        const text = await file.text()
-        const data = JSON.parse(text)
-        await db.transaction(
-          'rw',
-          [db.categories, db.incomes, db.fixedExpenses, db.variableExpenses, db.settings],
-          async () => {
-            if (Array.isArray(data.categories))       await db.categories.bulkPut(data.categories)
-            if (Array.isArray(data.incomes))          await db.incomes.bulkPut(data.incomes)
-            if (Array.isArray(data.fixedExpenses))    await db.fixedExpenses.bulkPut(data.fixedExpenses)
-            if (Array.isArray(data.variableExpenses)) await db.variableExpenses.bulkPut(data.variableExpenses)
-            if (Array.isArray(data.settings))         await db.settings.bulkPut(data.settings)
-          }
-        )
-        await refreshSettings()
-        setImportOk(true)
-      } catch {
-        setImportError(t.settings.importError)
-      }
+  async function handleExportCSVIncome() {
+    try {
+      setExportError(null)
+      const { data: transactions } = await getTransactions({ limit: 10000 })
+      const incomes = transactions.filter(t => t.type === 'income')
+      const rows = incomes.map(t =>
+        `${t.date},"${(t.description ?? '').replace(/"/g, "'")}", ${t.amount}`
+      )
+      downloadBlob(
+        new Blob([['Dátum,Popis,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
+        `finvu-prijmy-${new Date().toISOString().split('T')[0]}.csv`
+      )
+    } catch {
+      setExportError('Export zlyhal. Skúste znova.')
     }
-    input.click()
+  }
+
+  async function handleExportCSVExpenses() {
+    try {
+      setExportError(null)
+      const { data: transactions } = await getTransactions({ limit: 10000 })
+      const expenses = transactions.filter(t => t.type === 'expense' && !t.isFixed)
+      const rows = expenses.map(t =>
+        `${t.date},"${(t.categoryName ?? '—').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
+      )
+      downloadBlob(
+        new Blob([['Dátum,Kategória,Poznámka,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
+        `finvu-vydavky-${new Date().toISOString().split('T')[0]}.csv`
+      )
+    } catch {
+      setExportError('Export zlyhal. Skúste znova.')
+    }
   }
 
   async function handleExportPDF() {
-    const [cats, incomes, fixed, variable] = await Promise.all([
-      db.categories.toArray(),
-      db.incomes.toArray(),
-      db.fixedExpenses.toArray(),
-      db.variableExpenses.toArray(),
-    ])
-    const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text('Rodinné financie — Export', 14, 18)
-    doc.setFontSize(10)
-    doc.text(`Exportované: ${new Date().toLocaleDateString('sk-SK')}`, 14, 26)
-
-    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
-    const totalFixed = fixed.reduce((s, f) => s + f.amount, 0)
-    const totalVar = variable.reduce((s, v) => s + v.amount, 0)
-    const balance = totalIncome - totalFixed - totalVar
-
-    autoTable(doc, {
-      startY: 32,
-      head: [['Typ', 'Popis', 'Suma (€)']],
-      body: [
-        ...incomes.map(i => ['Príjem', i.label, i.amount.toFixed(2)]),
-        ...fixed.map(f => ['Fixný výdavok', f.label, (-f.amount).toFixed(2)]),
-        ...variable.map(v => {
-          const cat = cats.find(c => c.id === v.categoryId)
-          return ['Variabilný výdavok', cat?.name ?? v.note ?? '—', (-v.amount).toFixed(2)]
-        }),
-        ['', 'Zostatok', balance.toFixed(2)],
-      ],
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [124, 58, 237] },
-    })
-
-    doc.save('rodinne-financie-export.pdf')
-  }
-
-  async function handleExportXLSX() {
-    const [cats, incomes, fixed, variable] = await Promise.all([
-      db.categories.toArray(),
-      db.incomes.toArray(),
-      db.fixedExpenses.toArray(),
-      db.variableExpenses.toArray(),
-    ])
-    const wb = XLSX.utils.book_new()
-
-    const incomeRows = incomes.map(i => ({ Dátum: i.date, Popis: i.label, Suma: i.amount, Opakujúci: i.recurring ? 'Áno' : 'Nie' }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(incomeRows), 'Príjmy')
-
-    const varRows = variable.map(v => {
-      const cat = cats.find(c => c.id === v.categoryId)
-      return { Dátum: v.date, Kategória: cat?.name ?? '—', Poznámka: v.note, Suma: v.amount }
-    })
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(varRows), 'Výdavky')
-
-    const fixedRows = fixed.map(f => ({ Názov: f.label, Suma: f.amount, 'Deň v mesiaci': f.dayOfMonth }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fixedRows), 'Fixné výdavky')
-
-    XLSX.writeFile(wb, 'rodinne-financie-export.xlsx')
-  }
-
-  async function handleExportCSV() {
-    const [cats, variable] = await Promise.all([
-      db.categories.toArray(),
-      db.variableExpenses.toArray(),
-    ])
-    const header = 'Dátum,Kategória,Suma,Poznámka'
-    const rows = variable.map(v => {
-      const cat = cats.find(c => c.id === v.categoryId)
-      const note = (v.note ?? '').replace(/,/g, ';')
-      return `${v.date},${cat?.name ?? '—'},${v.amount},${note}`
-    })
-    const csv = [header, ...rows].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'rodinne-financie-export.csv'
-    a.click()
-    URL.revokeObjectURL(url)
+    try {
+      setExportError(null)
+      const [{ data: transactions }, { data: categories }] = await Promise.all([
+        getTransactions({ limit: 10000 }),
+        getCategories(),
+      ])
+      const doc = new jsPDF()
+      doc.setFontSize(16)
+      doc.text('Finvu — Finančný prehľad', 14, 18)
+      doc.setFontSize(10)
+      doc.text(`Exportované: ${new Date().toLocaleDateString('sk-SK')}`, 14, 26)
+      const incomes = transactions.filter(t => t.type === 'income')
+      const expenses = transactions.filter(t => t.type === 'expense')
+      const totalIncome = incomes.reduce((s, t) => s + t.amount, 0)
+      const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0)
+      autoTable(doc, {
+        startY: 32,
+        head: [['Typ', 'Popis', 'Kategória', 'Suma (€)']],
+        body: [
+          ...incomes.map(t => ['Príjem', t.description ?? '—', '—', t.amount.toFixed(2)]),
+          ...expenses.map(t => {
+            const cat = categories.find(c => c.id === t.categoryId)
+            return ['Výdavok', t.description ?? '—', cat?.name ?? '—', (-t.amount).toFixed(2)]
+          }),
+          ['', '', 'Zostatok', (totalIncome - totalExpenses).toFixed(2)],
+        ],
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [124, 58, 237] },
+      })
+      doc.save('finvu-export.pdf')
+    } catch {
+      setExportError('Export zlyhal. Skúste znova.')
+    }
   }
 
   async function handleShareReport() {
-    const [cats, incomes, fixed, variable] = await Promise.all([
-      db.categories.toArray(),
-      db.incomes.toArray(),
-      db.fixedExpenses.toArray(),
-      db.variableExpenses.toArray(),
-    ])
-    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
-    const totalExpenses = fixed.reduce((s, f) => s + f.amount, 0) + variable.reduce((s, v) => s + v.amount, 0)
-    const byCategory = cats
-      .map(cat => {
-        const total = variable.filter(v => v.categoryId === cat.id).reduce((s, v) => s + v.amount, 0)
-        return { name: cat.name, color: cat.color, total, percentage: totalExpenses > 0 ? Math.round(total / totalExpenses * 100) : 0 }
-      })
-      .filter(c => c.total > 0)
-    const data = JSON.stringify({
-      title: 'Finvu — Finančný prehľad',
-      totalIncome, totalExpenses,
-      balance: totalIncome - totalExpenses,
-      byCategory,
-      generatedAt: new Date().toISOString(),
-    })
     try {
+      const [{ data: allT }, { data: cats }] = await Promise.all([
+        getTransactions({ limit: 10000 }),
+        getCategories(),
+      ])
+      const totalIncome = allT.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+      const totalExpenses = allT.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+      const byCategory = cats
+        .map(cat => {
+          const total = allT.filter(tx => tx.categoryId === cat.id && tx.type === 'expense').reduce((s, tx) => s + tx.amount, 0)
+          return { name: cat.name, color: cat.color ?? '#9D84D4', total, percentage: totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0 }
+        })
+        .filter(c => c.total > 0)
+      const data = JSON.stringify({ title: 'Finvu — Finančný prehľad', totalIncome, totalExpenses, balance: totalIncome - totalExpenses, byCategory, generatedAt: new Date().toISOString() })
       const { token } = await createSharedReport(data, 24 * 7)
       const url = `${window.location.origin}${window.location.pathname}#report/${token}`
       await navigator.clipboard.writeText(url)
@@ -346,6 +346,114 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     }
   }
 
+  // ── Section 4: Import ─────────────────────────────────────────────────────
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importOk, setImportOk] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+
+  function handleImportFileSelect() {
+    setImportError(null)
+    setImportOk(false)
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json,application/json'
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        try {
+          const raw = JSON.parse(ev.target?.result as string)
+          if (!Array.isArray(raw.transactions)) {
+            setImportError('Nepodporovaný formát. Exportujte dáta znova a skúste importovať nový súbor.')
+            return
+          }
+          const transactions = raw.transactions as ApiTransaction[]
+          const categories = Array.isArray(raw.categories) ? raw.categories as ApiCategory[] : []
+          setImportPreview({
+            data: { transactions, categories },
+            incomeCount: transactions.filter(t => t.type === 'income').length,
+            expenseCount: transactions.filter(t => t.type === 'expense' && !t.isFixed).length,
+            fixedCount: transactions.filter(t => t.type === 'expense' && t.isFixed).length,
+            categoryCount: categories.length,
+          })
+        } catch {
+          setImportError('Neplatný JSON súbor.')
+        }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
+  }
+
+  async function handleImportConfirm(mode: 'merge' | 'replace') {
+    if (!importPreview) return
+    setImportLoading(true)
+    try {
+      if (mode === 'replace') {
+        const { data: existing } = await getTransactions({ limit: 10000 })
+        await Promise.all(existing.map(t => deleteTransaction(t.id)))
+      }
+      await Promise.all(
+        importPreview.data.transactions.map(t =>
+          createTransaction({
+            type: t.type,
+            amount: t.amount,
+            description: t.description ?? undefined,
+            date: t.date,
+            isFixed: t.isFixed,
+            categoryId: t.categoryId,
+          })
+        )
+      )
+      setImportPreview(null)
+      setImportOk(true)
+      setTimeout(() => setImportOk(false), 3000)
+    } catch {
+      setImportError('Import zlyhal. Skúste znova.')
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
+  // ── Section 5: Danger Zone ────────────────────────────────────────────────
+  const [dangerAction, setDangerAction] = useState<DangerAction | null>(null)
+  const [dangerConfirmText, setDangerConfirmText] = useState('')
+  const [dangerLoading, setDangerLoading] = useState(false)
+
+  async function executeDangerAction() {
+    if (!dangerAction) return
+    setDangerLoading(true)
+    try {
+      const { data: allTransactions } = await getTransactions({ limit: 10000 })
+      if (dangerAction === 'expenses') {
+        await Promise.all(
+          allTransactions.filter(t => t.type === 'expense').map(t => deleteTransaction(t.id))
+        )
+      } else if (dangerAction === 'incomes') {
+        await Promise.all(
+          allTransactions.filter(t => t.type === 'income').map(t => deleteTransaction(t.id))
+        )
+      } else if (dangerAction === 'reset') {
+        await Promise.all(allTransactions.map(t => deleteTransaction(t.id)))
+        try { localStorage.removeItem('app_settings') } catch { /* ignore */ }
+      }
+      setDangerAction(null)
+      setDangerConfirmText('')
+    } catch { /* fail silently */ }
+    finally { setDangerLoading(false) }
+  }
+
+  // ── Delete account ────────────────────────────────────────────────────────
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // ── Modals ────────────────────────────────────────────────────────────────
+  const [showAbout, setShowAbout] = useState(false)
+  const [showChangelog, setShowChangelog] = useState(false)
+
   const firstDayOfWeekOptions = [
     { value: 'monday', label: t.settings.monday },
     { value: 'sunday', label: t.settings.sunday },
@@ -354,259 +462,475 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full flex flex-col gap-5 pb-4">
+    <div className="w-full pb-24">
 
-      {/* Preferences card */}
-      <SectionCard>
-        <CardHeader icon={<Settings2 size={15} className="text-white" />} label={t.settings.general} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <SettingRow label={t.settings.currency}>
-          <select
-            value={currentDraft.currency}
-            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), currency: e.target.value }))}
-            className="select-field"
-          >
-            {CURRENCIES.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </SettingRow>
+        {/* ── LEFT COLUMN: sections 1, 2, 3 ── */}
+        <div className="flex flex-col gap-6">
 
-        <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
-          <select
-            value={currentDraft.language}
-            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), language: e.target.value }))}
-            className="select-field"
-          >
-            {LANGUAGES.map(l => (
-              <option key={l.value} value={l.value}>{l.label}</option>
-            ))}
-          </select>
-        </SettingRow>
+          {/* Section 1: Všeobecné */}
+          <SectionCard>
+            <SectionHeader emoji="👤" label="Všeobecné" />
+            <div className="divide-y divide-white/[0.04]">
+              <SettingRow label={t.settings.currency}>
+                <select
+                  value={settings.currency}
+                  onChange={e => updateSettings({ currency: e.target.value })}
+                  className="select-field"
+                >
+                  {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </SettingRow>
 
-        <SettingRow label={t.settings.dateFormat}>
-          <select
-            value={currentDraft.dateFormat}
-            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), dateFormat: e.target.value }))}
-            className="select-field"
-          >
-            {DATE_FORMATS.map(f => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-        </SettingRow>
+              <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
+                <select
+                  value={settings.language}
+                  onChange={e => updateSettings({ language: e.target.value })}
+                  className="select-field"
+                >
+                  {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                </select>
+              </SettingRow>
 
-        <SettingRow label={t.settings.firstDayOfWeek}>
-          <select
-            value={currentDraft.firstDayOfWeek}
-            onChange={e => setDraft(d => ({ ...(d ?? currentDraft), firstDayOfWeek: e.target.value }))}
-            className="select-field"
-          >
-            {firstDayOfWeekOptions.map(d => (
-              <option key={d.value} value={d.value}>{d.label}</option>
-            ))}
-          </select>
-        </SettingRow>
+              <SettingRow label={t.settings.dateFormat}>
+                <select
+                  value={settings.dateFormat}
+                  onChange={e => updateSettings({ dateFormat: e.target.value })}
+                  className="select-field"
+                >
+                  {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                </select>
+              </SettingRow>
 
-        <div className="px-5 py-4" style={{ borderTop: '1px solid #4C3A8A33' }}>
-          {settingsSaveOk ? (
-            <div
-              className="w-full flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-[#34d399]"
-              style={{ backgroundColor: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', height: '48px' }}
-            >
-              <Check size={16} /> {t.settings.saved}
+              <SettingRow label={t.settings.firstDayOfWeek}>
+                <select
+                  value={settings.firstDayOfWeek}
+                  onChange={e => updateSettings({ firstDayOfWeek: e.target.value })}
+                  className="select-field"
+                >
+                  {firstDayOfWeekOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                </select>
+              </SettingRow>
+
+              <SettingRow label="Prvý deň mesiaca" sublabel="Deň 1 – 28">
+                <input
+                  type="number"
+                  min={1}
+                  max={28}
+                  value={settings.firstDayOfMonth ?? 1}
+                  onChange={e => {
+                    const val = Math.max(1, Math.min(28, parseInt(e.target.value, 10) || 1))
+                    updateSettings({ firstDayOfMonth: val })
+                  }}
+                  className="input-field"
+                  style={{ width: 80, height: 40, fontSize: 14, textAlign: 'center', padding: '0 8px' }}
+                />
+              </SettingRow>
             </div>
-          ) : (
+          </SectionCard>
+
+          {/* Section 2: Vzhľad & Téma */}
+          <SectionCard>
+            <SectionHeader emoji="🎨" label="Vzhľad & Téma" />
+            <div className="divide-y divide-white/[0.04]">
+              <SettingRow label="Téma" sublabel="Farebné schéma aplikácie">
+                <div className="flex gap-1.5">
+                  {(['dark', 'light', 'system'] as const).map(th => (
+                    <button
+                      key={th}
+                      onClick={() => handleThemeChange(th)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                        theme === th
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-white/5 text-[#9D84D4] border border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {th === 'dark' ? '🌙 Dark' : th === 'light' ? '☀️ Light' : '⚙️ System'}
+                    </button>
+                  ))}
+                </div>
+              </SettingRow>
+
+              <SettingRow label="Akcentová farba">
+                <div className="flex gap-2">
+                  {ACCENT_COLORS.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => handleAccentChange(c.value)}
+                      title={c.name}
+                      className="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
+                      style={{ backgroundColor: c.value, outline: accentColor === c.value ? `2px solid ${c.value}` : 'none', outlineOffset: 2 }}
+                    >
+                      {accentColor === c.value && (
+                        <div className="w-2 h-2 rounded-full bg-white/80" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </SettingRow>
+
+              <SettingRow label="Kompaktný režim" sublabel="Menšie karty a zmenšené písmo">
+                <Toggle checked={compactMode} onChange={handleCompactToggle} />
+              </SettingRow>
+            </div>
+          </SectionCard>
+
+          {/* Section 3: Notifikácie */}
+          <SectionCard>
+            <SectionHeader emoji="🔔" label="Notifikácie" />
+            <div className="divide-y divide-white/[0.04]">
+              <SettingRow label="Pripomienky fixných výdavkov" sublabel="Upozornenie v deň splatnosti fixného výdavku">
+                <Toggle checked={notificationsEnabled} onChange={handleNotificationsToggle} />
+              </SettingRow>
+
+              <SettingRow label="Upozornenia na rozpočet" sublabel="Notifikácia keď kategória dosiahne 80 % limitu">
+                <Toggle
+                  checked={budgetWarnings}
+                  onChange={() => {
+                    const next = !budgetWarnings
+                    setBudgetWarningsState(next)
+                    saveLocalPref('budget_warnings_enabled', next)
+                  }}
+                />
+              </SettingRow>
+
+              <SettingRow label="Mesačné pripomienky" sublabel="Pripomienka na konci mesiaca skontrolovať súhrn">
+                <Toggle
+                  checked={monthlySummary}
+                  onChange={() => {
+                    const next = !monthlySummary
+                    setMonthlySummaryState(next)
+                    saveLocalPref('monthly_summary_enabled', next)
+                  }}
+                />
+              </SettingRow>
+
+              <SettingRow label="Týždenný email" sublabel="Prehľad príjmov a výdavkov každý pondelok ráno">
+                <Toggle checked={weeklyEmail} onChange={handleWeeklyEmailToggle} disabled={weeklyEmailSaving} />
+              </SettingRow>
+
+              <SettingRow label="Mesačný email" sublabel="Súhrn predchádzajúceho mesiaca, 1. deň v mesiaci o 9:00">
+                <Toggle checked={monthlyEmail} onChange={handleMonthlyEmailToggle} disabled={monthlyEmailSaving} />
+              </SettingRow>
+            </div>
+            <div className="px-5 py-3 border-t border-white/[0.04]">
+              <p className="text-xs text-[#6B5A9E]">Notifikácie fungujú len keď je aplikácia otvorená</p>
+            </div>
+          </SectionCard>
+
+        </div>
+
+        {/* ── RIGHT COLUMN: sections 4, 5 ── */}
+        <div className="flex flex-col gap-6">
+
+          {/* Section 4: Dáta */}
+          <SectionCard>
+            <SectionHeader emoji="💾" label="Dáta" />
+            <div className="p-5 flex flex-col gap-4">
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Export</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={handleExportJSON} className="btn-secondary justify-center py-2.5 text-sm">
+                    📄 Exportovať JSON
+                  </button>
+                  <button onClick={handleExportPDF} className="btn-secondary justify-center py-2.5 text-sm">
+                    📊 Exportovať PDF
+                  </button>
+                  <button onClick={handleExportCSVIncome} className="btn-secondary justify-center py-2.5 text-sm">
+                    📋 CSV — Príjmy
+                  </button>
+                  <button onClick={handleExportCSVExpenses} className="btn-secondary justify-center py-2.5 text-sm">
+                    📋 CSV — Výdavky
+                  </button>
+                </div>
+                {user && (
+                  <button onClick={handleShareReport} className="btn-primary w-full justify-center py-2.5 text-sm mt-2">
+                    🔗 Zdieľať prehľad
+                  </button>
+                )}
+                {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
+              </div>
+
+              <div className="border-t border-white/[0.06] pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Import</p>
+                <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-2.5">
+                  <Upload size={14} />
+                  Importovať JSON
+                </button>
+                {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
+                {importOk && <p className="text-xs text-emerald-400 mt-2">Import úspešný ✓</p>}
+              </div>
+
+              <p className="text-xs text-[#6B5A9E] text-center">
+                Dáta sú uložené lokálne v tvojom prehliadači. Exportuj pravidelne pre zálohovanie.
+              </p>
+            </div>
+          </SectionCard>
+
+          {/* Section 5: Danger Zone */}
+          <div className="bg-red-500/5 border border-red-500/30 rounded-2xl overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-red-500/20">
+              <p className="text-xs uppercase tracking-wider text-red-400/70 font-semibold">⚠️ Nebezpečná zóna</p>
+            </div>
+            <div className="p-5 flex flex-col gap-2.5">
+              <button
+                onClick={() => { setDangerAction('expenses'); setDangerConfirmText('') }}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-left"
+              >
+                🗑️ Vymazať všetky výdavky
+              </button>
+              <button
+                onClick={() => { setDangerAction('incomes'); setDangerConfirmText('') }}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-left"
+              >
+                🗑️ Vymazať všetky príjmy
+              </button>
+              <button
+                onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-left"
+              >
+                💥 Reset aplikácie — vymazať všetko
+              </button>
+            </div>
+          </div>
+
+          {/* Logout */}
+          {onLogout && (
             <button
-              onClick={saveSettings}
-              className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px]"
-              style={{ height: '48px' }}
+              onClick={onLogout}
+              className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 cursor-pointer py-3"
+              style={{ background: 'transparent', border: '1px solid #F87171', color: '#F87171' }}
             >
-              {t.settings.save}
+              {t.auth.logout}
             </button>
           )}
-        </div>
-      </SectionCard>
 
-      {/* Notifications card */}
-      <SectionCard>
-        <CardHeader icon={<Bell size={15} className="text-white" />} label="Notifikácie" />
-        <SettingRow label="Pripomienky fixných výdavkov" sublabel="Upozornenie v deň splatnosti fixného výdavku">
-          <button
-            onClick={handleNotificationsToggle}
-            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${notificationsEnabled ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-            style={{ border: notificationsEnabled ? '1px solid #A78BFA' : '1px solid #4C3A8A' }}
-          >
-            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${notificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-          </button>
-        </SettingRow>
-        <SettingRow label="Týždenný email" sublabel="Prehľad príjmov a výdavkov každý pondelok ráno">
-          <button
-            onClick={handleWeeklyEmailToggle}
-            disabled={weeklyEmailSaving}
-            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${weeklyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-            style={{ border: weeklyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: weeklyEmailSaving ? 0.6 : 1 }}
-          >
-            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${weeklyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
-          </button>
-        </SettingRow>
-        <SettingRow label="Mesačný email" sublabel="Súhrn predchádzajúceho mesiaca, 1. deň v mesiaci o 9:00">
-          <button
-            onClick={handleMonthlyEmailToggle}
-            disabled={monthlyEmailSaving}
-            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${monthlyEmail ? 'bg-[#A78BFA]' : 'bg-[#32265A]'}`}
-            style={{ border: monthlyEmail ? '1px solid #A78BFA' : '1px solid #4C3A8A', opacity: monthlyEmailSaving ? 0.6 : 1 }}
-          >
-            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${monthlyEmail ? 'translate-x-5' : 'translate-x-0'}`} />
-          </button>
-        </SettingRow>
-      </SectionCard>
-
-      {/* Data card */}
-      <SectionCard>
-        <CardHeader icon={<Database size={15} className="text-white" />} label={t.settings.data} />
-        <div className="p-5 flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={handleExport}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-            >
-              <span>📄</span> JSON
-            </button>
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-            >
-              <span>📊</span> PDF
-            </button>
-            <button
-              onClick={handleExportXLSX}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-            >
-              <span>📈</span> XLSX
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white cursor-pointer hover:opacity-90 border"
-              style={{ backgroundColor: '#2A1F4A', borderColor: '#4C3A8A', transition: 'all 0.2s ease' }}
-            >
-              <span>📋</span> CSV
-            </button>
-          </div>
-
-          {user && (
-            <button onClick={handleShareReport} className="btn-primary w-full justify-center py-3 rounded-2xl">
-              🔗 Zdieľať prehľad
-            </button>
-          )}
-
-          <button onClick={handleImport} className="btn-secondary w-full justify-center py-3">
-            <Upload size={15} />
-            {t.settings.importJSON}
-          </button>
-
-          {importError && <p className="text-xs text-[#f87171] text-center mt-1">{importError}</p>}
-          {importOk && <p className="text-xs text-[#34d399] text-center mt-1">{t.settings.importSuccess}</p>}
-
-          <p className="text-xs text-[#9D84D4] text-center pt-1">{t.settings.exportNote}</p>
-        </div>
-      </SectionCard>
-
-      {/* About card */}
-      <SectionCard>
-        <CardHeader icon={<Info size={15} className="text-white" />} label={t.settings.about} />
-        <div className="px-5 py-5 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-[#E2D9F3]">{t.nav.appName}</p>
-            <span
-              className="text-xs px-2.5 py-1 rounded-full font-mono font-medium"
-              style={{ backgroundColor: 'rgba(167,139,250,0.12)', color: '#A78BFA' }}
-            >
-              {t.settings.version}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-start gap-2.5">
-              <Info size={13} style={{ color: '#9D84D4' }} className="mt-0.5 shrink-0" />
-              <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.storedLocally}</p>
+          {/* Delete account */}
+          <SectionCard>
+            <SectionHeader emoji="🗑️" label={t.settings.deleteAccount} />
+            <div className="p-5 flex flex-col gap-4">
+              <p className="text-sm text-[#9D84D4] leading-relaxed">{t.settings.deleteAccountDesc}</p>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F87171]">
+                  {t.settings.deleteAccountConfirmLabel}
+                </label>
+                <input
+                  type="text"
+                  placeholder="ZMAZAŤ"
+                  value={deleteConfirm}
+                  onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
+                  className="input-field"
+                />
+              </div>
+              {deleteError && <p className="text-xs text-[#F87171]">{deleteError}</p>}
+              <button
+                disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true)
+                  try {
+                    await deleteAccount()
+                  } catch {
+                    setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                    setIsDeleting(false)
+                  }
+                }}
+                className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer py-3"
+                style={{
+                  background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
+                  border: '1px solid #DC2626',
+                  color: deleteConfirm === 'ZMAZAŤ' ? 'white' : '#F87171',
+                }}
+              >
+                {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
+              </button>
             </div>
-            <div className="flex items-start gap-2.5">
-              <Heart size={13} style={{ color: '#f87171' }} className="mt-0.5 shrink-0" />
-              <p className="text-xs text-[#B8A3E8] leading-relaxed">{t.settings.madeWith}</p>
-            </div>
-          </div>
-        </div>
-      </SectionCard>
+          </SectionCard>
 
-      {/* Logout */}
-      {onLogout && (
+        </div>
+      </div>
+
+      {/* ── FOOTER BUTTONS ── */}
+      <div className="fixed bottom-6 right-6 flex gap-3 z-40">
         <button
-          onClick={onLogout}
-          className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 cursor-pointer font-[inherit]"
-          style={{
-            height: '48px',
-            background: 'transparent',
-            border: '1px solid #F87171',
-            color: '#F87171',
-          }}
+          onClick={() => setShowChangelog(true)}
+          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer shadow-lg"
         >
-          {t.auth.logout}
+          Changelog
         </button>
+        <button
+          onClick={() => setShowAbout(true)}
+          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer shadow-lg"
+        >
+          O aplikácii
+        </button>
+      </div>
+
+      {/* ── IMPORT PREVIEW MODAL ── */}
+      {importPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
+          <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-[#E2D9F3]">Náhľad importu</h2>
+              <button onClick={() => setImportPreview(null)} className="btn-icon">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex flex-col divide-y divide-white/[0.06] mb-5">
+              <div className="flex justify-between py-2.5">
+                <span className="text-sm text-[#9D84D4]">Príjmy</span>
+                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.incomeCount}</span>
+              </div>
+              <div className="flex justify-between py-2.5">
+                <span className="text-sm text-[#9D84D4]">Výdavky (variabilné)</span>
+                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.expenseCount}</span>
+              </div>
+              <div className="flex justify-between py-2.5">
+                <span className="text-sm text-[#9D84D4]">Fixné výdavky</span>
+                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.fixedCount}</span>
+              </div>
+              <div className="flex justify-between py-2.5">
+                <span className="text-sm text-[#9D84D4]">Kategórie</span>
+                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.categoryCount}</span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleImportConfirm('merge')}
+                disabled={importLoading}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {importLoading ? 'Importujem...' : 'Zlúčiť s existujúcimi'}
+              </button>
+              <button
+                onClick={() => handleImportConfirm('replace')}
+                disabled={importLoading}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {importLoading ? 'Importujem...' : 'Nahradiť všetko'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Danger zone */}
-      <SectionCard>
-        <CardHeader icon={<Trash2 size={15} className="text-white" />} label={t.settings.deleteAccount} />
-        <div className="p-5 flex flex-col gap-4">
-          <p className="text-sm text-[#9D84D4] leading-relaxed">{t.settings.deleteAccountDesc}</p>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F87171]">
-              {t.settings.deleteAccountConfirmLabel}
-            </label>
-            <input
-              type="text"
-              placeholder="ZMAZAŤ"
-              value={deleteConfirm}
-              onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
-              style={{
-                background: '#1E1535',
-                border: '1px solid #7C2D2D',
-                borderRadius: 12,
-                padding: '12px 16px',
-                color: '#E2D9F3',
-                fontSize: 15,
-                width: '100%',
-                outline: 'none',
-              }}
-            />
+      {/* ── DANGER CONFIRM MODAL ── */}
+      {dangerAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
+          <div className="bg-[#1a1035] border border-red-500/30 rounded-2xl p-6 w-full max-w-sm modal-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-[#E2D9F3]">
+                {dangerAction === 'expenses' && 'Vymazať všetky výdavky'}
+                {dangerAction === 'incomes' && 'Vymazať všetky príjmy'}
+                {dangerAction === 'reset' && 'Reset aplikácie'}
+              </h2>
+              <button onClick={() => setDangerAction(null)} className="btn-icon">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-sm text-[#9D84D4] mb-5">
+              {dangerAction === 'reset'
+                ? 'Táto akcia vymaže VŠETKY transakcie a nastavenia. Akcia je nevratná.'
+                : 'Táto akcia je nevratná. Všetky záznamy budú trvalo vymazané.'}
+            </p>
+            {dangerAction === 'reset' && (
+              <div className="mb-4">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-red-400 mb-2 block">
+                  Pre potvrdenie napíšte "VYMAZAŤ"
+                </label>
+                <input
+                  type="text"
+                  placeholder="VYMAZAŤ"
+                  value={dangerConfirmText}
+                  onChange={e => setDangerConfirmText(e.target.value)}
+                  className="input-field"
+                />
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDangerAction(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[#9D84D4] hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                Zrušiť
+              </button>
+              <button
+                onClick={executeDangerAction}
+                disabled={dangerLoading || (dangerAction === 'reset' && dangerConfirmText !== 'VYMAZAŤ')}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {dangerLoading ? 'Mažem...' : 'Vymazať'}
+              </button>
+            </div>
           </div>
-          {deleteError && <p className="text-xs text-[#F87171]">{deleteError}</p>}
-          <button
-            disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
-            onClick={async () => {
-              setIsDeleting(true)
-              try {
-                await deleteAccount()
-              } catch {
-                setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
-                setIsDeleting(false)
-              }
-            }}
-            className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer font-[inherit]"
-            style={{
-              height: '48px',
-              background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
-              border: '1px solid #DC2626',
-              color: deleteConfirm === 'ZMAZAŤ' ? 'white' : '#F87171',
-            }}
-          >
-            {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
-          </button>
         </div>
-      </SectionCard>
+      )}
+
+      {/* ── ABOUT MODAL ── */}
+      {showAbout && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in"
+          onClick={() => setShowAbout(false)}
+        >
+          <div
+            className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-[#E2D9F3]">O aplikácii</h2>
+              <button onClick={() => setShowAbout(false)} className="btn-icon"><X size={16} /></button>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-[#E2D9F3]">Finvu</p>
+                <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-violet-500/15 text-violet-300">v1.0.0</span>
+              </div>
+              <p className="text-xs text-[#B8A3E8] leading-relaxed">Vytvorené s ❤️ pomocou React + Vite + Dexie.js</p>
+              <p className="text-xs text-[#B8A3E8] leading-relaxed">Všetky dáta lokálne v prehliadači</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CHANGELOG MODAL ── */}
+      {showChangelog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in"
+          onClick={() => setShowChangelog(false)}
+        >
+          <div
+            className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-[#E2D9F3]">Changelog</h2>
+              <button onClick={() => setShowChangelog(false)} className="btn-icon"><X size={16} /></button>
+            </div>
+            <div className="flex flex-col gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-mono font-semibold text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-full">v1.0.0</span>
+                  <span className="text-xs text-[#6B5A9E]">2025</span>
+                </div>
+                <ul className="flex flex-col gap-1">
+                  {[
+                    'Úvodné vydanie aplikácie Finvu',
+                    'Sledovanie príjmov a variabilných výdavkov',
+                    'Fixné výdavky a kategórie',
+                    'Export do JSON, CSV, PDF',
+                    'Dashboard s grafmi a štatistikami',
+                    'PWA podpora (offline, inštalácia)',
+                  ].map(item => (
+                    <li key={item} className="text-xs text-[#B8A3E8]">• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

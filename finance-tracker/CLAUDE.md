@@ -107,3 +107,35 @@ npm run preview   # preview buildu
 - Ak nastane EACCES/permission denied: `sudo chown -R deploy:deploy /var/www/finance-tracker-repo /var/www/finance-tracker`
 - .env súbor pre frontend: `/var/www/finance-tracker-repo/finance-tracker/.env` s `VITE_API_URL=https://api.pedani.eu`
 - Backend .env: `/var/www/finance-tracker-api/.env`
+
+---
+
+## Layout & UI pravidlá
+
+### Grid a šírky
+- Main content wrapper v App.tsx: `className="flex-1 overflow-y-auto w-full min-w-0"`
+- Content div inside main: `className="w-full h-full p-6"`
+- NIKDY nepoužívať `max-w-*` na page-level komponentoch (Dashboard, Income, atď.)
+- Dashboard 2-stĺpcový layout: `grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-6 w-full`
+  - Ľavý stĺpec: hlavný obsah (rastie)
+  - Pravý stĺpec: kontextový panel (fixed 340–380px)
+
+### Sidebar
+- Expanded: šírka `240px`, main má `lg:ml-[240px]`
+- Collapsed: šírka `64px`, main má `lg:ml-[64px]`
+- Sidebar: `position: fixed`, `z-index` nad contentom
+- Prechod: `transition-all duration-200` na sidebar aj main
+
+### Farby a pozadie
+- Page background: `#0f0a1e`
+- Sticky greeting row: `background: #0f0a1e`, `position: sticky`, `top: 0`, `zIndex: 20`
+- Greeting margin kompenzácia: `margin: -24px -24px 0 -24px`, `padding: 16px 24px 12px`
+
+### Dashboard pravý panel — povinné karty
+1. **Rozpočet** — category progress bars (green <70%, yellow 70–90%, red >90%)
+2. **Predikcia výdavkov** — (spent / days elapsed) × days in month
+3. **Porovnanie mesiacov** — current vs previous month, % difference
+
+### Responsive pravidlo
+- Desktop (lg+): sidebar + 2-stĺpcový grid
+- Mobile: bottom pill nav, single column, FAB pre pridávanie
