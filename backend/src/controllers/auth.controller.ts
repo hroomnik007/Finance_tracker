@@ -38,6 +38,7 @@ function userPublic(u: {
   id: string; email: string; name: string; avatarUrl?: string | null; role?: string;
   weeklyEmailEnabled?: boolean; monthlyEmailEnabled?: boolean; onboardingComplete?: boolean;
   currentStreak?: number; longestStreak?: number; badges?: string[];
+  defaultPage?: string | null; currencyFormat?: string | null;
 }) {
   return {
     id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null,
@@ -46,6 +47,8 @@ function userPublic(u: {
     onboardingComplete: u.onboardingComplete ?? false,
     currentStreak: u.currentStreak ?? 0, longestStreak: u.longestStreak ?? 0,
     badges: u.badges ?? [],
+    defaultPage: u.defaultPage ?? 'dashboard',
+    currencyFormat: u.currencyFormat ?? 'sk',
   };
 }
 
@@ -184,6 +187,7 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       role: users.role, weeklyEmailEnabled: users.weeklyEmailEnabled,
       monthlyEmailEnabled: users.monthlyEmailEnabled, onboardingComplete: users.onboardingComplete,
       currentStreak: users.currentStreak, longestStreak: users.longestStreak, badges: users.badges,
+      defaultPage: users.defaultPage, currencyFormat: users.currencyFormat,
     })
     .from(users)
     .where(eq(users.id, req.userId!))
@@ -330,13 +334,19 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
 
 export async function updateUserSettings(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  const { onboardingComplete, monthlyEmailEnabled } = req.body as {
+  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat } = req.body as {
     onboardingComplete?: boolean;
     monthlyEmailEnabled?: boolean;
+    defaultPage?: string;
+    currencyFormat?: string;
   };
+  const VALID_PAGES = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings'];
+  const VALID_FORMATS = ['sk', 'en', 'de'];
   const update: Record<string, unknown> = { updatedAt: new Date() };
   if (typeof onboardingComplete === 'boolean') update.onboardingComplete = onboardingComplete;
   if (typeof monthlyEmailEnabled === 'boolean') update.monthlyEmailEnabled = monthlyEmailEnabled;
+  if (typeof defaultPage === 'string' && VALID_PAGES.includes(defaultPage)) update.defaultPage = defaultPage;
+  if (typeof currencyFormat === 'string' && VALID_FORMATS.includes(currencyFormat)) update.currencyFormat = currencyFormat;
   await db.update(users).set(update).where(eq(users.id, userId));
   res.json({ success: true });
 }
@@ -385,7 +395,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk' };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }

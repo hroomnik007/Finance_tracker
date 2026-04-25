@@ -77,6 +77,8 @@ export async function googleLogin(accessToken: string): Promise<{ user: import('
 export async function updateUserSettings(settings: {
   onboardingComplete?: boolean
   monthlyEmailEnabled?: boolean
+  defaultPage?: string
+  currencyFormat?: string
 }): Promise<void> {
   await apiClient.patch('/api/auth/settings', settings)
 }

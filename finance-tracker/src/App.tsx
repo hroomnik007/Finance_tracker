@@ -106,7 +106,7 @@ function App() {
     if (isAuthenticated && !isLoading) {
       if (sessionStorage.getItem('just_logged_in') === 'true') {
         sessionStorage.removeItem('just_logged_in')
-        const target = (settings.defaultPage as Page | undefined) ?? 'dashboard'
+        const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
         const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
         setPage(dest)
         window.location.hash = dest

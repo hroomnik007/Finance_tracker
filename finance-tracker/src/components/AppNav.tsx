@@ -199,16 +199,16 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
           {/* User avatar */}
           <button
             onClick={onOpenProfile}
-            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 cursor-pointer"
+            className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 cursor-pointer"
             style={{ background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : '#7C3AED' }}
             title={user?.name ?? ''}
           >
             {isPhotoUrl(user?.avatarUrl) ? (
               <img src={user!.avatarUrl!} alt="" className="w-full h-full object-cover" />
             ) : user?.avatarUrl ? (
-              <span style={{ fontSize: 22, lineHeight: 1 }}>{user.avatarUrl}</span>
+              <span style={{ fontSize: 24, lineHeight: 1 }}>{user.avatarUrl}</span>
             ) : (
-              <span className="text-white text-sm font-bold">
+              <span className="text-white font-bold" style={{ fontSize: 17 }}>
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
               </span>
             )}

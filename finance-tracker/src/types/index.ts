@@ -84,6 +84,8 @@ export interface AuthUser {
   longestStreak?: number
   badges?: string[]
   createdAt?: string
+  defaultPage?: string
+  currencyFormat?: string
 }
 
 export interface ApiCategory {

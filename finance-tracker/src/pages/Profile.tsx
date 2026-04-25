@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Check, Pencil } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
-import { updateAvatar, savePin, deletePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
+import { updateAvatar, savePin, deletePin, webauthnRegisterOptions, webauthnRegisterVerify, updateUserSettings } from '../api/auth'
 import { getTransactions } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { useSettingsContext } from '../context/SettingsContext'
@@ -74,6 +74,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [stats, setStats] = useState<Stats | null>(null)
   const [lastTransactions, setLastTransactions] = useState<ApiTransaction[]>([])
   const [logoutConfirm, setLogoutConfirm] = useState(false)
+  const [prefSaveOk, setPrefSaveOk] = useState(false)
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -156,6 +157,16 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     setPasswordMsg({ type: 'ok', text: 'Heslo bolo zmenené.' })
     setTimeout(() => setPasswordMsg(null), 3000)
     setPasswordFormOpen(false)
+  }
+
+  async function handlePrefChange(key: 'defaultPage' | 'currencyFormat', value: string) {
+    updateSettings({ [key]: value })
+    try {
+      await updateUserSettings({ [key]: value })
+      await refreshUser()
+      setPrefSaveOk(true)
+      setTimeout(() => setPrefSaveOk(false), 2000)
+    } catch { /* localStorage already updated */ }
   }
 
   const memberSince = user?.createdAt
@@ -317,14 +328,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               </div>
               <div className="grid grid-cols-2 gap-3 p-3">
                 {[
-                  { label: 'PRÍJMY', value: stats ? String(stats.incomeCount) : '—', color: '#10b981' },
-                  { label: 'VÝDAVKY', value: stats ? String(stats.expenseCount) : '—', color: '#f87171' },
-                  { label: 'PRVÝ ZÁZNAM', value: stats?.firstDate ? formatDate(stats.firstDate) : '—', color: 'var(--accent-color)' },
-                  { label: 'KATEGÓRIE', value: stats ? String(stats.categoryCount) : '—', color: '#60a5fa' },
+                  { label: 'PRÍJMY', value: stats ? String(stats.incomeCount) : '—' },
+                  { label: 'VÝDAVKY', value: stats ? String(stats.expenseCount) : '—' },
+                  { label: 'PRVÝ ZÁZNAM', value: stats?.firstDate ? formatDate(stats.firstDate) : '—' },
+                  { label: 'KATEGÓRIE', value: stats ? String(stats.categoryCount) : '—' },
                 ].map((s, i) => (
                   <div key={i} className="flex flex-col gap-1 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <p className="font-bold text-[20px] leading-tight" style={{ color: s.color }}>{s.value}</p>
-                    <p className="text-[11px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
+                    <p className="font-semibold text-[22px] leading-tight" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
+                    <p style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -497,10 +508,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     Výchozí pohľad
                   </label>
                   <select
-                    value={settings.defaultPage ?? 'dashboard'}
-                    onChange={e => updateSettings({ defaultPage: e.target.value })}
-                    className="input-field"
-                    style={{ height: 40, fontSize: 14 }}
+                    value={user?.defaultPage ?? settings.defaultPage ?? 'dashboard'}
+                    onChange={e => handlePrefChange('defaultPage', e.target.value)}
+                    style={{
+                      height: 40, fontSize: 14, width: '100%',
+                      backgroundColor: '#1a1035', color: 'var(--text-primary)',
+                      border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                      padding: '0 12px', appearance: 'none', WebkitAppearance: 'none',
+                    }}
                   >
                     <option value="dashboard">Dashboard</option>
                     <option value="income">Príjmy</option>
@@ -512,16 +527,25 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     Formát sumy
                   </label>
                   <select
-                    value={settings.currencyFormat ?? 'sk'}
-                    onChange={e => updateSettings({ currencyFormat: e.target.value })}
-                    className="input-field"
-                    style={{ height: 40, fontSize: 14 }}
+                    value={user?.currencyFormat ?? settings.currencyFormat ?? 'sk'}
+                    onChange={e => handlePrefChange('currencyFormat', e.target.value)}
+                    style={{
+                      height: 40, fontSize: 14, width: '100%',
+                      backgroundColor: '#1a1035', color: 'var(--text-primary)',
+                      border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                      padding: '0 12px', appearance: 'none', WebkitAppearance: 'none',
+                    }}
                   >
                     <option value="sk">1 234,56 €</option>
                     <option value="en">€1,234.56</option>
                     <option value="de">1.234,56 €</option>
                   </select>
                 </div>
+                {prefSaveOk && (
+                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#34d399' }}>
+                    <Check size={13} /> Uložené
+                  </div>
+                )}
               </div>
             </div>
 
@@ -592,8 +616,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     <span
                       key={badge}
                       title={BADGE_DESCRIPTIONS[badge] ?? badge}
-                      className="text-sm font-medium px-3 py-1 rounded-full cursor-default"
-                      style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)' }}
+                      className="font-medium rounded-full cursor-default"
+                      style={{
+                        background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)',
+                        padding: '8px 16px', fontSize: 14,
+                      }}
                     >
                       {BADGE_LABELS[badge] ?? badge}
                     </span>
@@ -601,8 +628,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 )}
               </div>
               {(user?.longestStreak ?? 0) > 0 && (
-                <p className="text-xs px-4 pb-3 pt-1" style={{ color: 'var(--text-muted)' }}>
-                  Najdlhšia séria: <span className="text-[#FB923C] font-semibold">🔥 {user!.longestStreak} dní</span>
+                <p className="px-4 pb-3 pt-1 mt-1" style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  Najdlhšia séria: <span className="font-semibold" style={{ color: '#FB923C' }}>🔥 {user!.longestStreak} dní</span>
                 </p>
               )}
             </div>
@@ -611,8 +638,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {onLogout && (
               <button
                 onClick={() => setLogoutConfirm(true)}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-opacity hover:opacity-80"
-                style={{ border: '1px solid rgba(248,113,113,0.3)', color: '#f87171', background: 'transparent' }}
+                className="w-full font-semibold cursor-pointer transition-opacity hover:opacity-80"
+                style={{
+                  padding: '12px 24px', fontSize: 15, borderRadius: 12,
+                  border: '1px solid rgba(239,68,68,0.4)', color: '#f87171',
+                  background: 'rgba(239,68,68,0.05)',
+                }}
               >
                 Odhlásiť sa
               </button>

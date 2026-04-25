@@ -33,6 +33,8 @@ export const users = pgTable("users", {
   badges: text("badges").array().default(sql`ARRAY[]::text[]`).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   pinHash: varchar("pin_hash", { length: 255 }),
+  defaultPage: varchar("default_page", { length: 50 }).default("dashboard"),
+  currencyFormat: varchar("currency_format", { length: 10 }).default("sk"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
