@@ -468,26 +468,34 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       )}
       <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">Rozpočet</p>
-        {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => (
-          <div key={b.categoryId} className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-[#E2D9F3] flex items-center gap-1">
-                <span>{b.categoryIcon}</span> {b.categoryName}
-              </span>
-              <span className="text-xs font-semibold" style={{ color: b.percentage >= 100 ? '#F87171' : b.percentage >= 80 ? '#FBBF24' : '#34D399' }}>
-                {Math.round(b.percentage)}%
-              </span>
+        {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => {
+          const barColor = b.percentage >= 90 ? '#F87171' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
+          return (
+            <div key={b.categoryId} className="mb-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-[#E2D9F3] flex items-center gap-1">
+                  <span>{b.categoryIcon}</span> {b.categoryName}
+                </span>
+                <span className="text-xs font-semibold" style={{ color: barColor }}>
+                  {Math.round(b.percentage)}%
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${Math.min(b.percentage, 100)}%`, background: barColor }} />
+              </div>
             </div>
-            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full rounded-full" style={{
-                width: `${Math.min(b.percentage, 100)}%`,
-                background: b.percentage >= 100 ? '#F87171' : b.percentage >= 80 ? '#FBBF24' : b.categoryColor,
-              }} />
-            </div>
-          </div>
-        ))}
+          )
+        })}
         {budgetStatuses.filter(b => b.limit > 0).length === 0 && (
-          <p className="text-xs text-[#6B5A9E]">Žiadne limity nastavené</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[#6B5A9E]">Žiadne limity nastavené</p>
+            <button
+              onClick={() => onNavigate('settings')}
+              className="text-xs text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 px-2 py-1 rounded-lg hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
+            >
+              Nastaviť
+            </button>
+          </div>
         )}
       </div>
       {motivationalMsg && (
@@ -616,7 +624,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── DESKTOP TOP BAR — desktop only ── */}
       <div
         className="hidden lg:flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, zIndex: 20, background: '#0f0a1e', marginLeft: '-24px', marginRight: '-24px', paddingLeft: '24px', paddingRight: '24px', paddingBottom: '12px' }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, zIndex: 20, background: '#0f0a1e', marginLeft: '-24px', marginRight: '-24px', paddingTop: '16px', paddingLeft: '24px', paddingRight: '24px', paddingBottom: '12px' }}
       >
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
@@ -670,7 +678,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT — grid, hidden on mobile
       ════════════════════════════════════════ */}
-      <div className="hidden lg:grid gap-6 items-start" style={{ gridTemplateColumns: 'minmax(0, 1fr) clamp(240px, 22vw, 340px)', width: '100%' }}>
+      <div className="hidden lg:grid gap-6 items-start w-full" style={{ gridTemplateColumns: 'minmax(0, 1fr) 340px' }}>
 
         {/* LEFT — all main content */}
         <div className="flex flex-col gap-6">

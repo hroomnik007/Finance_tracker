@@ -18,7 +18,6 @@ import { ForgotPasswordPage } from './pages/ForgotPassword'
 import { ResetPasswordPage } from './pages/ResetPassword'
 import { VerifyEmailPage } from './pages/VerifyEmail'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
-import { RightPanel } from './components/RightPanel'
 import { OnboardingTutorial, useOnboarding } from './components/OnboardingTutorial'
 import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTemplateModal'
 import { PinLock } from './components/PinLock'
@@ -228,13 +227,13 @@ function App() {
         </button>
       </div>
 
-      {/* Main content + RightPanel wrapper */}
+      {/* Main content wrapper */}
       <div
         className="flex h-screen transition-all duration-200 ease-in-out"
         style={{ marginLeft: sidebarCollapsed ? '64px' : '240px' }}
       >
-        <main className="flex-1 h-full overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0" style={{ background: '#0f0a1e' }}>
-          <div className="p-6 pt-4 lg:pt-6 w-full h-full">
+        <main className="flex-1 overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0" style={{ background: '#0f0a1e' }}>
+          <div className="p-6 w-full h-full">
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
             )}
@@ -257,7 +256,6 @@ function App() {
           </div>
         </main>
 
-        {page === 'dashboard' && <RightPanel month={month} year={year} />}
       </div>
 
       <div className="lg:hidden">
