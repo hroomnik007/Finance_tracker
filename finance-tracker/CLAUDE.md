@@ -88,7 +88,10 @@ npm run preview   # preview buildu
 ### Deploy
 - Server: pedani.eu (Hetzner CX23), deploy cez SSH → `./deploy.sh frontend`
 - `.npmrc` má `legacy-peer-deps=true` kvôli vite-plugin-pwa@1.2/vite@8 konfliktu
-- Po každej zmene: `git add -A && git commit -m "<popis>" && git push origin main && git push gitea main` → SSH → `./deploy.sh frontend`
+- Po každej zmene: `git add -A && git commit -m "<popis>" && git push origin main && git push gitea main`
+- git remotes: `origin` = GitHub (triggers Actions), `gitea` = self-hosted Gitea
+- VŽDY pushuj na oba: `git push origin main && git push gitea main`
+- GitHub Actions automaticky nasadí na pedani.eu pri každom push na origin/main
 
 ### Štýl práce
 - Surgical changes — meniť len čo je potrebné, nič navyše
