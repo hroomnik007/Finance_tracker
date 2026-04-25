@@ -583,7 +583,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   )
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-6 pb-4 w-full max-w-[1400px] mx-auto">
+    <div className="flex flex-col gap-4 lg:gap-6 pb-4 w-full">
 
       {/* ── HEADER ROW — full width always ── */}
       <div className="flex items-center justify-between gap-3">
@@ -621,7 +621,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT — grid, hidden on mobile
       ════════════════════════════════════════ */}
-      <div className="hidden lg:grid grid-cols-[1fr_300px] gap-6 items-start">
+      <div className="hidden lg:grid gap-6 items-start" style={{ gridTemplateColumns: '1fr minmax(280px, 320px)' }}>
 
         {/* LEFT — all main content */}
         <div className="flex flex-col gap-6">
