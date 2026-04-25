@@ -72,6 +72,13 @@ function App() {
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024)
+
+  useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 1024)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -230,7 +237,7 @@ function App() {
       {/* Main content wrapper */}
       <div
         className="flex h-screen transition-all duration-200 ease-in-out"
-        style={{ marginLeft: sidebarCollapsed ? '64px' : '240px' }}
+        style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '64px' : '240px') : '0' }}
       >
         <main className="flex-1 overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0" style={{ background: '#0f0a1e' }}>
           <div className="p-6 w-full h-full">

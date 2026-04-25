@@ -195,12 +195,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const greetingRow = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        {user?.avatarUrl ? (
-          <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-[#4C3A8A]" />
-        ) : (
-          <span className="text-xl">{profileAvatar}</span>
-        )}
-        <span className="text-base font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
+        <span className="text-xl font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
         {(user?.currentStreak ?? 0) > 0 && (
           <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0">
             🔥 {user!.currentStreak}
