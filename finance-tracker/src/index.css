@@ -19,15 +19,15 @@
 
 :root {
   /* === Dusk Purple theme === */
-  --bg-primary: #1E1535;
-  --bg-card: #2A1F4A;
-  --bg-card-hover: #32265A;
+  --bg-primary: #0f0a1e;
+  --bg-card: #1a1035;
+  --bg-card-hover: #221545;
 
   /* Legacy aliases (keep for compatibility) */
-  --bg-base: #1E1535;
-  --bg-surface: #2A1F4A;
-  --bg-elevated: #32265A;
-  --bg-hover: #32265A;
+  --bg-base: #0f0a1e;
+  --bg-surface: #1a1035;
+  --bg-elevated: #2a1f4a;
+  --bg-hover: #2a1f4a;
 
   /* Borders */
   --border-subtle: #4C3A8A;
@@ -62,14 +62,26 @@
   --color-warning: #FBBF24;
 
   /* Shadows */
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.3);
   --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.5);
+
+  /* Card system */
+  --border-radius-card: 16px;
+
+  /* Typography */
+  --font-size-hero: clamp(24px, 4vw, 36px);
+
+  /* Spacing */
+  --spacing-page: 24px;
+  --spacing-section: 20px;
+  --spacing-card: 16px;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
@@ -93,7 +105,6 @@ body {
 .card {
   background: var(--bg-card);
   border-radius: 20px;
-  border: 0.5px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
   padding: 20px;
   transition: all 0.2s ease;
@@ -101,7 +112,7 @@ body {
 
 .card-hover:hover {
   background: var(--bg-card-hover);
-  border-color: var(--border-medium);
+  box-shadow: var(--shadow-elevated);
   transition: all 0.2s ease;
 }
 
