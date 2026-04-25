@@ -230,7 +230,7 @@ function App() {
 
       {/* Main content + RightPanel wrapper */}
       <div
-        className="flex h-screen transition-all duration-200 ease-in-out"
+        className="flex h-screen transition-all duration-200 ease-in-out w-full"
         style={{ marginLeft: window.innerWidth >= 1024 ? (sidebarCollapsed ? '64px' : '240px') : '0' }}
       >
         <main className="flex-1 h-full overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0" style={{ background: '#0f0a1e' }}>
