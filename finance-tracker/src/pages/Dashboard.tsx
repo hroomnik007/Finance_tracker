@@ -16,6 +16,7 @@ import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { getSummary } from '../api/transactions'
+import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 
@@ -78,6 +79,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const { fixedExpenses } = useFixedExpenses(month, year)
   const { variableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
+  const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
   const { profileName, profileAvatar } = useSettingsContext()
@@ -447,6 +449,30 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </div>
         </div>
       )}
+      <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">Rozpočet</p>
+        {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => (
+          <div key={b.categoryId} className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-[#E2D9F3] flex items-center gap-1">
+                <span>{b.categoryIcon}</span> {b.categoryName}
+              </span>
+              <span className="text-xs font-semibold" style={{ color: b.percentage >= 100 ? '#F87171' : b.percentage >= 80 ? '#FBBF24' : '#34D399' }}>
+                {Math.round(b.percentage)}%
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full" style={{
+                width: `${Math.min(b.percentage, 100)}%`,
+                background: b.percentage >= 100 ? '#F87171' : b.percentage >= 80 ? '#FBBF24' : b.categoryColor,
+              }} />
+            </div>
+          </div>
+        ))}
+        {budgetStatuses.filter(b => b.limit > 0).length === 0 && (
+          <p className="text-xs text-[#6B5A9E]">Žiadne limity nastavené</p>
+        )}
+      </div>
       {motivationalMsg && (
         <div
           className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08] border-l-4"
@@ -474,6 +500,28 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </div>
         )
       })()}
+      <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">Porovnanie mesiacov</p>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-[#9D84D4]">Tento mesiac</span>
+            <span className="text-sm font-mono font-semibold text-[#F87171]">-{formatAmount(totalExpenses)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-[#9D84D4]">Minulý mesiac</span>
+            <span className="text-sm font-mono text-[#E2D9F3]">-{formatAmount(prevMonthData?.expenses ?? 0)}</span>
+          </div>
+          {(prevMonthData?.expenses ?? 0) > 0 && (() => {
+            const diff = ((totalExpenses - (prevMonthData?.expenses ?? 0)) / (prevMonthData?.expenses ?? 0) * 100).toFixed(1)
+            const isUp = totalExpenses > (prevMonthData?.expenses ?? 0)
+            return (
+              <div className={`text-xs font-semibold mt-1 ${isUp ? 'text-[#F87171]' : 'text-[#34D399]'}`}>
+                {isUp ? '↑' : '↓'} {Math.abs(Number(diff))}% vs minulý mesiac
+              </div>
+            )
+          })()}
+        </div>
+      </div>
       {monthChallengeTarget > 0 && (
         <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">Mesačná výzva</p>
