@@ -7,8 +7,8 @@ import { getTransactions } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useFormatters } from '../hooks/useFormatters'
-import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import type { ApiTransaction } from '../types'
 
 const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
 
@@ -22,6 +22,20 @@ const BADGE_LABELS: Record<string, string> = {
   savings_goal: 'Cieľ splnený ✅',
 }
 
+const BADGE_DESCRIPTIONS: Record<string, string> = {
+  first_transaction: 'Zadal si prvý výdavok',
+  transactions_10: 'Dosiahol si 10 transakcií',
+  transactions_50: 'Dosiahol si 50 transakcií',
+  transactions_100: 'Dosiahol si 100 transakcií',
+  streak_7: 'Bol si aktívny 7 dní v rade',
+  streak_30: 'Bol si aktívny 30 dní v rade',
+  savings_goal: 'Splnil si finančný cieľ',
+}
+
+function isPhotoUrl(url: string | null | undefined): url is string {
+  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
+}
+
 interface Stats {
   incomeCount: number
   expenseCount: number
@@ -30,14 +44,18 @@ interface Stats {
 }
 
 export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLogout?: () => void }) {
-  const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
-  const { t } = useTranslation()
+  const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile, settings, updateSettings } = useSettingsContext()
   const { user, refreshUser } = useAuth()
-  const { formatDate } = useFormatters()
+  const { formatDate, formatAmount } = useFormatters()
 
   const [profileNameDraft, setProfileNameDraft] = useState(user?.name || ctxName)
-  const [profileAvatarDraft, setProfileAvatarDraft] = useState(ctxAvatar)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(user?.avatarUrl ?? null)
+  const [profileAvatarDraft, setProfileAvatarDraft] = useState(() => {
+    if (user?.avatarUrl && !isPhotoUrl(user.avatarUrl)) return user.avatarUrl
+    return ctxAvatar
+  })
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() =>
+    isPhotoUrl(user?.avatarUrl) ? user!.avatarUrl! : null
+  )
   const [photoUploading, setPhotoUploading] = useState(false)
   const [profileSaveOk, setProfileSaveOk] = useState(false)
 
@@ -47,12 +65,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [passwordFormOpen, setPasswordFormOpen] = useState(false)
 
   const { hasPin, setupPin, removePin } = usePinLock()
+  const hasPinLogin = !!user?.email && !!localStorage.getItem(`pin_enabled_${user.email}`)
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
   const [webauthnSupported] = useState(() => typeof window !== 'undefined' && !!window.PublicKeyCredential)
   const [webauthnRegistering, setWebauthnRegistering] = useState(false)
   const [webauthnMsg, setWebauthnMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   const [stats, setStats] = useState<Stats | null>(null)
+  const [lastTransactions, setLastTransactions] = useState<ApiTransaction[]>([])
   const [logoutConfirm, setLogoutConfirm] = useState(false)
 
   useEffect(() => {
@@ -67,17 +87,30 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       getCategories(),
     ]).then(([{ data: txs }, { data: cats }]) => {
       const sorted = [...txs].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
+      const expenseCatIds = new Set(
+        txs.filter(t => t.type === 'expense' && t.categoryId).map(t => t.categoryId)
+      )
       setStats({
         incomeCount: txs.filter(t => t.type === 'income').length,
         expenseCount: txs.filter(t => t.type === 'expense').length,
         firstDate: sorted[0]?.date ?? null,
-        categoryCount: cats.length,
+        categoryCount: expenseCatIds.size || cats.length,
       })
+      const recent = [...txs]
+        .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+        .slice(0, 5)
+      setLastTransactions(recent)
     }).catch(() => {})
   }, [])
 
-  function handleSaveProfile() {
+  async function handleSaveProfile() {
     setProfile(profileNameDraft, profileAvatarDraft)
+    if (!photoUrl && profileAvatarDraft && !isPhotoUrl(profileAvatarDraft)) {
+      try {
+        await updateAvatar(profileAvatarDraft)
+        await refreshUser()
+      } catch { /* non-critical */ }
+    }
     setProfileSaveOk(true)
     setTimeout(() => setProfileSaveOk(false), 2000)
   }
@@ -100,6 +133,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         try {
           await updateAvatar(base64)
           setPhotoUrl(base64)
+          setProfileAvatarDraft('')
           await refreshUser()
         } catch {
           alert('Nepodarilo sa nahrať fotku.')
@@ -114,12 +148,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   function handleSavePassword() {
     if (!newPassword || newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'err', text: t.settings.passwordMismatch })
+      setPasswordMsg({ type: 'err', text: 'Heslá sa nezhodujú.' })
       return
     }
     setNewPassword('')
     setConfirmPassword('')
-    setPasswordMsg({ type: 'ok', text: t.settings.passwordSaved })
+    setPasswordMsg({ type: 'ok', text: 'Heslo bolo zmenené.' })
     setTimeout(() => setPasswordMsg(null), 3000)
     setPasswordFormOpen(false)
   }
@@ -134,7 +168,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       onClick={onClose}
     >
       <div
-        className="relative overflow-y-auto w-[520px] max-w-[calc(100vw-24px)] max-h-[92vh] rounded-[24px]"
+        className="relative overflow-y-auto w-[900px] max-w-[calc(100vw-16px)] max-h-[94vh] rounded-[24px]"
         style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}
         onClick={e => e.stopPropagation()}
       >
@@ -163,8 +197,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             >
               {photoUrl ? (
                 <img src={photoUrl} alt="avatar" className="w-full h-full object-cover" />
+              ) : profileAvatarDraft ? (
+                <span style={{ fontSize: 36, lineHeight: 1 }}>{profileAvatarDraft}</span>
               ) : (
-                <span>{profileAvatarDraft || (profileNameDraft ? profileNameDraft[0].toUpperCase() : '👤')}</span>
+                <span className="text-white text-2xl font-bold">
+                  {profileNameDraft?.[0]?.toUpperCase() ?? '?'}
+                </span>
               )}
               {photoUploading && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -202,11 +240,13 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           </div>
         </div>
 
-        {/* Body */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
+        {/* Body — 2-column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 p-5">
 
-          {/* LEFT — Osobné údaje */}
+          {/* LEFT column */}
           <div className="flex flex-col gap-4">
+
+            {/* Osobné údaje */}
             <div
               className="rounded-2xl overflow-hidden"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
@@ -216,18 +256,16 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   👤 Osobné údaje
                 </p>
               </div>
-
               <div className="px-4 pb-4 pt-3 flex flex-col gap-3">
-                {/* Emoji picker */}
                 <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {AVATAR_OPTIONS.map(em => (
                     <button
                       key={em}
-                      onClick={() => setProfileAvatarDraft(em)}
+                      onClick={() => { setProfileAvatarDraft(em); setPhotoUrl(null) }}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 cursor-pointer transition-transform hover:scale-110"
                       style={{
-                        border: profileAvatarDraft === em ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
-                        background: profileAvatarDraft === em ? 'rgba(124,58,237,0.2)' : 'var(--bg-elevated)',
+                        border: profileAvatarDraft === em && !photoUrl ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
+                        background: profileAvatarDraft === em && !photoUrl ? 'rgba(124,58,237,0.2)' : 'var(--bg-elevated)',
                       }}
                     >
                       {em}
@@ -236,7 +274,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 </div>
 
                 <div>
-                  <label className="form-label">{t.settings.name}</label>
+                  <label className="form-label">Meno</label>
                   <input
                     type="text"
                     placeholder="Zadaj svoje meno"
@@ -244,17 +282,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     onChange={e => setProfileNameDraft(e.target.value)}
                     className="input-field"
                     style={{ height: 44 }}
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    value={user?.email ?? ''}
-                    readOnly
-                    className="input-field"
-                    style={{ height: 44, opacity: 0.6, cursor: 'default' }}
                   />
                 </div>
 
@@ -267,17 +294,17 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   </div>
                 ) : (
                   <button
-                    onClick={handleSaveProfile}
+                    onClick={() => { handleSaveProfile() }}
                     className="w-full h-10 rounded-xl text-sm font-semibold text-white cursor-pointer"
                     style={{ background: 'var(--accent-color)' }}
                   >
-                    {t.settings.saveProfile}
+                    Uložiť profil
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Štatistiky účtu */}
+            {/* Štatistiky */}
             <div
               className="rounded-2xl overflow-hidden"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
@@ -289,47 +316,21 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               </div>
               <div className="grid grid-cols-2 gap-px" style={{ background: 'var(--border-subtle)' }}>
                 {[
-                  {
-                    icon: <TrendingUp size={14} />,
-                    label: 'Príjmy (záznamy)',
-                    value: stats ? String(stats.incomeCount) : '—',
-                    color: '#10b981',
-                  },
-                  {
-                    icon: <TrendingDown size={14} />,
-                    label: 'Výdavky (záznamy)',
-                    value: stats ? String(stats.expenseCount) : '—',
-                    color: '#f87171',
-                  },
-                  {
-                    icon: <Calendar size={14} />,
-                    label: 'Prvý záznam',
-                    value: stats?.firstDate ? formatDate(stats.firstDate) : '—',
-                    color: 'var(--accent-color)',
-                  },
-                  {
-                    icon: <Tag size={14} />,
-                    label: 'Kategórie',
-                    value: stats ? String(stats.categoryCount) : '—',
-                    color: '#60a5fa',
-                  },
+                  { icon: <TrendingUp size={14} />, label: 'PRÍJMY', value: stats ? String(stats.incomeCount) : '—', color: '#10b981' },
+                  { icon: <TrendingDown size={14} />, label: 'VÝDAVKY', value: stats ? String(stats.expenseCount) : '—', color: '#f87171' },
+                  { icon: <Calendar size={14} />, label: 'PRVÝ ZÁZNAM', value: stats?.firstDate ? formatDate(stats.firstDate) : '—', color: 'var(--accent-color)' },
+                  { icon: <Tag size={14} />, label: 'KATEGÓRIE', value: stats ? String(stats.categoryCount) : '—', color: '#60a5fa' },
                 ].map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex flex-col gap-1.5 px-4 py-3"
-                    style={{ background: 'var(--bg-card)' }}
-                  >
+                  <div key={i} className="flex flex-col gap-1.5 px-4 py-3" style={{ background: 'var(--bg-card)' }}>
                     <span style={{ color: s.color }}>{s.icon}</span>
-                    <p className="font-mono font-bold text-xl" style={{ color: s.color }}>{s.value}</p>
-                    <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
+                    <p className="font-mono font-bold text-2xl" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-[11px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* RIGHT — Bezpečnosť */}
-          <div className="flex flex-col gap-4">
+            {/* Bezpečnosť */}
             <div
               className="rounded-2xl overflow-hidden"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
@@ -339,14 +340,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   🔒 Bezpečnosť
                 </p>
               </div>
-
               <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+
                 {/* Zmeniť heslo */}
                 <div>
                   <div className="flex items-center justify-between px-4 py-3.5">
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t.settings.changePassword}</p>
-                    </div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Zmeniť heslo</p>
                     <button
                       onClick={() => setPasswordFormOpen(o => !o)}
                       className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors flex-shrink-0"
@@ -357,50 +356,67 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   </div>
                   {passwordFormOpen && (
                     <div className="px-4 pb-4 flex flex-col gap-2">
-                      <input
-                        type="password"
-                        placeholder={t.settings.newPassword}
-                        value={newPassword}
-                        onChange={e => setNewPassword(e.target.value)}
-                        className="input-field"
-                        style={{ height: 44 }}
-                      />
-                      <input
-                        type="password"
-                        placeholder={t.auth.confirmPassword}
-                        value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        className="input-field"
-                        style={{ height: 44 }}
-                      />
+                      <input type="password" placeholder="Nové heslo" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="input-field" style={{ height: 44 }} />
+                      <input type="password" placeholder="Potvrdiť heslo" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input-field" style={{ height: 44 }} />
                       {passwordMsg && (
-                        <p className="text-xs" style={{ color: passwordMsg.type === 'ok' ? '#34d399' : '#f87171' }}>
-                          {passwordMsg.text}
-                        </p>
+                        <p className="text-xs" style={{ color: passwordMsg.type === 'ok' ? '#34d399' : '#f87171' }}>{passwordMsg.text}</p>
                       )}
-                      <button
-                        onClick={handleSavePassword}
-                        className="btn-secondary self-start px-4 rounded-xl text-xs cursor-pointer"
-                        style={{ height: 36 }}
-                      >
-                        {t.settings.savePassword}
+                      <button onClick={handleSavePassword} className="btn-secondary self-start px-4 rounded-xl text-xs cursor-pointer" style={{ height: 36 }}>
+                        Uložiť heslo
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* PIN zámok */}
+                {/* PIN */}
+                <div style={{ borderTopColor: 'var(--border-subtle)' }}>
+                  <div className="flex items-center justify-between px-4 py-3.5">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>PIN prihlásenie a zámok</p>
+                      {hasPinLogin || hasPin ? (
+                        <span className="inline-flex items-center gap-1 text-xs mt-0.5 font-medium" style={{ color: '#34d399' }}>
+                          <Check size={11} /> PIN je aktívny
+                        </span>
+                      ) : (
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Rýchle prihlásenie 4-miestnym PIN</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {(hasPinLogin || hasPin) && (
+                        <button
+                          onClick={async () => {
+                            removePin()
+                            try { await deletePin() } catch { /* ok */ }
+                          }}
+                          className="text-xs font-medium px-2.5 py-1.5 rounded-lg cursor-pointer"
+                          style={{ color: '#f87171', border: '1px solid rgba(248,113,113,0.4)' }}
+                        >
+                          Odstrániť
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setPinSetupOpen(true)}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                        style={{ color: 'var(--accent-color)', border: '1px solid rgba(124,58,237,0.4)' }}
+                      >
+                        {hasPinLogin || hasPin ? 'Zmeniť PIN' : 'Nastaviť PIN'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Auto-zámok toggle */}
                 <div style={{ borderTopColor: 'var(--border-subtle)' }}>
                   <div className="flex items-center justify-between px-4 py-3.5">
                     <div>
                       <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Auto-zámok</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>PIN — zamkne po 5 min</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Zamkne aplikáciu po 5 min nečinnosti</p>
                     </div>
                     <button
                       onClick={async () => {
                         if (hasPin) {
                           removePin()
-                          try { await deletePin() } catch { /* local PIN removed */ }
+                          try { await deletePin() } catch { /* ok */ }
                         } else {
                           setPinSetupOpen(true)
                         }
@@ -414,17 +430,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasPin ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                   </div>
-                  {hasPin && (
-                    <div className="px-4 pb-3">
-                      <button
-                        onClick={() => setPinSetupOpen(true)}
-                        className="btn-secondary justify-center py-2 text-xs w-full cursor-pointer"
-                        style={{ borderRadius: 10 }}
-                      >
-                        Zmeniť PIN
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* WebAuthn */}
@@ -471,36 +476,138 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 )}
               </div>
             </div>
+          </div>
+
+          {/* RIGHT column */}
+          <div className="flex flex-col gap-4">
+
+            {/* Preferencie */}
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            >
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+                  ⚙️ Preferencie
+                </p>
+              </div>
+              <div className="px-4 py-3 flex flex-col gap-3">
+                <div>
+                  <label className="text-[11px] uppercase tracking-widest font-semibold block mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                    Výchozí pohľad
+                  </label>
+                  <select
+                    value={settings.defaultPage ?? 'dashboard'}
+                    onChange={e => updateSettings({ defaultPage: e.target.value })}
+                    className="input-field"
+                    style={{ height: 40, fontSize: 14 }}
+                  >
+                    <option value="dashboard">Dashboard</option>
+                    <option value="income">Príjmy</option>
+                    <option value="variable-expenses">Výdavky</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-widest font-semibold block mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                    Formát sumy
+                  </label>
+                  <select
+                    value={settings.currencyFormat ?? 'sk'}
+                    onChange={e => updateSettings({ currencyFormat: e.target.value })}
+                    className="input-field"
+                    style={{ height: 40, fontSize: 14 }}
+                  >
+                    <option value="sk">1 234,56 €</option>
+                    <option value="en">€1,234.56</option>
+                    <option value="de">1.234,56 €</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Aktivita */}
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            >
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+                  🕐 Posledná aktivita
+                </p>
+              </div>
+              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+                {lastTransactions.length === 0 ? (
+                  <p className="px-4 py-4 text-sm" style={{ color: 'var(--text-muted)' }}>Zatiaľ žiadne záznamy.</p>
+                ) : (
+                  lastTransactions.map(tx => (
+                    <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                      <span className="text-xl shrink-0" style={{ lineHeight: 1 }}>
+                        {tx.categoryIcon ?? (tx.type === 'income' ? '💰' : '💸')}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                          {tx.description || tx.categoryName || '—'}
+                        </p>
+                        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{formatDate(tx.date)}</p>
+                      </div>
+                      <span
+                        className="text-sm font-semibold shrink-0"
+                        style={{ color: tx.type === 'income' ? '#10b981' : '#f87171' }}
+                      >
+                        {tx.type === 'income' ? '+' : '-'}{formatAmount(tx.amount)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                <button
+                  onClick={() => { window.location.hash = 'variable-expenses'; onClose() }}
+                  className="text-xs font-medium cursor-pointer transition-colors"
+                  style={{ color: 'var(--accent-color)', background: 'none', border: 'none' }}
+                >
+                  Zobraziť všetky →
+                </button>
+              </div>
+            </div>
 
             {/* Odznaky */}
-            {user && (user.badges?.length ?? 0) > 0 && (
-              <div
-                className="rounded-2xl overflow-hidden"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
-              >
-                <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
-                    🏅 Odznaky
-                  </p>
-                </div>
-                <div className="px-4 py-3 flex flex-wrap gap-2">
-                  {(user.badges ?? []).map(badge => (
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            >
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+                  🏅 Odznaky
+                </p>
+              </div>
+              <div className="px-4 py-3 flex flex-wrap gap-2">
+                {(user?.badges?.length ?? 0) === 0 ? (
+                  <p className="text-sm w-full" style={{ color: 'var(--text-muted)' }}>Zatiaľ žiadne odznaky. Pridaj prvú transakciu! 🎯</p>
+                ) : (
+                  (user!.badges!).map(badge => (
                     <span
                       key={badge}
-                      className="text-xs font-medium px-3 py-1.5 rounded-full"
-                      style={{ background: 'rgba(167,139,250,0.15)', color: 'var(--accent-color)', border: '1px solid rgba(167,139,250,0.3)' }}
+                      title={BADGE_DESCRIPTIONS[badge] ?? badge}
+                      className="text-sm font-medium px-3 py-2 rounded-full cursor-default"
+                      style={{
+                        background: 'rgba(167,139,250,0.12)',
+                        color: 'var(--accent-color)',
+                        border: '1px solid rgba(167,139,250,0.25)',
+                        lineHeight: 1.4,
+                      }}
                     >
                       {BADGE_LABELS[badge] ?? badge}
                     </span>
-                  ))}
-                </div>
-                {(user.longestStreak ?? 0) > 0 && (
-                  <p className="text-xs px-4 pb-3" style={{ color: 'var(--text-muted)' }}>
-                    Najdlhšia séria: <span className="text-[#FB923C] font-semibold">🔥 {user.longestStreak} dní</span>
-                  </p>
+                  ))
                 )}
               </div>
-            )}
+              {(user?.longestStreak ?? 0) > 0 && (
+                <p className="text-xs px-4 pb-3 pt-1" style={{ color: 'var(--text-muted)' }}>
+                  Najdlhšia séria: <span className="text-[#FB923C] font-semibold">🔥 {user!.longestStreak} dní</span>
+                </p>
+              )}
+            </div>
 
             {/* Logout */}
             {onLogout && (
@@ -526,7 +633,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         />
       </div>
 
-      {/* Logout confirm dialog */}
+      {/* Logout confirm */}
       {logoutConfirm && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"

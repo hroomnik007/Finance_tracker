@@ -8,15 +8,25 @@ export function useFormatters() {
     const symbol = symbols[settings.currency] ?? settings.currency
     const abs = Math.abs(amount)
     const sign = amount < 0 ? '-' : ''
-    const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F')
+    const fmt = settings.currencyFormat ?? 'sk'
+    if (fmt === 'en') {
+      const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+      const decPart = (abs % 1).toFixed(2).slice(2)
+      return `${sign}${symbol}${intPart}.${decPart}`
+    }
+    if (fmt === 'de') {
+      const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+      const decPart = (abs % 1).toFixed(2).slice(2)
+      return `${sign}${intPart},${decPart} ${symbol}`
+    }
+    const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     const decPart = (abs % 1).toFixed(2).slice(2)
-    return `${sign}${intPart},${decPart}\u00A0${symbol}`
+    return `${sign}${intPart},${decPart} ${symbol}`
   }
 
   const formatDate = (dateStr: string): string => {
     if (!dateStr) return ''
     try {
-      // Append time to avoid UTC timezone shifting
       const d = new Date(dateStr + 'T00:00:00')
       const day   = String(d.getDate()).padStart(2, '0')
       const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -24,7 +34,7 @@ export function useFormatters() {
       switch (settings.dateFormat) {
         case 'YYYY-MM-DD': return `${year}-${month}-${day}`
         case 'MM/DD/YYYY': return `${month}/${day}/${year}`
-        default:           return `${day}.${month}.${year}` // DD.MM.YYYY
+        default:           return `${day}.${month}.${year}`
       }
     } catch {
       return dateStr

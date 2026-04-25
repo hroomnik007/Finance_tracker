@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Delete } from 'lucide-react'
+import { X, Delete, Check } from 'lucide-react'
 
 interface PinSetupModalProps {
   open: boolean
@@ -10,7 +10,7 @@ interface PinSetupModalProps {
 const KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
 export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
-  const [step, setStep] = useState<'enter' | 'confirm'>('enter')
+  const [step, setStep] = useState<'enter' | 'confirm' | 'success'>('enter')
   const [first, setFirst] = useState('')
   const [pin, setPin] = useState('')
   const [shake, setShake] = useState(false)
@@ -24,7 +24,7 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
   }
 
   async function handleKey(k: string) {
-    if (saving) return
+    if (saving || step === 'success') return
     if (k === '⌫') { setPin(p => p.slice(0, -1)); return }
     if (pin.length >= 4) return
     const next = pin + k
@@ -36,15 +36,39 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
       } else {
         if (next !== first) {
           setShake(true)
-          setTimeout(() => { setShake(false); setPin(''); }, 600)
+          setTimeout(() => { setShake(false); setPin('') }, 600)
         } else {
           setSaving(true)
           await onSetPin(next)
-          handleClose()
           setSaving(false)
+          setStep('success')
+          setTimeout(() => { handleClose() }, 1500)
         }
       }
     }
+  }
+
+  if (step === 'success') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} />
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: 340,
+          background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+          borderRadius: 24, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%', background: 'rgba(52,211,153,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Check size={28} color="#34d399" />
+          </div>
+          <p style={{ fontSize: 18, fontWeight: 700, color: '#E2D9F3', textAlign: 'center' }}>PIN bol nastavený</p>
+          <p style={{ fontSize: 13, color: '#9D84D4', textAlign: 'center' }}>Môžeš sa teraz prihlasovať pomocou PIN kódu.</p>
+        </div>
+      </div>
+    )
   }
 
   const title = step === 'enter' ? 'Zadaj nový PIN' : 'Potvrď PIN'
@@ -90,6 +114,7 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
                     color: '#E2D9F3', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'inherit',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    opacity: saving ? 0.5 : 1,
                   }}
                   onPointerDown={e => (e.currentTarget.style.background = k === '⌫' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.15)')}
                   onPointerUp={e => (e.currentTarget.style.background = k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)')}

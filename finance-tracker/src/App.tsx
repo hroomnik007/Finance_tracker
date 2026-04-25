@@ -41,6 +41,10 @@ import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotificatio
   } catch { /* ignore */ }
 })()
 
+function isPhotoUrl(url: string | null | undefined): url is string {
+  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
+}
+
 export type Page =
   | 'dashboard'
   | 'income'
@@ -235,11 +239,13 @@ function App() {
         </div>
         <button
           onClick={() => setIsProfileOpen(true)}
-          className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0"
-          style={{ background: '#7C3AED' }}
+          className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+          style={{ background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : '#7C3AED' }}
         >
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+          {isPhotoUrl(user?.avatarUrl) ? (
+            <img src={user!.avatarUrl!} alt="" className="w-full h-full object-cover" />
+          ) : user?.avatarUrl ? (
+            <span style={{ fontSize: 22, lineHeight: 1 }}>{user.avatarUrl}</span>
           ) : (
             <span className="text-white text-sm font-bold">
               {user?.name?.[0]?.toUpperCase() ?? '?'}

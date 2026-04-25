@@ -43,6 +43,8 @@ export interface AppSettings {
   dateFormat: string
   firstDayOfWeek: string
   firstDayOfMonth?: number
+  defaultPage?: string
+  currencyFormat?: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -51,6 +53,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dateFormat: 'DD.MM.YYYY',
   firstDayOfWeek: 'monday',
   firstDayOfMonth: 1,
+  defaultPage: 'dashboard',
+  currencyFormat: 'sk',
 }
 
 export interface BudgetStatus {

@@ -20,6 +20,10 @@ interface AppNavProps {
 
 const EXPENSE_CHILDREN: Page[] = ['variable-expenses', 'fixed-expenses', 'categories']
 
+function isPhotoUrl(url: string | null | undefined): url is string {
+  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
+}
+
 export function AppNav({ current, onChange, month, year, collapsed, onToggle, onOpenProfile }: AppNavProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -180,12 +184,14 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
           {/* User avatar */}
           <button
             onClick={onOpenProfile}
-            className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 cursor-pointer"
-            style={{ background: '#7C3AED' }}
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 cursor-pointer"
+            style={{ background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : '#7C3AED' }}
             title={user?.name ?? ''}
           >
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+            {isPhotoUrl(user?.avatarUrl) ? (
+              <img src={user!.avatarUrl!} alt="" className="w-full h-full object-cover" />
+            ) : user?.avatarUrl ? (
+              <span style={{ fontSize: 22, lineHeight: 1 }}>{user.avatarUrl}</span>
             ) : (
               <span className="text-white text-sm font-bold">
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
