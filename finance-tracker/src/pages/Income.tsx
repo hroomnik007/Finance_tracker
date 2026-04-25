@@ -219,6 +219,16 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const groupLabel = (g: WeekGroup) =>
     g === 'this-week' ? t.income.thisWeek : g === 'last-week' ? t.income.lastWeek : t.income.older
 
+  const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
+  const yearlyProjection = recurringMonthlyTotal * 12
+
+  const yearlyIncome = yearlyData
+    .filter((_, i) => {
+      const months = getLast12Months()
+      return months[i]?.key.startsWith(String(year))
+    })
+    .reduce((s, d) => s + d.total, 0)
+
   return (
     <div className="w-full flex flex-col gap-5 lg:gap-6 pb-4">
 
@@ -244,252 +254,319 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       </div>
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
-      {/* Hero 3 cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 fade-up">
-        {/* Total */}
-        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
-            <TrendingUp size={16} className="text-[#34d399]" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.totalLabel}</p>
-            <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
-              {formatAmount(totalAmount)}
-            </p>
-            {incomeChange !== null && (
-              <p className={`flex items-center gap-0.5 text-[10px] font-medium mt-0.5 ${incomeChange >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
-                {incomeChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
-                {Math.abs(incomeChange).toFixed(1)}%
-              </p>
-            )}
-          </div>
-        </div>
+      <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
 
-        {/* Count */}
-        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#A78BFA]/15 shrink-0">
-            <Hash size={16} className="text-[#A78BFA]" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.records}</p>
-            <p className="font-mono font-bold text-[#A78BFA]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)' }}>
-              {incomes.length}
-            </p>
-          </div>
-        </div>
+        {/* ── Left column: main content ── */}
+        <div className="flex flex-col gap-5 lg:gap-6">
 
-        {/* Average */}
-        <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#60a5fa]/15 shrink-0">
-            <Repeat size={16} className="text-[#60a5fa]" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.avgLabel}</p>
-            <p className="font-mono font-bold text-[#60a5fa]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
-              {formatAmount(avgAmount)}
-            </p>
-            <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.income.perItem}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 12-month Bar Chart */}
-      {yearlyData.length > 0 && (
-        <div className="rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08]">
-          <h3 className="text-sm font-semibold text-[#E2D9F3] mb-4">{t.income.yearlyChart}</h3>
-          <div style={{ height: 140 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yearlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis
-                  tick={{ fill: '#9D84D4', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)}
-                />
-                <Tooltip
-                  contentStyle={TOOLTIP_STYLE}
-                  labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
-                  itemStyle={{ color: '#10b981' }}
-                  formatter={(v) => [formatAmount(Number(v ?? 0)), t.income.totalLabel]}
-                />
-                <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Recurring section */}
-      <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.08] overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-white/[0.06] flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[#E2D9F3]">{t.income.recurringSection}</h3>
-          <span className="text-xs text-[#9D84D4]">{recurringIncomes.length}</span>
-        </div>
-        {recurringIncomes.length === 0 ? (
-          <p className="px-4 py-4 text-sm text-[#9D84D4]">{t.income.noRecurring}</p>
-        ) : (
-          <div className="divide-y divide-white/[0.04]">
-            {recurringIncomes.map(inc => (
-              <div
-                key={inc.id}
-                className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
-                onClick={() => openEdit(inc)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#60a5fa]/12 shrink-0">
-                    <Repeat size={14} className="text-[#60a5fa]" />
-                  </div>
-                  <span className="text-sm font-medium text-[#E2D9F3]">{inc.label}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-semibold text-[#34d399]">{formatAmount(inc.amount)}</span>
-                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
-                    <Repeat size={9} /> {t.income.recurringBadge}
-                  </span>
-                </div>
+          {/* Hero 3 cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 fade-up">
+            {/* Total */}
+            <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
+                <TrendingUp size={16} className="text-[#34d399]" />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Main list or empty state */}
-      {sorted.length === 0 ? (
-        <div className="card">
-          <div className="empty-state">
-            <span className="empty-state-emoji">💰</span>
-            <p className="empty-state-title">{t.income.noIncome}</p>
-            <p className="empty-state-subtitle">{t.income.noIncomeSubtitle}</p>
-            <button onClick={openAdd} className="btn-primary mt-2 rounded-2xl px-6 py-2.5">
-              <Plus size={16} />
-              {t.income.add}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Mobile: weekly-grouped card list */}
-          <div className="flex flex-col gap-4 lg:hidden">
-            {groups.map(({ group, items }) => (
-              <div key={group}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] px-1 mb-2">
-                  {groupLabel(group)}
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.totalLabel}</p>
+                <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+                  {formatAmount(totalAmount)}
                 </p>
-                <div className="flex flex-col gap-2">
-                  {items.map((income, idx) => (
-                    <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)}>
-                      <div
-                        className="flex items-center justify-between px-4 py-4 rounded-[18px] cursor-pointer transition-all duration-150 fade-up bg-[var(--bg-surface)] border border-white/[0.08]"
-                        style={{ animationDelay: `${idx * 40}ms`, minHeight: '64px' }}
-                        onClick={() => openEdit(income)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
-                            <Calendar size={18} className="text-[#34d399]" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{income.label}</p>
-                            <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(income.date)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="font-mono font-semibold text-sm text-[#34d399]">{formatAmount(income.amount)}</span>
-                            {income.recurring && (
-                              <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
-                                <Repeat size={9} /> {t.income.recurringBadge}
-                              </span>
-                            )}
-                          </div>
-                          <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
-                            <Edit2 size={14} />
-                          </button>
-                          <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    </SwipeableRow>
-                  ))}
-                </div>
+                {incomeChange !== null && (
+                  <p className={`flex items-center gap-0.5 text-[10px] font-medium mt-0.5 ${incomeChange >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
+                    {incomeChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
+                    {Math.abs(incomeChange).toFixed(1)}%
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Desktop: table */}
-          <div className="hidden lg:block rounded-[20px] overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm" style={{ minWidth: '560px' }}>
-                <colgroup>
-                  <col style={{ width: '120px' }} />
-                  <col style={{ width: 'auto' }} />
-                  <col style={{ width: '140px' }} />
-                  <col style={{ width: '140px' }} />
-                  <col style={{ width: '80px' }} />
-                </colgroup>
-                <thead>
-                  <tr className="text-left border-b border-white/[0.06]">
-                    <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.date_col}</th>
-                    <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.desc_col}</th>
-                    <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-right">{t.income.amount_col}</th>
-                    <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.recurring_col}</th>
-                    <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.actions_col}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map(income => (
-                    <tr
-                      key={income.id}
-                      className="cursor-pointer transition-all duration-150 border-b border-white/[0.03] hover:bg-[var(--bg-elevated)]"
-                      onClick={() => openEdit(income)}
-                    >
-                      <td className="px-6 py-4 text-[#9D84D4] text-sm whitespace-nowrap">{formatDate(income.date)}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#34d399]/12 shrink-0">
-                            <Calendar size={14} className="text-[#34d399]" />
-                          </div>
-                          <span className="text-[#E2D9F3] font-medium">{income.label}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-mono font-semibold text-[#34d399] text-base">{formatAmount(income.amount)}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
-                        {income.recurring ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
-                            <Repeat size={11} /> {t.income.recurringBadge}
-                          </span>
-                        ) : (
-                          <Minus size={14} className="text-[#9D84D4] mx-auto" />
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
-                            <Edit2 size={14} />
-                          </button>
-                          <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Count */}
+            <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#A78BFA]/15 shrink-0">
+                <Hash size={16} className="text-[#A78BFA]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.records}</p>
+                <p className="font-mono font-bold text-[#A78BFA]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)' }}>
+                  {incomes.length}
+                </p>
+              </div>
+            </div>
+
+            {/* Average */}
+            <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#60a5fa]/15 shrink-0">
+                <Repeat size={16} className="text-[#60a5fa]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.avgLabel}</p>
+                <p className="font-mono font-bold text-[#60a5fa]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+                  {formatAmount(avgAmount)}
+                </p>
+                <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.income.perItem}</p>
+              </div>
             </div>
           </div>
-        </>
-      )}
+
+          {/* 12-month Bar Chart */}
+          {yearlyData.length > 0 && (
+            <div className="rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08]">
+              <h3 className="text-sm font-semibold text-[#E2D9F3] mb-4">{t.income.yearlyChart}</h3>
+              <div style={{ height: 140 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={yearlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+                    <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: '#9D84D4', fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
+                      itemStyle={{ color: '#10b981' }}
+                      formatter={(v) => [formatAmount(Number(v ?? 0)), t.income.totalLabel]}
+                    />
+                    <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Recurring section (mobile only — desktop shows right panel) */}
+          <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.08] overflow-hidden lg:hidden">
+            <div className="px-4 py-3.5 border-b border-white/[0.06] flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#E2D9F3]">{t.income.recurringSection}</h3>
+              <span className="text-xs text-[#9D84D4]">{recurringIncomes.length}</span>
+            </div>
+            {recurringIncomes.length === 0 ? (
+              <p className="px-4 py-4 text-sm text-[#9D84D4]">{t.income.noRecurring}</p>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {recurringIncomes.map(inc => (
+                  <div
+                    key={inc.id}
+                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                    onClick={() => openEdit(inc)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#60a5fa]/12 shrink-0">
+                        <Repeat size={14} className="text-[#60a5fa]" />
+                      </div>
+                      <span className="text-sm font-medium text-[#E2D9F3]">{inc.label}</span>
+                    </div>
+                    <span className="font-mono text-sm font-semibold text-[#34d399]">{formatAmount(inc.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Main list or empty state */}
+          {sorted.length === 0 ? (
+            <div className="card">
+              <div className="empty-state">
+                <span className="empty-state-emoji">💰</span>
+                <p className="empty-state-title">{t.income.noIncome}</p>
+                <p className="empty-state-subtitle">{t.income.noIncomeSubtitle}</p>
+                <button onClick={openAdd} className="btn-primary mt-2 rounded-2xl px-6 py-2.5">
+                  <Plus size={16} />
+                  {t.income.add}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Mobile: weekly-grouped card list */}
+              <div className="flex flex-col gap-4 lg:hidden">
+                {groups.map(({ group, items }) => (
+                  <div key={group}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] px-1 mb-2">
+                      {groupLabel(group)}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {items.map((income, idx) => (
+                        <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)}>
+                          <div
+                            className="flex items-center justify-between px-4 py-4 rounded-[18px] cursor-pointer transition-all duration-150 fade-up bg-[var(--bg-surface)] border border-white/[0.08]"
+                            style={{ animationDelay: `${idx * 40}ms`, minHeight: '64px' }}
+                            onClick={() => openEdit(income)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
+                                <Calendar size={18} className="text-[#34d399]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{income.label}</p>
+                                <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(income.date)}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="font-mono font-semibold text-sm text-[#34d399]">{formatAmount(income.amount)}</span>
+                                {income.recurring && (
+                                  <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
+                                    <Repeat size={9} /> {t.income.recurringBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
+                                <Edit2 size={14} />
+                              </button>
+                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </SwipeableRow>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden lg:block rounded-[20px] overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm" style={{ minWidth: '480px' }}>
+                    <colgroup>
+                      <col style={{ width: '110px' }} />
+                      <col style={{ width: 'auto' }} />
+                      <col style={{ width: '130px' }} />
+                      <col style={{ width: '110px' }} />
+                      <col style={{ width: '70px' }} />
+                    </colgroup>
+                    <thead>
+                      <tr className="text-left border-b border-white/[0.06]">
+                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.date_col}</th>
+                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.desc_col}</th>
+                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-right">{t.income.amount_col}</th>
+                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.recurring_col}</th>
+                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.actions_col}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sorted.map(income => (
+                        <tr
+                          key={income.id}
+                          className="cursor-pointer transition-all duration-150 border-b border-white/[0.03] hover:bg-[var(--bg-elevated)]"
+                          onClick={() => openEdit(income)}
+                        >
+                          <td className="px-4 py-3.5 text-[#9D84D4] text-sm whitespace-nowrap">{formatDate(income.date)}</td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#34d399]/12 shrink-0">
+                                <Calendar size={13} className="text-[#34d399]" />
+                              </div>
+                              <span className="text-[#E2D9F3] font-medium text-sm">{income.label}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-right">
+                            <span className="font-mono font-semibold text-[#34d399]">{formatAmount(income.amount)}</span>
+                          </td>
+                          <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
+                            {income.recurring ? (
+                              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
+                                <Repeat size={9} /> {t.income.recurringBadge}
+                              </span>
+                            ) : (
+                              <Minus size={14} className="text-[#9D84D4] mx-auto" />
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
+                                <Edit2 size={13} />
+                              </button>
+                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
+        </div>
+
+        {/* ── Right panel — desktop only ── */}
+        <div className="hidden lg:flex flex-col gap-4 sticky top-4">
+
+          {/* Card 1: Ročný príjem */}
+          <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
+            <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📅 Ročný príjem {year}</p>
+            </div>
+            <div className="px-4 py-4">
+              <p className="font-mono font-bold text-2xl text-[#34d399] mb-1">{formatAmount(yearlyIncome)}</p>
+              <p className="text-xs text-[#9D84D4]">Celkový príjem za rok {year}</p>
+            </div>
+          </div>
+
+          {/* Card 2: Opakujúce sa príjmy */}
+          <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
+            <div className="px-4 pt-4 pb-3 border-b border-white/[0.06] flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">🔁 Opakujúce sa</p>
+              <span className="text-xs text-[#9D84D4] font-mono">{recurringIncomes.length}×</span>
+            </div>
+            {recurringIncomes.length === 0 ? (
+              <p className="px-4 py-4 text-xs text-[#9D84D4]">{t.income.noRecurring}</p>
+            ) : (
+              <>
+                <div className="divide-y divide-white/[0.04]">
+                  {recurringIncomes.map(inc => (
+                    <div
+                      key={inc.id}
+                      className="flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                      onClick={() => openEdit(inc)}
+                    >
+                      <span className="text-xs font-medium text-[#E2D9F3] truncate mr-2">{inc.label}</span>
+                      <span className="font-mono text-xs font-semibold text-[#34d399] shrink-0">{formatAmount(inc.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="flex items-center justify-between px-4 py-3"
+                  style={{ borderTop: '1px solid rgba(167,139,250,0.15)', background: 'rgba(167,139,250,0.05)' }}
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9D84D4]">Mesačne</span>
+                  <span className="font-mono font-bold text-sm text-[#34d399]">{formatAmount(recurringMonthlyTotal)}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Card 3: Prognóza */}
+          <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
+            <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📈 Ročná prognóza</p>
+            </div>
+            <div className="px-4 py-4 flex flex-col gap-2">
+              <p className="font-mono font-bold text-2xl text-[#A78BFA]">{formatAmount(yearlyProjection)}</p>
+              <p className="text-xs text-[#9D84D4]">
+                {recurringIncomes.length > 0
+                  ? `${recurringIncomes.length} opak. príjmov × 12 mesiacov`
+                  : 'Žiadne opakujúce sa príjmy'}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
       {/* FAB — only on mobile, hidden when sheet is open */}
       {!sheetOpen && sorted.length > 0 && (
         <button
           onClick={openAdd}
           className="lg:hidden fixed right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] border-none cursor-pointer flex items-center justify-center z-50 text-white transition-all duration-200"
-          style={{ bottom: 'calc(90px + env(safe-area-inset-bottom, 16px))', boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
+          style={{ bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

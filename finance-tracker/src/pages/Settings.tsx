@@ -764,16 +764,16 @@ export function SettingsPage() {
       </div>
 
       {/* ── FOOTER BUTTONS ── */}
-      <div className="fixed right-6 flex gap-3 z-40 settings-footer">
+      <div className="flex justify-end gap-3 mt-4 pb-2">
         <button
           onClick={() => setShowChangelog(true)}
-          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer shadow-lg"
+          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
         >
           Changelog
         </button>
         <button
           onClick={() => setShowAbout(true)}
-          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer shadow-lg"
+          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
         >
           O aplikácii
         </button>

@@ -493,27 +493,34 @@ html.light [class~="text-[#B8A3E8]"] { color: var(--text-secondary) !important; 
 html.light [class~="text-[#9D84D4]"] { color: var(--text-secondary) !important; }
 html.light [class~="text-[#6B5A9E]"] { color: var(--text-muted) !important; }
 
+/* Light theme — semantic color overrides (Fix 1: hero card amounts visible on light bg) */
+html.light [class~="text-[#34D399]"] { color: #059669 !important; }
+html.light [class~="text-[#34d399]"] { color: #059669 !important; }
+html.light [class~="text-[#F87171]"] { color: #dc2626 !important; }
+html.light [class~="text-[#f87171]"] { color: #dc2626 !important; }
+html.light [class~="text-[#A78BFA]"] { color: #7c3aed !important; }
+html.light [class~="text-[#a78bfa]"] { color: #7c3aed !important; }
+html.light [class~="text-[#60a5fa]"] { color: #2563eb !important; }
+html.light [class~="text-[#FB923C]"] { color: #ea580c !important; }
+
+/* Light theme — danger zone (Fix 2: red Tailwind classes visible on light bg) */
+html.light [class~="text-red-400"] { color: #dc2626 !important; }
+html.light [class~="bg-red-500/5"]  { background-color: rgba(220,38,38,0.06) !important; }
+html.light [class~="bg-red-500/10"] { background-color: rgba(254,226,226,0.6) !important; }
+html.light [class~="bg-red-500/20"] { background-color: rgba(254,202,202,0.7) !important; }
+html.light [class~="border-red-500/20"] { border-color: rgba(220,38,38,0.25) !important; }
+html.light [class~="border-red-500/30"] { border-color: rgba(220,38,38,0.35) !important; }
+
 /* ── Mobile content area padding (replaces pt-14/pb-20 Tailwind classes) ── */
 .content-main {
-  padding-top: calc(56px + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px));
+  padding-top: calc(64px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px));
 }
 
 @media (min-width: 1024px) {
   .content-main {
     padding-top: 16px;
     padding-bottom: 0;
-  }
-}
-
-/* ── Settings footer buttons — above bottom nav on mobile ── */
-.settings-footer {
-  bottom: 24px;
-}
-
-@media (max-width: 1023px) {
-  .settings-footer {
-    bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   }
 }
 

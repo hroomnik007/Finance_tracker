@@ -530,7 +530,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           onClick={openAdd}
           className="lg:hidden fixed right-6 w-14 h-14 rounded-full border-0 cursor-pointer flex items-center justify-center text-white z-50 transition-all"
           style={{
-            bottom: 'calc(90px + env(safe-area-inset-bottom, 16px))',
+            bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))',
             background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
             boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
           }}
