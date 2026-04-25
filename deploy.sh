@@ -82,19 +82,16 @@ deploy_backend() {
     ok "Backend files deployed"
 
     log "Running database migrations..."
-    cd "${BACKEND_DEST}"
-    # drizzle-kit reads DATABASE_URL from the .env in BACKEND_DEST
+    # Run migrations from BACKEND_SRC where drizzle-kit (dev dep) is installed,
+    # using the .env from BACKEND_SRC which has the real DATABASE_URL.
+    cd "${BACKEND_SRC}"
     npx drizzle-kit migrate
     ok "Migrations applied"
 
-    log "Restarting backend via PM2..."
-    if pm2 describe "${API_NAME}" > /dev/null 2>&1; then
-        pm2 restart "${API_NAME}"
-    else
-        pm2 start "${BACKEND_DEST}/ecosystem.config.js" --env production
-    fi
-    pm2 save
-    ok "PM2 process '${API_NAME}' running"
+    log "Rebuilding Docker container..."
+    cd "$(dirname "${BACKEND_SRC}")"
+    docker compose up --build -d backend
+    ok "Docker container rebuilt and running"
 
     echo ""
     echo "  Backend live at https://api.pedani.eu"
