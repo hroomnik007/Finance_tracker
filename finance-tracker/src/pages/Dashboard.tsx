@@ -621,31 +621,27 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT — grid, hidden on mobile
       ════════════════════════════════════════ */}
-      <div className="hidden lg:flex lg:flex-col lg:gap-6">
+      <div className="hidden lg:grid grid-cols-[1fr_300px] gap-6 items-start">
 
-        {/* TOP: 60/40 — hero left, insights right */}
-        <div className="grid grid-cols-[60fr_40fr] gap-6">
-          <div className="flex flex-col gap-4">
-            {greetingRow}
-            <div className="grid grid-cols-3 gap-4">{heroCards}</div>
-            {statsStrip}
-          </div>
-          <div className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">{rightPanelCards}</div>
-        </div>
-
-        {/* MIDDLE: 40/60 — heatmap left, tabs+charts right */}
-        <div className="grid grid-cols-[40fr_60fr] gap-6">
-          <div>{heatmapCard}</div>
+        {/* LEFT — all main content */}
+        <div className="flex flex-col gap-6">
+          {greetingRow}
+          <div className="grid grid-cols-3 gap-4">{heroCards}</div>
+          {statsStrip}
           <div className="flex flex-col gap-4">
             {tabPills}
             {activeTab === 'income' && incomeTabContent}
             {activeTab === 'expenses' && expenseCharts}
           </div>
+          {heatmapCard}
+          {pieChartCard}
+          {recentTransactions}
         </div>
 
-        {/* BOTTOM: full width */}
-        {pieChartCard}
-        {recentTransactions}
+        {/* RIGHT — sticky panel */}
+        <div className="flex flex-col gap-4 sticky top-6 self-start">
+          {rightPanelCards}
+        </div>
 
       </div>
 
