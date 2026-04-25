@@ -89,7 +89,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setInitializingAuth(true)
     refreshToken()
       .then(({ accessToken }) => {
         setAccessToken(accessToken)
