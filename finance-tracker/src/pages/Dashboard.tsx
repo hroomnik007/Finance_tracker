@@ -639,7 +639,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
 
         {/* RIGHT — sticky panel */}
-        <div className="flex flex-col gap-4 sticky top-6 self-start">
+        <div style={{position:'sticky', top:'24px', alignSelf:'start'}} className="flex flex-col gap-4">
           {rightPanelCards}
         </div>
 
