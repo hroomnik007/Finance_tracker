@@ -145,19 +145,17 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
 
   useEffect(() => {
     const months = getLast12Months()
-    Promise.all(
-      months.map(m =>
-        getTransactions({ type: 'income', month: m.key, limit: 200 })
-          .catch(() => ({ data: [] as Array<{ amount: number }>, total: 0 }))
-      )
-    ).then(results => {
-      setYearlyData(months.map((m, i) => ({
-        label: m.label,
-        total: results[i].data.reduce((s, t) => s + t.amount, 0),
-      })))
-      const prevTotal = results[10].data.reduce((s, t) => s + t.amount, 0)
-      setPrevMonthTotal(prevTotal > 0 ? prevTotal : null)
-    })
+    getTransactions({ type: 'income', limit: 1000 })
+      .then(({ data }) => {
+        setYearlyData(months.map(m => ({
+          label: m.label,
+          total: data.filter(t => (t.date ?? '').startsWith(m.key)).reduce((s, t) => s + t.amount, 0),
+        })))
+        const prevKey = months[10].key
+        const prevTotal = data.filter(t => (t.date ?? '').startsWith(prevKey)).reduce((s, t) => s + t.amount, 0)
+        setPrevMonthTotal(prevTotal > 0 ? prevTotal : null)
+      })
+      .catch(() => {})
   }, [])
 
   const openAdd = () => {

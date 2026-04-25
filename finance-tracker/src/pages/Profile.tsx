@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Pencil, Check, X } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
@@ -38,6 +38,12 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
   const [webauthnSupported] = useState(() => typeof window !== 'undefined' && !!window.PublicKeyCredential)
   const [webauthnRegistering, setWebauthnRegistering] = useState(false)
   const [webauthnMsg, setWebauthnMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
 
   function handleSaveProfile() {
     setProfile(profileNameDraft, profileAvatarDraft)
@@ -142,12 +148,12 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
           <p className="text-xs text-[#9d84d4]">{user?.email}</p>
 
           {/* Emoji picker row */}
-          <div className="flex gap-1.5 overflow-x-auto w-full justify-center pt-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none', padding: '8px 16px' }}>
             {AVATAR_OPTIONS.map(em => (
               <button
                 key={em}
                 onClick={() => setProfileAvatarDraft(em)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 cursor-pointer transition-transform hover:scale-110"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0 cursor-pointer transition-transform hover:scale-110"
                 style={{
                   border: profileAvatarDraft === em ? '1.5px solid #7c3aed' : '1.5px solid transparent',
                   background: profileAvatarDraft === em ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
@@ -160,11 +166,11 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Cards */}
-        <div className="flex flex-col gap-3 p-4">
+        <div className="flex flex-col pb-4">
 
           {/* Osobné údaje */}
           <div
-            className="rounded-xl overflow-hidden"
+            className="rounded-xl overflow-hidden mx-4 mb-3"
             style={{ background: '#0f0a1e', border: '1px solid rgba(255,255,255,0.07)' }}
           >
             <p className="text-[10px] uppercase tracking-widest text-[#6b5b8a] px-4 pt-3 pb-2">Osobné údaje</p>
@@ -213,7 +219,7 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
 
           {/* Bezpečnosť */}
           <div
-            className="rounded-xl overflow-hidden"
+            className="rounded-xl overflow-hidden mx-4 mb-3"
             style={{ background: '#0f0a1e', border: '1px solid rgba(255,255,255,0.07)' }}
           >
             <p className="text-[10px] uppercase tracking-widest text-[#6b5b8a] px-4 pt-3 pb-2">Bezpečnosť</p>
@@ -224,7 +230,7 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
                 <p className="text-sm font-medium text-[#E2D9F3]">{t.settings.changePassword}</p>
                 <button
                   onClick={() => setPasswordFormOpen(o => !o)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors text-[#A78BFA]"
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors text-[#A78BFA] flex-shrink-0 whitespace-nowrap"
                   style={{ border: '1px solid rgba(124,58,237,0.5)' }}
                 >
                   Zmeniť
@@ -328,7 +334,7 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
                       }
                     }}
                     disabled={webauthnRegistering}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors text-[#A78BFA] disabled:opacity-60"
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors text-[#A78BFA] disabled:opacity-60 flex-shrink-0 whitespace-nowrap"
                     style={{ border: '1px solid rgba(124,58,237,0.5)' }}
                   >
                     {webauthnRegistering ? 'Registrujem...' : 'Nastaviť'}
@@ -346,7 +352,7 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
           {/* Odznaky */}
           {user && (user.badges?.length ?? 0) > 0 && (
             <div
-              className="rounded-xl overflow-hidden"
+              className="rounded-xl overflow-hidden mx-4 mb-3"
               style={{ background: '#0f0a1e', border: '1px solid rgba(255,255,255,0.07)' }}
             >
               <p className="text-[10px] uppercase tracking-widest text-[#6b5b8a] px-4 pt-3 pb-2">Odznaky</p>
