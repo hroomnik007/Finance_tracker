@@ -485,7 +485,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <div className="flex items-center justify-between">
             <p className="text-xs text-[#6B5A9E]">Žiadne limity nastavené</p>
             <button
-              onClick={() => onNavigate('settings')}
+              onClick={() => onNavigate('categories')}
               className="text-xs text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 px-2 py-1 rounded-lg hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
             >
               Nastaviť

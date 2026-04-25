@@ -6,6 +6,7 @@ export interface CategoryPayload {
   type: 'income' | 'expense'
   color?: string
   icon?: string
+  budgetLimit?: number | null
 }
 
 export async function getCategories(): Promise<{ data: ApiCategory[] }> {

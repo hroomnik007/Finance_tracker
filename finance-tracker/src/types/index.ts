@@ -91,6 +91,7 @@ export interface ApiCategory {
   icon: string | null
   isDefault: boolean
   createdAt: string
+  budgetLimit?: number | null
 }
 
 export interface ApiTransaction {

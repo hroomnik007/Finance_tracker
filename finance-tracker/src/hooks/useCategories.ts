@@ -35,7 +35,8 @@ function toCategory(c: ApiCategory, limits: Record<string, number>): Category {
     color: c.color ?? '#9D84D4',
     icon: normalizeIcon(c.icon),
     type: c.type,
-    budgetLimit: limits[c.id],
+    // prefer server value; fall back to localStorage for backwards compatibility
+    budgetLimit: c.budgetLimit != null ? c.budgetLimit : limits[c.id],
   }
 }
 
@@ -53,15 +54,18 @@ export function useCategories() {
   useEffect(() => { load() }, [load])
 
   const addCategory = useCallback(async (category: Omit<Category, 'id'>): Promise<string> => {
+    const limit = category.budgetLimit && category.budgetLimit > 0 ? category.budgetLimit : undefined
     const { data } = await createCategory({
       name: category.name,
       type: category.type ?? 'expense',
       color: category.color,
       icon: category.icon,
+      budgetLimit: limit ?? null,
     })
-    if (category.budgetLimit !== undefined) {
+    // mirror to localStorage as fallback
+    if (limit !== undefined) {
       const limits = loadBudgetLimits()
-      limits[data.id] = category.budgetLimit
+      limits[data.id] = limit
       saveBudgetLimits(limits)
     }
     await load()
@@ -69,16 +73,18 @@ export function useCategories() {
   }, [load])
 
   const updateCategoryFn = useCallback(async (id: string, changes: Partial<Category>): Promise<void> => {
+    const apiChanges: { name?: string; color?: string; icon?: string; budgetLimit?: number | null } = {}
+    if (changes.name !== undefined) apiChanges.name = changes.name
+    if (changes.color !== undefined) apiChanges.color = changes.color
+    if (changes.icon !== undefined) apiChanges.icon = changes.icon
     if (changes.budgetLimit !== undefined) {
+      apiChanges.budgetLimit = changes.budgetLimit > 0 ? changes.budgetLimit : null
+      // mirror to localStorage as fallback
       const limits = loadBudgetLimits()
       if (changes.budgetLimit > 0) limits[id] = changes.budgetLimit
       else delete limits[id]
       saveBudgetLimits(limits)
     }
-    const apiChanges: { name?: string; color?: string; icon?: string } = {}
-    if (changes.name !== undefined) apiChanges.name = changes.name
-    if (changes.color !== undefined) apiChanges.color = changes.color
-    if (changes.icon !== undefined) apiChanges.icon = changes.icon
     if (Object.keys(apiChanges).length > 0) await updateCategory(id, apiChanges)
     await load()
   }, [load])
