@@ -70,7 +70,7 @@ function getGreeting(name: string): { text: string; emoji: string } {
 
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
-  const [activePieIndex, setActivePieIndex] = useState<number | null>(null)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
@@ -104,6 +104,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       color: cat.color,
     }))
     .filter(d => d.value > 0)
+
+  const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
+  const legendItems = sortedPieData.slice(0, 5)
+  const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
 
   useEffect(() => {
     const months = getLast6Months()
@@ -143,7 +147,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={index === activePieIndex ? outerRadius + 12 : outerRadius}
+        outerRadius={index === activeIndex ? outerRadius + 6 : outerRadius}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -394,8 +398,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               dataKey="value"
               startAngle={90}
               endAngle={-270}
+              {...(activeIndex !== null ? { activeIndex } : {})}
               activeShape={renderPieShape}
-              onClick={(_: unknown, index: number) => setActivePieIndex(prev => prev === index ? null : index)}
+              onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
               style={{ cursor: 'pointer' }}
             >
               {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
@@ -403,12 +409,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          {activePieIndex !== null && pieData[activePieIndex] ? (
+          {activeIndex !== null && pieData[activeIndex] ? (
             <>
-              <span className="text-xl mb-0.5">{pieData[activePieIndex].icon}</span>
-              <p className="text-xs text-[#9D84D4] font-medium">{pieData[activePieIndex].name}</p>
-              <p className="font-mono font-bold text-sm text-white leading-tight mt-0.5">{formatAmount(pieData[activePieIndex].value)}</p>
-              <p className="text-[11px] text-[#9D84D4]">{Math.round((pieData[activePieIndex].value / totalVariable) * 100)}%</p>
+              <span className="text-xl mb-0.5">{pieData[activeIndex].icon}</span>
+              <p className="text-xs text-[#9D84D4] font-medium">{pieData[activeIndex].name}</p>
+              <p className="font-mono font-bold text-sm text-white leading-tight mt-0.5">{formatAmount(pieData[activeIndex].value)}</p>
+              <p className="text-[11px] text-[#9D84D4]">{Math.round((pieData[activeIndex].value / totalVariable) * 100)}%</p>
             </>
           ) : (
             <>
@@ -418,11 +424,22 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           )}
         </div>
       </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-2 mt-3">
+        {legendItems.map((item, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
+            <span className="text-xs text-[#B8A3E8]">{item.name}</span>
+          </div>
+        ))}
+      </div>
+      {remainingPieCount > 0 && (
+        <p className="text-xs text-[#A78BFA] mt-2">+ {remainingPieCount} ďalších kategórií →</p>
+      )}
     </div>
   ) : null
 
   const heatmapCard = (
-    <div className="bg-[#2A1F4A] rounded-2xl p-6 border border-white/5">
+    <div className="bg-[#2A1F4A] rounded-2xl p-3 border border-white/5">
       <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
     </div>
   )
@@ -583,10 +600,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   )
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-6 pb-4 w-full">
+    <div className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
-      {/* ── HEADER ROW — full width always ── */}
-      <div className="flex items-center justify-between gap-3">
+      {/* ── MOBILE HEADER — mobile only ── */}
+      <div className="flex items-center justify-between gap-3 lg:hidden">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
         <button
           onClick={() => setRefreshKey(k => k + 1)}
@@ -594,6 +611,38 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         >
           Aktualizovať
         </button>
+      </div>
+
+      {/* ── DESKTOP TOP BAR — desktop only ── */}
+      <div
+        className="hidden lg:flex items-center justify-between"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '16px 0', marginBottom: '24px' }}
+      >
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-[#4C3A8A]" />
+            ) : (
+              <span className="text-xl">{profileAvatar}</span>
+            )}
+            <span className="text-xl font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
+            {(user?.currentStreak ?? 0) > 0 && (
+              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0">
+                🔥 {user!.currentStreak}
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-[#9D84D4] ml-10">{todayStr}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+          <button
+            onClick={() => setRefreshKey(k => k + 1)}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
+          >
+            Aktualizovať
+          </button>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════
@@ -625,7 +674,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
         {/* LEFT — all main content */}
         <div className="flex flex-col gap-6">
-          {greetingRow}
           <div className="grid grid-cols-3 gap-4">{heroCards}</div>
           {statsStrip}
           <div className="flex flex-col gap-4">
@@ -639,7 +687,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
 
         {/* RIGHT — sticky panel */}
-        <div style={{position:'sticky', top:'24px', alignSelf:'start', minHeight:'100%'}} className="flex flex-col gap-4">
+        <div
+          style={{ position: 'sticky', top: '24px', alignSelf: 'start', background: '#0d0920', borderLeft: '2px solid #1e1535', padding: '20px 16px' }}
+          className="flex flex-col gap-4"
+        >
           {rightPanelCards}
         </div>
 
