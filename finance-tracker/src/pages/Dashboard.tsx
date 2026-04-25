@@ -192,7 +192,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   })()
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-6 pb-4 w-full">
+    <div className="flex flex-col gap-4 lg:gap-6 pb-4 w-full max-w-[1400px] mx-auto">
 
       {/* ── HEADER ROW ── */}
       <div className="flex items-center justify-between gap-3">
@@ -227,9 +227,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Saldo */}
-        <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08] flex flex-col gap-2">
+        <div className="bg-[#2A1F4A] rounded-2xl p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">Zostatok</p>
-          <p className={`font-bold text-2xl font-mono leading-none ${balance >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
+          <p className={`font-bold text-3xl font-mono leading-none ${balance >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
             {formatAmount(balance)}
           </p>
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full w-fit ${balance >= 0 ? 'bg-[#34D399]/15 text-[#34D399]' : 'bg-[#F87171]/15 text-[#F87171]'}`}>
@@ -253,9 +253,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
 
         {/* Príjmy */}
-        <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08] flex flex-col gap-2">
+        <div className="bg-[#2A1F4A] rounded-2xl p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.nav.income}</p>
-          <p className="font-bold text-2xl font-mono text-[#34D399] leading-none">{formatAmount(totalIncome)}</p>
+          <p className="font-bold text-3xl font-mono text-[#34D399] leading-none">{formatAmount(totalIncome)}</p>
           {incomeChange !== null && (
             <div className={`flex items-center gap-1 text-xs font-medium ${incomeChange >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
               {incomeChange >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
@@ -265,9 +265,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
 
         {/* Výdavky */}
-        <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08] flex flex-col gap-2">
+        <div className="bg-[#2A1F4A] rounded-2xl p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.nav.expenses}</p>
-          <p className="font-bold text-2xl font-mono text-[#F87171] leading-none">{formatAmount(totalExpenses)}</p>
+          <p className="font-bold text-3xl font-mono text-[#F87171] leading-none">{formatAmount(totalExpenses)}</p>
           {expensesChange !== null && (
             <div className={`flex items-center gap-1 text-xs font-medium ${expensesChange <= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
               {expensesChange >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
@@ -278,18 +278,18 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       </div>
 
       {/* ── QUICK STATS STRIP ── */}
-      <div className="bg-[#2A1F4A] rounded-2xl border border-white/[0.08] grid grid-cols-3 divide-x divide-white/[0.08]">
-        <div className="flex flex-col items-center py-3 px-4 text-center">
+      <div className="bg-white/[0.06] rounded-2xl border border-white/5 grid grid-cols-3 gap-px overflow-hidden">
+        <div className="flex flex-col items-center py-3 px-4 text-center bg-[#2A1F4A]">
           <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">Ø / deň</p>
           <p className="font-mono font-semibold text-[#A78BFA] text-sm">{formatAmount(dailyAvgExpense)}</p>
         </div>
-        <div className="flex flex-col items-center py-3 px-4 text-center">
+        <div className="flex flex-col items-center py-3 px-4 text-center bg-[#2A1F4A]">
           <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">Najväčší výdavok</p>
           <p className="font-mono font-semibold text-[#F87171] text-sm">
             {biggestExpense ? formatAmount(biggestExpense.amount) : '—'}
           </p>
         </div>
-        <div className="flex flex-col items-center py-3 px-4 text-center">
+        <div className="flex flex-col items-center py-3 px-4 text-center bg-[#2A1F4A]">
           <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">Transakcií</p>
           <p className="font-semibold text-[#E2D9F3] text-sm">{variableExpenses.length}</p>
         </div>
@@ -403,7 +403,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
               )}
 
               {pieData.length > 0 && (
-                <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
+                <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5 min-h-[320px]">
                   <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.expensesByCategory}</h3>
                   <div className="relative" style={{ height: 'clamp(220px, 30vw, 320px)' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -445,7 +445,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                 </div>
               )}
 
-              <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
+              <div className="bg-[#2A1F4A] rounded-2xl p-6 border border-white/5">
+                <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
+              </div>
             </div>
           )}
         </div>
