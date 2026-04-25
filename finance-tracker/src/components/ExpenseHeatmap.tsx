@@ -69,7 +69,7 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
       </p>
 
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 14px)', gap: 3, marginBottom: 3 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
         {DAYS_SK.map(d => (
           <div key={d} style={{ textAlign: 'center', fontSize: 10, color: '#6B5A9E', fontWeight: 600, padding: '2px 0' }}>
             {d}
@@ -78,12 +78,12 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
       </div>
 
       {/* Weeks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, position: 'relative', maxHeight: 120, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, position: 'relative', maxHeight: 160, overflow: 'hidden' }}>
         {weeks.map((week, wi) => (
-          <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 14px)', gap: 3 }}>
+          <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
             {week.map((day, di) => {
               if (day === null) {
-                return <div key={di} style={{ width: 14, height: 14, borderRadius: 3 }} />
+                return <div key={di} style={{ height: 12, borderRadius: 3 }} />
               }
               const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
               const amount = dailyTotals[dateStr] || 0
@@ -94,8 +94,7 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
                 <div
                   key={di}
                   style={{
-                    width: 14,
-                    height: 14,
+                    height: 12,
                     borderRadius: 6,
                     backgroundColor: color,
                     cursor: amount > 0 ? 'pointer' : 'default',
