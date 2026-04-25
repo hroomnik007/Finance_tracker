@@ -681,8 +681,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             {activeTab === 'income' && incomeTabContent}
             {activeTab === 'expenses' && expenseCharts}
           </div>
-          {heatmapCard}
-          {pieChartCard}
+          <div className="grid grid-cols-2 gap-4">
+            {heatmapCard}
+            {pieChartCard}
+          </div>
           {recentTransactions}
         </div>
 
