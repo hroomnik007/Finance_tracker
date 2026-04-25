@@ -630,7 +630,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             <div className="grid grid-cols-3 gap-4">{heroCards}</div>
             {statsStrip}
           </div>
-          <div className="flex flex-col gap-4">{rightPanelCards}</div>
+          <div className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">{rightPanelCards}</div>
         </div>
 
         {/* MIDDLE: 40/60 — heatmap left, tabs+charts right */}
