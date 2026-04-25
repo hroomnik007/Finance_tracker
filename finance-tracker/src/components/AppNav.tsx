@@ -39,11 +39,11 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
       {/* Logo */}
       <div
         className={`flex items-center pt-6 pb-5 ${collapsed ? 'justify-center px-3' : 'px-5'}`}
-        style={{ borderBottom: '0.5px solid #4C3A8A' }}
+        style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
       >
         <img src="/logo.svg" alt="Finvu" className="w-8 h-8 shrink-0" />
         {!collapsed && (
-          <span className="ml-2 font-bold text-lg tracking-tight text-[#E2D9F3] whitespace-nowrap">Finvu</span>
+          <span className="ml-2 font-bold text-lg tracking-tight whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>Finvu</span>
         )}
       </div>
 

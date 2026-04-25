@@ -427,30 +427,49 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* ── Compact mode ── */
+/* ── Compact mode CSS variables ── */
+html:not(.compact) {
+  --card-padding: 20px;
+  --row-padding-y: 14px;
+  --gap-size: 16px;
+}
+
+html.compact {
+  --card-padding: 12px;
+  --row-padding-y: 8px;
+  --gap-size: 12px;
+}
+
 html.compact body {
   font-size: 13px;
 }
 
 html.compact .card {
-  padding: 12px;
+  padding: var(--card-padding);
 }
 
 /* ── Light theme ── */
 html.light {
-  --bg-primary: #f4f2ff;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f7;
   --bg-card: #ffffff;
-  --bg-card-hover: #ece8ff;
-  --bg-base: #f4f2ff;
+  --bg-card-hover: #f0f0f5;
+  --bg-elevated: #f0f0f5;
+  --bg-base: #f5f5f7;
   --bg-surface: #ffffff;
-  --bg-elevated: #e8e3ff;
   --bg-hover: #e8e3ff;
-  --text-primary: #1a1035;
-  --text-secondary: #3d2e8a;
-  --text-muted: #6b5a9e;
-  --text-hint: #9d84d4;
-  --border-subtle: #c9bef5;
-  --border-medium: #a78bfa;
+
+  --text-primary: #0f0a1e;
+  --text-secondary: #4a4560;
+  --text-muted: #8b85a8;
+  --text-hint: #8b85a8;
+
+  --border-subtle: rgba(0, 0, 0, 0.12);
+  --border-medium: rgba(0, 0, 0, 0.22);
+  --border-color: rgba(0, 0, 0, 0.1);
+
+  --sidebar-bg: #f5f5f7;
+  --nav-active-bg: rgba(124, 58, 237, 0.1);
 }
 
 html.light body,
@@ -459,7 +478,42 @@ html.light #root {
   color: var(--text-primary);
 }
 
-html.light main {
-  background: var(--bg-primary) !important;
+/* Light theme — background overrides for hardcoded dark Tailwind classes */
+html.light [class~="bg-[#1a1035]"] { background-color: var(--bg-card) !important; }
+html.light [class~="bg-[#0f0a1e]"] { background-color: var(--bg-primary) !important; }
+html.light [class~="bg-[#2A1F4A]"] { background-color: var(--bg-elevated) !important; }
+html.light [class~="bg-[#231840]"] { background-color: var(--bg-elevated) !important; }
+html.light [class~="bg-[#1A1230]"] { background-color: var(--bg-secondary) !important; }
+html.light [class~="bg-[#2D1F5E]"] { background-color: var(--bg-secondary) !important; }
+html.light [class~="bg-[#32265A]"] { background-color: var(--bg-secondary) !important; }
+
+/* Light theme — text overrides for hardcoded dark text Tailwind classes */
+html.light [class~="text-[#E2D9F3]"] { color: var(--text-primary) !important; }
+html.light [class~="text-[#B8A3E8]"] { color: var(--text-secondary) !important; }
+html.light [class~="text-[#9D84D4]"] { color: var(--text-secondary) !important; }
+html.light [class~="text-[#6B5A9E]"] { color: var(--text-muted) !important; }
+
+/* ── Mobile content area padding (replaces pt-14/pb-20 Tailwind classes) ── */
+.content-main {
+  padding-top: calc(56px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px));
+}
+
+@media (min-width: 1024px) {
+  .content-main {
+    padding-top: 16px;
+    padding-bottom: 0;
+  }
+}
+
+/* ── Settings footer buttons — above bottom nav on mobile ── */
+.settings-footer {
+  bottom: 24px;
+}
+
+@media (max-width: 1023px) {
+  .settings-footer {
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  }
 }
 

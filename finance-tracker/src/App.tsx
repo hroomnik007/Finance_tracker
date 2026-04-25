@@ -231,7 +231,7 @@ function App() {
       >
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />
-          <span className="font-bold text-lg tracking-tight text-[#E2D9F3]">Finvu</span>
+          <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>Finvu</span>
         </div>
         <button
           onClick={() => setIsProfileOpen(true)}
@@ -253,7 +253,7 @@ function App() {
         className="flex h-screen transition-all duration-200 ease-in-out"
         style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '64px' : '240px') : '0' }}
       >
-        <main className="flex-1 overflow-y-auto min-w-0 w-full pt-14 lg:pt-4 pb-20 lg:pb-0" style={{ background: '#0f0a1e' }}>
+        <main className="flex-1 overflow-y-auto min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)' }}>
           <div className="p-6 w-full h-full">
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
@@ -273,7 +273,7 @@ function App() {
               <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
             )}
             {page === 'categories' && <CategoriesPage />}
-            {page === 'settings' && <SettingsPage onLogout={handleLogout} />}
+            {page === 'settings' && <SettingsPage />}
           </div>
         </main>
 
@@ -295,7 +295,7 @@ function App() {
         <OnboardingTutorial onComplete={() => { completeOnboarding(); setShowTutorial(false) }} />
       )}
 
-      {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} />}
+      {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} onLogout={handleLogout} />}
     </div>
   )
 }

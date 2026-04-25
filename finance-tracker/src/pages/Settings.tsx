@@ -86,7 +86,7 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 
 function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
   return (
-    <div className="px-5 pt-4 pb-3 border-b border-white/[0.06]">
+    <div className="border-b border-white/[0.06]" style={{ padding: 'var(--row-padding-y, 14px) var(--card-padding, 20px)' }}>
       <p className="text-xs uppercase tracking-wider text-purple-300/60 font-semibold">
         {emoji} {label}
       </p>
@@ -96,7 +96,7 @@ function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
 
 function SettingRow({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-3.5">
+    <div className="flex items-center justify-between" style={{ gap: 'var(--gap-size, 16px)', padding: 'var(--row-padding-y, 14px) var(--card-padding, 20px)' }}>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-[#E2D9F3]">{label}</p>
         {sublabel && <p className="text-xs text-[#9D84D4] mt-0.5">{sublabel}</p>}
@@ -173,11 +173,7 @@ type DangerAction = 'expenses' | 'incomes' | 'reset'
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-interface SettingsPageProps {
-  onLogout?: () => void
-}
-
-export function SettingsPage({ onLogout }: SettingsPageProps) {
+export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail } = useAuth()
@@ -641,7 +637,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
                 <Toggle checked={monthlyEmail} onChange={handleMonthlyEmailToggle} disabled={monthlyEmailSaving} />
               </SettingRow>
             </div>
-            <div className="px-5 py-3 border-t border-white/[0.04]">
+            <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
               <p className="text-xs text-[#6B5A9E]">Notifikácie fungujú len keď je aplikácia otvorená</p>
             </div>
           </SectionCard>
@@ -654,7 +650,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           {/* Section 4: Dáta */}
           <SectionCard>
             <SectionHeader emoji="💾" label="Dáta" />
-            <div className="p-5 flex flex-col gap-4">
+            <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Export</p>
@@ -723,17 +719,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </div>
           </div>
 
-          {/* Logout */}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 cursor-pointer py-3"
-              style={{ background: 'transparent', border: '1px solid #F87171', color: '#F87171' }}
-            >
-              {t.auth.logout}
-            </button>
-          )}
-
           {/* Delete account */}
           <SectionCard>
             <SectionHeader emoji="🗑️" label={t.settings.deleteAccount} />
@@ -779,7 +764,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       </div>
 
       {/* ── FOOTER BUTTONS ── */}
-      <div className="fixed bottom-6 right-6 flex gap-3 z-40">
+      <div className="fixed right-6 flex gap-3 z-40 settings-footer">
         <button
           onClick={() => setShowChangelog(true)}
           className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer shadow-lg"

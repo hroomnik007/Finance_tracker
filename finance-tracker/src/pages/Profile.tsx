@@ -18,7 +18,7 @@ const BADGE_LABELS: Record<string, { emoji: string; label: string }> = {
   transactions_100:  { emoji: '🏆', label: '100 transakcií' },
 }
 
-export function ProfileModal({ onClose }: { onClose: () => void }) {
+export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLogout?: () => void }) {
   const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { t } = useTranslation()
   const { user, refreshUser } = useAuth()
@@ -380,6 +380,18 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
+
+        {onLogout && (
+          <div className="px-4 pb-4">
+            <button
+              onClick={onLogout}
+              className="w-full py-3 rounded-xl text-sm font-semibold cursor-pointer transition-opacity hover:opacity-80"
+              style={{ border: '1px solid rgba(248,113,113,0.4)', color: '#F87171', background: 'transparent' }}
+            >
+              Odhlásiť sa
+            </button>
+          </div>
+        )}
 
         <PinSetupModal
           open={pinSetupOpen}

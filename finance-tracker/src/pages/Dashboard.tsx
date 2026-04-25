@@ -619,7 +619,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── DESKTOP TOP BAR — desktop only ── */}
       <div
         className="hidden lg:flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, zIndex: 20, background: '#0f0a1e', marginLeft: '-24px', marginRight: '-24px', paddingTop: '16px', paddingLeft: '24px', paddingRight: '24px', paddingBottom: '12px' }}
+        style={{ borderBottom: '1px solid var(--border-subtle)', position: 'sticky', top: 0, zIndex: 20, background: 'var(--bg-primary)', marginLeft: '-24px', marginRight: '-24px', paddingTop: '16px', paddingLeft: '24px', paddingRight: '24px', paddingBottom: '12px' }}
       >
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">

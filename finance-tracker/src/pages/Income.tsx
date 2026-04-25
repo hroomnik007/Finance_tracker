@@ -488,8 +488,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       {!sheetOpen && sorted.length > 0 && (
         <button
           onClick={openAdd}
-          className="lg:hidden fixed bottom-[88px] right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] border-none cursor-pointer flex items-center justify-center z-50 text-white transition-all duration-200"
-          style={{ boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
+          className="lg:hidden fixed right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] border-none cursor-pointer flex items-center justify-center z-50 text-white transition-all duration-200"
+          style={{ bottom: 'calc(90px + env(safe-area-inset-bottom, 16px))', boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

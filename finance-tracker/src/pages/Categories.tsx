@@ -331,7 +331,7 @@ export function CategoriesPage() {
           <button
             onClick={openAdd}
             style={{
-              position: 'fixed', bottom: '88px', right: '24px',
+              position: 'fixed', bottom: 'calc(90px + env(safe-area-inset-bottom, 16px))', right: '24px',
               width: '56px', height: '56px', borderRadius: '50%',
               background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
               border: 'none', cursor: 'pointer',
