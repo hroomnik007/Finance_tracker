@@ -621,7 +621,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT — grid, hidden on mobile
       ════════════════════════════════════════ */}
-      <div className="hidden lg:grid gap-6 items-start" style={{ gridTemplateColumns: '1fr 300px' }}>
+      <div className="hidden lg:grid gap-6 items-start" style={{ gridTemplateColumns: 'minmax(0, 1fr) clamp(240px, 22vw, 340px)' }}>
 
         {/* LEFT — all main content */}
         <div className="flex flex-col gap-6">
