@@ -77,7 +77,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
-  const [refreshKey, setRefreshKey] = useState(0)
 
   const { incomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -128,7 +127,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           })
         )
       })
-  }, [refreshKey])
+  }, [month, year])
 
   useEffect(() => {
     const days = getLast7Days()
@@ -387,63 +386,66 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const pieChartCard = pieData.length > 0 ? (
     <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5" style={{ alignSelf: 'start' }}>
       <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.expensesByCategory}</h3>
-      <div className="relative" style={{ height: 200, margin: '0 auto' }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={3}
-              dataKey="value"
-              startAngle={90}
-              endAngle={-270}
-              {...(activeIndex !== null ? { activeIndex } : {})}
-              activeShape={renderPieShape}
-              onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
-              onMouseLeave={() => setActiveIndex(null)}
-              style={{ cursor: 'pointer' }}
-            >
-              {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          {activeIndex !== null && pieData[activeIndex] ? (
-            <>
-              <span className="text-xl mb-0.5">{pieData[activeIndex].icon}</span>
-              <p className="text-xs text-[#9D84D4] font-medium">{pieData[activeIndex].name}</p>
-              <p className="font-mono font-bold text-sm text-white leading-tight mt-0.5">{formatAmount(pieData[activeIndex].value)}</p>
-              <p className="text-[11px] text-[#9D84D4]">{Math.round((pieData[activeIndex].value / totalVariable) * 100)}%</p>
-            </>
-          ) : (
-            <>
-              <p className="font-mono font-bold text-base text-white leading-tight">{formatAmount(totalVariable)}</p>
-              <p className="text-xs text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
-            </>
+      <div className="flex items-center gap-3">
+        {/* Legend LEFT */}
+        <div className="flex flex-col gap-2 flex-1 min-w-0 justify-center">
+          {legendItems.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 min-w-0">
+              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
+              <span className="text-xs text-[#B8A3E8] truncate flex-1">{item.name}</span>
+              <span className="text-xs font-mono text-[#E2D9F3] shrink-0">{formatAmount(item.value)}</span>
+            </div>
+          ))}
+          {remainingPieCount > 0 && (
+            <p className="text-xs text-[#A78BFA]">+ {remainingPieCount} ďalších →</p>
           )}
         </div>
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-2 mt-3">
-        {legendItems.map((item, i) => (
-          <div key={i} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
-            <span className="text-xs text-[#B8A3E8]">{item.name}</span>
+        {/* Donut RIGHT */}
+        <div className="relative shrink-0" style={{ width: 190, height: 190 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={55}
+                outerRadius={90}
+                paddingAngle={3}
+                dataKey="value"
+                startAngle={90}
+                endAngle={-270}
+                {...(activeIndex !== null ? { activeIndex } : {})}
+                activeShape={renderPieShape}
+                onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+                style={{ cursor: 'pointer' }}
+              >
+                {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {activeIndex !== null && pieData[activeIndex] ? (
+              <>
+                <span className="text-lg mb-0.5">{pieData[activeIndex].icon}</span>
+                <p className="text-[10px] text-[#9D84D4] font-medium text-center px-1">{pieData[activeIndex].name}</p>
+                <p className="font-mono font-bold text-xs text-white leading-tight mt-0.5">{formatAmount(pieData[activeIndex].value)}</p>
+                <p className="text-[10px] text-[#9D84D4]">{Math.round((pieData[activeIndex].value / totalVariable) * 100)}%</p>
+              </>
+            ) : (
+              <>
+                <p className="font-mono font-bold text-sm text-white leading-tight">{formatAmount(totalVariable)}</p>
+                <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
+              </>
+            )}
           </div>
-        ))}
+        </div>
       </div>
-      {remainingPieCount > 0 && (
-        <p className="text-xs text-[#A78BFA] mt-2">+ {remainingPieCount} ďalších kategórií →</p>
-      )}
     </div>
   ) : null
 
   const heatmapCard = (
-    <div className="bg-[#2A1F4A] rounded-2xl p-3 border border-white/5" style={{ alignSelf: 'start' }}>
-      <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
-    </div>
+    <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
   )
 
   const rightPanelCards = (
@@ -615,12 +617,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* ── MOBILE HEADER — mobile only ── */}
       <div className="flex items-center justify-between gap-3 lg:hidden">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <button
-          onClick={() => setRefreshKey(k => k + 1)}
-          className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
-        >
-          {t.dashboard.refresh}
-        </button>
       </div>
 
       {/* ── DESKTOP TOP BAR — desktop only ── */}
@@ -646,15 +642,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </div>
           <span className="text-xs text-[#9D84D4] ml-10">{todayStr}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-          <button
-            onClick={() => setRefreshKey(k => k + 1)}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
-          >
-            Aktualizovať
-          </button>
-        </div>
+        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
       </div>
 
       {/* ════════════════════════════════════════
@@ -676,7 +664,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           )}
         </div>
         <div className="flex flex-col gap-4">{rightPanelCards}</div>
-        {recentTransactions}
+        {activeTab === 'expenses' && recentTransactions}
       </div>
 
       {/* ════════════════════════════════════════
@@ -691,13 +679,18 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <div className="flex flex-col gap-4">
             {tabPills}
             {activeTab === 'income' && incomeTabContent}
-            {activeTab === 'expenses' && expenseCharts}
+            {activeTab === 'expenses' && (
+              <div className="flex flex-col gap-4">
+                {expenseCharts}
+                <div className="grid grid-cols-2 gap-4">
+                  {heatmapCard}
+                  {pieChartCard}
+                </div>
+                {recentTransactions}
+              </div>
+            )}
+            {activeTab === 'income' && recentTransactions}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {heatmapCard}
-            {pieChartCard}
-          </div>
-          {recentTransactions}
         </div>
 
         {/* RIGHT — sticky panel */}

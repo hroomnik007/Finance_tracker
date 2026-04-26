@@ -3,12 +3,8 @@ import { X, Check, Pencil } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
 import { updateAvatar, savePin, deletePin, webauthnRegisterOptions, webauthnRegisterVerify, updateUserSettings } from '../api/auth'
-import { getTransactions } from '../api/transactions'
-import { getCategories } from '../api/categories'
 import { useSettingsContext } from '../context/SettingsContext'
-import { useFormatters } from '../hooks/useFormatters'
 import { useAuth } from '../context/AuthContext'
-import type { ApiTransaction } from '../types'
 
 const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
 
@@ -36,17 +32,9 @@ function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
-interface Stats {
-  incomeCount: number
-  expenseCount: number
-  firstDate: string | null
-  categoryCount: number
-}
-
 export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLogout?: () => void }) {
   const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile, settings, updateSettings } = useSettingsContext()
   const { user, refreshUser } = useAuth()
-  const { formatDate, formatAmount } = useFormatters()
 
   const [profileNameDraft, setProfileNameDraft] = useState(user?.name || ctxName)
   const [profileAvatarDraft, setProfileAvatarDraft] = useState(() => {
@@ -71,9 +59,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [webauthnRegistering, setWebauthnRegistering] = useState(false)
   const [webauthnMsg, setWebauthnMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [lastTransactions, setLastTransactions] = useState<ApiTransaction[]>([])
   const [logoutConfirm, setLogoutConfirm] = useState(false)
+  const [pinRemoveConfirm, setPinRemoveConfirm] = useState(false)
   const [prefSaveOk, setPrefSaveOk] = useState(false)
 
   useEffect(() => {
@@ -82,27 +69,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     return () => document.removeEventListener('keydown', handleEsc)
   }, [onClose])
 
-  useEffect(() => {
-    Promise.all([
-      getTransactions({ limit: 10000 }),
-      getCategories(),
-    ]).then(([{ data: txs }, { data: cats }]) => {
-      const sorted = [...txs].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
-      const expenseCatIds = new Set(
-        txs.filter(t => t.type === 'expense' && t.categoryId).map(t => t.categoryId)
-      )
-      setStats({
-        incomeCount: txs.filter(t => t.type === 'income').length,
-        expenseCount: txs.filter(t => t.type === 'expense').length,
-        firstDate: sorted[0]?.date ?? null,
-        categoryCount: expenseCatIds.size || cats.length,
-      })
-      const recent = [...txs]
-        .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
-        .slice(0, 5)
-      setLastTransactions(recent)
-    }).catch(() => {})
-  }, [])
 
   async function handleSaveProfile() {
     setProfile(profileNameDraft, profileAvatarDraft)
@@ -316,31 +282,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               </div>
             </div>
 
-            {/* Štatistiky */}
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
-            >
-              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
-                  📊 Štatistiky účtu
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3 p-3">
-                {[
-                  { label: 'PRÍJMY', value: stats ? String(stats.incomeCount) : '—' },
-                  { label: 'VÝDAVKY', value: stats ? String(stats.expenseCount) : '—' },
-                  { label: 'PRVÝ ZÁZNAM', value: stats?.firstDate ? formatDate(stats.firstDate) : '—' },
-                  { label: 'KATEGÓRIE', value: stats ? String(stats.categoryCount) : '—' },
-                ].map((s, i) => (
-                  <div key={i} className="flex flex-col gap-1 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <p className="font-semibold text-[22px] leading-tight" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
-                    <p style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Bezpečnosť */}
             <div
               className="rounded-2xl overflow-hidden"
@@ -395,14 +336,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {(hasPinLogin || hasPin) && (
                         <button
-                          onClick={async () => {
-                            removePin()
-                            try { await deletePin() } catch { /* ok */ }
-                          }}
+                          onClick={() => setPinRemoveConfirm(true)}
                           className="text-xs font-medium px-2.5 py-1.5 rounded-lg cursor-pointer"
                           style={{ color: '#f87171', border: '1px solid rgba(248,113,113,0.4)' }}
                         >
-                          Odstrániť
+                          Zrušiť PIN
                         </button>
                       )}
                       <button
@@ -413,33 +351,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                         {hasPinLogin || hasPin ? 'Zmeniť PIN' : 'Nastaviť PIN'}
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                {/* Auto-zámok toggle */}
-                <div style={{ borderTopColor: 'var(--border-subtle)' }}>
-                  <div className="flex items-center justify-between px-4 py-3.5">
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Auto-zámok</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Zamkne aplikáciu po 5 min nečinnosti</p>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (hasPin) {
-                          removePin()
-                          try { await deletePin() } catch { /* ok */ }
-                        } else {
-                          setPinSetupOpen(true)
-                        }
-                      }}
-                      className="w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0"
-                      style={{
-                        background: hasPin ? 'var(--accent-color)' : '#32265A',
-                        border: hasPin ? '1px solid var(--accent-color)' : '1px solid #4C3A8A',
-                      }}
-                    >
-                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasPin ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
                   </div>
                 </div>
 
@@ -549,55 +460,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               </div>
             </div>
 
-            {/* Aktivita */}
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
-            >
-              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
-                  🕐 Posledná aktivita
-                </p>
-              </div>
-              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                {lastTransactions.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-6">
-                    <span style={{ fontSize: 28, opacity: 0.4 }}>📋</span>
-                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Zatiaľ žiadne záznamy.</p>
-                  </div>
-                ) : (
-                  lastTransactions.map(tx => (
-                    <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="text-xl shrink-0" style={{ lineHeight: 1 }}>
-                        {tx.categoryIcon ?? (tx.type === 'income' ? '💰' : '💸')}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>
-                          {tx.description || tx.categoryName || '—'}
-                        </p>
-                        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{formatDate(tx.date)}</p>
-                      </div>
-                      <span
-                        className="text-sm font-semibold shrink-0"
-                        style={{ color: tx.type === 'income' ? '#10b981' : '#f87171' }}
-                      >
-                        {tx.type === 'income' ? '+' : '-'}{formatAmount(tx.amount)}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                <button
-                  onClick={() => { window.location.hash = 'variable-expenses'; onClose() }}
-                  className="text-xs font-medium cursor-pointer transition-colors"
-                  style={{ color: 'var(--accent-color)', background: 'none', border: 'none' }}
-                >
-                  Zobraziť všetky →
-                </button>
-              </div>
-            </div>
-
             {/* Odznaky */}
             <div
               className="rounded-2xl overflow-hidden"
@@ -663,6 +525,44 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           }}
         />
       </div>
+
+      {/* PIN remove confirm */}
+      {pinRemoveConfirm && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setPinRemoveConfirm(false)}
+        >
+          <div
+            className="rounded-2xl p-6 w-full max-w-[320px]"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Zrušiť PIN?</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>PIN prihlásenie a zámok budú deaktivované.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPinRemoveConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: 'none' }}
+              >
+                Zrušiť
+              </button>
+              <button
+                onClick={async () => {
+                  setPinRemoveConfirm(false)
+                  removePin()
+                  if (user?.email) localStorage.removeItem(`pin_enabled_${user.email}`)
+                  try { await deletePin() } catch { /* ok */ }
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+                style={{ background: '#ef4444', color: 'white', border: 'none' }}
+              >
+                Zrušiť PIN
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Logout confirm */}
       {logoutConfirm && (

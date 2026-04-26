@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { VariableExpense } from '../types'
 import { useFormatters } from '../hooks/useFormatters'
+import { useTranslation } from '../i18n'
 
 interface ExpenseHeatmapProps {
   expenses: VariableExpense[]
@@ -28,16 +29,15 @@ function getDayColor(amount: number, maxAmount: number, isLight: boolean): strin
 }
 
 export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
-  const { formatAmount, formatDate } = useFormatters()
+  const { formatAmount } = useFormatters()
+  const { t } = useTranslation()
   const [tooltip, setTooltip] = useState<{ date: string; amount: number; x: number; y: number } | null>(null)
   const isLight = document.documentElement.classList.contains('light')
 
   const daysInMonth = new Date(year, month, 0).getDate()
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay()
-  // Convert Sunday=0 to Monday=0 week
   const startOffset = (firstDayOfMonth + 6) % 7
 
-  // Build daily totals
   const dailyTotals: Record<string, number> = {}
   for (const exp of expenses) {
     dailyTotals[exp.date] = (dailyTotals[exp.date] || 0) + exp.amount
@@ -45,12 +45,10 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
 
   const maxAmount = Math.max(...Object.values(dailyTotals), 1)
 
-  // Build grid: fill with null for empty cells before first day
   const cells: (number | null)[] = Array(startOffset).fill(null)
   for (let d = 1; d <= daysInMonth; d++) {
     cells.push(d)
   }
-  // Pad to complete last row
   while (cells.length % 7 !== 0) cells.push(null)
 
   const weeks: (number | null)[][] = []
@@ -58,20 +56,12 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
     weeks.push(cells.slice(i, i + 7))
   }
 
-  const monthDate = new Date(year, month - 1, 1)
-  const monthLabel = monthDate.toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })
+  const monthLabel = `${t.months[month - 1]} ${year}`
 
   return (
-    <div
-      style={{
-        background: 'var(--bg-card)',
-        border: '0.5px solid var(--border-subtle)',
-        borderRadius: 20,
-        padding: 16,
-      }}
-    >
-      <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 12 }}>
-        Heatmapa výdavkov
+    <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-5">
+      <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+        {t.dashboard.heatmapTitle}
       </h3>
       <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'capitalize' }}>
         {monthLabel}
@@ -142,17 +132,17 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
 
       {/* Legend */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
-        <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>Menej</span>
+        <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>{t.dashboard.heatmapLess}</span>
         {(isLight
           ? ['#E8E7F0', '#C4B8E8', '#9B82D4', '#7C3AED', '#5B21B6']
           : ['#1A1030', '#3C3489', '#6D28D9', '#7C3AED', '#A78BFA']
         ).map(c => (
           <div key={c} style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: c }} />
         ))}
-        <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>Viac</span>
+        <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>{t.dashboard.heatmapMore}</span>
       </div>
 
-      {/* Tooltip (portal-like fixed position) */}
+      {/* Tooltip */}
       {tooltip && (
         <div
           style={{
@@ -171,7 +161,7 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
             whiteSpace: 'nowrap',
           }}
         >
-          <div style={{ fontWeight: 600 }}>{formatDate(tooltip.date)}</div>
+          <div style={{ fontWeight: 600 }}>{tooltip.date}</div>
           <div style={{ color: '#F87171' }}>-{formatAmount(tooltip.amount)}</div>
         </div>
       )}

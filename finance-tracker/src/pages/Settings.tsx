@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Upload } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
@@ -264,6 +265,7 @@ export function SettingsPage() {
 
   // ── Section 4: Export ─────────────────────────────────────────────────────
   const [exportError, setExportError] = useState<string | null>(null)
+  const [csvSubMenuOpen, setCsvSubMenuOpen] = useState(false)
 
   async function handleExportJSON() {
     try {
@@ -324,6 +326,40 @@ export function SettingsPage() {
 
   function handleExportPDF() {
     window.print()
+  }
+
+  async function handleExportXlsx() {
+    try {
+      setExportError(null)
+      const [{ data: transactions }, { data: categories }] = await Promise.all([
+        getTransactions({ limit: 10000 }),
+        getCategories(),
+      ])
+      const incomesData = transactions.filter(t => t.type === 'income').map(t => ({
+        Dátum: t.date,
+        Popis: t.description ?? '',
+        Suma: t.amount,
+      }))
+      const expensesData = transactions.filter(t => t.type === 'expense' && !t.isFixed).map(t => ({
+        Dátum: t.date,
+        Kategória: t.categoryName ?? '',
+        Poznámka: t.description ?? '',
+        Suma: t.amount,
+      }))
+      const categoriesData = categories.map(c => ({
+        Ikona: c.icon,
+        Názov: c.name,
+        Typ: c.type,
+        Limit: c.budgetLimit ?? '',
+      }))
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(incomesData), 'Príjmy')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), 'Výdavky')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categoriesData), 'Kategórie')
+      XLSX.writeFile(wb, `finvu-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+    } catch {
+      setExportError('Export zlyhal. Skúste znova.')
+    }
   }
 
   async function handleShareReport() {
@@ -642,21 +678,36 @@ export function SettingsPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Export</p>
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={handleExportJSON} className="btn-secondary justify-center py-2.5 text-sm">
-                    📄 Exportovať JSON
+                    📄 {t.settings.exportJson}
                   </button>
                   <button onClick={handleExportPDF} className="btn-secondary justify-center py-2.5 text-sm">
-                    🖨️ Tlačiť / PDF
+                    🖨️ {t.settings.printPdf}
                   </button>
-                  <button onClick={handleExportCSVIncome} className="btn-secondary justify-center py-2.5 text-sm">
-                    📋 CSV — Príjmy
-                  </button>
-                  <button onClick={handleExportCSVExpenses} className="btn-secondary justify-center py-2.5 text-sm">
-                    📋 CSV — Výdavky
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => setCsvSubMenuOpen(o => !o)}
+                      className="btn-secondary justify-center py-2.5 text-sm w-full"
+                    >
+                      📋 {t.settings.exportCsv} {csvSubMenuOpen ? '▲' : '▼'}
+                    </button>
+                    {csvSubMenuOpen && (
+                      <div className="flex flex-col gap-1 pl-1">
+                        <button onClick={() => { handleExportCSVIncome(); setCsvSubMenuOpen(false) }} className="btn-secondary justify-center py-1.5 text-xs w-full">
+                          {t.settings.exportCsvIncome}
+                        </button>
+                        <button onClick={() => { handleExportCSVExpenses(); setCsvSubMenuOpen(false) }} className="btn-secondary justify-center py-1.5 text-xs w-full">
+                          {t.settings.exportCsvExpenses}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={handleExportXlsx} className="btn-secondary justify-center py-2.5 text-sm">
+                    📊 {t.settings.exportXlsx}
                   </button>
                 </div>
                 {user && (
                   <button onClick={handleShareReport} className="btn-primary w-full justify-center py-2.5 text-sm mt-2">
-                    🔗 Zdieľať prehľad
+                    🔗 {t.settings.shareOverview}
                   </button>
                 )}
                 {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
@@ -666,7 +717,7 @@ export function SettingsPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Import</p>
                 <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-2.5">
                   <Upload size={14} />
-                  Importovať JSON
+                  {t.settings.importJson}
                 </button>
                 {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
                 {importOk && <p className="text-xs text-emerald-400 mt-2">Import úspešný ✓</p>}

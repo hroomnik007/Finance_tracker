@@ -11,8 +11,6 @@ import { useAuth } from '../context/AuthContext'
 interface AppNavProps {
   current: Page
   onChange: (page: Page) => void
-  month: number
-  year: number
   collapsed: boolean
   onToggle: () => void
   onOpenProfile: () => void
@@ -26,7 +24,7 @@ function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
-export function AppNav({ current, onChange, month, year, collapsed, onToggle, onOpenProfile, mobileOpen, onMobileClose }: AppNavProps) {
+export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, mobileOpen, onMobileClose }: AppNavProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const expensesActive = EXPENSE_CHILDREN.includes(current)
@@ -172,30 +170,9 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
         />
       </nav>
 
-      {/* Bottom: month badge + avatar + toggle */}
+      {/* Bottom: avatar only */}
       <div className="mt-auto" style={{ borderTop: '0.5px solid var(--border-subtle)' }}>
-        {!collapsed && (
-          <div className="px-4 pt-3 pb-1">
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '4px 10px',
-              borderRadius: 20,
-              background: 'rgba(124,58,237,0.12)',
-              border: '1px solid rgba(124,58,237,0.25)',
-            }}>
-              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6B5A9E' }}>
-                {t.nav.currentMonth}
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA' }}>
-                {t.months[month - 1]} {year}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className={`flex py-3 ${collapsed ? 'flex-col items-center gap-3 px-2 pb-4' : 'flex-row items-center justify-between px-4 pb-4'}`}>
+        <div className={`flex py-4 ${collapsed ? 'justify-center px-2' : 'px-4'}`}>
           {/* User avatar */}
           <button
             onClick={onOpenProfile}
@@ -206,36 +183,47 @@ export function AppNav({ current, onChange, month, year, collapsed, onToggle, on
             {isPhotoUrl(user?.avatarUrl) ? (
               <img src={user!.avatarUrl!} alt="" className="w-full h-full object-cover" />
             ) : user?.avatarUrl ? (
-              <span style={{ fontSize: 24, lineHeight: 1 }}>{user.avatarUrl}</span>
+              <span style={{
+                fontSize: 24, lineHeight: '1',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '100%', height: '100%', textAlign: 'center',
+              }}>
+                {user.avatarUrl}
+              </span>
             ) : (
               <span className="text-white font-bold" style={{ fontSize: 17 }}>
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
               </span>
             )}
           </button>
-
-          {/* Toggle button */}
-          <button
-            onClick={onToggle}
-            className="flex items-center justify-center w-7 h-7 rounded-full cursor-pointer shrink-0"
-            style={{
-              backgroundColor: 'var(--bg-card)',
-              border: '0.5px solid var(--border-subtle)',
-              color: 'var(--text-hint)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card-hover)'
-              ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card)'
-              ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-hint)'
-            }}
-          >
-            {collapsed ? <ChevronRightIcon size={12} /> : <ChevronLeft size={12} />}
-          </button>
         </div>
       </div>
+
+      {/* Sidebar toggle — centered on right edge */}
+      <button
+        onClick={onToggle}
+        className="absolute flex items-center justify-center w-6 h-6 rounded-full cursor-pointer"
+        style={{
+          right: '-12px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          backgroundColor: 'var(--bg-card)',
+          border: '0.5px solid var(--border-subtle)',
+          color: 'var(--text-hint)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          zIndex: 10,
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card-hover)'
+          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--bg-card)'
+          ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-hint)'
+        }}
+      >
+        {collapsed ? <ChevronRightIcon size={11} /> : <ChevronLeft size={11} />}
+      </button>
     </aside>
     </>
   )

@@ -152,6 +152,38 @@ function App() {
     })
   }
 
+  const collapseSidebar = () => {
+    setSidebarCollapsed(true)
+    try { localStorage.setItem('sidebar_collapsed', 'true') } catch { /* ignore */ }
+  }
+
+  const expandSidebar = () => {
+    setSidebarCollapsed(false)
+    try { localStorage.setItem('sidebar_collapsed', 'false') } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'ArrowLeft') collapseSidebar()
+      if (e.key === 'ArrowRight') expandSidebar()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const handleUnload = () => {
+      const apiBase = (import.meta.env.VITE_API_URL as string) || ''
+      navigator.sendBeacon(`${apiBase}/api/auth/logout`)
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    return () => window.removeEventListener('beforeunload', handleUnload)
+  }, [isAuthenticated])
+
   const handleMonthChange = (m: number, y: number) => {
     setMonth(m)
     setYear(y)
@@ -228,8 +260,6 @@ function App() {
       <AppNav
         current={page}
         onChange={setPage}
-        month={month}
-        year={year}
         collapsed={sidebarCollapsed}
         onToggle={toggleSidebar}
         onOpenProfile={() => setIsProfileOpen(true)}
@@ -246,7 +276,7 @@ function App() {
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer"
-            style={{ background: 'none', border: 'none', color: 'var(--text-primary)' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)' }}
           >
             <Menu size={22} />
           </button>

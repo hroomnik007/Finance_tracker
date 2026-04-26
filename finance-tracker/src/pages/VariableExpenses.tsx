@@ -186,9 +186,9 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           </button>
           <button
             onClick={openAdd}
-            className="hidden lg:flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[#7C3AED] text-white text-[13px] font-semibold cursor-pointer shrink-0 border-0 font-[inherit]"
+            className="hidden lg:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium cursor-pointer shrink-0 border-none transition-all duration-200 shadow-lg shadow-violet-500/25"
           >
-            <Plus size={15} />
+            <Plus size={16} />
             {t.expenses.variable.add}
           </button>
         </div>
