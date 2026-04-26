@@ -100,7 +100,7 @@ export function CategoriesPage() {
 
   return (
     <div className="w-full">
-      <div className="lg:grid gap-6" style={{ gridTemplateColumns: categories.length > 0 ? '1fr 360px' : '1fr' }}>
+      <div className="lg:grid gap-6" style={{ gridTemplateColumns: categories.length > 0 ? '1fr 280px' : '1fr' }}>
 
         {/* ── Main column ── */}
         <div className="space-y-6 pb-4">

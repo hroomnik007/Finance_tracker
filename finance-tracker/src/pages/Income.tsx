@@ -264,7 +264,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       </div>
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
-      <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
+      <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
 
         {/* ── Left column: main content ── */}
         <div className="flex flex-col gap-5 lg:gap-6">
@@ -272,13 +272,13 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           {/* Hero 3 cards */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3 fade-up">
             {/* Total */}
-            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:px-4 sm:py-4 bg-[#2A1F4A] border border-white/[0.08]">
-              <div className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center bg-[#34d399]/15 shrink-0">
-                <TrendingUp size={16} className="text-[#34d399]" />
+            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3))' }}>
+                <TrendingUp size={14} className="text-[#A78BFA]" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.totalLabel}</p>
-                <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+                <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
                   {formatAmount(totalAmount)}
                 </p>
                 {incomeChange !== null && (
@@ -291,26 +291,26 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             </div>
 
             {/* Count */}
-            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:px-4 sm:py-4 bg-[#2A1F4A] border border-white/[0.08]">
-              <div className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center bg-[#A78BFA]/15 shrink-0">
-                <Hash size={16} className="text-[#A78BFA]" />
+            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3))' }}>
+                <Hash size={14} className="text-[#A78BFA]" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.records}</p>
-                <p className="font-mono font-bold text-[#A78BFA]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)' }}>
+                <p className="font-mono font-bold text-[#A78BFA]" style={{ fontSize: 'clamp(12px, 2.5vw, 18px)' }}>
                   {incomes.length}
                 </p>
               </div>
             </div>
 
             {/* Average */}
-            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:px-4 sm:py-4 bg-[#2A1F4A] border border-white/[0.08]">
-              <div className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center bg-[#60a5fa]/15 shrink-0">
-                <Repeat size={16} className="text-[#60a5fa]" />
+            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3))' }}>
+                <Repeat size={14} className="text-[#A78BFA]" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.avgLabel}</p>
-                <p className="font-mono font-bold text-[#60a5fa]" style={{ fontSize: 'clamp(13px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
+                <p className="font-mono font-bold text-[#60a5fa]" style={{ fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
                   {formatAmount(avgAmount)}
                 </p>
                 <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.income.perItem}</p>

@@ -482,7 +482,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       </div>
 
       {/* 2-col desktop grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
 
         {/* ── LEFT: pills + list ── */}
         <div className="flex flex-col gap-4 order-2 lg:order-1">
