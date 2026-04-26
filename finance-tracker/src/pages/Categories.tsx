@@ -99,7 +99,7 @@ export function CategoriesPage() {
 
   return (
     <div className="w-full">
-      <div className="lg:grid gap-6" style={{ gridTemplateColumns: categories.length > 0 ? '1fr 320px' : '1fr' }}>
+      <div className="lg:grid gap-6" style={{ gridTemplateColumns: categories.length > 0 ? '1fr 360px' : '1fr' }}>
 
         {/* ── Main column ── */}
         <div className="space-y-6 pb-4">
@@ -199,27 +199,27 @@ export function CategoriesPage() {
 
             {/* Card 1: Súhrn */}
             <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6B5A9E] mb-3">📊 Súhrn kategórií</p>
+              <p className="text-[13px] font-semibold uppercase tracking-widest text-[#6B5A9E] mb-3">📊 Súhrn kategórií</p>
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-[#9D84D4]">Celkový počet</span>
-                  <span className="text-sm font-semibold text-[#E2D9F3]">{categories.length}</span>
+                  <span className="text-[13px] text-[#9D84D4]">Celkový počet</span>
+                  <span className="text-[16px] font-bold text-[#E2D9F3]">{categories.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-[#9D84D4]">S limitom</span>
-                  <span className="text-sm font-semibold text-[#E2D9F3]">{withLimit.length}</span>
+                  <span className="text-[13px] text-[#9D84D4]">S limitom</span>
+                  <span className="text-[16px] font-bold text-[#E2D9F3]">{withLimit.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-[#9D84D4]">Bez limitu</span>
-                  <span className="text-sm font-semibold text-[#E2D9F3]">{categories.length - withLimit.length}</span>
+                  <span className="text-[13px] text-[#9D84D4]">Bez limitu</span>
+                  <span className="text-[16px] font-bold text-[#E2D9F3]">{categories.length - withLimit.length}</span>
                 </div>
                 {mostExpensive && mostExpensive.spent > 0 && (
                   <div className="mt-1 pt-2 border-t border-white/[0.06]">
-                    <p className="text-[10px] text-[#6B5A9E] mb-1">Najvyššie výdavky</p>
+                    <p className="text-[12px] text-[#6B5A9E] mb-1">Najvyššie výdavky</p>
                     <div className="flex items-center gap-2">
                       <span className="text-base">{mostExpensive.categoryIcon}</span>
-                      <span className="text-xs text-[#E2D9F3] flex-1 truncate">{mostExpensive.categoryName}</span>
-                      <span className="text-xs font-mono font-semibold text-[#F87171]">{formatAmount(mostExpensive.spent)}</span>
+                      <span className="text-[13px] text-[#E2D9F3] flex-1 truncate">{mostExpensive.categoryName}</span>
+                      <span className="text-[12px] font-mono font-semibold text-[#F87171]">{formatAmount(mostExpensive.spent)}</span>
                     </div>
                   </div>
                 )}
@@ -229,25 +229,25 @@ export function CategoriesPage() {
             {/* Card 2: Rozpočet */}
             {withLimit.length > 0 && (
               <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6B5A9E] mb-3">💰 Rozpočet na tento mesiac</p>
+                <p className="text-[13px] font-semibold uppercase tracking-widest text-[#6B5A9E] mb-3">💰 Rozpočet na tento mesiac</p>
                 <div className="flex flex-col gap-3">
                   {budgetStatuses.map(b => {
                     const barColor = b.percentage >= 90 ? '#F87171' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
                     return (
                       <div key={b.categoryId}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-[#E2D9F3] flex items-center gap-1 min-w-0">
+                          <span className="text-[13px] text-[#E2D9F3] flex items-center gap-1 min-w-0">
                             <span className="shrink-0">{b.categoryIcon}</span>
                             <span className="truncate">{b.categoryName}</span>
                           </span>
-                          <span className="text-[10px] font-semibold shrink-0 ml-2" style={{ color: barColor }}>
+                          <span className="text-[12px] font-semibold shrink-0 ml-2" style={{ color: barColor }}>
                             {Math.round(b.percentage)}%
                           </span>
                         </div>
                         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-1">
                           <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(b.percentage, 100)}%`, background: barColor }} />
                         </div>
-                        <p className="text-[10px] text-[#6B5A9E]">
+                        <p className="text-[12px] text-[#6B5A9E]">
                           {formatAmount(b.spent)} {t.common.of} {formatAmount(b.limit)}
                         </p>
                       </div>
@@ -259,11 +259,11 @@ export function CategoriesPage() {
 
             {/* Card 3: Tipy */}
             <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6B5A9E] mb-3">💡 Tipy</p>
+              <p className="text-[13px] font-semibold uppercase tracking-widest text-[#6B5A9E] mb-3">💡 Tipy</p>
               <div className="flex flex-col gap-2.5">
-                <p className="text-xs text-[#9D84D4] leading-relaxed">💡 Nastav limity pre kategórie aby si lepšie kontroloval výdavky</p>
-                <p className="text-xs text-[#9D84D4] leading-relaxed">📊 Sleduj ktorá kategória ťa stojí najviac</p>
-                <p className="text-xs text-[#9D84D4] leading-relaxed">🎯 Optimálny limit je 70–80 % mesačného priemeru výdavkov</p>
+                <p className="text-[13px] text-[#9D84D4] leading-relaxed">💡 Nastav limity pre kategórie aby si lepšie kontroloval výdavky</p>
+                <p className="text-[13px] text-[#9D84D4] leading-relaxed">📊 Sleduj ktorá kategória ťa stojí najviac</p>
+                <p className="text-[13px] text-[#9D84D4] leading-relaxed">🎯 Optimálny limit je 70–80 % mesačného priemeru výdavkov</p>
               </div>
             </div>
 

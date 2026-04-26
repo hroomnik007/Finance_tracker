@@ -242,7 +242,7 @@ function App() {
   return (
     <div
       className="h-screen relative"
-      style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh' }}
+      style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', overflow: 'hidden' }}
     >
       {locked && isAuthenticated && <PinLock onVerify={verifyPin} />}
       <ToastContainer toasts={toasts} />
@@ -293,9 +293,9 @@ function App() {
       {/* Main content wrapper */}
       <div
         className="flex h-screen transition-all duration-200 ease-in-out"
-        style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '64px' : '240px') : '0' }}
+        style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '52px' : '200px') : '0', overflowX: 'hidden', width: '100%', maxWidth: '100%' }}
       >
-        <main className="flex-1 overflow-y-auto min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)' }}>
           <div className="p-6 w-full h-full">
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />

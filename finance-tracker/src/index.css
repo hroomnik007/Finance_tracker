@@ -529,6 +529,22 @@ html.light .input-field {
 }
 html.light .input-field::placeholder { color: var(--text-hint) !important; }
 
+/* Light theme — bg-[#1a1035] → white (cards, modals, heatmap) */
+html.light [class~="bg-[#1a1035]"] { background-color: #ffffff !important; }
+
+/* Light theme — force all non-semantic text dark */
+html.light [class~="text-white"] { color: var(--text-primary) !important; }
+html.light [class~="text-slate-100"],
+html.light [class~="text-slate-200"],
+html.light [class~="text-slate-300"] { color: var(--text-secondary) !important; }
+html.light [class~="text-slate-400"],
+html.light [class~="text-slate-500"] { color: var(--text-muted) !important; }
+
+/* Light theme — preserve white text on dark gradient/action buttons */
+html.light button[style*="linear-gradient"] [class~="text-white"],
+html.light button[style*="linear-gradient"].text-white,
+html.light [class~="text-white"][style*="background"] { color: white !important; }
+
 /* ── Mobile content area padding (replaces pt-14/pb-20 Tailwind classes) ── */
 .content-main {
   padding-top: calc(64px + env(safe-area-inset-top, 0px));

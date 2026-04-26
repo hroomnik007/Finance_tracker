@@ -75,6 +75,7 @@ const TOOLTIP_STYLE = {
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [showAllPie, setShowAllPie] = useState(false)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
 
@@ -96,7 +97,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const totalExpenses = totalFixed + totalVariable
   const balance = totalIncome - totalExpenses
 
-  const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4)
+  const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  const last5Income = [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
   const getCategoryById = (id: string) => categories.find(c => c.id === id)
 
   const pieData = categories
@@ -109,7 +111,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     .filter(d => d.value > 0)
 
   const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
-  const legendItems = sortedPieData.slice(0, 5)
+  const legendItems = showAllPie ? sortedPieData : sortedPieData.slice(0, 5)
   const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
 
   useEffect(() => {
@@ -398,7 +400,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             </div>
           ))}
           {remainingPieCount > 0 && (
-            <p className="text-xs text-[#A78BFA]">+ {remainingPieCount} ďalších →</p>
+            <button
+              onClick={() => setShowAllPie(p => !p)}
+              className="text-xs text-[#A78BFA] cursor-pointer bg-transparent border-none p-0 text-left font-[inherit]"
+            >
+              {showAllPie ? 'Zobraziť menej ↑' : `+ ${remainingPieCount} ďalších →`}
+            </button>
           )}
         </div>
         {/* Donut RIGHT */}
@@ -453,6 +460,60 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       categories={categories}
       onNavigate={onNavigate}
     />
+  )
+
+  const rightPanelTransactions = (
+    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.dashboard.recentTransactions}</p>
+        <button
+          onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
+          className="text-xs text-[#9D84D4] cursor-pointer bg-transparent border-none"
+        >
+          {t.dashboard.showAll} →
+        </button>
+      </div>
+      {activeTab === 'expenses' ? (
+        last5.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {last5.map(expense => {
+              const cat = getCategoryById(expense.categoryId)
+              return (
+                <div key={expense.id} className="flex items-center justify-between gap-2">
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style={{ background: (cat?.color ?? '#9D84D4') + '33' }}>
+                    {cat?.icon ?? '📦'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-[#E2D9F3] truncate">{expense.note || cat?.name}</p>
+                    <p className="text-[10px] text-[#6B5A9E]">{formatDate(expense.date)}</p>
+                  </div>
+                  <span className="font-mono text-xs font-semibold text-[#F87171] shrink-0">-{formatAmount(expense.amount)}</span>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-[#6B5A9E]">{t.dashboard.noExpenses}</p>
+        )
+      ) : (
+        last5Income.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {last5Income.map(income => (
+              <div key={income.id} className="flex items-center justify-between gap-2">
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 bg-[#34D399]/15">💰</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[#E2D9F3] truncate">{income.label}</p>
+                  <p className="text-[10px] text-[#6B5A9E]">{formatDate(income.date)}</p>
+                </div>
+                <span className="font-mono text-xs font-semibold text-[#34D399] shrink-0">+{formatAmount(income.amount)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-[#6B5A9E]">{t.dashboard.noIncomes}</p>
+        )
+      )}
+    </div>
   )
 
   const rightPanelCards = (
@@ -573,49 +634,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <p className="text-xs text-[#9D84D4] mt-1.5">{formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)</p>
         </div>
       )}
+      {rightPanelTransactions}
     </>
-  )
-
-  const recentTransactions = last5.length > 0 ? (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.dashboard.recentTransactions}</h3>
-        <button
-          onClick={() => onNavigate('variable-expenses')}
-          className="text-xs text-[#9D84D4] cursor-pointer bg-transparent border-none"
-        >
-          {t.dashboard.showAll} →
-        </button>
-      </div>
-      <div className="flex flex-col gap-2">
-        {last5.map(expense => {
-          const cat = getCategoryById(expense.categoryId)
-          return (
-            <div key={expense.id} className="flex items-center justify-between bg-[#231840] border border-[#4C3A8A]/50 rounded-2xl p-3">
-              <div className="flex items-center gap-3">
-                <span
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
-                  style={{ background: (cat?.color ?? '#9D84D4') + '33' }}
-                >
-                  {cat?.icon ?? '📦'}
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-[#E2D9F3]">{expense.note || cat?.name}</p>
-                  <p className="text-xs text-[#6B5A9E]">{formatDate(expense.date)}</p>
-                </div>
-              </div>
-              <span className="font-mono text-sm font-semibold text-[#F87171] shrink-0 ml-3">-{formatAmount(expense.amount)}</span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  ) : (
-    <div className="bg-[#2A1F4A] rounded-2xl border border-white/[0.08] p-10 text-center">
-      <p className="text-4xl mb-3">📊</p>
-      <p className="text-sm text-[#B8A3E8]">{t.dashboard.noExpenses}</p>
-      <p className="text-xs text-[#6B5A9E] mt-1">{t.dashboard.noExpensesSubtitle}</p>
-    </div>
   )
 
   return (
@@ -671,7 +691,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           )}
         </div>
         <div className="flex flex-col gap-4">{rightPanelCards}</div>
-        {activeTab === 'expenses' && recentTransactions}
       </div>
 
       {/* ════════════════════════════════════════
@@ -693,7 +712,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   {heatmapCard}
                   {pieChartCard}
                 </div>
-                {recentTransactions}
               </div>
             )}
           </div>

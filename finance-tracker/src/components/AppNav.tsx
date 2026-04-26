@@ -47,7 +47,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
     <aside
       className={`${mobileOpen ? 'flex' : 'hidden'} lg:flex flex-col fixed top-0 left-0 h-screen z-50 overflow-hidden`}
       style={{
-        width: collapsed ? '64px' : '240px',
+        width: collapsed ? '52px' : '200px',
         transition: 'width 0.2s ease-in-out',
         background: 'var(--sidebar-bg)',
         borderRight: '0.5px solid var(--border-subtle)',
@@ -94,7 +94,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
             style={{
               backgroundColor: expensesActive ? 'rgba(124,58,237,0.15)' : 'transparent',
               color: expensesActive ? '#A78BFA' : '#9D84D4',
-              fontSize: '15px',
+              fontSize: '13px',
               fontWeight: expensesActive ? 600 : 400,
               minHeight: '44px',
               borderLeft: collapsed ? 'none' : (expensesActive ? '3px solid #7C3AED' : '3px solid transparent'),
@@ -252,7 +252,7 @@ function SideNavItem({
         style={{
           backgroundColor: active ? 'rgba(124,58,237,0.15)' : 'transparent',
           color: active ? '#A78BFA' : '#9D84D4',
-          fontSize: '15px',
+          fontSize: '13px',
           fontWeight: active ? 600 : 400,
           minHeight: '44px',
           borderLeft: collapsed ? 'none' : (active ? '3px solid #7C3AED' : '3px solid transparent'),
