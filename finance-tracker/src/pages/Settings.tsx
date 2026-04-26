@@ -179,16 +179,20 @@ export function SettingsPage() {
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail } = useAuth()
 
+  const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
+  const compactDefault = window.innerWidth < 768
+
   // Apply saved appearance preferences on mount
   useEffect(() => {
     const savedTheme = loadLocalPref<string>('theme_preference', 'dark')
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
-    const savedCompact = loadLocalPref<boolean>('compact_mode', false)
+    const savedCompact = loadLocalPref<boolean>(compactStorageKey, compactDefault)
     const html = document.documentElement
     html.classList.remove('dark', 'light')
     if (savedTheme !== 'system') html.classList.add(savedTheme)
     html.style.setProperty('--accent-color', savedAccent)
     html.classList.toggle('compact', savedCompact)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── Section 2: Appearance ─────────────────────────────────────────────────
@@ -199,7 +203,7 @@ export function SettingsPage() {
     loadLocalPref<string>('accent_color', '#7C3AED')
   )
   const [compactMode, setCompactModeState] = useState<boolean>(() =>
-    loadLocalPref<boolean>('compact_mode', false)
+    loadLocalPref<boolean>(compactStorageKey, compactDefault)
   )
 
   function handleThemeChange(next: 'dark' | 'light' | 'system') {
@@ -219,7 +223,7 @@ export function SettingsPage() {
   function handleCompactToggle() {
     const next = !compactMode
     setCompactModeState(next)
-    saveLocalPref('compact_mode', next)
+    saveLocalPref(compactStorageKey, next)
     document.documentElement.classList.toggle('compact', next)
   }
 

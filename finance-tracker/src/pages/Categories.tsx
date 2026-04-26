@@ -112,8 +112,20 @@ export function CategoriesPage() {
             {categories.length > 0 && (
               <button
                 onClick={openAdd}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium cursor-pointer border-none text-sm"
-                style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', borderRadius: 12, boxShadow: '0 4px 12px rgba(124,58,237,0.4)' }}
+                className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+                style={{
+                  background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                  borderRadius: 12, padding: '10px 20px', fontSize: 14,
+                  boxShadow: '0 4px 12px rgba(124,58,237,0.4)',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
+                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)'
+                }}
               >
                 <Plus size={16} />
                 Pridať kategóriu

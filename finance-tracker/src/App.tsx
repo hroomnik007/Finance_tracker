@@ -33,7 +33,10 @@ import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotificatio
   try {
     const html = document.documentElement
     const accent = JSON.parse(localStorage.getItem('accent_color') ?? 'null') as string | null
-    const compact = JSON.parse(localStorage.getItem('compact_mode') ?? 'false') as boolean
+    const isMobile = window.innerWidth < 768
+    const compactKey = isMobile ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
+    const compactDefault = isMobile ? 'true' : 'false'
+    const compact = JSON.parse(localStorage.getItem(compactKey) ?? compactDefault) as boolean
     const theme = JSON.parse(localStorage.getItem('theme_preference') ?? '"dark"') as string
     if (accent) html.style.setProperty('--accent-color', accent)
     html.classList.toggle('compact', compact)

@@ -186,7 +186,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           </button>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
             style={{
               background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
               borderRadius: 12, padding: '10px 20px', fontSize: 14,

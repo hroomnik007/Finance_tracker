@@ -51,6 +51,10 @@
   --text-muted: #9D84D4;
   --text-hint: #6B5A9E;
 
+  /* BottomNav */
+  --bottom-nav-bg: #1A1230;
+  --bottom-nav-border: #4C3A8A;
+
   /* Semantic */
   --positive: #34D399;
   --negative: #F87171;
@@ -471,6 +475,8 @@ html.light {
 
   --sidebar-bg: #EEEDF0;
   --nav-active-bg: rgba(124, 58, 237, 0.1);
+  --bottom-nav-bg: #F2F1F6;
+  --bottom-nav-border: rgba(0, 0, 0, 0.1);
 
   --shadow-card: 0 1px 4px rgba(0,0,0,0.08);
   --shadow-elevated: 0 4px 20px rgba(0,0,0,0.12);
@@ -544,6 +550,37 @@ html.light [class~="text-slate-500"] { color: var(--text-muted) !important; }
 html.light button[style*="linear-gradient"] [class~="text-white"],
 html.light button[style*="linear-gradient"].text-white,
 html.light [class~="text-white"][style*="background"] { color: white !important; }
+
+/* Light theme — BottomNav */
+html.light .bottom-nav-bar {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12) !important;
+}
+
+/* Light theme — sidebar nav item active/inactive */
+html.light aside nav button {
+  color: var(--text-secondary);
+}
+
+/* Light theme — MonthSwitcher and date picker text */
+html.light [class*="text-\[#"] { color: var(--text-primary); }
+
+/* Light theme — misc inline-white text not caught by class selectors */
+html.light .bottom-nav-bar button { color: var(--text-muted); }
+
+/* Light theme — sidebar text overrides for hardcoded color values */
+html.light [class~="text-[#9D84D4]"],
+html.light [class~="text-[#6B5A9E]"],
+html.light [class~="text-[#B8A3E8]"] { color: var(--text-secondary) !important; }
+
+/* Light theme — secondary background used for bg-[#0f0a1e] pages */
+html.light [class~="bg-[#0f0a1e]"] { background-color: var(--bg-primary) !important; }
+
+/* Light theme — ensure violet/purple accent elements stay purple */
+html.light [style*="rgba(124,58,237"] { }
+html.light [style*="#7C3AED"] { }
+html.light [style*="#A78BFA"] { color: #7c3aed !important; }
 
 /* ── Mobile content area padding (replaces pt-14/pb-20 Tailwind classes) ── */
 .content-main {

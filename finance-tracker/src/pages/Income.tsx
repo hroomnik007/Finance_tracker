@@ -242,7 +242,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           </button>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
             style={{
               background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
               borderRadius: 12, padding: '10px 20px', fontSize: 14,
@@ -263,6 +263,24 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         </div>
       </div>
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
+
+      {/* FAB — mobile only */}
+      {!sheetOpen && (
+        <button
+          onClick={openAdd}
+          className="lg:hidden fixed right-5 flex items-center justify-center text-white border-none cursor-pointer z-50"
+          style={{
+            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+            width: 56, height: 56,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+            boxShadow: '0 4px 16px rgba(124,58,237,0.5)',
+            fontSize: 28,
+          }}
+        >
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      )}
 
       <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
 

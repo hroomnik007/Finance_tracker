@@ -388,7 +388,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   )
 
   const pieChartCard = pieData.length > 0 ? (
-    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5" style={{ alignSelf: 'start' }}>
+    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5 w-full">
       <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.expensesByCategory}</h3>
       <div className="flex items-center gap-3">
         {/* Legend LEFT */}
