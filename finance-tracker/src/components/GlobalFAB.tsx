@@ -130,7 +130,7 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
     const amt = parseFloat(fixAmt.replace(',', '.'))
     const day = parseInt(fixDay)
     if (!fixLabel.trim() || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 31) return
-    await addFixedExpense({ label: fixLabel.trim(), amount: amt, dayOfMonth: day })
+    await addFixedExpense({ label: fixLabel.trim(), amount: amt, dayOfMonth: day, category: 'other', note: '' })
     closeModal()
   }
 

@@ -156,7 +156,7 @@ export function ExpensesPage({
     if (editingFixed?.id) {
       await updateFixedExpense(editingFixed.id, { label: fixedForm.label, amount, dayOfMonth })
     } else {
-      await addFixedExpense({ label: fixedForm.label, amount, dayOfMonth })
+      await addFixedExpense({ label: fixedForm.label, amount, dayOfMonth, category: 'other', note: '' })
     }
     setFixedSheetOpen(false)
   }

@@ -17,11 +17,15 @@ export interface Income {
   recurring: boolean
 }
 
+export type FixedCategory = 'housing' | 'utilities' | 'subscriptions' | 'insurance' | 'other'
+
 export interface FixedExpense {
   id?: string
   label: string
   amount: number
-  dayOfMonth: number      // client-only field (1 = default when not available)
+  dayOfMonth: number
+  category: FixedCategory
+  note: string
 }
 
 export interface VariableExpense {
