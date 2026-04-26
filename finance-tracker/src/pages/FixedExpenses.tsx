@@ -616,25 +616,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <div className="lg:hidden order-3">{summaryCard}</div>
       </div>
 
-      {/* FAB — mobile only */}
-      {!sheetOpen && deleteId === null && (
-        <button
-          onClick={openAdd}
-          className="lg:hidden"
-          style={{
-            position: 'fixed', bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', right: '24px',
-            width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)', zIndex: 50, color: 'white',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
-
       {formModal}
       {deleteModal}
     </div>

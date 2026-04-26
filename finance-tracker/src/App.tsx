@@ -174,16 +174,6 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    if (!isAuthenticated) return
-    const handleUnload = () => {
-      const apiBase = (import.meta.env.VITE_API_URL as string) || ''
-      navigator.sendBeacon(`${apiBase}/api/auth/logout`)
-    }
-    window.addEventListener('beforeunload', handleUnload)
-    return () => window.removeEventListener('beforeunload', handleUnload)
-  }, [isAuthenticated])
-
   const handleMonthChange = (m: number, y: number) => {
     setMonth(m)
     setYear(y)

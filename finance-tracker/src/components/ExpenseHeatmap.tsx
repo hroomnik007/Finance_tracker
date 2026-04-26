@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { VariableExpense } from '../types'
+import type { VariableExpense, Category } from '../types'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 
@@ -7,6 +7,8 @@ interface ExpenseHeatmapProps {
   expenses: VariableExpense[]
   month: number
   year: number
+  categories?: Category[]
+  onNavigate?: (page: 'variable-expenses') => void
 }
 
 const DAYS_SK = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne']
@@ -28,10 +30,18 @@ function getDayColor(amount: number, maxAmount: number, isLight: boolean): strin
   return '#A78BFA'
 }
 
-export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
+type TooltipState = {
+  date: string
+  amount: number
+  x: number
+  y: number
+  dayExpenses: VariableExpense[]
+} | null
+
+export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavigate }: ExpenseHeatmapProps) {
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
-  const [tooltip, setTooltip] = useState<{ date: string; amount: number; x: number; y: number } | null>(null)
+  const [tooltip, setTooltip] = useState<TooltipState>(null)
   const isLight = document.documentElement.classList.contains('light')
 
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -39,8 +49,11 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
   const startOffset = (firstDayOfMonth + 6) % 7
 
   const dailyTotals: Record<string, number> = {}
+  const dailyExpenses: Record<string, VariableExpense[]> = {}
   for (const exp of expenses) {
     dailyTotals[exp.date] = (dailyTotals[exp.date] || 0) + exp.amount
+    if (!dailyExpenses[exp.date]) dailyExpenses[exp.date] = []
+    dailyExpenses[exp.date].push(exp)
   }
 
   const maxAmount = Math.max(...Object.values(dailyTotals), 1)
@@ -56,7 +69,12 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
     weeks.push(cells.slice(i, i + 7))
   }
 
+  const getCatIcon = (categoryId: string) =>
+    categories.find(c => c.id === categoryId)?.icon ?? '📦'
+
   const monthLabel = `${t.months[month - 1]} ${year}`
+  const legendBg = isLight ? 'white' : '#1a1035'
+  const legendBorder = isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)'
 
   return (
     <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-5">
@@ -110,15 +128,30 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
                   onMouseEnter={e => {
                     if (amount > 0) {
                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                      setTooltip({ date: dateStr, amount, x: rect.left + rect.width / 2, y: rect.top - 8 })
+                      setTooltip({
+                        date: dateStr,
+                        amount,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top - 8,
+                        dayExpenses: dailyExpenses[dateStr] ?? [],
+                      })
                     }
                   }}
                   onMouseLeave={() => setTooltip(null)}
+                  onClick={() => {
+                    if (amount > 0 && onNavigate) onNavigate('variable-expenses')
+                  }}
                   onTouchStart={e => {
                     if (amount > 0) {
                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                      setTooltip({ date: dateStr, amount, x: rect.left + rect.width / 2, y: rect.top - 8 })
-                      setTimeout(() => setTooltip(null), 2000)
+                      setTooltip({
+                        date: dateStr,
+                        amount,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top - 8,
+                        dayExpenses: dailyExpenses[dateStr] ?? [],
+                      })
+                      setTimeout(() => setTooltip(null), 2500)
                     }
                   }}
                 >
@@ -150,19 +183,39 @@ export function ExpenseHeatmap({ expenses, month, year }: ExpenseHeatmapProps) {
             left: tooltip.x,
             top: tooltip.y,
             transform: 'translateX(-50%) translateY(-100%)',
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 8,
-            padding: '6px 10px',
+            background: legendBg,
+            border: legendBorder,
+            borderRadius: 10,
+            padding: '8px 12px',
             fontSize: 12,
             color: 'var(--text-primary)',
             pointerEvents: 'none',
             zIndex: 9999,
-            whiteSpace: 'nowrap',
+            minWidth: 160,
+            maxWidth: 220,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
           }}
         >
-          <div style={{ fontWeight: 600 }}>{tooltip.date}</div>
-          <div style={{ color: '#F87171' }}>-{formatAmount(tooltip.amount)}</div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>{tooltip.date}</div>
+          <div style={{ color: '#F87171', fontWeight: 600, marginBottom: 6, fontFamily: 'DM Mono, monospace' }}>
+            -{formatAmount(tooltip.amount)}
+          </div>
+          {tooltip.dayExpenses.slice(0, 3).map((exp, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <span style={{ fontSize: 13 }}>{getCatIcon(exp.categoryId)}</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: 11 }}>
+                {exp.note || '—'}
+              </span>
+              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#F87171', flexShrink: 0 }}>
+                -{formatAmount(exp.amount)}
+              </span>
+            </div>
+          ))}
+          {tooltip.dayExpenses.length > 3 && (
+            <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 4 }}>
+              + {tooltip.dayExpenses.length - 3} ďalších
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -158,6 +158,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     )
   }
 
+  const isLight = document.documentElement.classList.contains('light')
+  const axisTickColor = isLight ? '#6B7280' : '#9D84D4'
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const now = new Date()
@@ -314,7 +316,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
               <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
             </AreaChart>
@@ -360,7 +362,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
                 <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
               </AreaChart>
@@ -371,7 +373,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                 <Bar dataKey="income" name={t.nav.income} fill="#34D399" radius={[4,4,0,0]} />
                 <Bar dataKey="expenses" name={t.nav.expenses} fill="#F87171" radius={[4,4,0,0]} />
@@ -393,7 +395,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             <div key={i} className="flex items-center gap-2 min-w-0">
               <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
               <span className="text-xs text-[#B8A3E8] truncate flex-1">{item.name}</span>
-              <span className="text-xs font-mono text-[#E2D9F3] shrink-0">{formatAmount(item.value)}</span>
             </div>
           ))}
           {remainingPieCount > 0 && (
@@ -445,7 +446,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   ) : null
 
   const heatmapCard = (
-    <ExpenseHeatmap expenses={variableExpenses} month={month} year={year} />
+    <ExpenseHeatmap
+      expenses={variableExpenses}
+      month={month}
+      year={year}
+      categories={categories}
+      onNavigate={onNavigate}
+    />
   )
 
   const rightPanelCards = (
@@ -673,7 +680,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       <div className="hidden lg:grid gap-6 items-start w-full" style={{ gridTemplateColumns: 'minmax(0, 1fr) 340px' }}>
 
         {/* LEFT — all main content */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-w-0 overflow-x-hidden">
           <div className="grid grid-cols-3 gap-4">{heroCards}</div>
           {statsStrip}
           <div className="flex flex-col gap-4">
@@ -689,13 +696,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                 {recentTransactions}
               </div>
             )}
-            {activeTab === 'income' && recentTransactions}
           </div>
         </div>
 
         {/* RIGHT — sticky panel */}
         <div
-          style={{ background: '#0d0920', borderLeft: '2px solid #1e1535', padding: '16px', position: 'sticky', top: '0', alignSelf: 'start' }}
+          style={{ background: 'var(--bg-card)', borderLeft: '1px solid var(--border-subtle)', padding: '16px', position: 'sticky', top: '0', alignSelf: 'start' }}
           className="flex flex-col gap-4"
         >
           {rightPanelCards}

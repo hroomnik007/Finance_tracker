@@ -111,10 +111,11 @@ export function CategoriesPage() {
             {categories.length > 0 && (
               <button
                 onClick={openAdd}
-                className="hidden lg:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium cursor-pointer border-none transition-all duration-200 shadow-lg shadow-violet-500/25 text-sm"
+                className="hidden lg:flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium cursor-pointer border-none text-sm"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', borderRadius: 12, boxShadow: '0 4px 12px rgba(124,58,237,0.4)' }}
               >
                 <Plus size={16} />
-                {t.common.add}
+                Pridať kategóriu
               </button>
             )}
           </div>
@@ -194,7 +195,7 @@ export function CategoriesPage() {
 
         {/* ── Right panel — desktop only ── */}
         {categories.length > 0 && (
-          <div className="hidden lg:flex flex-col gap-4 self-start">
+          <div className="hidden lg:flex flex-col gap-4 self-start" style={{ marginTop: 60 }}>
 
             {/* Card 1: Súhrn */}
             <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-4">
@@ -270,24 +271,6 @@ export function CategoriesPage() {
         )}
       </div>
 
-      {/* FAB — mobile */}
-      {!sheetOpen && deleteId === null && categories.length > 0 && (
-        <button
-          onClick={openAdd}
-          style={{
-            position: 'fixed', bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', right: '24px',
-            width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)', zIndex: 50, color: 'white',
-            transition: 'all 0.2s ease',
-          }}
-          className="lg:hidden"
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
 
       {/* Edit/Add sheet */}
       <BottomSheet

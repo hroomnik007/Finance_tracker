@@ -172,7 +172,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
 
       {/* Bottom: avatar only */}
       <div className="mt-auto" style={{ borderTop: '0.5px solid var(--border-subtle)' }}>
-        <div className={`flex py-4 ${collapsed ? 'justify-center px-2' : 'px-4'}`}>
+        <div className="flex justify-center py-4">
           {/* User avatar */}
           <button
             onClick={onOpenProfile}

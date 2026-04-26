@@ -460,10 +460,10 @@ html.light {
   --bg-surface: #F2F1F6;
   --bg-hover: #DDD9EA;
 
-  --text-primary: #1C1B2E;
-  --text-secondary: #4A4868;
-  --text-muted: #8884A8;
-  --text-hint: #8884A8;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6B7280;
+  --text-hint: #9CA3AF;
 
   --border-subtle: rgba(0, 0, 0, 0.1);
   --border-medium: rgba(0, 0, 0, 0.18);
@@ -514,6 +514,20 @@ html.light [class~="bg-red-500/10"] { background-color: rgba(254,226,226,0.6) !i
 html.light [class~="bg-red-500/20"] { background-color: rgba(254,202,202,0.7) !important; }
 html.light [class~="border-red-500/20"] { border-color: rgba(220,38,38,0.25) !important; }
 html.light [class~="border-red-500/30"] { border-color: rgba(220,38,38,0.35) !important; }
+
+/* Light theme — border overrides (dark mode uses white/opacity, light needs dark/opacity) */
+html.light [class~="border-white/10"] { border-color: rgba(0,0,0,0.08) !important; }
+html.light [class~="border-white/5"] { border-color: rgba(0,0,0,0.05) !important; }
+html.light [class~="border-\[#4C3A8A\]"] { border-color: rgba(0,0,0,0.12) !important; }
+html.light [class~="border-\[#4C3A8A\]\/50"] { border-color: rgba(0,0,0,0.08) !important; }
+
+/* Light theme — input field fix */
+html.light .input-field {
+  background: rgba(0,0,0,0.04) !important;
+  border-color: rgba(0,0,0,0.15) !important;
+  color: var(--text-primary) !important;
+}
+html.light .input-field::placeholder { color: var(--text-hint) !important; }
 
 /* ── Mobile content area padding (replaces pt-14/pb-20 Tailwind classes) ── */
 .content-main {

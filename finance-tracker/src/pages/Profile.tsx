@@ -6,7 +6,7 @@ import { updateAvatar, savePin, deletePin, webauthnRegisterOptions, webauthnRegi
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
-const AVATAR_OPTIONS = ['👤','👨','👩','👦','👧','🧔','👨‍💼','👩‍💼','🧑‍💻','👨‍🍳','👩‍🍳','🦸','🦹','🧙','👮','🧑‍🎤']
+const AVATAR_OPTIONS = ['👤','👨','👩','🧔','👨‍💼','👩‍💼','🧑‍💻','🦸']
 
 const BADGE_LABELS: Record<string, string> = {
   first_transaction: 'Prvá transakcia 🎉',
@@ -146,7 +146,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     >
       <div
         className="relative w-full max-w-[860px] max-h-[94vh] rounded-[20px] overflow-hidden flex flex-col"
-        style={{ background: '#0f0a1e', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Close */}
@@ -296,12 +296,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
                 {/* Zmeniť heslo */}
                 <div>
-                  <div className="flex items-center justify-between px-4 py-3.5">
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Zmeniť heslo</p>
+                  <div className="flex items-center justify-between px-4" style={{ paddingTop: 14, paddingBottom: 14 }}>
+                    <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Zmeniť heslo</p>
                     <button
                       onClick={() => setPasswordFormOpen(o => !o)}
-                      className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors flex-shrink-0"
-                      style={{ color: 'var(--accent-color)', border: '1px solid rgba(124,58,237,0.4)' }}
+                      className="cursor-pointer transition-colors flex-shrink-0"
+                      style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: 'none' }}
                     >
                       Zmeniť
                     </button>
@@ -322,31 +322,31 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
                 {/* PIN */}
                 <div style={{ borderTopColor: 'var(--border-subtle)' }}>
-                  <div className="flex items-center justify-between px-4 py-3.5">
+                  <div className="flex items-center justify-between px-4" style={{ paddingTop: 14, paddingBottom: 14 }}>
                     <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>PIN prihlásenie a zámok</p>
+                      <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>PIN prihlásenie a zámok</p>
                       {hasPinLogin || hasPin ? (
-                        <span className="inline-flex items-center gap-1 text-xs mt-0.5 font-medium" style={{ color: '#34d399' }}>
+                        <span className="inline-flex items-center gap-1 mt-0.5 font-medium" style={{ color: '#34d399', fontSize: 13 }}>
                           <Check size={11} /> PIN je aktívny
                         </span>
                       ) : (
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Rýchle prihlásenie 4-miestnym PIN</p>
+                        <p style={{ fontSize: 13, marginTop: 2, color: 'var(--text-muted)' }}>Rýchle prihlásenie 4-miestnym PIN</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {(hasPinLogin || hasPin) && (
                         <button
                           onClick={() => setPinRemoveConfirm(true)}
-                          className="text-xs font-medium px-2.5 py-1.5 rounded-lg cursor-pointer"
-                          style={{ color: '#f87171', border: '1px solid rgba(248,113,113,0.4)' }}
+                          className="cursor-pointer"
+                          style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.1)', color: '#f87171', border: 'none' }}
                         >
                           Zrušiť PIN
                         </button>
                       )}
                       <button
                         onClick={() => setPinSetupOpen(true)}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-                        style={{ color: 'var(--accent-color)', border: '1px solid rgba(124,58,237,0.4)' }}
+                        className="cursor-pointer transition-colors"
+                        style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: 'none' }}
                       >
                         {hasPinLogin || hasPin ? 'Zmeniť PIN' : 'Nastaviť PIN'}
                       </button>
@@ -357,10 +357,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 {/* WebAuthn */}
                 {webauthnSupported && (
                   <div style={{ borderTopColor: 'var(--border-subtle)' }}>
-                    <div className="flex items-center justify-between px-4 py-3.5">
+                    <div className="flex items-center justify-between px-4" style={{ paddingTop: 14, paddingBottom: 14 }}>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Biometrické prihlásenie</p>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Odtlačok prsta alebo Face ID</p>
+                        <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Biometrické prihlásenie</p>
+                        <p style={{ fontSize: 13, marginTop: 2, color: 'var(--text-muted)' }}>Odtlačok prsta alebo Face ID</p>
                       </div>
                       <button
                         onClick={async () => {
@@ -383,8 +383,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                           }
                         }}
                         disabled={webauthnRegistering}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-60 flex-shrink-0"
-                        style={{ color: 'var(--accent-color)', border: '1px solid rgba(124,58,237,0.4)' }}
+                        className="cursor-pointer transition-colors disabled:opacity-60 flex-shrink-0"
+                        style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: 'none' }}
                       >
                         {webauthnRegistering ? 'Registrujem...' : 'Nastaviť'}
                       </button>
@@ -423,8 +423,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     onChange={e => handlePrefChange('defaultPage', e.target.value)}
                     style={{
                       height: 40, fontSize: 14, width: '100%',
-                      backgroundColor: '#1a1035', color: 'var(--text-primary)',
-                      border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                      backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 10,
                       padding: '0 12px', appearance: 'none', WebkitAppearance: 'none',
                     }}
                   >
@@ -442,8 +442,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     onChange={e => handlePrefChange('currencyFormat', e.target.value)}
                     style={{
                       height: 40, fontSize: 14, width: '100%',
-                      backgroundColor: '#1a1035', color: 'var(--text-primary)',
-                      border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                      backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 10,
                       padding: '0 12px', appearance: 'none', WebkitAppearance: 'none',
                     }}
                   >
