@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Menu } from 'lucide-react'
 import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
 import { ToastContainer } from './components/ToastContainer'
@@ -94,7 +93,6 @@ function App() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024)
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   useEffect(() => {
     const handler = () => setIsDesktop(window.innerWidth >= 1024)
@@ -253,8 +251,6 @@ function App() {
         collapsed={sidebarCollapsed}
         onToggle={toggleSidebar}
         onOpenProfile={() => setIsProfileOpen(true)}
-        mobileOpen={mobileSidebarOpen}
-        onMobileClose={() => setMobileSidebarOpen(false)}
       />
 
       {/* Mobile top bar */}
@@ -262,14 +258,7 @@ function App() {
         className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-14"
         style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border-subtle)' }}
       >
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setMobileSidebarOpen(true)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer"
-            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)' }}
-          >
-            <Menu size={22} />
-          </button>
+        <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />
           <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>Finvu</span>
         </div>
@@ -296,7 +285,7 @@ function App() {
         style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '52px' : '200px') : '0', overflowX: 'hidden', width: '100%', maxWidth: '100%' }}
       >
         <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)' }}>
-          <div className="p-6 w-full h-full">
+          <div className="p-6 w-full min-h-full">
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
             )}

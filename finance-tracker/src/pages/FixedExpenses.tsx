@@ -461,7 +461,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         </h1>
         <button
           onClick={openAdd}
-          className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+          className="flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
           style={{
             background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
             borderRadius: 12, padding: '10px 20px', fontSize: 14,
@@ -625,8 +625,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           <div className="hidden lg:block">{vsCard}</div>
         </div>
 
-        {/* Mobile only: Mesačný súhrn at bottom */}
-        <div className="lg:hidden order-3">{summaryCard}</div>
+        {/* Mobile only: Mesačný súhrn + Ročný + Fixné vs Var at bottom */}
+        <div className="flex flex-col gap-4 lg:hidden order-3">
+          {summaryCard}
+          {yearlyCard}
+          {vsCard}
+        </div>
       </div>
 
       {formModal}

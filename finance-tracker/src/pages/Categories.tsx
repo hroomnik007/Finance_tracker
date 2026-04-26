@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
+import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
@@ -111,7 +112,7 @@ export function CategoriesPage() {
             {categories.length > 0 && (
               <button
                 onClick={openAdd}
-                className="hidden lg:flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium cursor-pointer border-none text-sm"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium cursor-pointer border-none text-sm"
                 style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', borderRadius: 12, boxShadow: '0 4px 12px rgba(124,58,237,0.4)' }}
               >
                 <Plus size={16} />
@@ -162,31 +163,32 @@ export function CategoriesPage() {
               {/* Mobile */}
               <div className="flex flex-col gap-3 lg:hidden">
                 {categories.map((cat, idx) => (
-                  <div
-                    key={cat.id}
-                    className="flex items-center gap-3 p-4 rounded-2xl fade-up cursor-pointer"
-                    style={{
-                      backgroundColor: cat.color + '12',
-                      border: `1px solid ${cat.color}40`,
-                      animationDelay: `${idx * 40}ms`,
-                      minHeight: '64px',
-                    }}
-                    onClick={() => openEdit(cat)}
-                  >
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: cat.color + '30' }}>
-                      {cat.icon}
+                  <SwipeableRow key={cat.id} onDelete={() => setDeleteId(cat.id!)}>
+                    <div
+                      className="flex items-center gap-3 p-4 rounded-2xl fade-up cursor-pointer"
+                      style={{
+                        backgroundColor: cat.color + '12',
+                        border: `1px solid ${cat.color}40`,
+                        animationDelay: `${idx * 40}ms`,
+                        minHeight: '64px',
+                      }}
+                      onClick={() => openEdit(cat)}
+                    >
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: cat.color + '30' }}>
+                        {cat.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#E2D9F3] leading-snug">{cat.name}</p>
+                        {cat.budgetLimit != null ? (
+                          <span className="text-xs font-semibold" style={{ color: cat.color }}>
+                            {formatAmount(cat.budgetLimit)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#9D84D4]">{t.expenses.categories.noLimit}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#E2D9F3] leading-snug">{cat.name}</p>
-                      {cat.budgetLimit != null ? (
-                        <span className="text-xs font-semibold" style={{ color: cat.color }}>
-                          {formatAmount(cat.budgetLimit)}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[#9D84D4]">{t.expenses.categories.noLimit}</span>
-                      )}
-                    </div>
-                  </div>
+                  </SwipeableRow>
                 ))}
               </div>
             </>

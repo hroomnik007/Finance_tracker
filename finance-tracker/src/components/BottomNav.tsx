@@ -114,7 +114,13 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           active={expensesActive || expensesMenuOpen}
           icon={<TrendingDown size={20} />}
           label={t.nav.expenses}
-          onClick={() => setExpensesMenuOpen(o => !o)}
+          onClick={() => {
+            if (!expensesActive) {
+              handleNavTo('variable-expenses')
+            } else {
+              setExpensesMenuOpen(o => !o)
+            }
+          }}
         />
         <NavPill
           active={current === 'settings'}

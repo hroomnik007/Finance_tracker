@@ -242,7 +242,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           </button>
           <button
             onClick={openAdd}
-            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+            className="flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
             style={{
               background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
               borderRadius: 12, padding: '10px 20px', fontSize: 14,
@@ -270,10 +270,10 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         <div className="flex flex-col gap-5 lg:gap-6">
 
           {/* Hero 3 cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 fade-up">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 fade-up">
             {/* Total */}
-            <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
+            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:px-4 sm:py-4 bg-[#2A1F4A] border border-white/[0.08]">
+              <div className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center bg-[#34d399]/15 shrink-0">
                 <TrendingUp size={16} className="text-[#34d399]" />
               </div>
               <div className="min-w-0">
@@ -291,8 +291,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             </div>
 
             {/* Count */}
-            <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#A78BFA]/15 shrink-0">
+            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:px-4 sm:py-4 bg-[#2A1F4A] border border-white/[0.08]">
+              <div className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center bg-[#A78BFA]/15 shrink-0">
                 <Hash size={16} className="text-[#A78BFA]" />
               </div>
               <div className="min-w-0">
@@ -304,8 +304,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             </div>
 
             {/* Average */}
-            <div className="flex flex-col gap-2 rounded-2xl px-4 py-4 bg-[#2A1F4A] border border-white/[0.08] min-h-[80px]">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#60a5fa]/15 shrink-0">
+            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:px-4 sm:py-4 bg-[#2A1F4A] border border-white/[0.08]">
+              <div className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center bg-[#60a5fa]/15 shrink-0">
                 <Repeat size={16} className="text-[#60a5fa]" />
               </div>
               <div className="min-w-0">
@@ -571,16 +571,6 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         </div>
       </div>
 
-      {/* FAB — only on mobile, hidden when sheet is open */}
-      {!sheetOpen && sorted.length > 0 && (
-        <button
-          onClick={openAdd}
-          className="lg:hidden fixed right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] border-none cursor-pointer flex items-center justify-center z-50 text-white transition-all duration-200"
-          style={{ bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
 
       <BottomSheet
         open={sheetOpen}

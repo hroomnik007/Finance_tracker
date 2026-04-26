@@ -548,7 +548,7 @@ html.light [class~="text-white"][style*="background"] { color: white !important;
 /* ── Mobile content area padding (replaces pt-14/pb-20 Tailwind classes) ── */
 .content-main {
   padding-top: calc(64px + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 20px));
 }
 
 @media (min-width: 1024px) {

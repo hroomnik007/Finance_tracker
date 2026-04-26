@@ -186,7 +186,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           </button>
           <button
             onClick={openAdd}
-            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+            className="flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
             style={{
               background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
               borderRadius: 12, padding: '10px 20px', fontSize: 14,
@@ -210,12 +210,12 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
       {/* Hero 3 cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
             {t.expenses.variable.totalTitle}
           </p>
-          <p className="text-2xl font-bold text-[#f87171] font-mono">{formatAmount(totalAmount)}</p>
+          <p className="text-lg sm:text-2xl font-bold text-[#f87171] font-mono">{formatAmount(totalAmount)}</p>
           {changeVsPrev !== null && (
             <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${changeVsPrev >= 0 ? 'text-[#f87171]' : 'text-emerald-400'}`}>
               {changeVsPrev >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -224,19 +224,19 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           )}
         </div>
 
-        <div className="rounded-2xl p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
             {t.expenses.variable.countTitle}
           </p>
-          <p className="text-2xl font-bold text-[#E2D9F3]">{count}</p>
+          <p className="text-lg sm:text-2xl font-bold text-[#E2D9F3]">{count}</p>
           <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.itemsThisMonth}</p>
         </div>
 
-        <div className="rounded-2xl p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
             {t.expenses.variable.avgExpense}
           </p>
-          <p className="text-2xl font-bold text-[#E2D9F3] font-mono">{formatAmount(avgAmount)}</p>
+          <p className="text-lg sm:text-2xl font-bold text-[#E2D9F3] font-mono">{formatAmount(avgAmount)}</p>
           <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.perItem}</p>
         </div>
       </div>
@@ -449,6 +449,26 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           )}
         </div>
       </div>
+
+      {/* Mobile: budget pills strip */}
+      {budgetStatuses.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden" style={{ scrollbarWidth: 'none' }}>
+          {budgetStatuses.map((bs: BudgetStatus) => {
+            const barColor = getBudgetBarColor(bs.percentage)
+            return (
+              <div
+                key={bs.categoryId}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
+              >
+                <span>{bs.categoryIcon}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{bs.categoryName}</span>
+                <span style={{ color: barColor, fontWeight: 600 }}>{Math.round(bs.percentage)}%</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Mobile: week-grouped cards */}
       <div className="flex flex-col gap-4 lg:hidden">

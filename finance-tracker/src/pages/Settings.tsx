@@ -516,7 +516,7 @@ export function SettingsPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full pb-24">
+    <div className="w-full pb-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
