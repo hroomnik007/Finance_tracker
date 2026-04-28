@@ -638,6 +638,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         footer={
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
+              type="button"
               onClick={() => setSheetOpen(false)}
               style={{
                 flex: 1, height: '56px', borderRadius: '16px',
@@ -648,6 +649,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
               {t.common.cancel}
             </button>
             <button
+              type="button"
               onClick={handleSave}
               style={{
                 flex: 1, height: '56px', borderRadius: '16px',

@@ -655,6 +655,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         title={editing ? t.income.editTitle : t.income.addTitle}
         footer={
           <button
+            type="button"
             onClick={handleSave}
             className="w-full h-14 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] text-white text-base font-semibold border-none cursor-pointer flex items-center justify-center"
           >

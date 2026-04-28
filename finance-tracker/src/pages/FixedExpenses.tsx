@@ -302,6 +302,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       footer={
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
+            type="button"
             onClick={closeSheet}
             style={{
               flex: 1, height: '56px', borderRadius: '16px',
@@ -312,6 +313,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             {t.common.cancel}
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={!label.trim() || !amount}
             style={{
@@ -420,6 +422,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       footer={
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
+            type="button"
             onClick={() => setDeleteId(null)}
             style={{
               flex: 1, height: '56px', borderRadius: '16px',
@@ -430,6 +433,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             {t.common.cancel}
           </button>
           <button
+            type="button"
             onClick={() => deleteId !== null && handleDelete(deleteId)}
             style={{
               flex: 1, height: '56px', borderRadius: '16px',
