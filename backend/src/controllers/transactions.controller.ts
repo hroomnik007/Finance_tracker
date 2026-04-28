@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { and, eq, gte, lt, isNull, sql, count } from "drizzle-orm";
+import { and, eq, gte, lt, isNull, or, sql, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import { transactions, categories, users } from "../db/schema";
@@ -54,7 +54,10 @@ function buildFilters(
 ) {
   const baseFilter =
     householdEnabled && householdId
-      ? eq(transactions.householdId, householdId)
+      ? or(
+          eq(transactions.householdId, householdId),
+          and(eq(transactions.userId, userId), isNull(transactions.householdId))
+        )
       : and(eq(transactions.userId, userId), isNull(transactions.householdId));
 
   const filters = [baseFilter!];
@@ -216,7 +219,10 @@ export async function getSummary(req: AuthRequest, res: Response): Promise<void>
 
   const baseFilter =
     userCtx?.householdEnabled && userCtx?.householdId
-      ? eq(transactions.householdId, userCtx.householdId)
+      ? or(
+          eq(transactions.householdId, userCtx.householdId),
+          and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
+        )
       : and(eq(transactions.userId, req.userId!), isNull(transactions.householdId));
 
   const rows = await db
