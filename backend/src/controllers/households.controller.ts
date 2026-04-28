@@ -349,17 +349,6 @@ export async function toggleHousehold(req: AuthRequest, res: Response): Promise<
     return;
   }
 
-  const [user] = await db
-    .select({ householdId: users.householdId })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (enabled && !user?.householdId) {
-    res.status(400).json({ error: "Nie ste členom žiadnej domácnosti." });
-    return;
-  }
-
   await db.update(users).set({ householdEnabled: enabled }).where(eq(users.id, userId));
 
   res.json({ household_enabled: enabled });
