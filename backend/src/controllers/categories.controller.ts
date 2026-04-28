@@ -1,8 +1,8 @@
 import { Response } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { categories, transactions } from "../db/schema";
+import { categories, transactions, users, householdMembers } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 
 type CategoryRow = typeof categories.$inferSelect;
@@ -29,11 +29,31 @@ const updateSchema = z.object({
 });
 
 export async function listCategories(req: AuthRequest, res: Response): Promise<void> {
-  const rows = await db
-    .select()
-    .from(categories)
-    .where(eq(categories.userId, req.userId!))
-    .orderBy(categories.type, categories.name);
+  const [user] = await db
+    .select({ householdId: users.householdId, householdEnabled: users.householdEnabled })
+    .from(users)
+    .where(eq(users.id, req.userId!))
+    .limit(1);
+
+  let rows;
+  if (user?.householdEnabled && user?.householdId) {
+    const members = await db
+      .select({ userId: householdMembers.userId })
+      .from(householdMembers)
+      .where(eq(householdMembers.householdId, user.householdId));
+    const memberIds = members.map((m) => m.userId);
+    rows = await db
+      .select()
+      .from(categories)
+      .where(memberIds.length > 0 ? inArray(categories.userId, memberIds) : eq(categories.userId, req.userId!))
+      .orderBy(categories.type, categories.name);
+  } else {
+    rows = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, req.userId!))
+      .orderBy(categories.type, categories.name);
+  }
 
   res.json({ data: rows.map(normalizeCategory) });
 }

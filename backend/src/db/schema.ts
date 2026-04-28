@@ -8,7 +8,9 @@ import {
   numeric,
   date,
   integer,
+  serial,
   check,
+  unique,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -35,6 +37,8 @@ export const users = pgTable("users", {
   pinHash: varchar("pin_hash", { length: 255 }),
   defaultPage: varchar("default_page", { length: 50 }).default("dashboard"),
   currencyFormat: varchar("currency_format", { length: 10 }).default("sk"),
+  householdId: integer("household_id"),
+  householdEnabled: boolean("household_enabled").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -48,6 +52,21 @@ export const refreshTokens = pgTable("refresh_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const households = pgTable("households", {
+  id:         serial("id").primaryKey(),
+  name:       varchar("name", { length: 100 }).notNull(),
+  inviteCode: varchar("invite_code", { length: 20 }).notNull().unique(),
+  createdBy:  uuid("created_by").notNull().references(() => users.id),
+  createdAt:  timestamp("created_at").defaultNow(),
+});
+
+export const householdMembers = pgTable("household_members", {
+  id:          serial("id").primaryKey(),
+  householdId: integer("household_id").notNull().references(() => households.id, { onDelete: "cascade" }),
+  userId:      uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  joinedAt:    timestamp("joined_at").defaultNow(),
+}, (t) => [unique("household_members_unq").on(t.householdId, t.userId)]);
 
 export const categories = pgTable(
   "categories",
@@ -82,6 +101,8 @@ export const transactions = pgTable(
     description: varchar("description", { length: 500 }),
     date: date("date").notNull(),
     isFixed: boolean("is_fixed").default(false).notNull(),
+    householdId: integer("household_id").references(() => households.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -122,3 +143,6 @@ export type NewTransaction = typeof transactions.$inferInsert;
 export type SharedReport = typeof sharedReports.$inferSelect;
 export type WebAuthnCredential = typeof webauthnCredentials.$inferSelect;
 export type NewWebAuthnCredential = typeof webauthnCredentials.$inferInsert;
+export type Household = typeof households.$inferSelect;
+export type NewHousehold = typeof households.$inferInsert;
+export type HouseholdMember = typeof householdMembers.$inferSelect;

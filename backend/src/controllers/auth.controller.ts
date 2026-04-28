@@ -5,7 +5,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
-import { users, refreshTokens, categories, transactions, webauthnCredentials } from "../db/schema";
+import { users, refreshTokens, categories, transactions, webauthnCredentials, households } from "../db/schema";
 import { env } from "../config/env";
 import {
   signAccessToken,
@@ -188,13 +188,32 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       monthlyEmailEnabled: users.monthlyEmailEnabled, onboardingComplete: users.onboardingComplete,
       currentStreak: users.currentStreak, longestStreak: users.longestStreak, badges: users.badges,
       defaultPage: users.defaultPage, currencyFormat: users.currencyFormat,
+      householdId: users.householdId, householdEnabled: users.householdEnabled,
     })
     .from(users)
     .where(eq(users.id, req.userId!))
     .limit(1);
 
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
-  res.json({ user: userPublic(user) });
+
+  let householdInfo: { id: number; name: string; invite_code: string } | null = null;
+  if (user.householdId) {
+    const [h] = await db
+      .select({ id: households.id, name: households.name, inviteCode: households.inviteCode })
+      .from(households)
+      .where(eq(households.id, user.householdId))
+      .limit(1);
+    if (h) householdInfo = { id: h.id, name: h.name, invite_code: h.inviteCode };
+  }
+
+  res.json({
+    user: {
+      ...userPublic(user),
+      household_id: user.householdId ?? null,
+      household_enabled: user.householdEnabled ?? false,
+      household: householdInfo,
+    },
+  });
 }
 
 export async function updateAvatar(req: AuthRequest, res: Response): Promise<void> {
@@ -395,7 +414,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk' };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }

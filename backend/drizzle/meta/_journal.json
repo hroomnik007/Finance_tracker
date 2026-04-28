@@ -29,6 +29,13 @@
       "when": 1777150945616,
       "tag": "0003_steep_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777365290980,
+      "tag": "0004_safe_captain_cross",
+      "breakpoints": true
     }
   ]
 }

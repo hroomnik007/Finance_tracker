@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { and, eq, gte, lt, sql, count } from "drizzle-orm";
+import { and, eq, gte, lt, isNull, sql, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import { transactions, categories, users } from "../db/schema";
@@ -35,8 +35,29 @@ function monthRange(month: string): { start: string; end: string } {
   return { start, end: next };
 }
 
-function buildFilters(userId: string, month?: string, type?: string, isFixed?: string) {
-  const filters = [eq(transactions.userId, userId)];
+async function resolveUserHousehold(userId: string) {
+  const [u] = await db
+    .select({ householdId: users.householdId, householdEnabled: users.householdEnabled })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return u;
+}
+
+function buildFilters(
+  userId: string,
+  householdId: number | null | undefined,
+  householdEnabled: boolean | null | undefined,
+  month?: string,
+  type?: string,
+  isFixed?: string
+) {
+  const baseFilter =
+    householdEnabled && householdId
+      ? eq(transactions.householdId, householdId)
+      : and(eq(transactions.userId, userId), isNull(transactions.householdId));
+
+  const filters = [baseFilter!];
   if (month) {
     const { start, end } = monthRange(month);
     filters.push(gte(transactions.date, start));
@@ -59,7 +80,8 @@ export async function listTransactions(req: AuthRequest, res: Response): Promise
   }
 
   const { month, type, isFixed, limit, offset } = query.data;
-  const filters = buildFilters(req.userId!, month, type, isFixed);
+  const userCtx = await resolveUserHousehold(req.userId!);
+  const filters = buildFilters(req.userId!, userCtx?.householdId, userCtx?.householdEnabled, month, type, isFixed);
 
   const [rows, [{ total }]] = await Promise.all([
     db
@@ -102,6 +124,7 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
   }
 
   const { amount, categoryId, ...rest } = body.data;
+  const userCtx = await resolveUserHousehold(req.userId!);
 
   const [row] = await db
     .insert(transactions)
@@ -110,6 +133,8 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
       amount: String(amount),
       categoryId: categoryId ?? null,
       userId: req.userId!,
+      createdBy: req.userId!,
+      householdId: userCtx?.householdEnabled && userCtx?.householdId ? userCtx.householdId : null,
     })
     .returning();
 
@@ -187,6 +212,12 @@ export async function getSummary(req: AuthRequest, res: Response): Promise<void>
 
   const { month } = query.data;
   const { start, end } = monthRange(month);
+  const userCtx = await resolveUserHousehold(req.userId!);
+
+  const baseFilter =
+    userCtx?.householdEnabled && userCtx?.householdId
+      ? eq(transactions.householdId, userCtx.householdId)
+      : and(eq(transactions.userId, req.userId!), isNull(transactions.householdId));
 
   const rows = await db
     .select({
@@ -200,7 +231,7 @@ export async function getSummary(req: AuthRequest, res: Response): Promise<void>
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(
-        eq(transactions.userId, req.userId!),
+        baseFilter,
         gte(transactions.date, start),
         lt(transactions.date, end)
       )
