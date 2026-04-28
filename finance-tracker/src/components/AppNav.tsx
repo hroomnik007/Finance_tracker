@@ -47,10 +47,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
     <aside
       className={`${mobileOpen ? 'flex' : 'hidden'} lg:flex flex-col fixed top-0 left-0 h-screen z-50 overflow-hidden`}
       style={{
-        width: collapsed ? '52px' : '200px',
+        width: collapsed ? '52px' : '180px',
         transition: 'width 0.2s ease-in-out',
         background: 'var(--sidebar-bg)',
         borderRight: '0.5px solid var(--border-subtle)',
+        boxShadow: '4px 0 24px rgba(0,0,0,0.3)',
       }}
     >
       {/* Logo */}

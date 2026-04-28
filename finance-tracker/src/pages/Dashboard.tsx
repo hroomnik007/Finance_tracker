@@ -401,7 +401,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
   const pieChartCard = pieData.length > 0 ? (
     <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5 w-full">
-      <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.expensesByCategory}</h3>
+      <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3 text-center lg:text-left">{t.dashboard.expensesByCategory}</h3>
       <div className="flex items-center gap-3">
         {/* Legend LEFT */}
         <div className="flex flex-col gap-2 flex-1 min-w-0 justify-center">
@@ -449,25 +449,40 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             const displayIndex = clickedIndex ?? activeIndex
             const slice = displayIndex !== null ? pieData[displayIndex] : null
             return (
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center"
-                style={{ cursor: clickedIndex !== null ? 'pointer' : 'default' }}
-                onClick={() => clickedIndex !== null && setClickedIndex(null)}
-              >
-                {slice ? (
-                  <>
-                    <span className="text-lg mb-0.5">{slice.icon}</span>
-                    <p className="text-[10px] text-[#9D84D4] font-medium text-center px-1">{slice.name}</p>
-                    <p className="font-mono font-bold text-xs text-white leading-tight mt-0.5">{formatAmount(slice.value)}</p>
-                    <p className="text-[10px] text-[#9D84D4]">{Math.round((slice.value / totalVariable) * 100)}%</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-mono font-bold text-sm text-white leading-tight">{formatAmount(totalVariable)}</p>
-                    <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
-                  </>
+              <>
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {slice ? (
+                    <>
+                      <span className="text-lg mb-0.5">{slice.icon}</span>
+                      <p className="text-[10px] text-[#9D84D4] font-medium text-center px-1">{slice.name}</p>
+                      <p className="font-mono font-bold text-xs text-white leading-tight mt-0.5">{formatAmount(slice.value)}</p>
+                      <p className="text-[10px] text-[#9D84D4]">{Math.round((slice.value / totalVariable) * 100)}%</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-mono font-bold text-sm text-white leading-tight">{formatAmount(totalVariable)}</p>
+                      <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
+                    </>
+                  )}
+                </div>
+                {clickedIndex !== null && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '50%', top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: 80, height: 80,
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      zIndex: 2,
+                    }}
+                    onClick={() => setClickedIndex(null)}
+                  />
                 )}
-              </div>
+              </>
             )
           })()}
         </div>
@@ -488,10 +503,10 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const rightPanelTransactions = (
     <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.dashboard.recentTransactions}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] text-center lg:text-left flex-1">{t.dashboard.recentTransactions}</p>
         <button
           onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
-          className="text-xs text-[#9D84D4] cursor-pointer bg-transparent border-none"
+          className="hidden lg:block text-xs text-[#9D84D4] cursor-pointer bg-transparent border-none shrink-0"
         >
           {t.dashboard.showAll} →
         </button>
@@ -546,6 +561,23 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <p className="text-xs text-[#6B5A9E]">{t.dashboard.noIncomes}</p>
         )
       )}
+      <button
+        onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
+        className="lg:hidden w-full mt-2"
+        style={{
+          padding: '12px',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '12px',
+          color: '#9ca3af',
+          fontSize: '13px',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          textAlign: 'center',
+        }}
+      >
+        {t.dashboard.showAll} →
+      </button>
     </div>
   )
 
@@ -572,7 +604,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         </div>
       )}
       <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.budget}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3 text-center lg:text-left">{t.dashboard.budget}</p>
         {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => {
           const barColor = b.percentage >= 90 ? '#F87171' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
           return (
@@ -617,7 +649,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         const diff = prediction - prevTotal
         return (
           <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">{t.dashboard.expensePrediction}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2 text-center lg:text-left">{t.dashboard.expensePrediction}</p>
             <p className="font-mono font-bold text-2xl text-[#F87171]">{formatAmount(prediction)}</p>
             <p className="text-xs text-[#9D84D4] mt-1">
               {dailyAvgExpense.toFixed(2)} €/deň × {daysInMonth} dní
@@ -631,7 +663,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         )
       })()}
       <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.monthComparison}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3 text-center lg:text-left">{t.dashboard.monthComparison}</p>
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
             <span className="text-xs text-[#9D84D4]">{t.dashboard.thisMonth}</span>
@@ -754,7 +786,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
         {/* RIGHT — sticky panel */}
         <div
-          style={{ background: 'var(--bg-card)', borderLeft: '1px solid var(--border-subtle)', padding: '16px', position: 'sticky', top: '0', alignSelf: 'start' }}
+          style={{ background: 'var(--bg-card)', borderLeft: '1px solid var(--border-subtle)', padding: '16px 12px', position: 'sticky', top: '0', alignSelf: 'start', overflowY: 'auto', overflowX: 'hidden' }}
           className="flex flex-col gap-4"
         >
           {rightPanelCards}

@@ -228,7 +228,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       {/* Hero 3 cards */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
             {t.expenses.variable.totalTitle}
           </p>
           <p className="text-lg sm:text-2xl font-bold text-[#f87171] font-mono">{formatAmount(totalAmount)}</p>
@@ -241,7 +241,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         </div>
 
         <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
             {t.expenses.variable.countTitle}
           </p>
           <p className="text-lg sm:text-2xl font-bold text-[#E2D9F3]">{count}</p>
@@ -249,7 +249,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         </div>
 
         <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
             {t.expenses.variable.avgExpense}
           </p>
           <p className="text-lg sm:text-2xl font-bold text-[#E2D9F3] font-mono">{formatAmount(avgAmount)}</p>

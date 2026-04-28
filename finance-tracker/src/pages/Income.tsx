@@ -412,8 +412,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           {/* Recurring section (mobile only — desktop shows right panel) */}
           <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.08] overflow-hidden lg:hidden">
             <div className="px-4 py-3.5 border-b border-white/[0.06] flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-[#E2D9F3]">{t.income.recurringSection}</h3>
-              <span className="text-xs text-[#9D84D4]">{recurringIncomes.length}</span>
+              <div className="w-5 shrink-0" />
+              <h3 className="text-sm font-semibold text-[#E2D9F3] flex-1 text-center">{t.income.recurringSection}</h3>
+              <span className="text-xs text-[#9D84D4] w-5 text-right shrink-0">{recurringIncomes.length}</span>
             </div>
             {recurringIncomes.length === 0 ? (
               <p className="px-4 py-4 text-sm text-[#9D84D4]">{t.income.noRecurring}</p>

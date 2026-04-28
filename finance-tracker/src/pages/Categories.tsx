@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
-import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
@@ -30,6 +29,18 @@ export function CategoriesPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [swipedId, setSwipedId] = useState<string | null>(null)
+  const touchStartX = useRef<number>(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent, id: string) => {
+    const delta = e.changedTouches[0].clientX - touchStartX.current
+    if (delta < -60) setSwipedId(id)
+    else if (delta > 30) setSwipedId(null)
+  }
 
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[6])
@@ -173,9 +184,25 @@ export function CategoriesPage() {
               </div>
 
               {/* Mobile */}
-              <div className="flex flex-col gap-3 lg:hidden">
+              <div className="flex flex-col gap-3 lg:hidden" onClick={() => setSwipedId(null)}>
                 {categories.map((cat, idx) => (
-                  <SwipeableRow key={cat.id} onDelete={() => setDeleteId(cat.id!)}>
+                  <div key={cat.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px' }}>
+                    {/* Delete button hidden behind row */}
+                    <div style={{
+                      position: 'absolute', right: 0, top: 0, bottom: 0,
+                      width: '80px',
+                      background: '#ef4444',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      borderRadius: '0 16px 16px 0',
+                    }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteId(cat.id!) }}
+                        style={{ background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    {/* Main row slides left on swipe */}
                     <div
                       className="flex items-center gap-3 p-4 rounded-2xl fade-up cursor-pointer"
                       style={{
@@ -183,8 +210,18 @@ export function CategoriesPage() {
                         border: `1px solid ${cat.color}40`,
                         animationDelay: `${idx * 40}ms`,
                         minHeight: '64px',
+                        transform: `translateX(${swipedId === cat.id ? '-80px' : '0px'})`,
+                        transition: 'transform 0.25s ease',
+                        position: 'relative',
+                        zIndex: 1,
                       }}
-                      onClick={() => openEdit(cat)}
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={(e) => handleTouchEnd(e, cat.id!)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (swipedId === cat.id) { setSwipedId(null); return }
+                        openEdit(cat)
+                      }}
                     >
                       <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: cat.color + '30' }}>
                         {cat.icon}
@@ -200,7 +237,7 @@ export function CategoriesPage() {
                         )}
                       </div>
                     </div>
-                  </SwipeableRow>
+                  </div>
                 ))}
               </div>
             </>

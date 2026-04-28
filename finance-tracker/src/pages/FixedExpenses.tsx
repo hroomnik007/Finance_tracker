@@ -507,7 +507,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
         {/* ── LEFT: pills + list ── */}
         <div className="flex flex-col gap-4 order-2 lg:order-1">
-          {/* Category filter pills */}
+          {/* Category filter pills — only categories with at least one expense */}
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             <button
               onClick={() => setActiveCat(null)}
@@ -519,19 +519,16 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             >
               {t.expenses.fixed.allCategories}
             </button>
-            {ALL_CATS.map(cat => {
+            {ALL_CATS.filter(cat => fixedExpenses.some(e => e.category === cat)).map(cat => {
               const cfg = CAT_CONFIG[cat]
-              const count = fixedExpenses.filter(e => e.category === cat).length
               const isActive = activeCat === cat
               return (
                 <button
                   key={cat}
-                  onClick={() => count > 0 && setActiveCat(isActive ? null : cat)}
+                  onClick={() => setActiveCat(isActive ? null : cat)}
                   className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 border ${
                     isActive
                       ? 'text-white border-transparent'
-                      : count === 0
-                      ? 'border-white/5 opacity-30 cursor-default'
                       : 'border-white/10 text-[#9D84D4] hover:border-white/20'
                   }`}
                   style={isActive ? { background: cfg.color, borderColor: cfg.color } : {}}
@@ -640,8 +637,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           <div className="hidden lg:block">{summaryCard}</div>
           {/* Ročný prehľad — desktop only */}
           <div className="hidden lg:block">{yearlyCard}</div>
-          {/* Najbližšie platby — both */}
-          {upcomingCard}
+          {/* Najbližšie platby — desktop only */}
+          <div className="hidden lg:block">{upcomingCard}</div>
           {/* Fixné vs Variabilné — desktop only */}
           <div className="hidden lg:block">{vsCard}</div>
         </div>

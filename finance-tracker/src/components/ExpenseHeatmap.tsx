@@ -79,10 +79,10 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
 
   return (
     <div className="bg-[#2A1F4A] border border-white/5 rounded-2xl p-5">
-      <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+      <h3 className="text-center lg:text-left" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
         {t.dashboard.heatmapTitle}
       </h3>
-      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'capitalize' }}>
+      <p className="text-center lg:text-left" style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'capitalize' }}>
         {monthLabel}
       </p>
 

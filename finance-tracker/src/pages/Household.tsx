@@ -105,6 +105,26 @@ export function HouseholdPage() {
         )}
       </div>
 
+      {/* Mobile invite code badge */}
+      {householdData?.invite_code && (
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 rounded-2xl gap-3" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-1">{ht.inviteCode}</p>
+            <code className="font-mono text-base font-bold text-[#A78BFA]" style={{ letterSpacing: '3px' }}>
+              {householdData.invite_code}
+            </code>
+          </div>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-white text-xs font-semibold cursor-pointer border-none shrink-0"
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}
+          >
+            {copied ? <Check size={13} /> : <Copy size={13} />}
+            {copied ? ht.copied : ht.copyCode}
+          </button>
+        </div>
+      )}
+
       <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-6 lg:items-start">
 
         {/* ── Left column ── */}
@@ -113,37 +133,37 @@ export function HouseholdPage() {
           {/* Stats cards */}
           {stats && (
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="flex flex-col gap-2 rounded-2xl px-3 py-3 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex flex-col gap-2 rounded-2xl px-3 py-3 sm:p-5 border border-white/[0.15]" style={{ background: 'rgba(248,113,113,0.08)' }}>
                 <div className="flex w-8 h-8 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(248,113,113,0.25), rgba(239,68,68,0.25))' }}>
                   <TrendingDown size={14} className="text-[#f87171]" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{ht.totalExpenses}</p>
-                  <p className="font-mono font-bold text-[#f87171]" style={{ fontSize: 'clamp(11px, 2.5vw, 17px)', wordBreak: 'break-all' }}>
+                  <p className="font-mono font-bold text-[#f87171]" style={{ fontSize: 'clamp(14px, 3vw, 22px)', wordBreak: 'break-all' }}>
                     {formatAmount(stats.total_expenses)}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 rounded-2xl px-3 py-3 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex flex-col gap-2 rounded-2xl px-3 py-3 sm:p-5 border border-white/[0.15]" style={{ background: 'rgba(52,211,153,0.08)' }}>
                 <div className="flex w-8 h-8 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.25), rgba(16,185,129,0.25))' }}>
                   <TrendingUp size={14} className="text-[#34d399]" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{ht.totalIncome}</p>
-                  <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(11px, 2.5vw, 17px)', wordBreak: 'break-all' }}>
+                  <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(14px, 3vw, 22px)', wordBreak: 'break-all' }}>
                     {formatAmount(stats.total_income)}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 rounded-2xl px-3 py-3 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex flex-col gap-2 rounded-2xl px-3 py-3 sm:p-5 border border-white/[0.15]" style={{ background: 'rgba(124,58,237,0.08)' }}>
                 <div className="flex w-8 h-8 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(109,40,217,0.25))' }}>
                   <Activity size={14} className="text-[#A78BFA]" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{ht.balance}</p>
-                  <p className={`font-mono font-bold ${balance >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`} style={{ fontSize: 'clamp(11px, 2.5vw, 17px)', wordBreak: 'break-all' }}>
+                  <p className={`font-mono font-bold ${balance >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`} style={{ fontSize: 'clamp(14px, 3vw, 22px)', wordBreak: 'break-all' }}>
                     {formatAmount(balance)}
                   </p>
                 </div>
@@ -162,12 +182,9 @@ export function HouseholdPage() {
                   <div key={m.user_id} className="flex items-center gap-3 px-4 py-3">
                     <MemberAvatar userId={m.user_id} userName={m.name} size={32} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#E2D9F3] truncate">{m.name}</p>
-                      <p className="text-[10px] text-[#9D84D4] mt-0.5">
-                        <span className="text-[#34d399]">+{formatAmount(m.income)}</span>
-                        {' / '}
-                        <span className="text-[#f87171]">-{formatAmount(m.expenses)}</span>
-                      </p>
+                      <p className="text-sm font-medium text-[#E2D9F3]" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</p>
+                      <p className="text-[10px] text-[#34d399] mt-0.5">↑ {formatAmount(m.income)}</p>
+                      <p className="text-[10px] text-[#f87171]">↓ {formatAmount(m.expenses)}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className={`font-mono text-sm font-semibold ${(m.income - m.expenses) >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
@@ -228,7 +245,7 @@ export function HouseholdPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">🔗 {ht.inviteCode}</p>
               </div>
               <div className="px-4 py-4 flex items-center gap-3">
-                <code className="flex-1 font-mono text-base font-bold text-[#A78BFA] tracking-widest">
+                <code className="flex-1 font-mono text-base font-bold text-[#A78BFA]" style={{ letterSpacing: '3px', wordBreak: 'break-all' }}>
                   {householdData.invite_code}
                 </code>
                 <button
@@ -254,9 +271,9 @@ export function HouseholdPage() {
                   <div key={m.id} className="flex items-center gap-3 px-4 py-3">
                     <MemberAvatar userId={m.id} userName={m.name} size={28} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-[#E2D9F3] truncate">{m.name}</p>
+                      <p className="text-[13px] font-medium text-[#E2D9F3]" style={{ wordBreak: 'break-word' }}>{m.name}</p>
                       {m.is_owner && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-[#FBBF24]">
+                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full mt-0.5" style={{ background: 'rgba(124,58,237,0.15)', color: '#A78BFA' }}>
                           <Crown size={9} /> {ht.owner}
                         </span>
                       )}
@@ -276,12 +293,16 @@ export function HouseholdPage() {
             <h3 className="text-sm font-semibold text-[#E2D9F3]">{ht.membersTitle}</h3>
             <span className="text-xs text-[#9D84D4]">{householdData.members.length}</span>
           </div>
-          <div className="flex gap-4 px-4 py-4 flex-wrap">
+          <div className="flex gap-5 px-4 py-4 flex-wrap">
             {householdData.members.map(m => (
-              <div key={m.id} className="flex flex-col items-center gap-1.5">
-                <MemberAvatar userId={m.id} userName={m.name} size={36} />
-                <p className="text-[10px] text-[#9D84D4] text-center max-w-[56px] truncate">{m.name}</p>
-                {m.is_owner && <Crown size={9} className="text-[#FBBF24]" />}
+              <div key={m.id} className="flex flex-col items-center gap-1.5" style={{ minWidth: '60px' }}>
+                <MemberAvatar userId={m.id} userName={m.name} size={44} />
+                <p className="text-[11px] text-[#E2D9F3] text-center font-medium" style={{ maxWidth: '64px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</p>
+                {m.is_owner && (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(124,58,237,0.2)', color: '#A78BFA' }}>
+                    {ht.owner}
+                  </span>
+                )}
               </div>
             ))}
           </div>
