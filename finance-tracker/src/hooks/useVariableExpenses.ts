@@ -9,6 +9,7 @@ function toVariableExpense(t: ApiTransaction): VariableExpense {
     categoryId: t.categoryId ?? '',
     note: t.description ?? '',
     date: t.date,
+    created_by: t.created_by ?? null,
   }
 }
 

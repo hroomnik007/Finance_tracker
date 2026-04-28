@@ -6,13 +6,17 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { MonthSwitcher } from '../components/MonthSwitcher'
 import { CsvImportModal } from '../components/CsvImportModal'
+import { MemberAvatar } from '../components/MemberAvatar'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
+import { useAuth } from '../context/AuthContext'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
+import { getMyHousehold } from '../api/households'
+import type { HouseholdMember } from '../api/households'
 import type { VariableExpense, BudgetStatus } from '../types'
 
 interface VariableExpensesPageProps {
@@ -61,6 +65,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const householdEnabled = user?.household_enabled ?? false
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<VariableExpense | null>(null)
@@ -71,6 +77,14 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const [csvOpen, setCsvOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
+  const [members, setMembers] = useState<HouseholdMember[]>([])
+  const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
+
+  useEffect(() => {
+    if (householdEnabled && user?.household_id) {
+      getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
+    }
+  }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
     const prevMonth = month === 1 ? 12 : month - 1
@@ -150,7 +164,9 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const filteredSorted = [...(activeCategory
     ? variableExpenses.filter(e => e.categoryId === activeCategory)
     : variableExpenses
-  )].sort((a, b) => b.date.localeCompare(a.date))
+  )]
+    .filter(e => memberFilter === 'all' || e.created_by === memberFilter)
+    .sort((a, b) => b.date.localeCompare(a.date))
   const hasAnyNote = filteredSorted.some(e => e.note && e.note.trim() !== '')
 
   // Mobile: weekly groups
@@ -241,7 +257,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         </div>
       </div>
 
-      {/* Filter pills */}
+      {/* Filter pills — categories */}
       {categoriesWithExpenses.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           <button
@@ -266,6 +282,36 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             >
               <span>{c.icon}</span>
               {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Filter pills — members (household mode) */}
+      {householdEnabled && members.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setMemberFilter('all')}
+            className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer font-[inherit] ${
+              memberFilter === 'all'
+                ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
+                : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
+            }`}
+          >
+            👥 Všetci
+          </button>
+          {members.map(m => (
+            <button
+              key={m.id}
+              onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
+              className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] ${
+                memberFilter === m.id
+                  ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
+                  : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
+              }`}
+            >
+              <MemberAvatar userId={m.id} userName={m.name} size={16} />
+              {m.name}
             </button>
           ))}
         </div>
@@ -375,6 +421,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
               <table className="w-full text-sm" style={{ minWidth: '480px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    {householdEnabled && <th className="pl-5 py-4" style={{ width: 32 }} />}
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.category_col}</th>
                     {hasAnyNote && <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>}
@@ -386,6 +433,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                   {filteredSorted.map((e: VariableExpense) => {
                     const cat = getCategoryById(e.categoryId)
                     const bs = cat?.id ? getBudgetForCat(cat.id) : null
+                    const creator = members.find(m => m.id === e.created_by)
                     return (
                       <tr
                         key={e.id}
@@ -395,6 +443,17 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
                         onMouseLeave={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                         onClick={() => openEdit(e)}
                       >
+                        {householdEnabled && (
+                          <td className="pl-5 py-3.5">
+                            {e.created_by && (
+                              <MemberAvatar
+                                userId={e.created_by}
+                                userName={creator?.name ?? '?'}
+                                size={24}
+                              />
+                            )}
+                          </td>
+                        )}
                         <td className="px-5 py-3.5 text-[#9D84D4] whitespace-nowrap">{formatDate(e.date)}</td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-2.5">

@@ -15,6 +15,7 @@ export interface Income {
   label: string
   date: string
   recurring: boolean
+  created_by?: string | null
 }
 
 export type FixedCategory = 'housing' | 'utilities' | 'subscriptions' | 'insurance' | 'other'
@@ -34,6 +35,7 @@ export interface VariableExpense {
   categoryId: string
   note: string
   date: string
+  created_by?: string | null
 }
 
 export interface AppSetting {
@@ -90,6 +92,13 @@ export interface AuthUser {
   createdAt?: string
   defaultPage?: string
   currencyFormat?: string
+  household_id?: number | null
+  household_enabled?: boolean
+  household?: {
+    id: number
+    name: string
+    invite_code: string
+  } | null
 }
 
 export interface ApiCategory {
@@ -118,6 +127,8 @@ export interface ApiTransaction {
   categoryName: string | null
   categoryColor: string | null
   categoryIcon: string | null
+  created_by?: string | null
+  household_id?: number | null
 }
 
 export interface ApiSummary {

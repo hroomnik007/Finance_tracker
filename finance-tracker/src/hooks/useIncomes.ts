@@ -9,6 +9,7 @@ function toIncome(t: ApiTransaction): Income {
     label: t.description ?? '',
     date: t.date,
     recurring: t.isFixed,
+    created_by: t.created_by ?? null,
   }
 }
 

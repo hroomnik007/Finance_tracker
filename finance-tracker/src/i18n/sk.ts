@@ -325,6 +325,28 @@ export const sk = {
     optional: '— nepovinné',
     of: 'z',
   },
+  household: {
+    title: 'Domácnosť',
+    subtitle: 'Spoločné financie rodiny',
+    membersTitle: 'Členovia',
+    activityTitle: 'Nedávna aktivita',
+    statsTitle: 'Štatistiky tohto mesiaca',
+    totalExpenses: 'Celkové výdavky',
+    totalIncome: 'Celkové príjmy',
+    perMember: 'Na člena',
+    inviteCode: 'Pozvánkový kód',
+    copyCode: 'Kopírovať',
+    copied: 'Skopírované!',
+    owner: 'Správca',
+    joined: 'Pripojil sa',
+    noActivity: 'Zatiaľ žiadna aktivita',
+    loading: 'Načítavam...',
+    notEnabled: 'Domácnosť nie je aktivovaná.',
+    enableInSettings: 'Aktivovať v nastaveniach',
+    expense: 'výdavok',
+    income: 'príjem',
+    balance: 'Zostatok',
+  },
 }
 
 export type Translations = typeof sk

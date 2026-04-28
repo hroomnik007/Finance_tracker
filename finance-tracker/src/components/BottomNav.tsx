@@ -1,6 +1,7 @@
 import { Home, TrendingUp, TrendingDown, Settings } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
+import { useAuth } from '../context/AuthContext'
 
 interface BottomNavProps {
   current: Page
@@ -11,7 +12,9 @@ const EXPENSE_PAGES: Page[] = ['variable-expenses', 'fixed-expenses', 'categorie
 
 export function BottomNav({ current, onChange }: BottomNavProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const expensesActive = EXPENSE_PAGES.includes(current)
+  const householdEnabled = user?.household_enabled ?? false
 
   return (
     <nav
@@ -50,6 +53,14 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         label={t.nav.expenses}
         onClick={() => onChange('variable-expenses')}
       />
+      {householdEnabled && (
+        <NavPill
+          active={current === 'household'}
+          icon={<span style={{ fontSize: 20, lineHeight: 1 }}>👨‍👩‍👧</span>}
+          label="Domácnosť"
+          onClick={() => onChange('household')}
+        />
+      )}
       <NavPill
         active={current === 'settings'}
         icon={<Settings size={20} />}

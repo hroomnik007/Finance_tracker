@@ -7,12 +7,16 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { MonthSwitcher } from '../components/MonthSwitcher'
 import { CsvImportModal } from '../components/CsvImportModal'
+import { MemberAvatar } from '../components/MemberAvatar'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
+import { useAuth } from '../context/AuthContext'
 import type { Translations } from '../i18n'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
+import { getMyHousehold } from '../api/households'
+import type { HouseholdMember } from '../api/households'
 import type { Income } from '../types'
 
 function getLast12Months(monthsShort: string[]) {
@@ -133,6 +137,8 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const { incomes, addIncome, updateIncome, deleteIncome } = useIncomes(month, year)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const householdEnabled = user?.household_enabled ?? false
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
   const [form, setForm] = useState<FormState>(makeEmpty())
@@ -141,6 +147,14 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const [yearlyData, setYearlyData] = useState<{ label: string; total: number }[]>([])
   const [prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
   const [allIncomeData, setAllIncomeData] = useState<{ date: string; amount: number }[]>([])
+  const [members, setMembers] = useState<HouseholdMember[]>([])
+  const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
+
+  useEffect(() => {
+    if (householdEnabled && user?.household_id) {
+      getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
+    }
+  }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
     const months = getLast12Months(t.monthsShort)
@@ -193,7 +207,9 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
     }
   }
 
-  const sorted = [...incomes].sort((a, b) => b.date.localeCompare(a.date))
+  const sorted = [...incomes]
+    .filter(i => memberFilter === 'all' || i.created_by === memberFilter)
+    .sort((a, b) => b.date.localeCompare(a.date))
   const totalAmount = incomes.reduce((s, i) => s + i.amount, 0)
   const avgAmount = incomes.length > 0 ? totalAmount / incomes.length : 0
   const recurringIncomes = incomes.filter(i => i.recurring)
@@ -336,6 +352,36 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             </div>
           </div>
 
+          {/* Filter pills — members (household mode) */}
+          {householdEnabled && members.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => setMemberFilter('all')}
+                className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer font-[inherit] ${
+                  memberFilter === 'all'
+                    ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
+                    : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
+                }`}
+              >
+                👥 Všetci
+              </button>
+              {members.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
+                  className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] ${
+                    memberFilter === m.id
+                      ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
+                      : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
+                  }`}
+                >
+                  <MemberAvatar userId={m.id} userName={m.name} size={16} />
+                  {m.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* 12-month Bar Chart */}
           {yearlyData.length > 0 && (
             <div className="rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08]">
@@ -464,6 +510,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                       <col style={{ width: 'auto' }} />
                       <col style={{ width: '130px' }} />
                       <col style={{ width: '110px' }} />
+                      {householdEnabled && <col style={{ width: '32px' }} />}
                       <col style={{ width: '70px' }} />
                     </colgroup>
                     <thead>
@@ -472,6 +519,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                         <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.desc_col}</th>
                         <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-right">{t.income.amount_col}</th>
                         <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.recurring_col}</th>
+                        {householdEnabled && <th style={{ width: 32 }} />}
                         <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.actions_col}</th>
                       </tr>
                     </thead>
@@ -503,6 +551,17 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                               <Minus size={14} className="text-[#9D84D4] mx-auto" />
                             )}
                           </td>
+                          {householdEnabled && (
+                            <td className="py-3.5 text-center" onClick={e => e.stopPropagation()}>
+                              {income.created_by ? (
+                                <MemberAvatar
+                                  userId={income.created_by}
+                                  userName={members.find(m => m.id === income.created_by)?.name ?? '?'}
+                                  size={24}
+                                />
+                              ) : null}
+                            </td>
+                          )}
                           <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-center gap-1">
                               <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">

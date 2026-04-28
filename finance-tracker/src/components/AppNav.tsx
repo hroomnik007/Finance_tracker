@@ -161,6 +161,16 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
           )}
         </div>
 
+        {user?.household_enabled && (
+          <SideNavItem
+            active={current === 'household'}
+            onClick={() => handleChange('household')}
+            icon={<span style={{ fontSize: 16, lineHeight: 1 }}>👨‍👩‍👧</span>}
+            label="Domácnosť"
+            collapsed={collapsed}
+          />
+        )}
+
         <SideNavItem
           active={current === 'settings'}
           onClick={() => handleChange('settings')}

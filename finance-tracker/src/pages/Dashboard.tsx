@@ -16,10 +16,13 @@ import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { getSummary } from '../api/transactions'
+import { getMyHousehold } from '../api/households'
+import { MemberAvatar } from '../components/MemberAvatar'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
+import type { HouseholdMember } from '../api/households'
 
 function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
@@ -78,6 +81,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const [showAllPie, setShowAllPie] = useState(false)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
+  const [members, setMembers] = useState<HouseholdMember[]>([])
 
   const { incomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -89,6 +93,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const { profileName } = useSettingsContext()
   const { user } = useAuth()
   const displayName = user?.name || profileName
+  const householdEnabled = user?.household_enabled ?? false
   const greeting = getGreeting(displayName, t)
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
@@ -140,6 +145,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       }))
     )
   }, [variableExpenses])
+
+  useEffect(() => {
+    if (householdEnabled && user?.household_id) {
+      getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
+    }
+  }, [householdEnabled, user?.household_id])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderPieShape = (props: any) => {
@@ -478,6 +489,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           <div className="flex flex-col gap-2">
             {last5.map(expense => {
               const cat = getCategoryById(expense.categoryId)
+              const member = householdEnabled && expense.created_by ? members.find(m => m.id === expense.created_by) : null
               return (
                 <div key={expense.id} className="flex items-center justify-between gap-2">
                   <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style={{ background: (cat?.color ?? '#9D84D4') + '33' }}>
@@ -487,6 +499,9 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                     <p className="text-xs font-medium text-[#E2D9F3] truncate">{expense.note || cat?.name}</p>
                     <p className="text-[10px] text-[#6B5A9E]">{formatDate(expense.date)}</p>
                   </div>
+                  {member && (
+                    <MemberAvatar userId={member.id} userName={member.name} size={20} />
+                  )}
                   <span className="font-mono text-xs font-semibold text-[#F87171] shrink-0">-{formatAmount(expense.amount)}</span>
                 </div>
               )
@@ -498,16 +513,22 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       ) : (
         last5Income.length > 0 ? (
           <div className="flex flex-col gap-2">
-            {last5Income.map(income => (
-              <div key={income.id} className="flex items-center justify-between gap-2">
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 bg-[#34D399]/15">💰</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-[#E2D9F3] truncate">{income.label}</p>
-                  <p className="text-[10px] text-[#6B5A9E]">{formatDate(income.date)}</p>
+            {last5Income.map(income => {
+              const member = householdEnabled && income.created_by ? members.find(m => m.id === income.created_by) : null
+              return (
+                <div key={income.id} className="flex items-center justify-between gap-2">
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 bg-[#34D399]/15">💰</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-[#E2D9F3] truncate">{income.label}</p>
+                    <p className="text-[10px] text-[#6B5A9E]">{formatDate(income.date)}</p>
+                  </div>
+                  {member && (
+                    <MemberAvatar userId={member.id} userName={member.name} size={20} />
+                  )}
+                  <span className="font-mono text-xs font-semibold text-[#34D399] shrink-0">+{formatAmount(income.amount)}</span>
                 </div>
-                <span className="font-mono text-xs font-semibold text-[#34D399] shrink-0">+{formatAmount(income.amount)}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <p className="text-xs text-[#6B5A9E]">{t.dashboard.noIncomes}</p>

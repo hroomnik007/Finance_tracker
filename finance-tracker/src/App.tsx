@@ -27,6 +27,7 @@ import { useAuth } from './context/AuthContext'
 import { useSettingsContext } from './context/SettingsContext'
 import { useFixedExpenses } from './hooks/useFixedExpenses'
 import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
+import { HouseholdPage } from './pages/Household'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -56,8 +57,9 @@ export type Page =
   | 'fixed-expenses'
   | 'categories'
   | 'settings'
+  | 'household'
 
-const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings']
+const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'household']
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.slice(1) as Page
@@ -308,6 +310,7 @@ function App() {
             )}
             {page === 'categories' && <CategoriesPage />}
             {page === 'settings' && <SettingsPage />}
+            {page === 'household' && <HouseholdPage />}
           </div>
         </main>
 
