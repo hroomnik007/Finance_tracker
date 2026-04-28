@@ -612,7 +612,8 @@ export function SettingsPage() {
         {/* ── LEFT COLUMN ── */}
         <div className="flex flex-col gap-6">
 
-          {/* Section 1: Všeobecné */}
+          {/* Section 1: Všeobecné — compact on mobile */}
+          <div className="settings-general-compact">
           <SectionCard>
             <SectionHeader emoji="👤" label={t.settings.generalSection} />
             <div className="divide-y divide-white/[0.04]">
@@ -658,6 +659,7 @@ export function SettingsPage() {
 
             </div>
           </SectionCard>
+          </div>
 
           {/* Section 2: Vzhľad & Téma */}
           <SectionCard>

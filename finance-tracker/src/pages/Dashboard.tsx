@@ -78,6 +78,7 @@ const TOOLTIP_STYLE = {
 export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
@@ -437,27 +438,38 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                 activeShape={renderPieShape}
                 onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(null)}
+                onClick={(_: unknown, index: number) => setClickedIndex(prev => prev === index ? null : index)}
                 style={{ cursor: 'pointer' }}
               >
                 {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            {activeIndex !== null && pieData[activeIndex] ? (
-              <>
-                <span className="text-lg mb-0.5">{pieData[activeIndex].icon}</span>
-                <p className="text-[10px] text-[#9D84D4] font-medium text-center px-1">{pieData[activeIndex].name}</p>
-                <p className="font-mono font-bold text-xs text-white leading-tight mt-0.5">{formatAmount(pieData[activeIndex].value)}</p>
-                <p className="text-[10px] text-[#9D84D4]">{Math.round((pieData[activeIndex].value / totalVariable) * 100)}%</p>
-              </>
-            ) : (
-              <>
-                <p className="font-mono font-bold text-sm text-white leading-tight">{formatAmount(totalVariable)}</p>
-                <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
-              </>
-            )}
-          </div>
+          {(() => {
+            const displayIndex = clickedIndex ?? activeIndex
+            const slice = displayIndex !== null ? pieData[displayIndex] : null
+            return (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center"
+                style={{ cursor: clickedIndex !== null ? 'pointer' : 'default' }}
+                onClick={() => clickedIndex !== null && setClickedIndex(null)}
+              >
+                {slice ? (
+                  <>
+                    <span className="text-lg mb-0.5">{slice.icon}</span>
+                    <p className="text-[10px] text-[#9D84D4] font-medium text-center px-1">{slice.name}</p>
+                    <p className="font-mono font-bold text-xs text-white leading-tight mt-0.5">{formatAmount(slice.value)}</p>
+                    <p className="text-[10px] text-[#9D84D4]">{Math.round((slice.value / totalVariable) * 100)}%</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-mono font-bold text-sm text-white leading-tight">{formatAmount(totalVariable)}</p>
+                    <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
+                  </>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
     </div>

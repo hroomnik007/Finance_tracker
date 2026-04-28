@@ -595,3 +595,28 @@ html.light [style*="#A78BFA"] { color: #7c3aed !important; }
   }
 }
 
+/* ── Mobile: center section/card titles ── */
+@media (max-width: 767px) {
+  h3[class*="tracking-widest"],
+  p[class*="tracking-widest"],
+  h3[class*="tracking-wider"],
+  p[class*="tracking-wider"] {
+    text-align: center;
+  }
+}
+
+/* ── Compact Všeobecné settings section ── */
+.settings-general-compact {
+  --row-padding-y: 8px;
+  --card-padding: 14px;
+  --gap-size: 10px;
+}
+.settings-general-compact .select-field {
+  height: 36px;
+  font-size: 13px;
+  padding: 0 12px;
+}
+.settings-general-compact .text-sm {
+  font-size: 13px;
+}
+

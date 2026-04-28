@@ -36,18 +36,18 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
     <div className="fixed inset-0 z-50 fade-in flex items-end sm:items-center justify-center sm:px-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 backdrop-blur-md"
-        style={{ background: 'rgba(0,0,0,0.6)' }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}
         onClick={onClose}
       />
 
       {/* Sheet — flex column so footer is always outside scroll area */}
       <div
-        className="relative w-full slide-up rounded-t-[24px] sm:rounded-[24px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in flex flex-col overflow-hidden"
+        className="relative w-full slide-up rounded-t-[24px] sm:rounded-[20px] sm:max-w-[480px] lg:max-w-[520px] lg:modal-in flex flex-col overflow-hidden"
         style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-elevated)',
+          background: 'linear-gradient(180deg, #1e1b36 0%, #16132a 100%)',
+          border: '1px solid rgba(124,58,237,0.2)',
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.5)',
           maxHeight: '92svh',
         }}
       >

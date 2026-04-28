@@ -197,7 +197,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             onClick={() => setCsvOpen(true)}
             className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.3)] text-[#A78BFA] text-[13px] font-semibold cursor-pointer shrink-0 font-[inherit]"
           >
-            <FileUp size={15} />
+            <FileUp size={20} />
             <span className="hidden sm:inline">Import CSV</span>
           </button>
           <button

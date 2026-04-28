@@ -42,6 +42,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
   const [tooltip, setTooltip] = useState<TooltipState>(null)
+  const [lastClickedDay, setLastClickedDay] = useState<string | null>(null)
   const isLight = document.documentElement.classList.contains('light')
 
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -106,6 +107,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
               const amount = dailyTotals[dateStr] || 0
               const color = getDayColor(amount, maxAmount, isLight)
               const isToday = dateStr === new Date().toISOString().split('T')[0]
+              const isSelected = lastClickedDay === dateStr
 
               return (
                 <div
@@ -115,7 +117,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
                     borderRadius: 6,
                     backgroundColor: color,
                     cursor: amount > 0 ? 'pointer' : 'default',
-                    border: isToday ? '1px solid #A78BFA' : '1px solid transparent',
+                    border: isSelected ? '1px solid #F59E0B' : isToday ? '1px solid #A78BFA' : '1px solid transparent',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -139,7 +141,13 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
                   }}
                   onMouseLeave={() => setTooltip(null)}
                   onClick={() => {
-                    if (amount > 0 && onNavigate) onNavigate('variable-expenses')
+                    if (amount === 0) return
+                    if (lastClickedDay === dateStr) {
+                      if (onNavigate) onNavigate('variable-expenses')
+                      setLastClickedDay(null)
+                    } else {
+                      setLastClickedDay(dateStr)
+                    }
                   }}
                   onTouchStart={e => {
                     if (amount > 0) {

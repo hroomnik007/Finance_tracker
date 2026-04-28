@@ -253,7 +253,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             onClick={() => setCsvOpen(true)}
             className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 text-[#A78BFA] text-sm font-semibold cursor-pointer shrink-0 transition-all duration-200"
           >
-            <FileUp size={15} />
+            <FileUp size={20} />
             <span className="hidden sm:inline">Import CSV</span>
           </button>
           <button
