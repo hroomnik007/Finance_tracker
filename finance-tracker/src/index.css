@@ -406,6 +406,42 @@ input[type=number] { -moz-appearance: textfield; }
   text-align: center !important;
 }
 
+/* Amount input wrap — violet-tinted container with € symbol */
+.amount-input-wrap {
+  background: rgba(139,92,246,0.06);
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+.amount-input-wrap:focus-within {
+  border-color: rgba(139,92,246,0.5);
+}
+.amount-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 36px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  color: var(--text);
+  text-align: right;
+  min-width: 0;
+  padding: 0;
+}
+.amount-input-wrap input::placeholder { color: var(--text3); }
+.amount-input-wrap .currency {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--violet);
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+}
+
 /* Form label */
 .form-label {
   display: block;

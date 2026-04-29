@@ -278,54 +278,44 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
       onClose={closeSheet}
       title={editing ? t.expenses.fixed.editTitle : t.expenses.fixed.newTitle}
       footer={
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            type="button"
-            onClick={closeSheet}
-            style={{
-              flex: 1, height: '56px', borderRadius: '16px',
-              background: 'transparent', color: '#9D84D4', fontSize: '14px',
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            {t.common.cancel}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!label.trim() || !amount}
-            style={{
-              flex: 1, height: '56px', borderRadius: '16px',
-              background: (label.trim() && amount) ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : 'rgba(124,58,237,0.35)',
-              fontSize: '16px', fontWeight: 600, color: 'white',
-              border: 'none', cursor: (label.trim() && amount) ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            {editing ? t.common.save : t.common.add}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!label.trim() || !amount}
+          style={{
+            width: '100%', padding: '15px', borderRadius: 14,
+            background: (label.trim() && amount) ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)' : 'rgba(139,92,246,0.3)',
+            color: 'white', fontSize: 15, fontWeight: 700,
+            border: 'none', cursor: (label.trim() && amount) ? 'pointer' : 'not-allowed',
+            fontFamily: 'inherit',
+            boxShadow: (label.trim() && amount) ? '0 4px 20px rgba(139,92,246,0.4)' : 'none',
+          }}
+        >
+          {editing ? t.common.save : t.common.add}
+        </button>
       }
     >
       <div className="flex flex-col gap-5">
         <div>
           <label className="form-label">{t.expenses.fixed.amountLabel}</label>
-          <input
-            className="input-field amount-input font-mono"
-            type="text"
-            inputMode="decimal"
-            placeholder="0,00"
-            value={amount}
-            onChange={e => {
-              const raw = e.target.value.replace(/[^0-9,]/g, '')
-              if ((raw.match(/,/g) || []).length > 1) return
-              setAmount(raw)
-            }}
-            onKeyDown={e => {
-              const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-              if (!allowed.includes(e.key)) e.preventDefault()
-            }}
-          />
+          <div className="amount-input-wrap">
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={amount}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setAmount(raw)
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
+            />
+            <span className="currency">€</span>
+          </div>
         </div>
         <div>
           <label className="form-label">{t.expenses.fixed.nameLabel}</label>

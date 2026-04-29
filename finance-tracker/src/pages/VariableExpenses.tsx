@@ -636,53 +636,42 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         onClose={() => setSheetOpen(false)}
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
         footer={
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              type="button"
-              onClick={() => setSheetOpen(false)}
-              style={{
-                flex: 1, height: '56px', borderRadius: '16px',
-                background: 'transparent', color: '#9D84D4', fontSize: '14px',
-                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              {t.common.cancel}
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              style={{
-                flex: 1, height: '56px', borderRadius: '16px',
-                background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-                fontSize: '16px', fontWeight: 600, color: 'white',
-                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              {editing ? t.common.save : t.common.add}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            style={{
+              width: '100%', padding: '15px', borderRadius: 14,
+              background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
+              color: 'white', fontSize: 15, fontWeight: 700,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
+            }}
+          >
+            {editing ? t.common.save : t.common.add}
+          </button>
         }
       >
         <div className="flex flex-col gap-5">
           <div>
             <label className="form-label">{t.expenses.variable.amount}</label>
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="0,00"
-              value={form.amount}
-              onChange={e => {
-                const raw = e.target.value.replace(/[^0-9,]/g, '')
-                if ((raw.match(/,/g) || []).length > 1) return
-                setForm(f => ({ ...f, amount: raw }))
-              }}
-              onKeyDown={e => {
-                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                if (!allowed.includes(e.key)) e.preventDefault()
-              }}
-              className="input-field amount-input font-mono"
-            />
+            <div className="amount-input-wrap">
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={form.amount}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9,]/g, '')
+                  if ((raw.match(/,/g) || []).length > 1) return
+                  setForm(f => ({ ...f, amount: raw }))
+                }}
+                onKeyDown={e => {
+                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                  if (!allowed.includes(e.key)) e.preventDefault()
+                }}
+              />
+              <span className="currency">€</span>
+            </div>
           </div>
 
           {livePct !== null && liveLimit && (

@@ -77,22 +77,24 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
     <div className="flex flex-col gap-5">
       <div>
         <label className="form-label">{t.income.amount}</label>
-        <input
-          type="text"
-          inputMode="decimal"
-          placeholder="0,00"
-          value={form.amount}
-          onChange={e => {
-            const raw = e.target.value.replace(/[^0-9,]/g, '')
-            if ((raw.match(/,/g) || []).length > 1) return
-            setForm(f => ({ ...f, amount: raw }))
-          }}
-          onKeyDown={e => {
-            const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-            if (!allowed.includes(e.key)) e.preventDefault()
-          }}
-          className="input-field amount-input font-mono"
-        />
+        <div className="amount-input-wrap">
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0,00"
+            value={form.amount}
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9,]/g, '')
+              if ((raw.match(/,/g) || []).length > 1) return
+              setForm(f => ({ ...f, amount: raw }))
+            }}
+            onKeyDown={e => {
+              const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+              if (!allowed.includes(e.key)) e.preventDefault()
+            }}
+          />
+          <span className="currency">€</span>
+        </div>
       </div>
       <div>
         <label className="form-label">{t.income.description}</label>
@@ -658,7 +660,13 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           <button
             type="button"
             onClick={handleSave}
-            className="w-full h-14 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] text-white text-base font-semibold border-none cursor-pointer flex items-center justify-center"
+            style={{
+              width: '100%', padding: '15px', borderRadius: 14,
+              background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
+              color: 'white', fontSize: 15, fontWeight: 700,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
+            }}
           >
             {editing ? t.income.saveChanges : t.income.add}
           </button>

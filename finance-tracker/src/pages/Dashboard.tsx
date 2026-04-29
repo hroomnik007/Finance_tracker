@@ -57,6 +57,86 @@ function getLast7Days(): string[] {
   })
 }
 
+// ── Local helper components ────────────────────────────────────────────────
+
+function StatCard({ label, value, sub, accentColor = 'var(--text2)' }: {
+  label: string; value: string; sub?: React.ReactNode; accentColor?: string
+}) {
+  return (
+    <div style={{
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
+      borderRadius: 20,
+      padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 6,
+      boxShadow: 'var(--card-shadow)',
+      borderTop: `3px solid ${accentColor}`,
+    }}>
+      <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{label}</p>
+      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 'clamp(18px, 2.2vw, 26px)', color: accentColor, lineHeight: 1, margin: 0 }}>{value}</p>
+      {sub && <div style={{ fontSize: 12 }}>{sub}</div>}
+    </div>
+  )
+}
+
+function MiniStatCard({ label, value, color = 'var(--text2)' }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
+      borderRadius: 14,
+      padding: '12px 16px',
+      textAlign: 'center',
+      flex: 1,
+    }}>
+      <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 6, margin: '0 0 6px' }}>{label}</p>
+      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: 14, color, margin: 0 }}>{value}</p>
+    </div>
+  )
+}
+
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
+      borderRadius: 20,
+      padding: '20px',
+    }}>
+      <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 16, margin: '0 0 16px' }}>{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function ToggleBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: '10px 16px',
+        borderRadius: 10,
+        fontSize: 13,
+        fontWeight: 600,
+        fontFamily: 'inherit',
+        cursor: 'pointer',
+        border: 'none',
+        background: active ? 'var(--violet)' : 'transparent',
+        color: active ? 'white' : 'var(--text3)',
+        transition: 'all 0.15s',
+        boxShadow: active ? '0 4px 12px rgba(139,92,246,0.3)' : 'none',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface DashboardProps {
   month: number
   year: number
@@ -67,10 +147,10 @@ interface DashboardProps {
 type Tab = 'income' | 'expenses'
 
 const TOOLTIP_STYLE = {
-  backgroundColor: '#32265A',
-  border: '1px solid #4C3A8A',
+  backgroundColor: '#1a1630',
+  border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: 12,
-  fontFamily: 'Plus Jakarta Sans, sans-serif',
+  fontFamily: "'DM Sans', sans-serif",
   fontSize: 13,
 }
 
@@ -209,118 +289,155 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     return null
   })()
 
-  // ── Shared JSX blocks reused in both mobile and desktop layouts ──
+  // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
   const greetingRow = (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="text-base sm:text-xl font-semibold text-[#E2D9F3] truncate">{greeting.text} {greeting.emoji}</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {greeting.text} {greeting.emoji}
+        </span>
         {(user?.currentStreak ?? 0) > 0 && (
           <span
-            className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0 cursor-default"
+            style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}
             title={`${user!.currentStreak} ${t.dashboard.streakTooltip}`}
           >
             🔥 {user!.currentStreak}
           </span>
         )}
       </div>
-      <span className="text-[11px] sm:text-xs text-[#6B5A9E] shrink-0 whitespace-nowrap">{todayStr}</span>
+      <span style={{ fontSize: 11, color: 'var(--text3)', flexShrink: 0, whiteSpace: 'nowrap' }}>{todayStr}</span>
     </div>
   )
 
-  const heroCards = (
-    <>
-      <div className="bg-[#2A1F4A] rounded-2xl p-3 sm:p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.dashboard.balance}</p>
-        <p className={`font-bold text-xl sm:text-3xl font-mono leading-none ${balance >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
-          {formatAmount(balance)}
-        </p>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full w-fit ${balance >= 0 ? 'bg-[#34D399]/15 text-[#34D399]' : 'bg-[#F87171]/15 text-[#F87171]'}`}>
-          {balance >= 0 ? t.dashboard.positive : t.dashboard.negative}
-        </span>
-        {sparklineData.some(d => d.value > 0) && (
-          <div className="h-10 mt-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparklineData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-                <defs>
-                  <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area type="monotone" dataKey="value" stroke="#A78BFA" strokeWidth={2} fill="url(#sparkFill)" fillOpacity={0.2} dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+  // Mobile hero card — gradient balance card with income/expense rows
+  const mobileHeroCard = (
+    <div style={{
+      background: 'linear-gradient(135deg, #1a1035 0%, #2d1b69 50%, #1a1035 100%)',
+      border: '1px solid rgba(139,92,246,0.2)',
+      borderRadius: 24,
+      padding: '24px 20px',
+      boxShadow: '0 8px 40px rgba(139,92,246,0.15)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(139,92,246,0.15)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.45)', textAlign: 'center', margin: '0 0 8px' }}>{t.dashboard.balance}</p>
+      <p style={{
+        fontFamily: "'DM Mono', monospace",
+        fontWeight: 700,
+        fontSize: 'clamp(32px, 8vw, 44px)',
+        color: balance >= 0 ? '#34D399' : '#F87171',
+        textAlign: 'center',
+        lineHeight: 1,
+        margin: '0 0 20px',
+      }}>{formatAmount(balance)}</p>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ flex: 1, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 14, padding: '12px 14px' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.4)', margin: '0 0 4px' }}>{t.nav.income}</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#34D399', margin: 0 }}>+{formatAmount(totalIncome)}</p>
+          {incomeChange !== null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: incomeChange >= 0 ? '#34D399' : '#F87171', marginTop: 2 }}>
+              {incomeChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
+              {Math.abs(incomeChange).toFixed(1)}%
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 14, padding: '12px 14px' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.4)', margin: '0 0 4px' }}>{t.nav.expenses}</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#F87171', margin: 0 }}>-{formatAmount(totalExpenses)}</p>
+          {expensesChange !== null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: expensesChange <= 0 ? '#34D399' : '#F87171', marginTop: 2 }}>
+              {expensesChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
+              {Math.abs(expensesChange).toFixed(1)}%
+            </div>
+          )}
+        </div>
       </div>
+      {sparklineData.some(d => d.value > 0) && (
+        <div style={{ height: 40, marginTop: 16 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sparklineData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+              <defs>
+                <linearGradient id="sparkFillMobile" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="value" stroke="#A78BFA" strokeWidth={2} fill="url(#sparkFillMobile)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  )
 
-      <div className="bg-[#2A1F4A] rounded-2xl p-3 sm:p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.nav.income}</p>
-        <p className="font-bold text-xl sm:text-3xl font-mono text-[#34D399] leading-none">{formatAmount(totalIncome)}</p>
-        {incomeChange !== null && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${incomeChange >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
-            {incomeChange >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+  // Desktop stat cards — 3-column
+  const desktopStatCards = (
+    <>
+      <StatCard
+        label={t.dashboard.balance}
+        value={formatAmount(balance)}
+        accentColor={balance >= 0 ? '#34D399' : '#F87171'}
+        sub={
+          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: balance >= 0 ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)', color: balance >= 0 ? '#34D399' : '#F87171' }}>
+            {balance >= 0 ? t.dashboard.positive : t.dashboard.negative}
+          </span>
+        }
+      />
+      <StatCard
+        label={t.nav.income}
+        value={formatAmount(totalIncome)}
+        accentColor="#34D399"
+        sub={incomeChange !== null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: incomeChange >= 0 ? '#34D399' : '#F87171' }}>
+            {incomeChange >= 0 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
             <span>{Math.abs(incomeChange).toFixed(1)}% {t.dashboard.vsLastMonth}</span>
           </div>
         )}
-      </div>
-
-      <div className="bg-[#2A1F4A] rounded-2xl p-3 sm:p-6 border border-white/5 flex flex-col gap-2" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4]">{t.nav.expenses}</p>
-        <p className="font-bold text-xl sm:text-3xl font-mono text-[#F87171] leading-none">{formatAmount(totalExpenses)}</p>
-        {expensesChange !== null && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${expensesChange <= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}`}>
-            {expensesChange >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+      />
+      <StatCard
+        label={t.nav.expenses}
+        value={formatAmount(totalExpenses)}
+        accentColor="#F87171"
+        sub={expensesChange !== null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: expensesChange <= 0 ? '#34D399' : '#F87171' }}>
+            {expensesChange >= 0 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
             <span>{Math.abs(expensesChange).toFixed(1)}% {t.dashboard.vsLastMonth}</span>
           </div>
         )}
-      </div>
+      />
     </>
   )
 
-  const statsStrip = (
-    <div className="bg-white/[0.06] rounded-2xl border border-white/5 grid grid-cols-3 gap-px overflow-hidden">
-      <div className="flex flex-col items-center py-2 px-2 sm:py-3 sm:px-4 text-center bg-[#2A1F4A]">
-        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">{t.dashboard.dailyAvg}</p>
-        <p className="font-mono font-semibold text-[#A78BFA] text-sm">{formatAmount(dailyAvgExpense)}</p>
-      </div>
-      <div className="flex flex-col items-center py-2 px-2 sm:py-3 sm:px-4 text-center bg-[#2A1F4A]">
-        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">{t.dashboard.biggestExpense}</p>
-        <p className="font-mono font-semibold text-[#F87171] text-sm">
-          {biggestExpense ? formatAmount(biggestExpense.amount) : '—'}
-        </p>
-      </div>
-      <div className="flex flex-col items-center py-2 px-2 sm:py-3 sm:px-4 text-center bg-[#2A1F4A]">
-        <p className="text-[10px] text-[#6B5A9E] uppercase tracking-widest mb-1">{t.dashboard.transactions}</p>
-        <p className="font-semibold text-[#E2D9F3] text-sm">{variableExpenses.length}</p>
-      </div>
+  // Mini stats row
+  const miniStatsRow = (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <MiniStatCard label={t.dashboard.dailyAvg} value={formatAmount(dailyAvgExpense)} color="var(--violet)" />
+      <MiniStatCard label={t.dashboard.biggestExpense} value={biggestExpense ? formatAmount(biggestExpense.amount) : '—'} color="var(--red)" />
+      <MiniStatCard label={t.dashboard.transactions} value={String(variableExpenses.length)} color="var(--text)" />
     </div>
   )
 
-  const tabPills = (
-    <div className="flex gap-2">
-      {([['income', t.nav.income], ['expenses', t.nav.expenses]] as [Tab, string][]).map(([tab, label]) => (
-        <button
-          key={tab}
-          onClick={() => setActiveTab(tab)}
-          className={`flex-1 py-2 text-sm font-medium rounded-full transition-all duration-150 cursor-pointer border ${
-            activeTab === tab
-              ? 'bg-[#7C3AED] text-white border-transparent'
-              : 'bg-transparent text-[#9D84D4] border-[#4C3A8A]'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
+  // Toggle row (income / expenses)
+  const toggleRow = (
+    <div style={{
+      display: 'flex',
+      background: 'var(--bg3)',
+      border: '1px solid var(--border)',
+      borderRadius: 14,
+      padding: 4,
+      gap: 4,
+    }}>
+      <ToggleBtn active={activeTab === 'income'} onClick={() => setActiveTab('income')}>{t.nav.income}</ToggleBtn>
+      <ToggleBtn active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')}>{t.nav.expenses}</ToggleBtn>
     </div>
   )
 
   const incomeTabContent = (
-    <div className="flex flex-col gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {chartData.length > 0 && (
-        <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-4">{t.dashboard.incomesLast6}</h3>
+        <ChartCard title={t.dashboard.incomesLast6}>
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
@@ -329,44 +446,46 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                   <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
               <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#34D399' }} formatter={(val) => formatAmount(Number(val))} />
               <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </ChartCard>
       )}
       {incomes.length > 0 ? (
-        <div className="flex flex-col gap-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {incomes.slice(0, 8).map(income => (
-            <div key={income.id} className="flex items-center justify-between bg-[#231840] border border-[#4C3A8A]/50 rounded-2xl p-3">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0 bg-[#34D399]/15">💰</span>
+            <div key={income.id} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 12,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0, background: 'rgba(52,211,153,0.15)' }}>💰</span>
                 <div>
-                  <p className="text-sm font-medium text-[#E2D9F3]">{income.label}</p>
-                  <p className="text-xs text-[#6B5A9E]">{formatDate(income.date)}</p>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', margin: '0 0 2px' }}>{income.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{formatDate(income.date)}</p>
                 </div>
               </div>
-              <span className="font-mono text-sm font-semibold text-[#34D399] shrink-0 ml-3">+{formatAmount(income.amount)}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 600, color: '#34D399', flexShrink: 0, marginLeft: 12 }}>+{formatAmount(income.amount)}</span>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-[#2A1F4A] rounded-2xl border border-white/[0.08] p-10 text-center">
-          <p className="text-4xl mb-3">💰</p>
-          <p className="text-sm text-[#B8A3E8]">{t.dashboard.noIncomes}</p>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: '40px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 36, marginBottom: 12 }}>💰</p>
+          <p style={{ fontSize: 14, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noIncomes}</p>
         </div>
       )}
     </div>
   )
 
   const expenseCharts = (
-    <div className="flex flex-col gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {chartData.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-4">{t.dashboard.expensesLast6}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 16 }}>
+          <ChartCard title={t.dashboard.expensesLast6}>
             <ResponsiveContainer width="100%" height={160}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <defs>
@@ -375,53 +494,50 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
                     <stop offset="95%" stopColor="#F87171" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#F87171' }} formatter={(val) => formatAmount(Number(val))} />
                 <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-          <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-4">{t.dashboard.monthComparison}</h3>
+          </ChartCard>
+          <ChartCard title={t.dashboard.monthComparison}>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#4C3A8A4D" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#E2D9F3', fontWeight: 600 }} itemStyle={{ color: '#B8A3E8' }} formatter={(val) => formatAmount(Number(val))} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                <Bar dataKey="income" name={t.nav.income} fill="#34D399" radius={[4,4,0,0]} />
-                <Bar dataKey="expenses" name={t.nav.expenses} fill="#F87171" radius={[4,4,0,0]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#A78BFA' }} formatter={(val) => formatAmount(Number(val))} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                <Bar dataKey="income" name={t.nav.income} fill="#34D399" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" name={t.nav.expenses} fill="#F87171" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
         </div>
       )}
     </div>
   )
 
   const pieChartCard = pieData.length > 0 ? (
-    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/5 w-full">
-      <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3 text-center lg:text-left">{t.dashboard.expensesByCategory}</h3>
-      <div className="flex items-center gap-3">
-        {/* Legend LEFT */}
-        <div className="flex flex-col gap-2 flex-1 min-w-0 justify-center">
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}>
+      <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
           {legendItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-2 min-w-0">
-              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
-              <span className="text-xs text-[#B8A3E8] truncate flex-1">{item.name}</span>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: item.color }} />
+              <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
             </div>
           ))}
           {remainingPieCount > 0 && (
             <button
               onClick={() => setShowAllPie(p => !p)}
-              className="text-xs text-[#A78BFA] cursor-pointer bg-transparent border-none p-0 text-left font-[inherit]"
+              style={{ fontSize: 12, color: 'var(--violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}
             >
               {showAllPie ? 'Zobraziť menej ↑' : `+ ${remainingPieCount} ďalších →`}
             </button>
           )}
         </div>
-        {/* Donut RIGHT */}
-        <div className="relative shrink-0" style={{ width: 190, height: 190 }}>
+        <div style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -450,35 +566,24 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
             const slice = displayIndex !== null ? pieData[displayIndex] : null
             return (
               <>
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center"
-                  style={{ pointerEvents: 'none' }}
-                >
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   {slice ? (
                     <>
-                      <span className="text-lg mb-0.5">{slice.icon}</span>
-                      <p className="text-[10px] text-[#9D84D4] font-medium text-center px-1">{slice.name}</p>
-                      <p className="font-mono font-bold text-xs text-white leading-tight mt-0.5">{formatAmount(slice.value)}</p>
-                      <p className="text-[10px] text-[#9D84D4]">{Math.round((slice.value / totalVariable) * 100)}%</p>
+                      <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
+                      <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
+                      <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalVariable) * 100)}%</p>
                     </>
                   ) : (
                     <>
-                      <p className="font-mono font-bold text-sm text-white leading-tight">{formatAmount(totalVariable)}</p>
-                      <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.dashboard.total}</p>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalVariable)}</p>
+                      <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
                     </>
                   )}
                 </div>
                 {clickedIndex !== null && (
                   <div
-                    style={{
-                      position: 'absolute',
-                      left: '50%', top: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: 80, height: 80,
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      zIndex: 2,
-                    }}
+                    style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 80, height: 80, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
                     onClick={() => setClickedIndex(null)}
                   />
                 )}
@@ -501,79 +606,70 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   )
 
   const rightPanelTransactions = (
-    <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] text-center lg:text-left flex-1">{t.dashboard.recentTransactions}</p>
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0, flex: 1 }}>{t.dashboard.recentTransactions}</p>
         <button
           onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
-          className="hidden lg:block text-xs text-[#9D84D4] cursor-pointer bg-transparent border-none shrink-0"
+          className="hidden lg:block"
+          style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', flexShrink: 0, fontFamily: 'inherit' }}
         >
           {t.dashboard.showAll} →
         </button>
       </div>
       {activeTab === 'expenses' ? (
         last5.length > 0 ? (
-          <div className="flex flex-col gap-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {last5.map(expense => {
               const cat = getCategoryById(expense.categoryId)
               const member = householdEnabled && expense.created_by ? members.find(m => m.id === expense.created_by) : null
               return (
-                <div key={expense.id} className="flex items-center justify-between gap-2">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style={{ background: (cat?.color ?? '#9D84D4') + '33' }}>
+                <div key={expense.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, background: (cat?.color ?? '#9D84D4') + '33' }}>
                     {cat?.icon ?? '📦'}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-[#E2D9F3] truncate">{expense.note || cat?.name}</p>
-                    <p className="text-[10px] text-[#6B5A9E]">{formatDate(expense.date)}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{expense.note || cat?.name}</p>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(expense.date)}</p>
                   </div>
-                  {member && (
-                    <MemberAvatar userId={member.id} userName={member.name} size={20} />
-                  )}
-                  <span className="font-mono text-xs font-semibold text-[#F87171] shrink-0">-{formatAmount(expense.amount)}</span>
+                  {member && <MemberAvatar userId={member.id} userName={member.name} size={20} />}
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: '#F87171', flexShrink: 0 }}>-{formatAmount(expense.amount)}</span>
                 </div>
               )
             })}
           </div>
         ) : (
-          <p className="text-xs text-[#6B5A9E]">{t.dashboard.noExpenses}</p>
+          <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.noExpenses}</p>
         )
       ) : (
         last5Income.length > 0 ? (
-          <div className="flex flex-col gap-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {last5Income.map(income => {
               const member = householdEnabled && income.created_by ? members.find(m => m.id === income.created_by) : null
               return (
-                <div key={income.id} className="flex items-center justify-between gap-2">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 bg-[#34D399]/15">💰</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-[#E2D9F3] truncate">{income.label}</p>
-                    <p className="text-[10px] text-[#6B5A9E]">{formatDate(income.date)}</p>
+                <div key={income.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, background: 'rgba(52,211,153,0.15)' }}>💰</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{income.label}</p>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(income.date)}</p>
                   </div>
-                  {member && (
-                    <MemberAvatar userId={member.id} userName={member.name} size={20} />
-                  )}
-                  <span className="font-mono text-xs font-semibold text-[#34D399] shrink-0">+{formatAmount(income.amount)}</span>
+                  {member && <MemberAvatar userId={member.id} userName={member.name} size={20} />}
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: '#34D399', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
                 </div>
               )
             })}
           </div>
         ) : (
-          <p className="text-xs text-[#6B5A9E]">{t.dashboard.noIncomes}</p>
+          <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.noIncomes}</p>
         )
       )}
       <button
         onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
-        className="lg:hidden w-full mt-2"
+        className="lg:hidden"
         style={{
-          padding: '8px 12px',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '10px',
-          color: '#6B5A9E',
-          fontSize: '12px',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          textAlign: 'center',
+          width: '100%', marginTop: 8, padding: '8px 12px',
+          background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10,
+          color: 'var(--text3)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
         }}
       >
         {t.dashboard.showAll} →
@@ -584,18 +680,18 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const rightPanelCards = (
     <>
       {upcomingFixed.length > 0 && (
-        <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3">{t.dashboard.upcomingPayments}</p>
-          <div className="flex flex-col gap-3">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.upcomingPayments}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {upcomingFixed.map(fe => (
-              <div key={fe.id ?? fe.label} className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm text-[#E2D9F3] truncate">{fe.label}</p>
-                  <p className="text-xs text-[#6B5A9E]">
+              <div key={fe.id ?? fe.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 2px' }}>{fe.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
                     {fe.daysUntil === 0 ? t.dashboard.today : fe.daysUntil === 1 ? t.dashboard.tomorrow : t.dashboard.inDays.replace('{n}', String(fe.daysUntil))}
                   </p>
                 </div>
-                <span className="font-mono text-sm font-semibold text-[#F87171] shrink-0 ml-3">
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 600, color: '#F87171', flexShrink: 0, marginLeft: 12 }}>
                   -{formatAmount(fe.amount)}
                 </span>
               </div>
@@ -603,102 +699,107 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </div>
         </div>
       )}
-      <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3 text-center lg:text-left">{t.dashboard.budget}</p>
+
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>
         {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => {
           const barColor = b.percentage >= 90 ? '#F87171' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
           return (
-            <div key={b.categoryId} className="mb-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-[#E2D9F3] flex items-center gap-1">
+            <div key={b.categoryId} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span>{b.categoryIcon}</span> {b.categoryName}
                 </span>
-                <span className="text-xs font-semibold" style={{ color: barColor }}>
-                  {Math.round(b.percentage)}%
-                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: barColor }}>{Math.round(b.percentage)}%</span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${Math.min(b.percentage, 100)}%`, background: barColor }} />
+              <div style={{ height: 6, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 99, width: `${Math.min(b.percentage, 100)}%`, background: barColor }} />
               </div>
             </div>
           )
         })}
         {budgetStatuses.filter(b => b.limit > 0).length === 0 && (
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-[#6B5A9E]">{t.dashboard.noLimits}</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noLimits}</p>
             <button
               onClick={() => onNavigate('categories')}
-              className="text-xs text-[#A78BFA] bg-[#7C3AED]/10 border border-[#7C3AED]/20 px-2 py-1 rounded-lg hover:bg-[#7C3AED]/20 transition-colors cursor-pointer"
+              style={{ fontSize: 12, color: 'var(--violet)', background: 'var(--violet-glow)', border: '1px solid rgba(139,92,246,0.2)', padding: '4px 8px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {t.dashboard.setLimits}
             </button>
           </div>
         )}
       </div>
+
       {motivationalMsg && (
-        <div
-          className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08] border-l-4"
-          style={{ borderLeftColor: motivationalMsg.color }}
-        >
-          <p className="text-sm" style={{ color: motivationalMsg.color }}>{motivationalMsg.msg}</p>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderLeft: `3px solid ${motivationalMsg.color}`, borderRadius: 16, padding: 16 }}>
+          <p style={{ fontSize: 14, color: motivationalMsg.color, margin: 0 }}>{motivationalMsg.msg}</p>
         </div>
       )}
+
       {totalExpenses > 0 && (() => {
         const prediction = dailyAvgExpense * daysInMonth
         const prevTotal = prevMonthData?.expenses ?? 0
         const diff = prediction - prevTotal
         return (
-          <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2 text-center lg:text-left">{t.dashboard.expensePrediction}</p>
-            <p className="font-mono font-bold text-2xl text-[#F87171]">{formatAmount(prediction)}</p>
-            <p className="text-xs text-[#9D84D4] mt-1">
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 8px' }}>{t.dashboard.expensePrediction}</p>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 24, color: '#F87171', margin: '0 0 4px' }}>{formatAmount(prediction)}</p>
+            <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
               {dailyAvgExpense.toFixed(2)} €/deň × {daysInMonth} dní
             </p>
             {prevTotal > 0 && (
-              <p className={`text-xs mt-1 ${diff > 0 ? 'text-[#F87171]' : 'text-[#34D399]'}`}>
+              <p style={{ fontSize: 12, color: diff > 0 ? '#F87171' : '#34D399', margin: '4px 0 0' }}>
                 {diff > 0 ? '▲' : '▼'} {formatAmount(Math.abs(diff))} {t.dashboard.vsLastMonth}
               </p>
             )}
           </div>
         )
       })()}
-      <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-3 text-center lg:text-left">{t.dashboard.monthComparison}</p>
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-[#9D84D4]">{t.dashboard.thisMonth}</span>
-            <span className="text-sm font-mono font-semibold text-[#F87171]">-{formatAmount(totalExpenses)}</span>
+
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.monthComparison}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.thisMonth}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 600, color: '#F87171' }}>-{formatAmount(totalExpenses)}</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-[#9D84D4]">{t.dashboard.lastMonth}</span>
-            <span className="text-sm font-mono text-[#E2D9F3]">-{formatAmount(prevMonthData?.expenses ?? 0)}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.lastMonth}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: 'var(--text)' }}>-{formatAmount(prevMonthData?.expenses ?? 0)}</span>
           </div>
           {(prevMonthData?.expenses ?? 0) > 0 && (() => {
             const diff = ((totalExpenses - (prevMonthData?.expenses ?? 0)) / (prevMonthData?.expenses ?? 0) * 100).toFixed(1)
             const isUp = totalExpenses > (prevMonthData?.expenses ?? 0)
             return (
-              <div className={`text-xs font-semibold mt-1 ${isUp ? 'text-[#F87171]' : 'text-[#34D399]'}`}>
+              <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: isUp ? '#F87171' : '#34D399' }}>
                 {isUp ? '↑' : '↓'} {Math.abs(Number(diff))}% {t.dashboard.vsLastMonth}
               </div>
             )
           })()}
         </div>
       </div>
+
       {monthChallengeTarget > 0 && (
-        <div className="bg-[#2A1F4A] rounded-2xl p-4 border border-white/[0.08]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-2">{t.dashboard.monthlyChallenge}</p>
-          <p className="text-sm text-[#E2D9F3] mb-2">{t.dashboard.spendLessThan} {formatAmount(monthChallengeTarget)}</p>
-          <div className="bg-[#1A1030] rounded-full h-2 overflow-hidden">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 8px' }}>{t.dashboard.monthlyChallenge}</p>
+          <p style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 8px' }}>{t.dashboard.spendLessThan} {formatAmount(monthChallengeTarget)}</p>
+          <div style={{ height: 8, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
             <div
-              className={`h-full rounded-full transition-[width] duration-[400ms] ${
-                challengeProgress < 0.8 ? 'bg-[#34D399]' : challengeProgress < 1 ? 'bg-[#F59E0B]' : 'bg-[#F87171]'
-              }`}
-              style={{ width: `${Math.round(challengeProgress * 100)}%` }}
+              style={{
+                height: '100%', borderRadius: 99,
+                width: `${Math.round(challengeProgress * 100)}%`,
+                background: challengeProgress < 0.8 ? '#34D399' : challengeProgress < 1 ? '#F59E0B' : '#F87171',
+                transition: 'width 0.4s',
+              }}
             />
           </div>
-          <p className="text-xs text-[#9D84D4] mt-1.5">{formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)</p>
+          <p style={{ fontSize: 12, color: 'var(--text3)', margin: '6px 0 0' }}>
+            {formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)
+          </p>
         </div>
       )}
+
       {rightPanelTransactions}
     </>
   )
@@ -706,76 +807,82 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   return (
     <div className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
-      {/* ── MOBILE HEADER — mobile only ── */}
+      {/* Mobile header */}
       <div className="flex items-center justify-between gap-3 lg:hidden">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
       </div>
 
-      {/* ── DESKTOP TOP BAR — desktop only ── */}
+      {/* Desktop top bar — sticky */}
       <div
         className="hidden lg:flex items-center justify-between"
-        style={{ borderBottom: '1px solid var(--border-subtle)', position: 'sticky', top: 0, zIndex: 20, background: 'var(--bg-primary)', marginLeft: '-24px', marginRight: '-24px', paddingTop: '16px', paddingLeft: '24px', paddingRight: '24px', paddingBottom: '12px' }}
+        style={{
+          borderBottom: '1px solid var(--border)',
+          position: 'sticky', top: 0, zIndex: 20,
+          background: 'var(--bg)',
+          margin: '-20px -20px 0 -20px',
+          padding: '16px 20px 12px',
+        }}
       >
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {isPhotoUrl(user?.avatarUrl) ? (
-              <img src={user!.avatarUrl!} alt="" className="w-8 h-8 rounded-full object-cover border border-[#4C3A8A]" />
+              <img src={user!.avatarUrl!} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border2)' }} />
             ) : user?.avatarUrl ? (
-              <span className="w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0" style={{ background: 'rgba(124,58,237,0.2)' }}>{user.avatarUrl}</span>
+              <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, background: 'var(--violet-glow)' }}>{user.avatarUrl}</span>
             ) : (
-              <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ background: '#7C3AED' }}>{user?.name?.[0]?.toUpperCase() ?? '?'}</span>
+              <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0, background: 'var(--violet)' }}>{user?.name?.[0]?.toUpperCase() ?? '?'}</span>
             )}
-            <span className="text-xl font-semibold text-[#E2D9F3]">{greeting.text} {greeting.emoji}</span>
+            <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)' }}>{greeting.text} {greeting.emoji}</span>
             {(user?.currentStreak ?? 0) > 0 && (
-              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#FB923C]/15 text-[#FB923C] shrink-0">
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}>
                 🔥 {user!.currentStreak}
               </span>
             )}
           </div>
-          <span className="text-xs text-[#9D84D4] ml-10">{todayStr}</span>
+          <span style={{ fontSize: 12, color: 'var(--text3)', paddingLeft: 42 }}>{todayStr}</span>
         </div>
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
       </div>
 
       {/* ════════════════════════════════════════
-          MOBILE LAYOUT — stacked, hidden on lg
+          MOBILE LAYOUT
       ════════════════════════════════════════ */}
       <div className="flex flex-col gap-4 lg:hidden">
         {greetingRow}
-        <div className="flex flex-col gap-2">{heroCards}</div>
-        {statsStrip}
-        <div className="flex flex-col gap-4">
-          {tabPills}
+        {mobileHeroCard}
+        {miniStatsRow}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {toggleRow}
           {activeTab === 'income' && incomeTabContent}
           {activeTab === 'expenses' && (
-            <div className="flex flex-col gap-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {expenseCharts}
               {pieChartCard}
               {heatmapCard}
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {activeTab === 'expenses' ? rightPanelCards : rightPanelTransactions}
         </div>
       </div>
 
       {/* ════════════════════════════════════════
-          DESKTOP LAYOUT — grid, hidden on mobile
+          DESKTOP LAYOUT
       ════════════════════════════════════════ */}
-      <div className="hidden lg:grid gap-6 items-start w-full" style={{ gridTemplateColumns: 'minmax(0, 1fr) 280px' }}>
+      <div className="hidden lg:grid gap-6 items-start w-full" style={{ gridTemplateColumns: 'minmax(0, 1fr) 280px', marginTop: 24 }}>
 
-        {/* LEFT — all main content */}
-        <div className="flex flex-col gap-6 min-w-0 overflow-x-hidden">
-          <div className="grid grid-cols-3 gap-4">{heroCards}</div>
-          {statsStrip}
-          <div className="flex flex-col gap-4">
-            {tabPills}
+        {/* LEFT */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
+          <div className="grid grid-cols-3" style={{ gap: 16 }}>{desktopStatCards}</div>
+          {miniStatsRow}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {toggleRow}
             {activeTab === 'income' && incomeTabContent}
             {activeTab === 'expenses' && (
-              <div className="flex flex-col gap-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {expenseCharts}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2" style={{ gap: 16 }}>
                   {heatmapCard}
                   {pieChartCard}
                 </div>
@@ -786,8 +893,21 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
         {/* RIGHT — sticky panel */}
         <div
-          style={{ background: 'var(--bg-card)', borderLeft: '1px solid var(--border-subtle)', padding: '16px 12px', position: 'sticky', top: '0', alignSelf: 'start', overflowY: 'auto', overflowX: 'hidden' }}
-          className="flex flex-col gap-4"
+          style={{
+            background: 'var(--bg2)',
+            border: '1px solid var(--border)',
+            borderRadius: 20,
+            padding: '16px 12px',
+            position: 'sticky',
+            top: 60,
+            alignSelf: 'start',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            maxHeight: 'calc(100svh - 80px)',
+          }}
         >
           {rightPanelCards}
         </div>
