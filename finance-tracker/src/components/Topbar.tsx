@@ -49,8 +49,8 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
 
   return (
     <div style={barStyle}>
-      {/* Mobile: logo */}
-      <div className="lg:hidden" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Mobile only: logo left */}
+      <div className="lg:hidden" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <div style={{
           width: 32, height: 32,
           background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
@@ -60,11 +60,10 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
           flexShrink: 0,
           boxShadow: '0 4px 12px rgba(139,92,246,0.4)',
         }}>📊</div>
-        <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>Finvu</span>
       </div>
 
-      {/* Desktop: page title + date */}
-      <div className="hidden lg:block">
+      {/* Mobile only: page title center */}
+      <div className="lg:hidden" style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
           {getPageTitle(page, t)}
         </div>
@@ -73,7 +72,7 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
         </div>
       </div>
 
-      {/* Mobile: avatar button */}
+      {/* Mobile only: avatar button right */}
       <button
         onClick={onOpenProfile}
         className="lg:hidden"
@@ -100,9 +99,6 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
           </span>
         )}
       </button>
-
-      {/* Desktop right: spacer (month picker handled by pages) */}
-      <div className="hidden lg:block" />
     </div>
   )
 }
