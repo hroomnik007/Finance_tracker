@@ -81,7 +81,7 @@ const CHANGELOG = [
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-[#1a1035] border border-white/10 rounded-2xl overflow-hidden">
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
       {children}
     </div>
   )
@@ -89,8 +89,8 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 
 function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
   return (
-    <div className="border-b border-white/[0.06]" style={{ padding: 'var(--row-padding-y, 14px) var(--card-padding, 20px)' }}>
-      <p className="text-xs uppercase tracking-wider text-purple-300/60 font-semibold">
+    <div style={{ borderBottom: '1px solid var(--border)', padding: '14px 20px' }}>
+      <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
         {emoji} {label}
       </p>
     </div>
@@ -99,12 +99,12 @@ function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
 
 function SettingRow({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between" style={{ gap: 'var(--gap-size, 16px)', padding: 'var(--row-padding-y, 14px) var(--card-padding, 20px)' }}>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-[#E2D9F3]">{label}</p>
-        {sublabel && <p className="text-xs text-[#9D84D4] mt-0.5">{sublabel}</p>}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '13px 20px' }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', margin: 0 }}>{label}</p>
+        {sublabel && <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{sublabel}</p>}
       </div>
-      <div className="flex-shrink-0">{children}</div>
+      <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
   )
 }
@@ -764,7 +764,7 @@ export function SettingsPage() {
             <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Export</p>
+                <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 8 }}>Export</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button onClick={handleExportJSON} className="btn-secondary justify-center py-1.5 text-xs">
                     📄 {t.settings.exportJson}
@@ -802,8 +802,8 @@ export function SettingsPage() {
                 {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
               </div>
 
-              <div className="border-t border-white/[0.06] pt-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-1.5">Import</p>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 6 }}>Import</p>
                 <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
                   <Upload size={13} />
                   {t.settings.importJson}
@@ -812,7 +812,7 @@ export function SettingsPage() {
                 {importOk && <p className="text-xs text-emerald-400 mt-2">Import úspešný ✓</p>}
               </div>
 
-              <p className="text-xs text-[#6B5A9E] text-center">
+              <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
                 Dáta sú uložené na serveri. Exportuj pravidelne pre zálohovanie.
               </p>
             </div>
@@ -955,9 +955,9 @@ export function SettingsPage() {
           </SectionCard>
 
           {/* Section 5: Danger Zone */}
-          <div className="bg-red-500/5 border border-red-500/30 rounded-2xl overflow-hidden">
-            <div className="px-5 pt-4 pb-3 border-b border-red-500/20">
-              <p className="text-xs uppercase tracking-wider text-red-400/70 font-semibold">⚠️ {t.settings.dangerZone}</p>
+          <div style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(239,68,68,0.1)' }}>
+              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>⚠️ {t.settings.dangerZone}</p>
             </div>
             <div className="p-5 flex flex-col gap-2.5">
               <button
@@ -1044,9 +1044,9 @@ export function SettingsPage() {
       {/* ── IMPORT PREVIEW MODAL ── */}
       {importPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in">
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-[#E2D9F3]">Náhľad importu</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Náhľad importu</h2>
               <button onClick={() => setImportPreview(null)} className="btn-icon">
                 <X size={16} />
               </button>
@@ -1093,9 +1093,9 @@ export function SettingsPage() {
       {/* ── DANGER CONFIRM MODAL ── */}
       {dangerAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div className="bg-[#1a1035] border border-red-500/30 rounded-2xl p-6 w-full max-w-sm modal-in">
+          <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-[#E2D9F3]">
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
                 {dangerAction === 'expenses' && 'Vymazať všetky výdavky'}
                 {dangerAction === 'incomes' && 'Vymazať všetky príjmy'}
                 {dangerAction === 'reset' && 'Reset aplikácie'}
@@ -1149,11 +1149,12 @@ export function SettingsPage() {
           onClick={() => setShowAbout(false)}
         >
           <div
-            className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in"
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }}
+            className="modal-in"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-[#E2D9F3]">O aplikácii</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>O aplikácii</h2>
               <button onClick={() => setShowAbout(false)} className="btn-icon"><X size={16} /></button>
             </div>
             <div className="flex flex-col items-center mb-5">
@@ -1194,12 +1195,12 @@ export function SettingsPage() {
           onClick={() => setShowChangelog(false)}
         >
           <div
-            className="bg-[#1a1035] border border-white/10 rounded-2xl p-6 w-full max-w-sm modal-in"
-            style={{ maxHeight: '80vh', overflowY: 'auto' }}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384, maxHeight: '80vh', overflowY: 'auto' }}
+            className="modal-in"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-[#E2D9F3]">Changelog</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Changelog</h2>
               <button onClick={() => setShowChangelog(false)} className="btn-icon"><X size={16} /></button>
             </div>
             <div className="flex flex-col gap-5">

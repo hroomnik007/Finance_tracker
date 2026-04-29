@@ -146,7 +146,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     >
       <div
         className="relative w-full max-w-[860px] max-h-[94vh] rounded-[20px] overflow-hidden flex flex-col"
-        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Close */}
@@ -198,10 +198,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           </div>
 
           <div className="flex flex-col items-center gap-1">
-            <p className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <p className="text-base font-semibold" style={{ color: 'var(--text)' }}>
               {profileNameDraft || 'Váš profil'}
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+            <p className="text-xs" style={{ color: 'var(--text3)' }}>{user?.email}</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -227,10 +227,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Osobné údaje */}
             <div
               className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+              style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
             >
-              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
                   👤 Osobné údaje
                 </p>
               </div>
@@ -285,19 +285,19 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Bezpečnosť */}
             <div
               className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+              style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
             >
-              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
                   🔒 Bezpečnosť
                 </p>
               </div>
-              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+              <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
 
                 {/* Zmeniť heslo */}
                 <div>
                   <div className="flex items-center justify-between px-4" style={{ paddingTop: 14, paddingBottom: 14 }}>
-                    <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Zmeniť heslo</p>
+                    <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>Zmeniť heslo</p>
                     <button
                       onClick={() => setPasswordFormOpen(o => !o)}
                       className="cursor-pointer transition-colors flex-shrink-0"
@@ -324,13 +324,13 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 <div style={{ borderTopColor: 'var(--border-subtle)' }}>
                   <div className="flex items-center justify-between px-4" style={{ paddingTop: 14, paddingBottom: 14 }}>
                     <div>
-                      <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>PIN prihlásenie a zámok</p>
+                      <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>PIN prihlásenie a zámok</p>
                       {hasPinLogin || hasPin ? (
-                        <span className="inline-flex items-center gap-1 mt-0.5 font-medium" style={{ color: '#34d399', fontSize: 13 }}>
+                        <span className="inline-flex items-center gap-1 mt-0.5 font-medium" style={{ color: 'var(--green)', fontSize: 13 }}>
                           <Check size={11} /> PIN je aktívny
                         </span>
                       ) : (
-                        <p style={{ fontSize: 13, marginTop: 2, color: 'var(--text-muted)' }}>Rýchle prihlásenie 4-miestnym PIN</p>
+                        <p style={{ fontSize: 13, marginTop: 2, color: 'var(--text3)' }}>Rýchle prihlásenie 4-miestnym PIN</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -359,8 +359,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   <div style={{ borderTopColor: 'var(--border-subtle)' }}>
                     <div className="flex items-center justify-between px-4" style={{ paddingTop: 14, paddingBottom: 14 }}>
                       <div>
-                        <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Biometrické prihlásenie</p>
-                        <p style={{ fontSize: 13, marginTop: 2, color: 'var(--text-muted)' }}>Odtlačok prsta alebo Face ID</p>
+                        <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>Biometrické prihlásenie</p>
+                        <p style={{ fontSize: 13, marginTop: 2, color: 'var(--text3)' }}>Odtlačok prsta alebo Face ID</p>
                       </div>
                       <button
                         onClick={async () => {
@@ -406,10 +406,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Preferencie */}
             <div
               className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+              style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
             >
-              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
                   ⚙️ Preferencie
                 </p>
               </div>
@@ -463,16 +463,16 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Odznaky */}
             <div
               className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+              style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
             >
-              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+              <div className="px-4 pt-3.5 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
                   🏅 Odznaky
                 </p>
               </div>
               <div className="px-4 py-3 flex flex-wrap gap-2">
                 {(user?.badges?.length ?? 0) === 0 ? (
-                  <p className="text-sm w-full" style={{ color: 'var(--text-muted)' }}>Zatiaľ žiadne odznaky. Pridaj prvú transakciu! 🎯</p>
+                  <p className="text-sm w-full" style={{ color: 'var(--text3)' }}>Zatiaľ žiadne odznaky. Pridaj prvú transakciu! 🎯</p>
                 ) : (
                   (user!.badges!).map(badge => (
                     <span
@@ -480,8 +480,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       title={BADGE_DESCRIPTIONS[badge] ?? badge}
                       className="font-medium rounded-full cursor-default"
                       style={{
-                        background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)',
-                        padding: '8px 16px', fontSize: 14,
+                        background: 'var(--bg3)', color: 'var(--text)',
+                        padding: '8px 16px', fontSize: 14, border: '1px solid var(--border)',
                       }}
                     >
                       {BADGE_LABELS[badge] ?? badge}
@@ -490,7 +490,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 )}
               </div>
               {(user?.longestStreak ?? 0) > 0 && (
-                <p className="px-4 pb-3 pt-1 mt-1" style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                <p className="px-4 pb-3 pt-1 mt-1" style={{ fontSize: 13, color: 'var(--text3)' }}>
                   Najdlhšia séria: <span className="font-semibold" style={{ color: '#FB923C' }}>🔥 {user!.longestStreak} dní</span>
                 </p>
               )}
@@ -534,11 +534,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         >
           <div
             className="rounded-2xl p-6 w-full max-w-[320px]"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Zrušiť PIN?</h3>
-            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>PIN prihlásenie a zámok budú deaktivované.</p>
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text)' }}>Zrušiť PIN?</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--text3)' }}>PIN prihlásenie a zámok budú deaktivované.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setPinRemoveConfirm(false)}
@@ -572,11 +572,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         >
           <div
             className="rounded-2xl p-6 w-full max-w-[320px]"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Odhlásiť sa?</h3>
-            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Budete presmerovaný na prihlasovaciu stránku.</p>
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text)' }}>Odhlásiť sa?</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--text3)' }}>Budete presmerovaný na prihlasovaciu stránku.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setLogoutConfirm(false)}
