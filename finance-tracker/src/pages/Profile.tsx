@@ -89,8 +89,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Obrázok je príliš veľký. Maximálna veľkosť je 2 MB.')
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Obrázok je príliš veľký. Max veľkosť je 10 MB.')
         return
       }
       setPhotoUploading(true)

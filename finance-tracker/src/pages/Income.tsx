@@ -369,7 +369,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                 <button
                   key={m.id}
                   onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
-                  className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] ${
+                  className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] whitespace-nowrap ${
                     memberFilter === m.id
                       ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
                       : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'

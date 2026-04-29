@@ -767,17 +767,17 @@ export function SettingsPage() {
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Export</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={handleExportJSON} className="btn-secondary justify-center py-2.5 text-sm">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button onClick={handleExportJSON} className="btn-secondary justify-center py-1.5 text-xs">
                     📄 {t.settings.exportJson}
                   </button>
-                  <button onClick={handleExportPDF} className="btn-secondary justify-center py-2.5 text-sm">
+                  <button onClick={handleExportPDF} className="btn-secondary justify-center py-1.5 text-xs">
                     🖨️ {t.settings.printPdf}
                   </button>
                   <div className="flex flex-col gap-1">
                     <button
                       onClick={() => setCsvSubMenuOpen(o => !o)}
-                      className="btn-secondary justify-center py-2.5 text-sm w-full"
+                      className="btn-secondary justify-center py-1.5 text-xs w-full"
                     >
                       📋 {t.settings.exportCsv} {csvSubMenuOpen ? '▲' : '▼'}
                     </button>
@@ -792,22 +792,22 @@ export function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  <button onClick={handleExportXlsx} className="btn-secondary justify-center py-2.5 text-sm">
+                  <button onClick={handleExportXlsx} className="btn-secondary justify-center py-1.5 text-xs">
                     📊 {t.settings.exportXlsx}
                   </button>
                 </div>
                 {user && (
-                  <button onClick={handleShareReport} className="btn-primary w-full justify-center py-2.5 text-sm mt-2">
+                  <button onClick={handleShareReport} className="btn-primary w-full justify-center py-1.5 text-xs mt-1.5">
                     🔗 {t.settings.shareOverview}
                   </button>
                 )}
                 {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
               </div>
 
-              <div className="border-t border-white/[0.06] pt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-2">Import</p>
-                <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-2.5">
-                  <Upload size={14} />
+              <div className="border-t border-white/[0.06] pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B5A9E] mb-1.5">Import</p>
+                <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
+                  <Upload size={13} />
                   {t.settings.importJson}
                 </button>
                 {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
@@ -824,8 +824,8 @@ export function SettingsPage() {
           <SectionCard>
             <SectionHeader emoji="👨‍👩‍👧" label="Rodinné financie" />
             <div className="divide-y divide-white/[0.04]">
-              <SettingRow label="Rodinné financie" sublabel="Zdieľajte financie s rodinou alebo partnerom">
-                <Toggle checked={householdEnabled} onChange={handleHouseholdToggle} disabled={householdToggling} />
+              <SettingRow label="Rodinné financie" sublabel={householdId ? 'Pre vypnutie opustite domácnosť' : 'Zdieľajte financie s rodinou alebo partnerom'}>
+                <Toggle checked={householdEnabled} onChange={householdId ? () => {} : handleHouseholdToggle} disabled={householdToggling || !!householdId} />
               </SettingRow>
             </div>
 

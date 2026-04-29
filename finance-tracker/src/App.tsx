@@ -287,7 +287,7 @@ function App() {
       {/* Main content wrapper */}
       <div
         className="flex h-screen transition-all duration-200 ease-in-out"
-        style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '52px' : '180px') : '0', overflow: 'hidden' }}
+        style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '52px' : '160px') : '0', overflow: 'hidden' }}
       >
         <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)' }}>
           <div className="p-6 w-full min-h-full">

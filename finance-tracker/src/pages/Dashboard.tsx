@@ -565,12 +565,12 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
         className="lg:hidden w-full mt-2"
         style={{
-          padding: '12px',
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '12px',
-          color: '#9ca3af',
-          fontSize: '13px',
+          padding: '8px 12px',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '10px',
+          color: '#6B5A9E',
+          fontSize: '12px',
           cursor: 'pointer',
           fontFamily: 'inherit',
           textAlign: 'center',

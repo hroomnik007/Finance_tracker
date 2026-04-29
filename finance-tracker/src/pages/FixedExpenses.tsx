@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { Pencil, Trash2, Plus, FileUp } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
+import { MonthSwitcher } from '../components/MonthSwitcher'
+import { CsvImportModal } from '../components/CsvImportModal'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFormatters } from '../hooks/useFormatters'
@@ -25,7 +27,7 @@ interface FixedExpensesPageProps {
   onMonthChange: (month: number, year: number) => void
 }
 
-export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
+export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesPageProps) {
   const { fixedExpenses, addFixedExpense, updateFixedExpense, deleteFixedExpense } = useFixedExpenses()
   const { variableExpenses } = useVariableExpenses(month, year)
   const { formatAmount } = useFormatters()
@@ -35,6 +37,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const [editing, setEditing] = useState<FixedExpense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [activeCat, setActiveCat] = useState<FixedCategory | null>(null)
+  const [csvOpen, setCsvOpen] = useState(false)
 
   // Form state
   const [label, setLabel] = useState('')
@@ -331,15 +334,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     >
       <div className="flex flex-col gap-5">
         <div>
-          <label className="form-label">{t.expenses.fixed.nameLabel}</label>
-          <input
-            className="input-field"
-            placeholder={t.expenses.fixed.namePlaceholder}
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-          />
-        </div>
-        <div>
           <label className="form-label">{t.expenses.fixed.amountLabel}</label>
           <input
             className="input-field amount-input font-mono"
@@ -356,6 +350,15 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
               if (!allowed.includes(e.key)) e.preventDefault()
             }}
+          />
+        </div>
+        <div>
+          <label className="form-label">{t.expenses.fixed.nameLabel}</label>
+          <input
+            className="input-field"
+            placeholder={t.expenses.fixed.namePlaceholder}
+            value={label}
+            onChange={e => setLabel(e.target.value)}
           />
         </div>
         <div>
@@ -458,32 +461,41 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
   return (
     <div className="w-full pb-24 lg:pb-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {t.expenses.fixed.title}
-        </h1>
-        <button
-          onClick={openAdd}
-          className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
-          style={{
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            borderRadius: 12, padding: '10px 20px', fontSize: 14,
-            boxShadow: '0 4px 12px rgba(124,58,237,0.4)',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)'
-          }}
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          {t.expenses.fixed.add}
-        </button>
+      {/* Page header — same layout as VariableExpenses */}
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCsvOpen(true)}
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.3)] text-[#A78BFA] text-[13px] font-semibold cursor-pointer shrink-0 font-[inherit]"
+          >
+            <FileUp size={20} />
+            <span className="hidden sm:inline">Import CSV</span>
+          </button>
+          <button
+            onClick={openAdd}
+            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
+            style={{
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              borderRadius: 12, padding: '10px 20px', fontSize: 14,
+              boxShadow: '0 4px 12px rgba(124,58,237,0.4)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)'
+            }}
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            {t.expenses.fixed.add}
+          </button>
+        </div>
       </div>
+
+      <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
       {/* FAB — mobile only */}
       {!sheetOpen && (
@@ -643,10 +655,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           <div className="hidden lg:block">{vsCard}</div>
         </div>
 
-        {/* Mobile only: Mesačný súhrn + Ročný + Fixné vs Var at bottom */}
+        {/* Mobile only: Fixné vs Variabilné at bottom */}
         <div className="flex flex-col gap-4 lg:hidden order-3">
-          {summaryCard}
-          {yearlyCard}
           {vsCard}
         </div>
       </div>

@@ -110,7 +110,7 @@ export function HouseholdPage() {
         <div className="lg:hidden flex items-center justify-between px-4 py-3 rounded-2xl gap-3" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D84D4] mb-1">{ht.inviteCode}</p>
-            <code className="font-mono text-base font-bold text-[#A78BFA]" style={{ letterSpacing: '3px' }}>
+            <code className="font-mono font-bold text-[#A78BFA]" style={{ letterSpacing: '3px', fontSize: '18px' }}>
               {householdData.invite_code}
             </code>
           </div>

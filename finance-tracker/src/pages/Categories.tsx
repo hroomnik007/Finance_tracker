@@ -31,15 +31,19 @@ export function CategoriesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [swipedId, setSwipedId] = useState<string | null>(null)
   const touchStartX = useRef<number>(0)
+  const touchStartY = useRef<number>(0)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
   }
 
   const handleTouchEnd = (e: React.TouchEvent, id: string) => {
-    const delta = e.changedTouches[0].clientX - touchStartX.current
-    if (delta < -60) setSwipedId(id)
-    else if (delta > 30) setSwipedId(null)
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current
+    const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+    if (deltaY > 30) return
+    if (deltaX < -60) setSwipedId(id)
+    else if (deltaX > 30) setSwipedId(null)
   }
 
   const [name, setName] = useState('')
@@ -111,7 +115,7 @@ export function CategoriesPage() {
 
   return (
     <div className="w-full">
-      <div className="lg:grid gap-6" style={{ gridTemplateColumns: categories.length > 0 ? '1fr 280px' : '1fr' }}>
+      <div className="lg:grid lg:items-start gap-6" style={{ gridTemplateColumns: categories.length > 0 ? '1fr 280px' : '1fr' }}>
 
         {/* ── Main column ── */}
         <div className="space-y-6 pb-4">
@@ -192,26 +196,27 @@ export function CategoriesPage() {
                       position: 'absolute', right: 0, top: 0, bottom: 0,
                       width: '80px',
                       background: '#ef4444',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px',
                       borderRadius: '0 16px 16px 0',
                     }}>
                       <button
                         onClick={(e) => { e.stopPropagation(); setDeleteId(cat.id!) }}
-                        style={{ background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: 0 }}
                       >
-                        🗑️
+                        <span style={{ fontSize: '18px' }}>🗑️</span>
+                        <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.03em' }}>Zmazať</span>
                       </button>
                     </div>
                     {/* Main row slides left on swipe */}
                     <div
                       className="flex items-center gap-3 p-4 rounded-2xl fade-up cursor-pointer"
                       style={{
-                        backgroundColor: cat.color + '12',
-                        border: `1px solid ${cat.color}40`,
+                        backgroundColor: 'var(--card-bg, #1a1830)',
+                        border: `1px solid ${cat.color}30`,
                         animationDelay: `${idx * 40}ms`,
                         minHeight: '64px',
                         transform: `translateX(${swipedId === cat.id ? '-80px' : '0px'})`,
-                        transition: 'transform 0.25s ease',
+                        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         position: 'relative',
                         zIndex: 1,
                       }}
@@ -246,7 +251,7 @@ export function CategoriesPage() {
 
         {/* ── Right panel — desktop only ── */}
         {categories.length > 0 && (
-          <div className="hidden lg:flex flex-col gap-4 self-start" style={{ marginTop: 60 }}>
+          <div className="hidden lg:flex flex-col gap-4 self-start">
 
             {/* Card 1: Súhrn */}
             <div className="bg-[#1a1035] border border-white/10 rounded-2xl p-4">

@@ -47,7 +47,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
     <aside
       className={`${mobileOpen ? 'flex' : 'hidden'} lg:flex flex-col fixed top-0 left-0 h-screen z-50 overflow-hidden`}
       style={{
-        width: collapsed ? '52px' : '180px',
+        width: collapsed ? '52px' : '160px',
         transition: 'width 0.2s ease-in-out',
         background: 'var(--sidebar-bg)',
         borderRight: '0.5px solid var(--border-subtle)',
@@ -128,8 +128,20 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
           </button>
 
           {collapsed && (
-            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-[#2D1F5E] border border-[#6B5A9E] text-[#E2D9F3] text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
-              {t.nav.expenses}
+            <div className="absolute left-full ml-2 top-0 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto bg-[#2D1F5E] border border-[#6B5A9E] rounded-xl z-50 transition-opacity duration-150 overflow-hidden"
+              style={{ minWidth: '148px' }}>
+              <div className="px-3 py-2 border-b border-white/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6B5A9E]">{t.nav.expenses}</p>
+              </div>
+              <button onClick={() => handleChange('variable-expenses')} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left">
+                <Receipt size={13} className="shrink-0" /> {t.nav.variable}
+              </button>
+              <button onClick={() => handleChange('fixed-expenses')} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left">
+                <Lock size={13} className="shrink-0" /> {t.nav.fixed}
+              </button>
+              <button onClick={() => handleChange('categories')} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left">
+                <Tag size={13} className="shrink-0" /> {t.nav.categories}
+              </button>
             </div>
           )}
 
