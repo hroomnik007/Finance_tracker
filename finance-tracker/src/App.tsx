@@ -289,7 +289,7 @@ function App() {
         className="flex h-screen transition-all duration-200 ease-in-out"
         style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '52px' : '160px') : '0', overflow: 'hidden' }}
       >
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="p-6 w-full min-h-full">
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />

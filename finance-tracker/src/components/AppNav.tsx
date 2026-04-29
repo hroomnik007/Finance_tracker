@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import {
   ChevronLeft, ChevronRight as ChevronRightIcon,
   ChevronDown, ChevronRight,
@@ -30,6 +31,22 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
   const expensesActive = EXPENSE_CHILDREN.includes(current)
   const expensesOpen = expensesActive && !collapsed
 
+  const [submenuVisible, setSubmenuVisible] = useState(false)
+  const [submenuY, setSubmenuY] = useState(0)
+  const expensesBtnRef = useRef<HTMLDivElement>(null)
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function openSubmenu() {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+    const rect = expensesBtnRef.current?.getBoundingClientRect()
+    if (rect) setSubmenuY(rect.top)
+    setSubmenuVisible(true)
+  }
+
+  function closeSubmenu() {
+    hideTimerRef.current = setTimeout(() => setSubmenuVisible(false), 80)
+  }
+
   function handleChange(p: Page) {
     onChange(p)
     onMobileClose?.()
@@ -50,8 +67,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
         width: collapsed ? '52px' : '160px',
         transition: 'width 0.2s ease-in-out',
         background: 'var(--sidebar-bg)',
-        borderRight: '0.5px solid var(--border-subtle)',
-        boxShadow: '4px 0 24px rgba(0,0,0,0.3)',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
       }}
     >
       {/* Logo */}
@@ -88,7 +105,12 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
         />
 
         {/* Expenses group */}
-        <div className="mb-0.5 relative group">
+        <div
+          ref={expensesBtnRef}
+          className="mb-0.5 relative"
+          onMouseEnter={() => { if (collapsed) openSubmenu() }}
+          onMouseLeave={() => { if (collapsed) closeSubmenu() }}
+        >
           <button
             onClick={() => handleChange('variable-expenses')}
             className={`w-full flex items-center rounded-xl transition-all duration-150 cursor-pointer text-left ${collapsed ? 'justify-center px-0 py-3' : 'gap-2 px-3'}`}
@@ -127,23 +149,6 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
             )}
           </button>
 
-          {collapsed && (
-            <div className="absolute left-full ml-2 top-0 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto bg-[#2D1F5E] border border-[#6B5A9E] rounded-xl z-50 transition-opacity duration-150 overflow-hidden"
-              style={{ minWidth: '148px' }}>
-              <div className="px-3 py-2 border-b border-white/10">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6B5A9E]">{t.nav.expenses}</p>
-              </div>
-              <button onClick={() => handleChange('variable-expenses')} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left">
-                <Receipt size={13} className="shrink-0" /> {t.nav.variable}
-              </button>
-              <button onClick={() => handleChange('fixed-expenses')} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left">
-                <Lock size={13} className="shrink-0" /> {t.nav.fixed}
-              </button>
-              <button onClick={() => handleChange('categories')} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left">
-                <Tag size={13} className="shrink-0" /> {t.nav.categories}
-              </button>
-            </div>
-          )}
 
           {!collapsed && (
             <div
@@ -173,6 +178,48 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
             </div>
           )}
         </div>
+
+        {/* Fixed-position collapsed submenu — not clipped by aside overflow:hidden */}
+        {collapsed && submenuVisible && (
+          <div
+            style={{
+              position: 'fixed',
+              left: '56px',
+              top: submenuY,
+              background: '#1e1b36',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '0 12px 12px 0',
+              padding: '6px 0',
+              minWidth: '170px',
+              zIndex: 300,
+              boxShadow: '4px 4px 20px rgba(0,0,0,0.5)',
+            }}
+            onMouseEnter={openSubmenu}
+            onMouseLeave={closeSubmenu}
+          >
+            <div style={{ padding: '6px 16px 4px', fontSize: '10px', color: '#6b7280', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              {t.nav.expenses}
+            </div>
+            <button
+              onClick={() => { handleChange('variable-expenses'); setSubmenuVisible(false) }}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left"
+            >
+              <Receipt size={13} className="shrink-0" /> {t.nav.variable}
+            </button>
+            <button
+              onClick={() => { handleChange('fixed-expenses'); setSubmenuVisible(false) }}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left"
+            >
+              <Lock size={13} className="shrink-0" /> {t.nav.fixed}
+            </button>
+            <button
+              onClick={() => { handleChange('categories'); setSubmenuVisible(false) }}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-[#9D84D4] hover:text-[#E2D9F3] hover:bg-white/5 cursor-pointer border-none bg-transparent font-[inherit] text-left"
+            >
+              <Tag size={13} className="shrink-0" /> {t.nav.categories}
+            </button>
+          </div>
+        )}
 
         {user?.household_enabled && (
           <SideNavItem

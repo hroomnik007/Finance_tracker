@@ -30,6 +30,7 @@ export interface ActivityItem {
   type: 'expense' | 'income'
   amount: number
   description: string | null
+  created_by: string | null
   created_by_name: string | null
   created_at: string
 }

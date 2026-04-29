@@ -125,31 +125,6 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
 
   // ── Reusable card blocks ──────────────────────────────────────────────────
 
-  const summaryCard = (
-    <div className={card}>
-      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
-        {t.expenses.fixed.monthly}
-      </p>
-      <p className="font-mono text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-        {formatAmount(total)}
-      </p>
-      <div className="flex gap-6">
-        <div>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.expenses.fixed.itemCount}</p>
-          <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-            {fixedExpenses.length} {t.expenses.fixed.itemsCount}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.expenses.fixed.avgPayment}</p>
-          <p className="font-mono text-sm font-semibold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-            {fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—'}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-
   const yearlyCard = (
     <div className={card}>
       <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
@@ -514,6 +489,32 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
         </button>
       )}
 
+      {/* Stat cards — matching VariableExpenses layout */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-2">
+        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
+            {t.expenses.fixed.monthly}
+          </p>
+          <p className="text-lg sm:text-2xl font-bold text-[#f87171] font-mono">{formatAmount(total)}</p>
+        </div>
+        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
+            {t.expenses.fixed.itemCount}
+          </p>
+          <p className="text-lg sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fixedExpenses.length}</p>
+          <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.fixed.itemsCount}</p>
+        </div>
+        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
+            {t.expenses.fixed.avgPayment}
+          </p>
+          <p className="text-lg sm:text-2xl font-bold font-mono" style={{ color: 'var(--text-primary)' }}>
+            {fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—'}
+          </p>
+          <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.perItem}</p>
+        </div>
+      </div>
+
       {/* 2-col desktop grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
 
@@ -645,8 +646,6 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
 
         {/* ── RIGHT: context panel ── */}
         <div className="flex flex-col gap-4 order-1 lg:order-2">
-          {/* Mesačný súhrn — desktop only in right panel */}
-          <div className="hidden lg:block">{summaryCard}</div>
           {/* Ročný prehľad — desktop only */}
           <div className="hidden lg:block">{yearlyCard}</div>
           {/* Najbližšie platby — desktop only */}

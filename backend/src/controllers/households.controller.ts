@@ -270,6 +270,7 @@ export async function getActivity(req: AuthRequest, res: Response): Promise<void
       type: transactions.type,
       amount: transactions.amount,
       description: transactions.description,
+      createdBy: transactions.createdBy,
       createdByName: users.name,
       createdAt: transactions.createdAt,
     })
@@ -284,6 +285,7 @@ export async function getActivity(req: AuthRequest, res: Response): Promise<void
       type: r.type,
       amount: parseFloat(r.amount as string),
       description: r.description,
+      created_by: r.createdBy,
       created_by_name: r.createdByName,
       created_at: r.createdAt,
     }))

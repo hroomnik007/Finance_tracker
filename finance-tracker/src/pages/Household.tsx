@@ -94,15 +94,6 @@ export function HouseholdPage() {
           <h1 className="text-xl font-bold text-[#E2D9F3]">{householdData?.name ?? ht.title}</h1>
           <p className="text-xs text-[#9D84D4] mt-0.5">{ht.subtitle}</p>
         </div>
-        {householdData?.invite_code && (
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 text-[#A78BFA] text-xs font-semibold cursor-pointer transition-all"
-          >
-            {copied ? <Check size={13} /> : <Copy size={13} />}
-            {copied ? ht.copied : ht.copyCode}
-          </button>
-        )}
       </div>
 
       {/* Mobile invite code badge */}
@@ -179,7 +170,7 @@ export function HouseholdPage() {
               </div>
               <div className="divide-y divide-white/[0.04]">
                 {stats.per_member.map(m => (
-                  <div key={m.user_id} className="flex items-center gap-3 px-4 py-3">
+                  <div key={m.user_id} className="flex items-center gap-3 px-4 py-3 min-w-0">
                     <MemberAvatar userId={m.user_id} userName={m.name} size={32} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#E2D9F3]" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</p>
@@ -219,14 +210,17 @@ export function HouseholdPage() {
                       {item.type === 'expense' ? '💸' : '💰'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-[#E2D9F3] truncate">{item.description || ht[item.type]}</p>
-                      <p className="text-[10px] text-[#9D84D4] mt-0.5">{item.created_by_name ?? '—'}</p>
+                      <p className="text-xs font-medium text-[#E2D9F3] truncate">
+                        <span className="text-[#A78BFA]">{item.created_by_name ?? '—'}</span>
+                        {' · '}
+                        {item.description || ht[item.type]}
+                      </p>
+                      <p className="text-[10px] text-[#9D84D4] mt-0.5">{formatRelativeTime(item.created_at)}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className={`font-mono text-xs font-semibold ${item.type === 'expense' ? 'text-[#f87171]' : 'text-[#34d399]'}`}>
                         {item.type === 'expense' ? '-' : '+'}{formatAmount(item.amount)}
                       </p>
-                      <p className="text-[10px] text-[#6B5A9E] mt-0.5">{formatRelativeTime(item.created_at)}</p>
                     </div>
                   </div>
                 ))}
