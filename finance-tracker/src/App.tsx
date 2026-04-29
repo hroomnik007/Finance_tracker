@@ -275,29 +275,33 @@ function App() {
         background: 'var(--bg)',
       }}>
         <Topbar page={page} onOpenProfile={() => setIsProfileOpen(true)} />
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <div className="content-main" style={{ padding: '20px', width: '100%', minHeight: '100%' }}>
-            {page === 'dashboard' && (
-              <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
-            )}
-            {page === 'income' && (
-              <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
-            )}
-            {page === 'variable-expenses' && (
-              <VariableExpensesPage
-                month={month}
-                year={year}
-                onMonthChange={handleMonthChange}
-                showToast={showToast}
-              />
-            )}
-            {page === 'fixed-expenses' && (
-              <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
-            )}
-            {page === 'categories' && <CategoriesPage />}
-            {page === 'settings' && <SettingsPage />}
-            {page === 'household' && <HouseholdPage />}
-          </div>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {page === 'dashboard' && (
+            <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
+          )}
+          {page === 'income' && (
+            <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
+          )}
+          {page === 'variable-expenses' && (
+            <VariableExpensesPage
+              month={month}
+              year={year}
+              onMonthChange={handleMonthChange}
+              showToast={showToast}
+            />
+          )}
+          {page === 'fixed-expenses' && (
+            <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
+          )}
+          {page === 'categories' && <CategoriesPage />}
+          {(page === 'settings' || page === 'household') && (
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div style={{ padding: '20px', minHeight: '100%' }}>
+                {page === 'settings' && <SettingsPage />}
+                {page === 'household' && <HouseholdPage />}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 

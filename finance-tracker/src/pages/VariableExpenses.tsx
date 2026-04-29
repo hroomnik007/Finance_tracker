@@ -18,6 +18,7 @@ import { getTransactions } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import type { HouseholdMember } from '../api/households'
 import type { VariableExpense, BudgetStatus } from '../types'
+import React from 'react'
 
 interface VariableExpensesPageProps {
   month: number
@@ -38,9 +39,9 @@ type WeekGroup = 'this-week' | 'last-week' | 'older'
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
 
 const getBudgetBarColor = (pct: number) => {
-  if (pct >= 100) return 'var(--negative)'
-  if (pct >= 80) return 'var(--warning)'
-  return 'var(--accent)'
+  if (pct >= 100) return 'var(--red)'
+  if (pct >= 80) return '#FBBF24'
+  return 'var(--green)'
 }
 
 function getWeekGroup(dateStr: string, today: Date): WeekGroup {
@@ -56,7 +57,6 @@ function getWeekGroup(dateStr: string, today: Date): WeekGroup {
   if (date >= startOfLastWeek) return 'last-week'
   return 'older'
 }
-
 
 export function VariableExpensesPage({ month, year, onMonthChange, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
@@ -104,7 +104,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
   const liveSpent = (liveBudget?.spent ?? 0) + (editing ? 0 : liveAmount)
   const liveLimit = liveBudget?.limit
   const livePct = liveLimit ? Math.min((liveSpent / liveLimit) * 100, 100) : null
-  const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--accent)'
+  const liveBudgetBarColor = livePct !== null ? getBudgetBarColor(livePct) : 'var(--green)'
 
   const openAdd = () => {
     setEditing(null)
@@ -150,17 +150,14 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     setSheetOpen(false)
   }
 
-  // Hero card data
   const totalAmount = variableExpenses.reduce((sum, e) => sum + e.amount, 0)
   const count = variableExpenses.length
   const avgAmount = count > 0 ? totalAmount / count : 0
   const changeVsPrev = prevMonthTotal !== null && prevMonthTotal > 0
     ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
 
-  // Filter pills — only categories that have expenses this month
   const categoriesWithExpenses = categories.filter(c => variableExpenses.some(e => e.categoryId === c.id))
 
-  // Filtered + sorted list (used by both desktop table and mobile groups)
   const filteredSorted = [...(activeCategory
     ? variableExpenses.filter(e => e.categoryId === activeCategory)
     : variableExpenses
@@ -169,7 +166,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     .sort((a, b) => b.date.localeCompare(a.date))
   const hasAnyNote = filteredSorted.some(e => e.note && e.note.trim() !== '')
 
-  // Mobile: weekly groups
   const today = new Date()
   const weekGroupMap = new Map<WeekGroup, VariableExpense[]>([
     ['this-week', []],
@@ -186,36 +182,62 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     : g === 'last-week' ? t.expenses.variable.lastWeek
     : t.expenses.variable.older
 
-  return (
-    <div className="w-full flex flex-col gap-5 lg:gap-6 pb-4">
+  const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)', flex: 1 }}>
+      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
+    </div>
+  )
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '6px 14px', borderRadius: 50, fontSize: 13,
+    fontWeight: active ? 600 : 500, cursor: 'pointer',
+    border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
+    background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
+    color: active ? 'var(--violet)' : 'var(--text2)',
+    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
+  })
+
+  const rpSection = (title: string, children: React.ReactNode) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
+      {children}
+    </div>
+  )
+
+  const colParts: string[] = []
+  if (householdEnabled) colParts.push('32px')
+  colParts.push('110px', '1fr')
+  if (hasAnyNote) colParts.push('1fr')
+  colParts.push('100px', '70px')
+  const cols = colParts.join(' ')
+
+  const hdrCell = (label: string, align: 'left' | 'right' | 'center' = 'left') => (
+    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", textAlign: align }}>{label}</div>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}
-            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.3)] text-[#A78BFA] text-[13px] font-semibold cursor-pointer shrink-0 font-[inherit]"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 14px', borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
           >
-            <FileUp size={20} />
+            <FileUp size={16} />
             <span className="hidden sm:inline">Import CSV</span>
           </button>
           <button
             onClick={openAdd}
-            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
-            style={{
-              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-              borderRadius: 12, padding: '10px 20px', fontSize: 14,
-              boxShadow: '0 4px 12px rgba(124,58,237,0.4)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)'
-            }}
+            className="hidden lg:flex"
+            style={{ alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)' }}
           >
             <Plus size={16} />
             {t.expenses.variable.add}
@@ -225,407 +247,223 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
-      {/* Hero 3 cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
-            {t.expenses.variable.totalTitle}
-          </p>
-          <p className="text-lg sm:text-2xl font-bold text-[#f87171] font-mono">{formatAmount(totalAmount)}</p>
-          {changeVsPrev !== null && (
-            <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${changeVsPrev >= 0 ? 'text-[#f87171]' : 'text-emerald-400'}`}>
-              {changeVsPrev >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {Math.abs(changeVsPrev).toFixed(1)}% {t.expenses.variable.vsLastMonth}
-            </div>
-          )}
-        </div>
+      {/* Content row */}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
-        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
-            {t.expenses.variable.countTitle}
-          </p>
-          <p className="text-lg sm:text-2xl font-bold text-[#E2D9F3]">{count}</p>
-          <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.itemsThisMonth}</p>
-        </div>
+        {/* Main scroll area */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        <div className="rounded-2xl p-2 sm:p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] mb-2 text-center lg:text-left">
-            {t.expenses.variable.avgExpense}
-          </p>
-          <p className="text-lg sm:text-2xl font-bold text-[#E2D9F3] font-mono">{formatAmount(avgAmount)}</p>
-          <p className="text-xs text-[#9D84D4] mt-1">{t.expenses.variable.perItem}</p>
-        </div>
-      </div>
-
-      {/* Filter pills — categories */}
-      {categoriesWithExpenses.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer font-[inherit] ${
-              activeCategory === null
-                ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-            }`}
-          >
-            {t.expenses.variable.allCategories}
-          </button>
-          {categoriesWithExpenses.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
-              className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] ${
-                activeCategory === c.id
-                  ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                  : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-              }`}
-            >
-              <span>{c.icon}</span>
-              {c.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Filter pills — members (household mode) */}
-      {householdEnabled && members.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          <button
-            onClick={() => setMemberFilter('all')}
-            className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer font-[inherit] ${
-              memberFilter === 'all'
-                ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-            }`}
-          >
-            👥 Všetci
-          </button>
-          {members.map(m => (
-            <button
-              key={m.id}
-              onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
-              className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] ${
-                memberFilter === m.id
-                  ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                  : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-              }`}
-            >
-              <MemberAvatar userId={m.id} userName={m.name} size={16} />
-              {m.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Desktop: 2-column layout */}
-      <div className="hidden lg:grid lg:grid-cols-[35fr_65fr] lg:gap-6">
-
-        {/* Left: Budget panel */}
-        <div
-          className="rounded-2xl p-5 flex flex-col"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9D84D4] pb-3 mb-3"
-            style={{ borderBottom: '1px solid var(--border-subtle)' }}
-          >
-            {t.expenses.variable.categoriesAndBudget}
-          </p>
-          {budgetStatuses.length === 0 ? (
-            <div className="text-center py-8 flex-1 flex flex-col items-center justify-center">
-              <p className="text-[#9D84D4] text-sm">{t.dashboard.noLimits}</p>
-              <p className="text-[#9D84D4]/60 text-xs mt-1">{t.dashboard.setInCategories}</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {budgetStatuses.map((bs: BudgetStatus) => {
-                const barColor = getBudgetBarColor(bs.percentage)
-                const pct = Math.min(bs.percentage, 100)
-                return (
-                  <div
-                    key={bs.categoryId}
-                    className={`rounded-2xl p-4 transition-all ${bs.isOver ? 'pulse-glow' : ''}`}
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      border: bs.isOver ? '1px solid rgba(248,113,113,0.35)' : '1px solid var(--border-subtle)',
-                      minHeight: '64px',
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
-                          style={{ backgroundColor: bs.categoryColor + '22' }}
-                        >
-                          {bs.categoryIcon}
-                        </span>
-                        <span className="text-sm font-medium text-[#E2D9F3] truncate mr-2 leading-snug">
-                          {bs.categoryName}
-                        </span>
-                      </div>
-                      <span
-                        className="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded-full"
-                        style={{ color: barColor, backgroundColor: barColor + '20' }}
-                      >
-                        {Math.round(bs.percentage)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: '#32265A' }}>
-                      <div
-                        className="h-full rounded-full progress-fill"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: bs.categoryColor,
-                          boxShadow: `0 0 8px ${bs.categoryColor}`,
-                        }}
-                      />
-                    </div>
-                    <p className="text-[#9D84D4]" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
-                      {formatAmount(bs.spent)} {t.common.of} {formatAmount(bs.limit)}
-                    </p>
-                    {bs.isOver && (
-                      <p className="text-[#f87171] text-xs mt-0.5 font-medium">{t.dashboard.limitExceeded}</p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Right: Expense table */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          {filteredSorted.length === 0 ? (
-            <div className="empty-state" style={{ padding: '48px 24px' }}>
-              <span className="empty-state-emoji">💸</span>
-              <p className="empty-state-title">{t.expenses.variable.noExpenses}</p>
-              <p className="empty-state-subtitle">{t.expenses.variable.noExpensesSubtitle}</p>
-              <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 16, padding: '10px 24px' }}>
-                <Plus size={16} />
-                {t.expenses.variable.add}
-              </button>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="w-full text-sm" style={{ minWidth: '480px' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    {householdEnabled && <th className="pl-5 py-4" style={{ width: 32 }} />}
-                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.date_col}</th>
-                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.category_col}</th>
-                    {hasAnyNote && <th className="px-5 py-4 text-left text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.note_col}</th>}
-                    <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.amount_col}</th>
-                    <th className="px-5 py-4 text-center text-[10px] uppercase tracking-[0.12em] text-[#9D84D4] font-semibold">{t.expenses.variable.actions_col}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSorted.map((e: VariableExpense) => {
-                    const cat = getCategoryById(e.categoryId)
-                    const bs = cat?.id ? getBudgetForCat(cat.id) : null
-                    const creator = members.find(m => m.id === e.created_by)
-                    return (
-                      <tr
-                        key={e.id}
-                        className="cursor-pointer transition-all duration-150"
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', height: '56px' }}
-                        onMouseEnter={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)' }}
-                        onMouseLeave={el => { (el.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-                        onClick={() => openEdit(e)}
-                      >
-                        {householdEnabled && (
-                          <td className="pl-5 py-3.5">
-                            {e.created_by && (
-                              <MemberAvatar
-                                userId={e.created_by}
-                                userName={creator?.name ?? '?'}
-                                size={24}
-                              />
-                            )}
-                          </td>
-                        )}
-                        <td className="px-5 py-3.5 text-[#9D84D4] whitespace-nowrap">{formatDate(e.date)}</td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <span
-                              className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shrink-0"
-                              style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
-                            >
-                              {cat?.icon ?? '📦'}
-                            </span>
-                            <div>
-                              <p className="text-[#B8A3E8] text-xs font-medium leading-snug">{cat?.name ?? '—'}</p>
-                              {bs && (
-                                <div className="w-14 h-1 rounded-full mt-0.5 overflow-hidden" style={{ backgroundColor: '#32265A' }}>
-                                  <div
-                                    className="h-full rounded-full"
-                                    style={{
-                                      width: `${Math.min(bs.percentage, 100)}%`,
-                                      backgroundColor: cat?.color ?? '#9D84D4',
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        {hasAnyNote && (
-                          <td className="px-5 py-3.5" style={{ color: e.note ? '#B8A3E8' : '#4C3A8A' }}>
-                            {e.note || '—'}
-                          </td>
-                        )}
-                        <td className="px-5 py-3.5 text-right">
-                          <span className="font-mono font-semibold text-[#f87171] whitespace-nowrap">
-                            -{formatAmount(e.amount)}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-center" onClick={ev => ev.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-2">
-                            <button onClick={() => openEdit(e)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
-                              <Edit2 size={14} />
-                            </button>
-                            <button onClick={() => setConfirmId(e.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile: budget pills strip */}
-      {budgetStatuses.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden" style={{ scrollbarWidth: 'none' }}>
-          {budgetStatuses.map((bs: BudgetStatus) => {
-            const barColor = getBudgetBarColor(bs.percentage)
-            return (
-              <div
-                key={bs.categoryId}
-                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-              >
-                <span>{bs.categoryIcon}</span>
-                <span style={{ color: 'var(--text-secondary)' }}>{bs.categoryName}</span>
-                <span style={{ color: barColor, fontWeight: 600 }}>{Math.round(bs.percentage)}%</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Mobile: week-grouped cards */}
-      <div className="flex flex-col gap-4 lg:hidden">
-        {filteredSorted.length === 0 ? (
-          <div className="card">
-            <div className="empty-state">
-              <span className="empty-state-emoji">💸</span>
-              <p className="empty-state-title">{t.expenses.variable.noExpenses}</p>
-              <p className="empty-state-subtitle">{t.expenses.variable.noExpensesSubtitle}</p>
-              <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 16, padding: '10px 24px' }}>
-                <Plus size={16} />
-                {t.expenses.variable.add}
-              </button>
-            </div>
+          {/* Stat cards */}
+          <div style={{ display: 'flex', gap: 12 }}>
+            {statCard(
+              t.expenses.variable.totalTitle,
+              formatAmount(totalAmount),
+              'var(--red)',
+              changeVsPrev !== null && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: changeVsPrev >= 0 ? 'var(--red)' : 'var(--green)' }}>
+                  {changeVsPrev >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                  {Math.abs(changeVsPrev).toFixed(1)}% {t.expenses.variable.vsLastMonth}
+                </span>
+              )
+            )}
+            {statCard(t.expenses.variable.countTitle, String(count), 'var(--text)', <span>{t.expenses.variable.itemsThisMonth}</span>)}
+            {statCard(t.expenses.variable.avgExpense, formatAmount(avgAmount), 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
           </div>
-        ) : (
-          weekGroups.map(({ group, items }) => (
-            <div key={group}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2.5 px-1">
-                {weekLabel(group)}
-              </p>
-              <div className="flex flex-col gap-2">
-                {items.map((e: VariableExpense) => {
+
+          {/* Category filter pills */}
+          {categoriesWithExpenses.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+              <button onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
+                {t.expenses.variable.allCategories}
+              </button>
+              {categoriesWithExpenses.map(c => (
+                <button key={c.id} onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
+                  <span>{c.icon}</span>{c.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Member filter pills */}
+          {householdEnabled && members.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+              <button onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>👥 Všetci</button>
+              {members.map(m => (
+                <button key={m.id} onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
+                  <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Desktop table */}
+          <div className="hidden lg:block">
+            {filteredSorted.length === 0 ? (
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
+                <span style={{ fontSize: 40 }}>💸</span>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
+                <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
+                  <Plus size={16} />{t.expenses.variable.add}
+                </button>
+              </div>
+            ) : (
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 0, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', alignItems: 'center' }}>
+                  {householdEnabled && <div />}
+                  {hdrCell(t.expenses.variable.date_col)}
+                  {hdrCell(t.expenses.variable.category_col)}
+                  {hasAnyNote && hdrCell(t.expenses.variable.note_col)}
+                  {hdrCell(t.expenses.variable.amount_col, 'right')}
+                  {hdrCell(t.expenses.variable.actions_col, 'center')}
+                </div>
+                {filteredSorted.map((e: VariableExpense) => {
                   const cat = getCategoryById(e.categoryId)
                   const bs = cat?.id ? getBudgetForCat(cat.id) : null
+                  const creator = members.find(m => m.id === e.created_by)
                   return (
-                    <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)}>
-                      <div
-                        className="px-4 py-3.5 rounded-[18px] cursor-pointer transition-all duration-150"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          border: '1px solid var(--border-subtle)',
-                          boxShadow: 'var(--shadow-card)',
-                          minHeight: '64px',
-                        }}
-                        onClick={() => openEdit(e)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
-                              style={{ backgroundColor: (cat?.color ?? '#9D84D4') + '25' }}
-                            >
-                              {cat?.icon ?? '📦'}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-[#E2D9F3] leading-snug">
-                                {e.note || cat?.name || t.expenses.variable.defaultExpense}
-                              </p>
-                              <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(e.date)}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5" onClick={ev => ev.stopPropagation()}>
-                            <span className="font-mono font-semibold text-sm text-[#f87171] whitespace-nowrap">
-                              -{formatAmount(e.amount)}
-                            </span>
-                            <button onClick={() => openEdit(e)}
-                              className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
-                              <Edit2 size={13} />
-                            </button>
-                            <button onClick={() => setConfirmId(e.id!)}
-                              className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
+                    <div
+                      key={e.id}
+                      style={{ display: 'grid', gridTemplateColumns: cols, gap: 0, padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center' }}
+                      onClick={() => openEdit(e)}
+                      onMouseEnter={el => { (el.currentTarget as HTMLElement).style.background = 'var(--bg3)' }}
+                      onMouseLeave={el => { (el.currentTarget as HTMLElement).style.background = 'transparent' }}
+                    >
+                      {householdEnabled && (
+                        <div>{e.created_by && <MemberAvatar userId={e.created_by} userName={creator?.name ?? '?'} size={24} />}</div>
+                      )}
+                      <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{formatDate(e.date)}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                          {cat?.icon ?? '📦'}
                         </div>
-                        {bs && (
-                          <div className="mt-2.5 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#32265A' }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(bs.percentage, 100)}%`,
-                                backgroundColor: cat?.color ?? '#9D84D4',
-                                boxShadow: `0 0 6px ${cat?.color ?? '#9D84D4'}`,
-                              }}
-                            />
-                          </div>
-                        )}
+                        <div>
+                          <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>{cat?.name ?? '—'}</div>
+                          {bs && (
+                            <div style={{ width: 48, height: 3, borderRadius: 2, background: 'var(--bg4)', marginTop: 3, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: cat?.color ?? '#9D84D4' }} />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </SwipeableRow>
+                      {hasAnyNote && <div style={{ fontSize: 13, color: e.note ? 'var(--text2)' : 'var(--text3)' }}>{e.note || '—'}</div>}
+                      <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={ev => ev.stopPropagation()}>
+                        <button onClick={() => openEdit(e)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Edit2 size={13} />
+                        </button>
+                        <button onClick={() => setConfirmId(e.id!)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
-            </div>
-          ))
-        )}
+            )}
+          </div>
+
+          {/* Mobile: week-grouped cards */}
+          <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {filteredSorted.length === 0 ? (
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
+                <span style={{ fontSize: 40 }}>💸</span>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
+                <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
+                  <Plus size={16} />{t.expenses.variable.add}
+                </button>
+              </div>
+            ) : (
+              weekGroups.map(({ group, items }) => (
+                <div key={group}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10, paddingLeft: 4 }}>{weekLabel(group)}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {items.map((e: VariableExpense) => {
+                      const cat = getCategoryById(e.categoryId)
+                      const bs = cat?.id ? getBudgetForCat(cat.id) : null
+                      return (
+                        <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)}>
+                          <div
+                            style={{ padding: '14px 16px', borderRadius: 16, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 64 }}
+                            onClick={() => openEdit(e)}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ width: 40, height: 40, borderRadius: 12, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                                  {cat?.icon ?? '📦'}
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{e.note || cat?.name || t.expenses.variable.defaultExpense}</div>
+                                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{formatDate(e.date)}</div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={ev => ev.stopPropagation()}>
+                                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</span>
+                                <button onClick={() => openEdit(e)} style={{ width: 36, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Edit2 size={13} /></button>
+                                <button onClick={() => setConfirmId(e.id!)} style={{ width: 36, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
+                              </div>
+                            </div>
+                            {bs && (
+                              <div style={{ marginTop: 10, height: 3, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: cat?.color ?? '#9D84D4' }} />
+                              </div>
+                            )}
+                          </div>
+                        </SwipeableRow>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+        </div>
+
+        {/* Right panel — desktop only */}
+        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--bg2)' }}>
+          {rpSection(t.expenses.variable.categoriesAndBudget,
+            budgetStatuses.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text3)', fontSize: 13 }}>
+                <div>{t.dashboard.noLimits}</div>
+                <div style={{ fontSize: 11, marginTop: 4 }}>{t.dashboard.setInCategories}</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {budgetStatuses.map((bs: BudgetStatus) => {
+                  const barColor = getBudgetBarColor(bs.percentage)
+                  const pct = Math.min(bs.percentage, 100)
+                  return (
+                    <div key={bs.categoryId} style={{ background: 'var(--bg3)', border: bs.isOver ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--border)', borderRadius: 12, padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+                          <span style={{ width: 24, height: 24, borderRadius: 8, background: bs.categoryColor + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>{bs.categoryIcon}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bs.categoryName}</span>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: barColor, background: barColor + '20', padding: '2px 6px', borderRadius: 20, flexShrink: 0, marginLeft: 6 }}>{Math.round(bs.percentage)}%</span>
+                      </div>
+                      <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 6 }}>
+                        <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: barColor }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{formatAmount(bs.spent)} / {formatAmount(bs.limit)}</div>
+                      {bs.isOver && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 2, fontWeight: 500 }}>{t.dashboard.limitExceeded}</div>}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          )}
+        </div>
+
       </div>
 
       {/* FAB — mobile only */}
       {!sheetOpen && confirmId === null && variableExpenses.length > 0 && (
         <button
           onClick={openAdd}
-          className="lg:hidden fixed right-6 w-14 h-14 rounded-full border-0 cursor-pointer flex items-center justify-center text-white z-50 transition-all"
-          style={{
-            bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))',
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
-          }}
+          className="lg:hidden"
+          style={{ position: 'fixed', right: 24, bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>
@@ -675,19 +513,13 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
           </div>
 
           {livePct !== null && liveLimit && (
-            <div
-              className="rounded-2xl p-3.5"
-              style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-            >
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-[#B8A3E8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
-                <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+            <div style={{ borderRadius: 14, padding: '12px 14px', background: 'var(--bg3)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8, color: 'var(--text2)' }}>
+                <span>{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
+                <span style={{ fontFamily: "'DM Mono', monospace" }}>{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
               </div>
-              <div className="h-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '2px' }}>
-                <div
-                  className="h-full progress-fill"
-                  style={{ width: `${livePct}%`, backgroundColor: liveBudgetBarColor, borderRadius: '2px' }}
-                />
+              <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 2, width: `${livePct}%`, background: liveBudgetBarColor }} />
               </div>
             </div>
           )}

@@ -805,7 +805,8 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   )
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
+    <div style={{ flex: 1, overflowY: 'auto' }}>
+    <div style={{ padding: '20px', minHeight: '100%' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
       {/* Mobile header */}
       <div className="flex items-center justify-between gap-3 lg:hidden">
@@ -817,7 +818,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
         className="hidden lg:flex items-center justify-between"
         style={{
           borderBottom: '1px solid var(--border)',
-          position: 'sticky', top: 0, zIndex: 20,
+          position: 'sticky', top: -20, zIndex: 20,
           background: 'var(--bg)',
           margin: '-20px -20px 0 -20px',
           padding: '16px 20px 12px',
@@ -914,6 +915,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
 
       </div>
 
+    </div>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Repeat, Edit2, Trash2, Minus, Calendar, TrendingUp, Hash, Plus, FileUp, ArrowUp, ArrowDown } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, FileUp, ArrowUp, ArrowDown } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { BottomSheet } from '../components/BottomSheet'
@@ -110,17 +110,21 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
         <label className="form-label">{t.income.date}</label>
         <DateInput value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
       </div>
-      <div className="flex items-center justify-between px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 min-h-[56px]">
-        <span className="text-sm font-medium text-[#E2D9F3]">{t.income.recurringToggle}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)' }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{t.income.recurringToggle}</span>
         <button
           onClick={() => setForm(f => ({ ...f, recurring: !f.recurring }))}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${
-            form.recurring ? 'bg-[#A78BFA] border border-[#A78BFA]' : 'bg-[#32265A] border border-[#4C3A8A]'
-          }`}
+          style={{
+            width: 44, height: 24, borderRadius: 99, cursor: 'pointer', flexShrink: 0, position: 'relative',
+            background: form.recurring ? 'var(--violet)' : 'var(--bg4)',
+            border: 'none', transition: 'background 0.2s',
+          }}
         >
-          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-            form.recurring ? 'translate-x-5' : 'translate-x-0'
-          }`} />
+          <div style={{
+            position: 'absolute', top: 2, left: form.recurring ? 22 : 2,
+            width: 20, height: 20, borderRadius: '50%', background: 'white',
+            transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+          }} />
         </button>
       </div>
     </div>
@@ -128,12 +132,30 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
 }
 
 const TOOLTIP_STYLE = {
-  backgroundColor: '#32265A',
-  border: '1px solid #4C3A8A',
+  backgroundColor: '#1a1630',
+  border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: 12,
-  fontFamily: 'Plus Jakarta Sans, sans-serif',
+  fontFamily: "'DM Sans', sans-serif",
   fontSize: 13,
 }
+
+const pillStyle = (active: boolean): React.CSSProperties => ({
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '6px 14px', borderRadius: 50, fontSize: 13,
+  fontWeight: active ? 600 : 500, cursor: 'pointer',
+  border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
+  background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
+  color: active ? 'var(--violet)' : 'var(--text2)',
+  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
+  flexShrink: 0,
+})
+
+const rpSection = (title: string, children: React.ReactNode) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
+    {children}
+  </div>
+)
 
 export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const { incomes, addIncome, updateIncome, deleteIncome } = useIncomes(month, year)
@@ -174,20 +196,10 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
       .catch(() => {})
   }, [])
 
-  const openAdd = () => {
-    setEditing(null)
-    setForm(makeEmpty())
-    setSheetOpen(true)
-  }
-
+  const openAdd = () => { setEditing(null); setForm(makeEmpty()); setSheetOpen(true) }
   const openEdit = (income: Income) => {
     setEditing(income)
-    setForm({
-      amount: String(income.amount),
-      label: income.label,
-      date: income.date,
-      recurring: income.recurring,
-    })
+    setForm({ amount: String(income.amount), label: income.label, date: income.date, recurring: income.recurring })
     setSheetOpen(true)
   }
 
@@ -203,10 +215,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   }
 
   const handleDelete = async () => {
-    if (confirmId !== null) {
-      await deleteIncome(confirmId)
-      setConfirmId(null)
-    }
+    if (confirmId !== null) { await deleteIncome(confirmId); setConfirmId(null) }
   }
 
   const sorted = [...incomes]
@@ -216,20 +225,12 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const avgAmount = incomes.length > 0 ? totalAmount / incomes.length : 0
   const recurringIncomes = incomes.filter(i => i.recurring)
 
-  const incomeChange =
-    prevMonthTotal != null && prevMonthTotal > 0
-      ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100
-      : null
+  const incomeChange = prevMonthTotal != null && prevMonthTotal > 0
+    ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
 
   const today = new Date()
-  const groupMap = new Map<WeekGroup, Income[]>([
-    ['this-week', []],
-    ['last-week', []],
-    ['older', []],
-  ])
-  for (const inc of sorted) {
-    groupMap.get(getWeekGroup(inc.date, today))!.push(inc)
-  }
+  const groupMap = new Map<WeekGroup, Income[]>([['this-week', []], ['last-week', []], ['older', []]])
+  for (const inc of sorted) groupMap.get(getWeekGroup(inc.date, today))!.push(inc)
   const groups = (['this-week', 'last-week', 'older'] as const)
     .filter(g => groupMap.get(g)!.length > 0)
     .map(g => ({ group: g, items: groupMap.get(g)! }))
@@ -239,144 +240,69 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
 
   const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const yearlyProjection = recurringMonthlyTotal * 12
+  const yearlyIncome = allIncomeData.filter(r => r.date.startsWith(String(year))).reduce((s, r) => s + r.amount, 0)
 
-  const yearlyIncome = allIncomeData
-    .filter(r => r.date.startsWith(String(year)))
-    .reduce((s, r) => s + r.amount, 0)
+  const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)', flex: 1 }}>
+      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
+    </div>
+  )
 
   return (
-    <div className="w-full flex flex-col gap-5 lg:gap-6 pb-4">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)' }}>
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => setCsvOpen(true)}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 text-[#A78BFA] text-sm font-semibold cursor-pointer shrink-0 transition-all duration-200"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 14px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            <FileUp size={20} />
+            <FileUp size={16} />
             <span className="hidden sm:inline">Import CSV</span>
           </button>
           <button
             onClick={openAdd}
-            className="hidden lg:flex items-center gap-2 cursor-pointer shrink-0 transition-all duration-200 border-none text-white font-semibold"
-            style={{
-              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-              borderRadius: 12, padding: '10px 20px', fontSize: 14,
-              boxShadow: '0 4px 12px rgba(124,58,237,0.4)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)'
-            }}
+            className="hidden lg:flex"
+            style={{ alignItems: 'center', gap: 8, height: 36, padding: '0 20px', borderRadius: 10, background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(139,92,246,0.4)', fontFamily: 'inherit' }}
           >
-            <Plus size={16} />
+            <Plus size={15} />
             {t.income.add}
           </button>
         </div>
       </div>
-      <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
-      {/* FAB — mobile only */}
-      {!sheetOpen && (
-        <button
-          onClick={openAdd}
-          className="lg:hidden fixed right-5 flex items-center justify-center text-white border-none cursor-pointer z-50"
-          style={{
-            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-            width: 56, height: 56,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            boxShadow: '0 4px 16px rgba(124,58,237,0.5)',
-            fontSize: 28,
-          }}
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
+      {/* Content row */}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
-      <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
+        {/* Main content */}
+        <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* ── Left column: main content ── */}
-        <div className="flex flex-col gap-5 lg:gap-6">
-
-          {/* Hero 3 cards */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 fade-up">
-            {/* Total */}
-            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <div className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3))' }}>
-                <TrendingUp size={14} className="text-[#A78BFA]" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.totalLabel}</p>
-                <p className="font-mono font-bold text-[#34d399]" style={{ fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
-                  {formatAmount(totalAmount)}
-                </p>
-                {incomeChange !== null && (
-                  <p className={`flex items-center gap-0.5 text-[10px] font-medium mt-0.5 ${incomeChange >= 0 ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
-                    {incomeChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
-                    {Math.abs(incomeChange).toFixed(1)}%
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Count */}
-            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <div className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3))' }}>
-                <Hash size={14} className="text-[#A78BFA]" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.records}</p>
-                <p className="font-mono font-bold text-[#A78BFA]" style={{ fontSize: 'clamp(12px, 2.5vw, 18px)' }}>
-                  {incomes.length}
-                </p>
-              </div>
-            </div>
-
-            {/* Average */}
-            <div className="flex flex-col gap-2 rounded-2xl px-2 py-2 sm:p-5 border border-white/[0.1]" style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <div className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3))' }}>
-                <Repeat size={14} className="text-[#A78BFA]" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] mb-0.5">{t.income.avgLabel}</p>
-                <p className="font-mono font-bold text-[#60a5fa]" style={{ fontSize: 'clamp(12px, 2.5vw, 18px)', wordBreak: 'break-all' }}>
-                  {formatAmount(avgAmount)}
-                </p>
-                <p className="text-[10px] text-[#9D84D4] mt-0.5">{t.income.perItem}</p>
-              </div>
-            </div>
+          {/* Stat cards */}
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto' }} className="lg:grid lg:grid-cols-3">
+            {statCard(t.income.totalLabel, formatAmount(totalAmount), 'var(--green)',
+              incomeChange !== null && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: incomeChange >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                  {incomeChange >= 0 ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                  {Math.abs(incomeChange).toFixed(1)}%
+                </span>
+              )
+            )}
+            {statCard(t.income.records, String(incomes.length), 'var(--violet)')}
+            {statCard(t.income.avgLabel, formatAmount(avgAmount), '#60a5fa', t.income.perItem)}
           </div>
 
-          {/* Filter pills — members (household mode) */}
+          {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              <button
-                onClick={() => setMemberFilter('all')}
-                className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer font-[inherit] ${
-                  memberFilter === 'all'
-                    ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                    : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-                }`}
-              >
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+              <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
                 👥 Všetci
               </button>
               {members.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
-                  className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 font-[inherit] whitespace-nowrap ${
-                    memberFilter === m.id
-                      ? 'bg-[#7C3AED] border-[#7C3AED] text-white'
-                      : 'bg-transparent border-[rgba(255,255,255,0.15)] text-[#9D84D4]'
-                  }`}
-                >
+                <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
                   <MemberAvatar userId={m.id} userName={m.name} size={16} />
                   {m.name}
                 </button>
@@ -384,117 +310,93 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             </div>
           )}
 
-          {/* 12-month Bar Chart */}
+          {/* 12-month bar chart */}
           {yearlyData.length > 0 && (
-            <div className="rounded-2xl px-4 py-4 bg-[var(--bg-surface)] border border-white/[0.08]">
-              <h3 className="text-sm font-semibold text-[#E2D9F3] mb-4">{t.income.yearlyChart}</h3>
-              <div style={{ height: 140 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={yearlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                    <XAxis dataKey="label" tick={{ fill: '#9D84D4', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis
-                      tick={{ fill: '#9D84D4', fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)}
-                    />
-                    <Tooltip
-                      contentStyle={TOOLTIP_STYLE}
-                      labelStyle={{ color: '#E2D9F3', fontWeight: 600 }}
-                      itemStyle={{ color: '#10b981' }}
-                      formatter={(v) => [formatAmount(Number(v ?? 0)), t.income.totalLabel]}
-                    />
-                    <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 16 }}>{t.income.yearlyChart}</div>
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart data={yearlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+                  <XAxis dataKey="label" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#34d399' }} formatter={(v) => [formatAmount(Number(v ?? 0)), t.income.totalLabel]} />
+                  <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
 
-          {/* Recurring section (mobile only — desktop shows right panel) */}
-          <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.08] overflow-hidden lg:hidden">
-            <div className="px-4 py-3.5 border-b border-white/[0.06] flex items-center justify-between">
-              <div className="w-5 shrink-0" />
-              <h3 className="text-sm font-semibold text-[#E2D9F3] flex-1 text-center">{t.income.recurringSection}</h3>
-              <span className="text-xs text-[#9D84D4] w-5 text-right shrink-0">{recurringIncomes.length}</span>
+          {/* Mobile: recurring section */}
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }} className="lg:hidden">
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)' }}>{t.income.recurringSection}</span>
+              <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{recurringIncomes.length}×</span>
             </div>
             {recurringIncomes.length === 0 ? (
-              <p className="px-4 py-4 text-sm text-[#9D84D4]">{t.income.noRecurring}</p>
+              <p style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text3)' }}>{t.income.noRecurring}</p>
             ) : (
-              <div className="divide-y divide-white/[0.04]">
-                {recurringIncomes.map(inc => (
-                  <div
-                    key={inc.id}
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
-                    onClick={() => openEdit(inc)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#60a5fa]/12 shrink-0">
-                        <Repeat size={14} className="text-[#60a5fa]" />
-                      </div>
-                      <span className="text-sm font-medium text-[#E2D9F3]">{inc.label}</span>
+              recurringIncomes.map(inc => (
+                <div key={inc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => openEdit(inc)}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(96,165,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Repeat size={14} color="#60a5fa" />
                     </div>
-                    <span className="font-mono text-sm font-semibold text-[#34d399]">{formatAmount(inc.amount)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{inc.label}</span>
                   </div>
-                ))}
-              </div>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>{formatAmount(inc.amount)}</span>
+                </div>
+              ))
             )}
           </div>
 
-          {/* Main list or empty state */}
+          {/* List / empty state */}
           {sorted.length === 0 ? (
             <div className="card">
               <div className="empty-state">
                 <span className="empty-state-emoji">💰</span>
                 <p className="empty-state-title">{t.income.noIncome}</p>
                 <p className="empty-state-subtitle">{t.income.noIncomeSubtitle}</p>
-                <button onClick={openAdd} className="btn-primary mt-2 rounded-2xl px-6 py-2.5">
-                  <Plus size={16} />
-                  {t.income.add}
+                <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 14, padding: '10px 24px' }}>
+                  <Plus size={16} />{t.income.add}
                 </button>
               </div>
             </div>
           ) : (
             <>
-              {/* Mobile: weekly-grouped card list */}
-              <div className="flex flex-col gap-4 lg:hidden">
+              {/* Mobile: weekly groups */}
+              <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {groups.map(({ group, items }) => (
                   <div key={group}>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] px-1 mb-2">
+                    <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8, fontFamily: "'DM Mono', monospace" }}>
                       {groupLabel(group)}
                     </p>
-                    <div className="flex flex-col gap-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {items.map((income, idx) => (
                         <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)}>
                           <div
-                            className="flex items-center justify-between px-4 py-4 rounded-[18px] cursor-pointer transition-all duration-150 fade-up bg-[var(--bg-surface)] border border-white/[0.08]"
-                            style={{ animationDelay: `${idx * 40}ms`, minHeight: '64px' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 16, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', minHeight: 64, animationDelay: `${idx * 40}ms` }}
+                            className="fade-up"
                             onClick={() => openEdit(income)}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#34d399]/15 shrink-0">
-                                <Calendar size={18} className="text-[#34d399]" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Calendar size={18} color="var(--green)" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#E2D9F3] leading-snug">{income.label}</p>
-                                <p className="text-xs text-[#9D84D4] mt-0.5">{formatDate(income.date)}</p>
+                                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', margin: 0 }}>{income.label}</p>
+                                <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0' }}>{formatDate(income.date)}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                              <div className="flex flex-col items-end gap-1">
-                                <span className="font-mono font-semibold text-sm text-[#34d399]">{formatAmount(income.amount)}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={e => e.stopPropagation()}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                                <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: 14, color: 'var(--green)' }}>{formatAmount(income.amount)}</span>
                                 {income.recurring && (
-                                  <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap' }}>
                                     <Repeat size={9} /> {t.income.recurringBadge}
                                   </span>
                                 )}
                               </div>
-                              <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8] min-h-[44px] min-w-[36px]">
-                                <Edit2 size={14} />
-                              </button>
-                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171] min-h-[44px] min-w-[36px]">
-                                <Trash2 size={14} />
-                              </button>
+                              <button onClick={() => openEdit(income)} className="btn-icon" style={{ minHeight: 44, minWidth: 36, color: 'var(--text3)' }}><Edit2 size={14} /></button>
+                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ minHeight: 44, minWidth: 36, color: 'var(--text3)' }}><Trash2 size={14} /></button>
                             </div>
                           </div>
                         </SwipeableRow>
@@ -504,153 +406,121 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                 ))}
               </div>
 
-              {/* Desktop: table */}
-              <div className="hidden lg:block rounded-[20px] overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm" style={{ minWidth: '480px' }}>
-                    <colgroup>
-                      <col style={{ width: '110px' }} />
-                      <col style={{ width: 'auto' }} />
-                      <col style={{ width: '130px' }} />
-                      <col style={{ width: '110px' }} />
-                      {householdEnabled && <col style={{ width: '32px' }} />}
-                      <col style={{ width: '70px' }} />
-                    </colgroup>
-                    <thead>
-                      <tr className="text-left border-b border-white/[0.06]">
-                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.date_col}</th>
-                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4]">{t.income.desc_col}</th>
-                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-right">{t.income.amount_col}</th>
-                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.recurring_col}</th>
-                        {householdEnabled && <th style={{ width: 32 }} />}
-                        <th className="px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9D84D4] text-center">{t.income.actions_col}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sorted.map(income => (
-                        <tr
-                          key={income.id}
-                          className="cursor-pointer transition-all duration-150 border-b border-white/[0.03] hover:bg-[var(--bg-elevated)]"
-                          onClick={() => openEdit(income)}
-                        >
-                          <td className="px-4 py-3.5 text-[#9D84D4] text-sm whitespace-nowrap">{formatDate(income.date)}</td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#34d399]/12 shrink-0">
-                                <Calendar size={13} className="text-[#34d399]" />
-                              </div>
-                              <span className="text-[#E2D9F3] font-medium text-sm">{income.label}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5 text-right">
-                            <span className="font-mono font-semibold text-[#34d399]">{formatAmount(income.amount)}</span>
-                          </td>
-                          <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                            {income.recurring ? (
-                              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#60a5fa]/12 text-[#60a5fa] whitespace-nowrap">
-                                <Repeat size={9} /> {t.income.recurringBadge}
-                              </span>
-                            ) : (
-                              <Minus size={14} className="text-[#9D84D4] mx-auto" />
-                            )}
-                          </td>
-                          {householdEnabled && (
-                            <td className="py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                              {income.created_by ? (
-                                <MemberAvatar
-                                  userId={income.created_by}
-                                  userName={members.find(m => m.id === income.created_by)?.name ?? '?'}
-                                  size={24}
-                                />
-                              ) : null}
-                            </td>
-                          )}
-                          <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => openEdit(income)} className="btn-icon text-[#9D84D4] hover:text-[#B8A3E8]">
-                                <Edit2 size={13} />
-                              </button>
-                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon text-[#9D84D4] hover:text-[#f87171]">
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Desktop: grid table */}
+              <div className="hidden lg:block" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+                {/* Header */}
+                <div style={{ display: 'grid', gridTemplateColumns: householdEnabled ? '110px 1fr 130px 100px 32px 70px' : '110px 1fr 130px 100px 70px', gap: 8, padding: '10px 16px', fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", borderBottom: '1px solid var(--border)' }}>
+                  <span>{t.income.date_col}</span>
+                  <span>{t.income.desc_col}</span>
+                  <span style={{ textAlign: 'right' }}>{t.income.amount_col}</span>
+                  <span style={{ textAlign: 'center' }}>{t.income.recurring_col}</span>
+                  {householdEnabled && <span />}
+                  <span style={{ textAlign: 'center' }}>{t.income.actions_col}</span>
                 </div>
+                {/* Rows */}
+                {sorted.map(income => (
+                  <div
+                    key={income.id}
+                    style={{ display: 'grid', gridTemplateColumns: householdEnabled ? '110px 1fr 130px 100px 32px 70px' : '110px 1fr 130px 100px 70px', gap: 8, padding: '12px 16px', alignItems: 'center', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s' }}
+                    onClick={() => openEdit(income)}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg3)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                  >
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'var(--text3)' }}>{formatDate(income.date)}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Calendar size={13} color="var(--green)" />
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{income.label}</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: 13, color: 'var(--green)' }}>{formatAmount(income.amount)}</span>
+                    </div>
+                    <div style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                      {income.recurring ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap' }}>
+                          <Repeat size={9} /> {t.income.recurringBadge}
+                        </span>
+                      ) : (
+                        <Minus size={13} color="var(--text3)" />
+                      )}
+                    </div>
+                    {householdEnabled && (
+                      <div style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                        {income.created_by && (
+                          <MemberAvatar userId={income.created_by} userName={members.find(m => m.id === income.created_by)?.name ?? '?'} size={24} />
+                        )}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+                      <button onClick={() => openEdit(income)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>
+                      <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ color: 'var(--text3)' }}><Trash2 size={13} /></button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}
-
         </div>
 
-        {/* ── Right panel — desktop only ── */}
-        <div className="hidden lg:flex flex-col gap-4 sticky top-4">
+        {/* Right panel — desktop only */}
+        <div
+          className="hidden lg:flex"
+          style={{ width: 280, flexShrink: 0, borderLeft: '1px solid var(--border)', background: 'var(--bg2)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20 }}
+        >
+          {rpSection(`📅 ${t.income.yearlyIncomeTitle} ${year}`, (
+            <div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
+            </div>
+          ))}
 
-          {/* Card 1: Ročný príjem */}
-          <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
-            <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📅 {t.income.yearlyIncomeTitle} {year}</p>
-            </div>
-            <div className="px-4 py-4">
-              <p className="font-mono font-bold text-2xl text-[#34d399] mb-1">{formatAmount(yearlyIncome)}</p>
-              <p className="text-xs text-[#9D84D4]">{t.income.yearlyIncomeDesc} {year}</p>
-            </div>
-          </div>
-
-          {/* Card 2: Opakujúce sa príjmy */}
-          <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
-            <div className="px-4 pt-4 pb-3 border-b border-white/[0.06] flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">🔁 {t.income.recurringCard}</p>
-              <span className="text-xs text-[#9D84D4] font-mono">{recurringIncomes.length}×</span>
-            </div>
-            {recurringIncomes.length === 0 ? (
-              <p className="px-4 py-4 text-xs text-[#9D84D4]">{t.income.noRecurring}</p>
-            ) : (
-              <>
-                <div className="divide-y divide-white/[0.04]">
+          {rpSection(`🔁 ${t.income.recurringCard}`, (
+            <div>
+              {recurringIncomes.length === 0 ? (
+                <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.income.noRecurring}</p>
+              ) : (
+                <>
                   {recurringIncomes.map(inc => (
-                    <div
-                      key={inc.id}
-                      className="flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
-                      onClick={() => openEdit(inc)}
-                    >
-                      <span className="text-xs font-medium text-[#E2D9F3] truncate mr-2">{inc.label}</span>
-                      <span className="font-mono text-xs font-semibold text-[#34d399] shrink-0">{formatAmount(inc.amount)}</span>
+                    <div key={inc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => openEdit(inc)}>
+                      <span style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{inc.label}</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: 'var(--green)', flexShrink: 0 }}>{formatAmount(inc.amount)}</span>
                     </div>
                   ))}
-                </div>
-                <div
-                  className="flex items-center justify-between px-4 py-3"
-                  style={{ borderTop: '1px solid rgba(167,139,250,0.15)', background: 'rgba(167,139,250,0.05)' }}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9D84D4]">{t.income.monthly}</span>
-                  <span className="font-mono font-bold text-sm text-[#34d399]">{formatAmount(recurringMonthlyTotal)}</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Card 3: Prognóza */}
-          <div className="rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-white/[0.08]">
-            <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9D84D4]">📈 {t.income.annualForecast}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: '8px 10px', background: 'rgba(139,92,246,0.06)', borderRadius: 10 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{t.income.monthly}</span>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: 'var(--green)' }}>{formatAmount(recurringMonthlyTotal)}</span>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="px-4 py-4 flex flex-col gap-2">
-              <p className="font-mono font-bold text-2xl text-[#A78BFA]">{formatAmount(yearlyProjection)}</p>
-              <p className="text-xs text-[#9D84D4]">
+          ))}
+
+          {rpSection(`📈 ${t.income.annualForecast}`, (
+            <div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--violet)', marginBottom: 4 }}>{formatAmount(yearlyProjection)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)' }}>
                 {recurringIncomes.length > 0
                   ? t.income.recurringTimesMonths.replace('{n}', String(recurringIncomes.length))
                   : t.income.noRecurring}
-              </p>
+              </div>
             </div>
-          </div>
-
+          ))}
         </div>
       </div>
 
+      {/* FAB — mobile only */}
+      {!sheetOpen && (
+        <button
+          onClick={openAdd}
+          className="lg:hidden"
+          style={{ position: 'fixed', bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
+        >
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      )}
+
+      <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
       <BottomSheet
         open={sheetOpen}
@@ -660,13 +530,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           <button
             type="button"
             onClick={handleSave}
-            style={{
-              width: '100%', padding: '15px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-              color: 'white', fontSize: 15, fontWeight: 700,
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
-            }}
+            style={{ width: '100%', padding: '15px', borderRadius: 14, background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}
           >
             {editing ? t.income.saveChanges : t.income.add}
           </button>
