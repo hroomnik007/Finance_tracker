@@ -172,7 +172,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
     )
   }
 
-  const isLight = document.documentElement.classList.contains('light')
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light'
   const axisTickColor = isLight ? '#6B7280' : '#9D84D4'
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 

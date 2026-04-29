@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
+import { Topbar } from './components/Topbar'
 import { ToastContainer } from './components/ToastContainer'
 import { Dashboard } from './pages/Dashboard'
 import { IncomePage } from './pages/Income'
@@ -41,14 +42,9 @@ import { HouseholdPage } from './pages/Household'
     const theme = JSON.parse(localStorage.getItem('theme_preference') ?? '"dark"') as string
     if (accent) html.style.setProperty('--accent-color', accent)
     html.classList.toggle('compact', compact)
-    html.classList.remove('dark', 'light')
-    if (theme !== 'system') html.classList.add(theme)
+    html.setAttribute('data-theme', theme !== 'system' ? theme : 'dark')
   } catch { /* ignore */ }
 })()
-
-function isPhotoUrl(url: string | null | undefined): url is string {
-  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
-}
 
 export type Page =
   | 'dashboard'
@@ -190,7 +186,7 @@ function App() {
   }
 
   if (isLoading) {
-    return <div style={{ minHeight: '100svh', backgroundColor: '#1E1535' }} />
+    return <div style={{ minHeight: '100svh', backgroundColor: 'var(--bg)' }} />
   }
 
   const getTokenFromHash = () => {
@@ -243,54 +239,44 @@ function App() {
   }
 
   return (
-    <div
-      className="h-screen relative"
-      style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', overflow: 'hidden' }}
-    >
+    <div style={{
+      display: 'flex',
+      height: '100svh',
+      width: '100vw',
+      overflow: 'hidden',
+      background: 'var(--bg)',
+    }}>
       {locked && isAuthenticated && <PinLock onVerify={verifyPin} />}
       <ToastContainer toasts={toasts} />
 
-      <AppNav
-        current={page}
-        onChange={setPage}
-        collapsed={sidebarCollapsed}
-        onToggle={toggleSidebar}
-        onOpenProfile={() => setIsProfileOpen(true)}
-      />
+      {/* Sidebar — desktop only */}
+      {isDesktop && (
+        <AppNav
+          current={page}
+          onChange={setPage}
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+          onOpenProfile={() => setIsProfileOpen(true)}
+        />
+      )}
 
-      {/* Mobile top bar */}
-      <div
-        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-14"
-        style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border-subtle)' }}
-      >
-        <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Finvu" className="w-8 h-8" />
-          <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>Finvu</span>
-        </div>
-        <button
-          onClick={() => setIsProfileOpen(true)}
-          className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center shrink-0"
-          style={{ background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : '#7C3AED' }}
-        >
-          {isPhotoUrl(user?.avatarUrl) ? (
-            <img src={user!.avatarUrl!} alt="" className="w-full h-full object-cover" />
-          ) : user?.avatarUrl ? (
-            <span style={{ fontSize: 22, lineHeight: 1 }}>{user.avatarUrl}</span>
-          ) : (
-            <span className="text-white text-sm font-bold">
-              {user?.name?.[0]?.toUpperCase() ?? '?'}
-            </span>
-          )}
-        </button>
-      </div>
+      {/* Physical gap between sidebar and main */}
+      {isDesktop && (
+        <div style={{ width: '12px', flexShrink: 0, background: 'var(--bg)' }} />
+      )}
 
-      {/* Main content wrapper */}
-      <div
-        className="flex h-screen transition-all duration-200 ease-in-out"
-        style={{ marginLeft: isDesktop ? (sidebarCollapsed ? '52px' : '160px') : '0', overflow: 'hidden' }}
-      >
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full content-main" style={{ background: 'var(--bg-primary)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="p-6 w-full min-h-full">
+      {/* Main content column */}
+      <main style={{
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        background: 'var(--bg)',
+      }}>
+        <Topbar page={page} onOpenProfile={() => setIsProfileOpen(true)} />
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="content-main" style={{ padding: '20px', width: '100%', minHeight: '100%' }}>
             {page === 'dashboard' && (
               <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
             )}
@@ -312,13 +298,11 @@ function App() {
             {page === 'settings' && <SettingsPage />}
             {page === 'household' && <HouseholdPage />}
           </div>
-        </main>
+        </div>
+      </main>
 
-      </div>
-
-      <div className="lg:hidden">
-        <BottomNav current={page} onChange={setPage} />
-      </div>
+      {/* Mobile bottom nav */}
+      {!isDesktop && <BottomNav current={page} onChange={setPage} />}
 
       {showBudgetTemplate && (
         <BudgetTemplateModal

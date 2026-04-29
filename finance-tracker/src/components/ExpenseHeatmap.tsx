@@ -43,7 +43,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const { t } = useTranslation()
   const [tooltip, setTooltip] = useState<TooltipState>(null)
   const [lastClickedDay, setLastClickedDay] = useState<string | null>(null)
-  const isLight = document.documentElement.classList.contains('light')
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light'
 
   const daysInMonth = new Date(year, month, 0).getDate()
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay()

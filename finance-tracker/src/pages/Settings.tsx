@@ -190,8 +190,7 @@ export function SettingsPage() {
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
     const savedCompact = loadLocalPref<boolean>(compactStorageKey, compactDefault)
     const html = document.documentElement
-    html.classList.remove('dark', 'light')
-    if (savedTheme !== 'system') html.classList.add(savedTheme)
+    html.setAttribute('data-theme', savedTheme !== 'system' ? savedTheme : 'dark')
     html.style.setProperty('--accent-color', savedAccent)
     html.classList.toggle('compact', savedCompact)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,8 +211,7 @@ export function SettingsPage() {
     setThemeState(next)
     saveLocalPref('theme_preference', next)
     const html = document.documentElement
-    html.classList.remove('dark', 'light')
-    if (next !== 'system') html.classList.add(next)
+    html.setAttribute('data-theme', next !== 'system' ? next : 'dark')
   }
 
   function handleAccentChange(color: string) {

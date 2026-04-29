@@ -81,6 +81,38 @@ When Profile saves a new avatar it calls `updateAvatar(avatarUrl)` → `PATCH /a
 ### Category budget limits
 `budgetLimit` is stored server-side in `categories.budget_limit` (numeric). The `useCategories` hook merges server value with a localStorage fallback (`category_budget_limits`) for backwards compatibility. Server value always takes precedence.
 
+## Design System v2.0 (Phase 1)
+
+### Fonts
+- **DM Sans** — UI text (300/400/500/600/700)
+- **DM Mono** — numbers, dates, amounts, labels (`.mono`, `.amount`, `.label-mono` classes)
+
+### CSS Variables
+New semantic variables: `--bg`, `--bg2`, `--bg3`, `--bg4`, `--border`, `--border2`, `--text`, `--text2`, `--text3`, `--violet`, `--violet2`, `--violet-glow`, `--green`, `--red`, `--card-shadow`, `--sidebar-w` (200px), `--sidebar-collapsed-w` (56px).
+
+Old variable names (`--bg-primary`, `--bg-card`, `--text-primary`, etc.) are kept as compat aliases pointing to new vars — existing components don't need changes.
+
+### Theme switching
+Uses `data-theme` attribute on `<html>`: `document.documentElement.setAttribute('data-theme', 'dark' | 'light')`. CSS selectors: `:root[data-theme="dark"]` and `[data-theme="light"]`. Compact mode still uses `html.compact` class.
+
+### Layout (desktop)
+`<div flex row> → <AppNav> → <div 12px gap> → <main flex column> → <Topbar> + <scrollable div>`
+
+AppNav is a **flex item** (not `position:fixed`). Main fills remaining space. Gap creates visual sidebar separation.
+
+### AppNav
+- Expanded: `var(--sidebar-w)` = 200px; collapsed: `var(--sidebar-collapsed-w)` = 56px
+- Bottom section: Nastavenia nav item → Profile row (avatar + name when expanded)
+- Collapsed Výdavky hover → `position:fixed` popup submenu
+
+### Topbar
+- Mobile: logo + avatar button (replaces old fixed mobile topbar)
+- Desktop: page title + date in DM Mono
+
+### BottomNav (mobile)
+- Full-width bar (`border-top`), no floating pill
+- Tab items: icon in 32×32 rounded box (active = violet bg) + label
+
 ## Key constraints
 - CORS: production only allows `financie.pedani.eu` and `finvu.pedani.eu`
 - NEVER run deploy commands as root — causes permission issues under `deploy` user

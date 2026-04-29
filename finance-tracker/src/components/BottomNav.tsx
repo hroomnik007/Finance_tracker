@@ -25,7 +25,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
 
   return (
     <>
-      {/* Expense submenu */}
+      {/* Expense submenu popup */}
       {showExpenseMenu && (
         <>
           <div
@@ -35,15 +35,15 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           <div
             style={{
               position: 'fixed',
-              bottom: '80px',
+              bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
               left: '8px',
               right: '8px',
-              background: '#1e1b36',
-              border: '1px solid rgba(124,58,237,0.25)',
-              borderRadius: '16px 16px 16px 16px',
+              background: 'var(--bg3)',
+              border: '1px solid var(--border2)',
+              borderRadius: '16px',
               padding: '8px',
               zIndex: 99,
-              boxShadow: '0 -4px 24px rgba(0,0,0,0.4)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             {([
@@ -60,13 +60,13 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
                   gap: '12px',
                   width: '100%',
                   padding: '12px 16px',
-                  background: current === item.page ? 'rgba(124,58,237,0.15)' : 'transparent',
+                  background: current === item.page ? 'rgba(139,92,246,0.12)' : 'transparent',
                   border: 'none',
                   borderRadius: '12px',
-                  color: current === item.page ? '#A78BFA' : '#9D84D4',
+                  color: current === item.page ? 'var(--violet)' : 'var(--text2)',
                   fontSize: '14px',
-                  fontFamily: 'inherit',
-                  fontWeight: current === item.page ? 600 : 400,
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: current === item.page ? 600 : 500,
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
@@ -82,34 +82,31 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
       <nav
         className="bottom-nav-bar"
         style={{
-          position: 'fixed',
-          bottom: 'max(env(safe-area-inset-bottom), 8px)',
-          left: '8px',
-          right: '8px',
-          padding: '8px',
-          background: 'var(--bottom-nav-bg, #1A1230)',
-          borderRadius: '20px',
-          border: '0.5px solid var(--bottom-nav-border, #4C3A8A)',
           display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
+          background: 'var(--bg2)',
+          borderTop: '1px solid var(--border)',
+          padding: '8px 0',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
           zIndex: 50,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
       >
-        <NavPill
+        <NavTab
           active={current === 'dashboard'}
           icon={<Home size={20} />}
           label={t.nav.overview}
           onClick={() => { setShowExpenseMenu(false); onChange('dashboard') }}
         />
-        <NavPill
+        <NavTab
           active={current === 'income'}
           icon={<TrendingUp size={20} />}
           label={t.nav.income}
           onClick={() => { setShowExpenseMenu(false); onChange('income') }}
         />
-        <NavPill
+        <NavTab
           active={expensesActive || showExpenseMenu}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -121,21 +118,19 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           onClick={() => setShowExpenseMenu(s => !s)}
         />
         {householdEnabled && (
-          <NavPill
+          <NavTab
             active={current === 'household'}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
-                <circle cx="9" cy="7" r="1" fill="currentColor" stroke="none"/>
-                <circle cx="15" cy="7" r="1" fill="currentColor" stroke="none"/>
               </svg>
             }
             label="Domácnosť"
             onClick={() => { setShowExpenseMenu(false); onChange('household') }}
           />
         )}
-        <NavPill
+        <NavTab
           active={current === 'settings'}
           icon={<Settings size={20} />}
           label={t.nav.settings}
@@ -146,7 +141,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   )
 }
 
-function NavPill({
+function NavTab({
   active,
   icon,
   label,
@@ -161,25 +156,30 @@ function NavPill({
     <button
       onClick={onClick}
       style={{
+        flex: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '3px',
-        padding: '6px 14px',
-        borderRadius: '999px',
-        background: active ? 'rgba(124,58,237,0.25)' : 'transparent',
-        color: active ? 'var(--text-primary)' : 'var(--text-hint)',
+        gap: 3,
+        padding: '4px 0',
+        fontSize: 10,
+        fontWeight: 500,
+        color: active ? 'var(--violet)' : 'var(--text3)',
         cursor: 'pointer',
+        fontFamily: "'DM Sans', sans-serif",
+        background: 'none',
         border: 'none',
-        fontSize: '10px',
-        fontFamily: 'inherit',
-        fontWeight: active ? 600 : 400,
-        transition: 'all 0.2s ease',
-        minWidth: '60px',
-        opacity: active ? 1 : 0.8,
       }}
     >
-      {icon}
+      <div style={{
+        width: 32, height: 32,
+        borderRadius: 10,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: active ? 'rgba(139,92,246,0.12)' : 'transparent',
+        transition: 'background 0.15s',
+      }}>
+        {icon}
+      </div>
       <span>{label}</span>
     </button>
   )
