@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Edit2, Trash2, Plus, FileUp, TrendingUp, TrendingDown } from 'lucide-react'
-import { SwipeableRow } from '../components/SwipeableRow'
+
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -34,8 +34,6 @@ interface VarForm {
   date: string
 }
 
-type WeekGroup = 'this-week' | 'last-week' | 'older'
-
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
 
 const getBudgetBarColor = (pct: number) => {
@@ -44,19 +42,6 @@ const getBudgetBarColor = (pct: number) => {
   return 'var(--green)'
 }
 
-function getWeekGroup(dateStr: string, today: Date): WeekGroup {
-  const date = new Date(dateStr + 'T00:00:00')
-  const todayStart = new Date(today)
-  todayStart.setHours(0, 0, 0, 0)
-  const dow = todayStart.getDay() === 0 ? 6 : todayStart.getDay() - 1
-  const startOfWeek = new Date(todayStart)
-  startOfWeek.setDate(todayStart.getDate() - dow)
-  const startOfLastWeek = new Date(startOfWeek)
-  startOfLastWeek.setDate(startOfWeek.getDate() - 7)
-  if (date >= startOfWeek) return 'this-week'
-  if (date >= startOfLastWeek) return 'last-week'
-  return 'older'
-}
 
 export function VariableExpensesPage({ month, year, onMonthChange, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
@@ -166,21 +151,6 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     .sort((a, b) => b.date.localeCompare(a.date))
   const hasAnyNote = filteredSorted.some(e => e.note && e.note.trim() !== '')
 
-  const today = new Date()
-  const weekGroupMap = new Map<WeekGroup, VariableExpense[]>([
-    ['this-week', []],
-    ['last-week', []],
-    ['older', []],
-  ])
-  for (const e of filteredSorted) weekGroupMap.get(getWeekGroup(e.date, today))!.push(e)
-  const weekGroups = (['this-week', 'last-week', 'older'] as const)
-    .filter(g => weekGroupMap.get(g)!.length > 0)
-    .map(g => ({ group: g, items: weekGroupMap.get(g)! }))
-
-  const weekLabel = (g: WeekGroup) =>
-    g === 'this-week' ? t.expenses.variable.thisWeek
-    : g === 'last-week' ? t.expenses.variable.lastWeek
-    : t.expenses.variable.older
 
   const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
     <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)', flex: 1 }}>
@@ -254,7 +224,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Stat cards */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', flexWrap: 'nowrap' }}>
             {statCard(
               t.expenses.variable.totalTitle,
               formatAmount(totalAmount),
@@ -363,59 +333,40 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
             )}
           </div>
 
-          {/* Mobile: week-grouped cards */}
-          <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Mobile: flat rows */}
+          <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 100 }}>
             {filteredSorted.length === 0 ? (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '48px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
                 <span style={{ fontSize: 40 }}>💸</span>
                 <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
                 <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
-                <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
+                <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 14, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
                   <Plus size={16} />{t.expenses.variable.add}
                 </button>
               </div>
             ) : (
-              weekGroups.map(({ group, items }) => (
-                <div key={group}>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10, paddingLeft: 4 }}>{weekLabel(group)}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {items.map((e: VariableExpense) => {
-                      const cat = getCategoryById(e.categoryId)
-                      const bs = cat?.id ? getBudgetForCat(cat.id) : null
-                      return (
-                        <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)}>
-                          <div
-                            style={{ padding: '14px 16px', borderRadius: 16, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 64 }}
-                            onClick={() => openEdit(e)}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <div style={{ width: 40, height: 40, borderRadius: 12, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                                  {cat?.icon ?? '📦'}
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{e.note || cat?.name || t.expenses.variable.defaultExpense}</div>
-                                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{formatDate(e.date)}</div>
-                                </div>
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={ev => ev.stopPropagation()}>
-                                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</span>
-                                <button onClick={() => openEdit(e)} style={{ width: 36, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Edit2 size={13} /></button>
-                                <button onClick={() => setConfirmId(e.id!)} style={{ width: 36, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
-                              </div>
-                            </div>
-                            {bs && (
-                              <div style={{ marginTop: 10, height: 3, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: cat?.color ?? '#9D84D4' }} />
-                              </div>
-                            )}
-                          </div>
-                        </SwipeableRow>
-                      )
-                    })}
+              filteredSorted.map((e: VariableExpense) => {
+                const cat = getCategoryById(e.categoryId)
+                return (
+                  <div
+                    key={e.id}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
+                    onClick={() => openEdit(e)}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                      {cat?.icon ?? '📦'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.note || cat?.name || t.expenses.variable.defaultExpense}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1, fontFamily: "'DM Mono', monospace" }}>{formatDate(e.date)}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={ev => ev.stopPropagation()}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</span>
+                      <button onClick={() => setConfirmId(e.id!)} style={{ width: 32, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
 

@@ -138,7 +138,7 @@ export function HouseholdPage() {
 
         {/* Stat cards */}
         {stats && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
             {statCard(ht.totalExpenses, formatAmount(stats.total_expenses), 'var(--red)')}
             {statCard(ht.totalIncome, formatAmount(stats.total_income), 'var(--green)')}
             {statCard(ht.balance, formatAmount(balance), balance >= 0 ? 'var(--green)' : 'var(--red)')}
@@ -202,7 +202,7 @@ export function HouseholdPage() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0 24px' }}>
               {activity.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
+                <div key={idx} className={idx >= 5 ? 'hidden lg:flex' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ width: 32, height: 32, borderRadius: 10, background: item.type === 'expense' ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>
                     {item.type === 'expense' ? '💸' : '💰'}
                   </div>

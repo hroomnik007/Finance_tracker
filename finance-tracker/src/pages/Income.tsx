@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, FileUp, ArrowUp, ArrowDown } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { SwipeableRow } from '../components/SwipeableRow'
+
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
@@ -30,21 +30,6 @@ function getLast12Months(monthsShort: string[]) {
   })
 }
 
-type WeekGroup = 'this-week' | 'last-week' | 'older'
-
-function getWeekGroup(dateStr: string, today: Date): WeekGroup {
-  const date = new Date(dateStr + 'T00:00:00')
-  const todayStart = new Date(today)
-  todayStart.setHours(0, 0, 0, 0)
-  const dow = todayStart.getDay() === 0 ? 6 : todayStart.getDay() - 1
-  const startOfWeek = new Date(todayStart)
-  startOfWeek.setDate(todayStart.getDate() - dow)
-  const startOfLastWeek = new Date(startOfWeek)
-  startOfLastWeek.setDate(startOfWeek.getDate() - 7)
-  if (date >= startOfWeek) return 'this-week'
-  if (date >= startOfLastWeek) return 'last-week'
-  return 'older'
-}
 
 interface IncomePageProps {
   month: number
@@ -228,15 +213,6 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   const incomeChange = prevMonthTotal != null && prevMonthTotal > 0
     ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
 
-  const today = new Date()
-  const groupMap = new Map<WeekGroup, Income[]>([['this-week', []], ['last-week', []], ['older', []]])
-  for (const inc of sorted) groupMap.get(getWeekGroup(inc.date, today))!.push(inc)
-  const groups = (['this-week', 'last-week', 'older'] as const)
-    .filter(g => groupMap.get(g)!.length > 0)
-    .map(g => ({ group: g, items: groupMap.get(g)! }))
-
-  const groupLabel = (g: WeekGroup) =>
-    g === 'this-week' ? t.income.thisWeek : g === 'last-week' ? t.income.lastWeek : t.income.older
 
   const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const yearlyProjection = recurringMonthlyTotal * 12
@@ -362,45 +338,31 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
             </div>
           ) : (
             <>
-              {/* Mobile: weekly groups */}
-              <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {groups.map(({ group, items }) => (
-                  <div key={group}>
-                    <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8, fontFamily: "'DM Mono', monospace" }}>
-                      {groupLabel(group)}
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {items.map((income, idx) => (
-                        <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)}>
-                          <div
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 16, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', minHeight: 64, animationDelay: `${idx * 40}ms` }}
-                            className="fade-up"
-                            onClick={() => openEdit(income)}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Calendar size={18} color="var(--green)" />
-                              </div>
-                              <div>
-                                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', margin: 0 }}>{income.label}</p>
-                                <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0' }}>{formatDate(income.date)}</p>
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={e => e.stopPropagation()}>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                                <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: 14, color: 'var(--green)' }}>{formatAmount(income.amount)}</span>
-                                {income.recurring && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap' }}>
-                                    <Repeat size={9} /> {t.income.recurringBadge}
-                                  </span>
-                                )}
-                              </div>
-                              <button onClick={() => openEdit(income)} className="btn-icon" style={{ minHeight: 44, minWidth: 36, color: 'var(--text3)' }}><Edit2 size={14} /></button>
-                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ minHeight: 44, minWidth: 36, color: 'var(--text3)' }}><Trash2 size={14} /></button>
-                            </div>
-                          </div>
-                        </SwipeableRow>
-                      ))}
+              {/* Mobile: flat rows */}
+              <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 100 }}>
+                {sorted.map(income => (
+                  <div
+                    key={income.id}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
+                    onClick={() => openEdit(income)}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Calendar size={16} color="var(--green)" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--green)' }}>{formatAmount(income.amount)}</span>
+                        {income.recurring && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap' }}>
+                            <Repeat size={8} /> {t.income.recurringBadge}
+                          </span>
+                        )}
+                      </div>
+                      <button onClick={() => setConfirmId(income.id!)} style={{ width: 32, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
                     </div>
                   </div>
                 ))}
