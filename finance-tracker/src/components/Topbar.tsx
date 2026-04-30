@@ -20,7 +20,7 @@ function getPageTitle(page: Page, t: ReturnType<typeof useTranslation>['t']): st
     case 'fixed-expenses': return t.nav.fixed
     case 'categories': return t.nav.categories
     case 'settings': return t.nav.settings
-    case 'household': return 'Domácnosť'
+    case 'household': return t.household.title
   }
 }
 
@@ -50,7 +50,7 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
   return (
     <div style={barStyle}>
       {/* Mobile only: logo left */}
-      <div className="lg:hidden" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div className="md:hidden flex items-center shrink-0" style={{ gap: 10 }}>
         <div style={{
           width: 32, height: 32,
           background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
@@ -63,7 +63,17 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
       </div>
 
       {/* Mobile only: page title center */}
-      <div className="lg:hidden" style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+      <div className="md:hidden" style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+          {getPageTitle(page, t)}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+          {formattedDate}
+        </div>
+      </div>
+
+      {/* Desktop only: page title left */}
+      <div className="hidden md:block" style={{ flex: 1 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
           {getPageTitle(page, t)}
         </div>
@@ -75,13 +85,11 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
       {/* Mobile only: avatar button right */}
       <button
         onClick={onOpenProfile}
-        className="lg:hidden"
+        className="md:hidden flex items-center justify-center shrink-0"
         style={{
           width: 40, height: 40,
           borderRadius: '50%',
           overflow: 'hidden',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
           background: isPhotoUrl(user?.avatarUrl)
             ? 'transparent'
             : 'linear-gradient(135deg, #8B5CF6, #6D28D9)',

@@ -158,7 +158,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           <X size={14} style={{ color: 'var(--text-muted)' }} />
         </button>
 
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto flex-1 rounded-b-[20px]">
         {/* Hero */}
         <div
           className="flex flex-col items-center gap-3 pt-7 pb-5 px-6"

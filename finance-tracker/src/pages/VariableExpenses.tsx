@@ -413,8 +413,8 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
       {!sheetOpen && confirmId === null && variableExpenses.length > 0 && (
         <button
           onClick={openAdd}
-          className="lg:hidden"
-          style={{ position: 'fixed', right: 24, bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          className="lg:hidden flex items-center justify-center"
+          style={{ position: 'fixed', right: 24, bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

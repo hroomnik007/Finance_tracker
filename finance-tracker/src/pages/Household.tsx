@@ -119,9 +119,9 @@ export function HouseholdPage() {
           <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>{ht.subtitle}</p>
         </div>
 
-        {/* Mobile invite code */}
+        {/* Invite code — main content area (all viewports) */}
         {householdData?.invite_code && (
-          <div className="lg:hidden" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 16, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 16, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', gap: 12 }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>{ht.inviteCode}</div>
               <code style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--violet)', letterSpacing: '3px', fontSize: 18 }}>{householdData.invite_code}</code>
@@ -242,22 +242,6 @@ export function HouseholdPage() {
 
       {/* Right panel — desktop only */}
       <div className="hidden lg:flex" style={{ width: 280, flexShrink: 0, flexDirection: 'column', gap: 20 }}>
-
-        {/* Invite code */}
-        {householdData?.invite_code && (
-          <div>
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>POZVÁNKOVÝ KÓD</div>
-            <div style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 12, padding: '12px 14px' }}>
-              <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '4px', color: 'var(--violet)', fontFamily: "'DM Mono', monospace" }}>
-                {householdData.invite_code}
-              </div>
-              <button onClick={handleCopy} style={{ marginTop: 10, width: '100%', padding: '8px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', color: 'var(--violet)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? ht.copied : '📋 Kopírovať'}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Members list */}
         {householdData && (

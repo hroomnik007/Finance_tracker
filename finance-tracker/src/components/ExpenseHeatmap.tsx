@@ -78,7 +78,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const legendBorder = isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)'
 
   return (
-    <div className="bg-[#2A1F4A] border border-white/5 rounded-2xl p-5">
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 20, boxShadow: 'var(--card-shadow)' }}>
       <h3 className="text-center lg:text-left" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
         {t.dashboard.heatmapTitle}
       </h3>

@@ -5,8 +5,7 @@ import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFi
 import { updateWeeklyEmail, createSharedReport } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import { getCategories } from '../api/categories'
-import { createHousehold, joinHousehold, getMyHousehold, leaveHousehold, toggleHousehold } from '../api/households'
-import type { HouseholdData } from '../api/households'
+import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
@@ -450,8 +449,11 @@ export function SettingsPage() {
     setImportLoading(true)
     try {
       if (mode === 'replace') {
-        const { data: existing } = await getTransactions({ limit: 10000 })
-        await Promise.all(existing.map(t => deleteTransaction(t.id)))
+        while (true) {
+          const { data: existing } = await getTransactions({ limit: 200 })
+          if (existing.length === 0) break
+          await Promise.all(existing.map(t => deleteTransaction(t.id)))
+        }
       }
       await Promise.all(
         importPreview.data.transactions.map(t =>
@@ -484,17 +486,24 @@ export function SettingsPage() {
     if (!dangerAction) return
     setDangerLoading(true)
     try {
-      const { data: allTransactions } = await getTransactions({ limit: 10000 })
       if (dangerAction === 'expenses') {
-        await Promise.all(
-          allTransactions.filter(t => t.type === 'expense').map(t => deleteTransaction(t.id))
-        )
+        while (true) {
+          const { data } = await getTransactions({ type: 'expense', limit: 200 })
+          if (data.length === 0) break
+          await Promise.all(data.map(t => deleteTransaction(t.id)))
+        }
       } else if (dangerAction === 'incomes') {
-        await Promise.all(
-          allTransactions.filter(t => t.type === 'income').map(t => deleteTransaction(t.id))
-        )
+        while (true) {
+          const { data } = await getTransactions({ type: 'income', limit: 200 })
+          if (data.length === 0) break
+          await Promise.all(data.map(t => deleteTransaction(t.id)))
+        }
       } else if (dangerAction === 'reset') {
-        await Promise.all(allTransactions.map(t => deleteTransaction(t.id)))
+        while (true) {
+          const { data } = await getTransactions({ limit: 200 })
+          if (data.length === 0) break
+          await Promise.all(data.map(t => deleteTransaction(t.id)))
+        }
         try { localStorage.removeItem('app_settings') } catch { /* ignore */ }
       }
       setDangerAction(null)
@@ -515,24 +524,12 @@ export function SettingsPage() {
   // ── Household ─────────────────────────────────────────────────────────────
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
-  const [householdData, setHouseholdData] = useState<HouseholdData | null>(null)
   const [householdToggling, setHouseholdToggling] = useState(false)
   const [createName, setCreateName] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [joinLoading, setJoinLoading] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(null)
-  const [leavePending, setLeavePending] = useState(false)
-  const [leaveLoading, setLeaveLoading] = useState(false)
-  const [copiedInvite, setCopiedInvite] = useState(false)
-
-  useEffect(() => {
-    if (householdEnabled && householdId) {
-      getMyHousehold().then(setHouseholdData).catch(() => {})
-    } else {
-      setHouseholdData(null)
-    }
-  }, [householdEnabled, householdId])
 
   async function handleHouseholdToggle() {
     setHouseholdToggling(true)
@@ -566,33 +563,12 @@ export function SettingsPage() {
       setJoinCode('')
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 404) setJoinError('Kód nebol nájdený')
-      else if (status === 409) setJoinError('Už si členom tejto domácnosti')
-      else setJoinError('Nepodarilo sa pripojiť')
+      if (status === 404) setJoinError(t.settings.householdJoinErrorNotFound)
+      else if (status === 409) setJoinError(t.settings.householdJoinErrorMember)
+      else setJoinError(t.settings.householdJoinErrorFailed)
     } finally {
       setJoinLoading(false)
     }
-  }
-
-  async function handleLeaveHousehold() {
-    setLeaveLoading(true)
-    try {
-      await leaveHousehold()
-      await refreshUser()
-      setLeavePending(false)
-    } finally {
-      setLeaveLoading(false)
-    }
-  }
-
-  async function handleCopyInviteCode() {
-    const code = householdData?.invite_code ?? user?.household?.invite_code
-    if (!code) return
-    try {
-      await navigator.clipboard.writeText(code)
-      setCopiedInvite(true)
-      setTimeout(() => setCopiedInvite(false), 2000)
-    } catch { /* ignore */ }
   }
 
   const firstDayOfWeekOptions = [
@@ -809,20 +785,20 @@ export function SettingsPage() {
                   {t.settings.importJson}
                 </button>
                 {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
-                {importOk && <p className="text-xs text-emerald-400 mt-2">Import úspešný ✓</p>}
+                {importOk && <p className="text-xs text-emerald-400 mt-2">{t.settings.importSuccess}</p>}
               </div>
 
               <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
-                Dáta sú uložené na serveri. Exportuj pravidelne pre zálohovanie.
+                {t.settings.dataNote}
               </p>
             </div>
           </SectionCard>
 
           {/* Section: Rodinné financie */}
           <SectionCard>
-            <SectionHeader emoji="👨‍👩‍👧" label="Rodinné financie" />
+            <SectionHeader emoji="👨‍👩‍👧" label={t.settings.householdTitle} />
             <div className="divide-y divide-white/[0.04]">
-              <SettingRow label="Rodinné financie" sublabel={householdId ? 'Pre vypnutie opustite domácnosť' : 'Zdieľajte financie s rodinou alebo partnerom'}>
+              <SettingRow label={t.settings.householdTitle} sublabel={householdId ? t.settings.householdSubtitleJoined : t.settings.householdSubtitleNew}>
                 <Toggle checked={householdEnabled} onChange={householdId ? () => {} : handleHouseholdToggle} disabled={householdToggling || !!householdId} />
               </SettingRow>
             </div>
@@ -832,10 +808,10 @@ export function SettingsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Vytvor domácnosť */}
                   <div className="flex flex-col gap-2 bg-[#0f0a1e]/40 rounded-xl p-4 border border-white/[0.08]">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">Vytvor domácnosť</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdCreate}</p>
                     <input
                       type="text"
-                      placeholder="napr. Bližňákovci"
+                      placeholder={t.settings.householdCreatePlaceholder}
                       value={createName}
                       onChange={e => setCreateName(e.target.value)}
                       className="input-field text-sm"
@@ -845,16 +821,16 @@ export function SettingsPage() {
                       disabled={createLoading || !createName.trim()}
                       className="btn-primary py-2 text-sm justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {createLoading ? 'Vytváram...' : '🏡 Vytvoriť'}
+                      {createLoading ? t.settings.householdCreating : t.settings.householdCreateBtn}
                     </button>
                   </div>
 
                   {/* Pripoj sa */}
                   <div className="flex flex-col gap-2 bg-[#0f0a1e]/40 rounded-xl p-4 border border-white/[0.08]">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">Pripoj sa</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdJoin}</p>
                     <input
                       type="text"
-                      placeholder="napr. BLIZ-4821"
+                      placeholder={t.settings.householdJoinPlaceholder}
                       value={joinCode}
                       onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(null) }}
                       className="input-field text-sm font-mono tracking-widest"
@@ -865,91 +841,10 @@ export function SettingsPage() {
                       disabled={joinLoading || !joinCode.trim()}
                       className="btn-primary py-2 text-sm justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {joinLoading ? 'Pripájam...' : '🔗 Pripojiť sa'}
+                      {joinLoading ? t.settings.householdJoining : t.settings.householdJoinBtn}
                     </button>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {householdEnabled && householdId && (
-              <div className="p-5 flex flex-col gap-4 border-t border-white/[0.06]">
-                {/* Household info */}
-                <div className="rounded-xl bg-[#0f0a1e]/40 border border-white/[0.08] p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl">🏡</span>
-                    <div>
-                      <p className="text-sm font-semibold text-[#E2D9F3]">
-                        {householdData?.name ?? user?.household?.name ?? 'Domácnosť'}
-                      </p>
-                      <p className="text-xs text-[#9D84D4]">
-                        {householdData?.members?.length ?? 0} {(householdData?.members?.length ?? 0) === 1 ? 'člen' : 'členovia'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 bg-[#1a1035] rounded-lg px-3 py-2 mb-3">
-                    <span className="text-xs text-[#9D84D4]">Kód pozvánky</span>
-                    <span className="flex-1 font-mono text-sm font-bold text-[#A78BFA] tracking-[3px]">
-                      {householdData?.invite_code ?? user?.household?.invite_code ?? '—'}
-                    </span>
-                    <button
-                      onClick={handleCopyInviteCode}
-                      className="text-xs text-[#9D84D4] hover:text-[#E2D9F3] transition-colors cursor-pointer bg-transparent border-none"
-                    >
-                      {copiedInvite ? '✓ Skopírované!' : '📋 Kopírovať'}
-                    </button>
-                  </div>
-
-                  {householdData?.members && householdData.members.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      {householdData.members.map(m => (
-                        <div key={m.id} className="flex items-center gap-2">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
-                          >
-                            {m.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-sm text-[#E2D9F3] flex-1">{m.name}</span>
-                          {m.is_owner && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#7C3AED]/20 text-[#A78BFA]">
-                              Vlastník
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {leavePending ? (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm text-[#9D84D4]">Naozaj chceš opustiť domácnosť?</p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleLeaveHousehold}
-                        disabled={leaveLoading}
-                        className="flex-1 py-2 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40"
-                      >
-                        {leaveLoading ? 'Opúšťam...' : 'Áno, opustiť'}
-                      </button>
-                      <button
-                        onClick={() => setLeavePending(false)}
-                        className="flex-1 py-2 px-4 rounded-xl text-sm font-medium text-[#9D84D4] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
-                      >
-                        Zrušiť
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setLeavePending(true)}
-                    className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer"
-                  >
-                    Opustiť domácnosť
-                  </button>
-                )}
               </div>
             )}
           </SectionCard>
@@ -1005,8 +900,13 @@ export function SettingsPage() {
                   setIsDeleting(true)
                   try {
                     await deleteAccount()
-                  } catch {
-                    setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                  } catch (err: unknown) {
+                    const status = (err as { response?: { status?: number } })?.response?.status
+                    if (status === 502 || status === 501 || status === 404) {
+                      setDeleteError(t.settings.deleteAccountUnavailable)
+                    } else {
+                      setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                    }
                     setIsDeleting(false)
                   }
                 }}
