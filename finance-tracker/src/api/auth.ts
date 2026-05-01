@@ -79,6 +79,7 @@ export async function updateUserSettings(settings: {
   monthlyEmailEnabled?: boolean
   defaultPage?: string
   currencyFormat?: string
+  theme?: string
 }): Promise<void> {
   await apiClient.patch('/api/auth/settings', settings)
 }

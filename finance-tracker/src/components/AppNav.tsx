@@ -116,15 +116,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
           overflow: 'hidden',
           flexShrink: 0,
         }}>
-          <div style={{
-            width: 34, height: 34,
-            background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-            borderRadius: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16,
-            flexShrink: 0,
-            boxShadow: '0 4px 12px rgba(139,92,246,0.4)',
-          }}>📊</div>
+          <img src="/logo.svg" alt="Finvu" style={{ width: 34, height: 34, flexShrink: 0 }} />
           {isExpanded && (
             <span style={{
               fontSize: 17,

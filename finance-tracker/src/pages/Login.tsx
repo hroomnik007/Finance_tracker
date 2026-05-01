@@ -22,7 +22,7 @@ const inputStyle: React.CSSProperties = {
 
 export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
-  const { login, loginDemo, loginWithGoogle, loginWithPin, loginWithToken } = useAuth()
+  const { login, loginWithGoogle, loginWithPin, loginWithToken } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,7 +31,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isDemoLoading, setIsDemoLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   // PIN modal state
@@ -272,7 +271,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             style={{
               height: '44px',
               background: 'white',
-              border: '1px solid #ddd',
+              border: '1px solid var(--border2)',
               color: '#3c4043',
               cursor: 'pointer',
             }}
@@ -292,31 +291,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={async () => {
-              setIsDemoLoading(true)
-              setError(null)
-              try {
-                await loginDemo()
-              } catch {
-                setError('Demo účet nie je dostupný. Skúste neskôr.')
-              } finally {
-                setIsDemoLoading(false)
-              }
-            }}
-            disabled={isDemoLoading}
-            className="w-full font-semibold text-[14px] rounded-2xl transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{
-              height: '44px',
-              background: 'rgba(167,139,250,0.12)',
-              border: '1px solid var(--border-subtle)',
-              color: '#A78BFA',
-              cursor: 'pointer',
-            }}
-          >
-            {isDemoLoading ? 'Načítavam demo...' : '👀 Vyskúšať demo'}
-          </button>
         </div>
       </div>
 

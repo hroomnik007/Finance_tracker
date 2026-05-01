@@ -94,7 +94,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessToken(accessToken)
         return getMe()
       })
-      .then(({ user: me }) => setUser(me))
+      .then(({ user: me }) => {
+        setUser(me)
+        if (me.theme) {
+          try {
+            localStorage.setItem('theme_preference', me.theme)
+            document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
+          } catch { /* ignore */ }
+        }
+      })
       .catch(() => { /* no valid session */ })
       .finally(() => {
         setInitializingAuth(false)
@@ -118,6 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (me.theme) {
+        localStorage.setItem('theme_preference', me.theme)
+        document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
+      }
     } catch { /* ignore */ }
   }, [])
 

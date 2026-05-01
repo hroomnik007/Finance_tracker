@@ -204,7 +204,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
   }
 
   const sorted = [...incomes]
-    .filter(i => memberFilter === 'all' || i.created_by === memberFilter)
+    .filter(i => memberFilter === 'all' || i.created_by === memberFilter || (memberFilter === user?.id && !i.created_by))
     .sort((a, b) => b.date.localeCompare(a.date))
   const totalAmount = incomes.reduce((s, i) => s + i.amount, 0)
   const avgAmount = incomes.length > 0 ? totalAmount / incomes.length : 0

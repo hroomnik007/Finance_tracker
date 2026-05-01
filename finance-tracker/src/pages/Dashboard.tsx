@@ -163,10 +163,13 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
+  const [dashView, setDashView] = useState<'personal' | 'family'>(() =>
+    (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'personal'
+  )
 
-  const { incomes } = useIncomes(month, year)
+  const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
-  const { variableExpenses } = useVariableExpenses(month, year)
+  const { variableExpenses: allVariableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
   const budgetStatuses = useBudgetStatus(month, year)
   const { formatAmount, formatDate } = useFormatters()
@@ -176,6 +179,18 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const displayName = user?.name || profileName
   const householdEnabled = user?.household_enabled ?? false
   const greeting = getGreeting(displayName, t)
+
+  const incomes = householdEnabled && dashView === 'personal'
+    ? allIncomes.filter(i => i.created_by === user?.id || !i.created_by)
+    : allIncomes
+  const variableExpenses = householdEnabled && dashView === 'personal'
+    ? allVariableExpenses.filter(e => e.created_by === user?.id || !e.created_by)
+    : allVariableExpenses
+
+  function handleDashViewChange(v: 'personal' | 'family') {
+    setDashView(v)
+    localStorage.setItem('finvu_dashboard_view', v)
+  }
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
@@ -811,6 +826,15 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       {/* Mobile header */}
       <div className="flex items-center justify-between gap-3 lg:hidden">
         <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        {householdEnabled && (
+          <div style={{ display: 'flex', borderRadius: 20, background: 'var(--bg3)', border: '1px solid var(--border)', padding: 2, gap: 2, flexShrink: 0 }}>
+            {(['personal', 'family'] as const).map(v => (
+              <button key={v} onClick={() => handleDashViewChange(v)} style={{ height: 28, padding: '0 12px', borderRadius: 18, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: dashView === v ? 'var(--violet)' : 'transparent', color: dashView === v ? 'white' : 'var(--text2)', transition: 'all 0.15s' }}>
+                {v === 'personal' ? 'Moje' : 'Rodinné'}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Desktop top bar — sticky */}
@@ -842,7 +866,18 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           </div>
           <span style={{ fontSize: 12, color: 'var(--text3)', paddingLeft: 42 }}>{todayStr}</span>
         </div>
-        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {householdEnabled && (
+            <div style={{ display: 'flex', borderRadius: 20, background: 'var(--bg3)', border: '1px solid var(--border)', padding: 2, gap: 2 }}>
+              {(['personal', 'family'] as const).map(v => (
+                <button key={v} onClick={() => handleDashViewChange(v)} style={{ height: 28, padding: '0 12px', borderRadius: 18, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: dashView === v ? 'var(--violet)' : 'transparent', color: dashView === v ? 'white' : 'var(--text2)', transition: 'all 0.15s' }}>
+                  {v === 'personal' ? 'Moje' : 'Rodinné'}
+                </button>
+              ))}
+            </div>
+          )}
+          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+        </div>
       </div>
 
       {/* ════════════════════════════════════════

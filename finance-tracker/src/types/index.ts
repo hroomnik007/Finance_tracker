@@ -92,6 +92,7 @@ export interface AuthUser {
   createdAt?: string
   defaultPage?: string
   currencyFormat?: string
+  theme?: string
   household_id?: number | null
   household_enabled?: boolean
   household?: {

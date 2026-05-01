@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, createSharedReport } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport, updateUserSettings } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
@@ -211,6 +211,7 @@ export function SettingsPage() {
     saveLocalPref('theme_preference', next)
     const html = document.documentElement
     html.setAttribute('data-theme', next !== 'system' ? next : 'dark')
+    updateUserSettings({ theme: next }).catch(() => { /* non-critical */ })
   }
 
   function handleAccentChange(color: string) {

@@ -146,7 +146,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     >
       <div
         className="relative w-full max-w-[860px] max-h-[94vh] rounded-[20px] overflow-hidden flex flex-col"
-        style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+        style={{ background: 'var(--bg)', border: '1px solid var(--border)', isolation: 'isolate' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Close */}
@@ -163,8 +163,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         <div
           className="flex flex-col items-center gap-3 pt-7 pb-5 px-6"
           style={{
-            background: 'linear-gradient(160deg, rgba(124,58,237,0.15) 0%, rgba(15,10,30,0) 60%)',
-            borderBottom: '1px solid var(--border-subtle)',
+            background: 'var(--bg3)',
+            borderBottom: '1px solid var(--border)',
           }}
         >
           <div className="relative">
@@ -222,7 +222,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-7">
 
           {/* LEFT column */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-bl-[20px] overflow-hidden">
 
             {/* Osobné údaje */}
             <div
@@ -242,8 +242,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       onClick={() => { setProfileAvatarDraft(em); setPhotoUrl(null) }}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer transition-transform hover:scale-110"
                       style={{
-                        border: profileAvatarDraft === em && !photoUrl ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
-                        background: profileAvatarDraft === em && !photoUrl ? 'rgba(124,58,237,0.2)' : 'var(--bg-elevated)',
+                        border: profileAvatarDraft === em && !photoUrl ? '2px solid var(--violet)' : '1.5px solid transparent',
+                        background: profileAvatarDraft === em && !photoUrl ? 'rgba(139,92,246,0.15)' : 'var(--bg-elevated)',
                       }}
                     >
                       {em}
@@ -401,7 +401,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           </div>
 
           {/* RIGHT column */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-br-[20px] overflow-hidden">
 
             {/* Preferencie */}
             <div

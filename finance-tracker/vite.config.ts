@@ -16,13 +16,19 @@ export default defineConfig({
         name: 'Finvu',
         short_name: 'Finvu',
         description: 'Financie pod kontrolou',
-        theme_color: '#3C3489',
-        background_color: '#0D0A1A',
+        theme_color: '#8B5CF6',
+        background_color: '#0d0b18',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
         icons: [
+          {
+            src: 'logo.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any',
+          },
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',

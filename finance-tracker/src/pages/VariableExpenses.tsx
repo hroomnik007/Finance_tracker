@@ -147,7 +147,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     ? variableExpenses.filter(e => e.categoryId === activeCategory)
     : variableExpenses
   )]
-    .filter(e => memberFilter === 'all' || e.created_by === memberFilter)
+    .filter(e => memberFilter === 'all' || e.created_by === memberFilter || (memberFilter === user?.id && !e.created_by))
     .sort((a, b) => b.date.localeCompare(a.date))
   const hasAnyNote = filteredSorted.some(e => e.note && e.note.trim() !== '')
 

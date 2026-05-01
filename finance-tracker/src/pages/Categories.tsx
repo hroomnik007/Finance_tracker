@@ -146,7 +146,8 @@ export function CategoriesPage() {
           ) : (
             <>
               {/* Desktop list */}
-              <div className="hidden lg:flex" style={{ flexDirection: 'column', gap: 6 }}>
+              <div className="hidden lg:block">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {categories.map(cat => (
                   <div
                     key={cat.id}
@@ -167,6 +168,7 @@ export function CategoriesPage() {
                     </span>
                   </div>
                 ))}
+                </div>
               </div>
 
               {/* Mobile list with swipe-to-delete */}
