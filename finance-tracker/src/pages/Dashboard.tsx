@@ -313,16 +313,16 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   // Mobile hero card — gradient balance card with income/expense rows
   const mobileHeroCard = (
     <div style={{
-      background: 'linear-gradient(135deg, #1a1035 0%, #2d1b69 50%, #1a1035 100%)',
-      border: '1px solid rgba(139,92,246,0.2)',
+      background: isLight ? 'linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 50%, var(--bg3) 100%)' : 'linear-gradient(135deg, #1a1035 0%, #2d1b69 50%, #1a1035 100%)',
+      border: '1px solid var(--border)',
       borderRadius: 24,
       padding: '24px 20px',
-      boxShadow: '0 8px 40px rgba(139,92,246,0.15)',
+      boxShadow: 'var(--card-shadow)',
       position: 'relative',
       overflow: 'hidden',
     }}>
-      <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(139,92,246,0.15)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.45)', textAlign: 'center', margin: '0 0 8px' }}>{t.dashboard.balance}</p>
+      <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'var(--violet-glow)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', textAlign: 'center', margin: '0 0 8px' }}>{t.dashboard.balance}</p>
       <p style={{
         fontFamily: "'DM Mono', monospace",
         fontWeight: 700,
@@ -334,7 +334,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
       }}>{formatAmount(balance)}</p>
       <div style={{ display: 'flex', gap: 10 }}>
         <div style={{ flex: 1, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 14, padding: '12px 14px' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.4)', margin: '0 0 4px' }}>{t.nav.income}</p>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.income}</p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#34D399', margin: 0 }}>+{formatAmount(totalIncome)}</p>
           {incomeChange !== null && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: incomeChange >= 0 ? '#34D399' : '#F87171', marginTop: 2 }}>
@@ -344,7 +344,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
           )}
         </div>
         <div style={{ flex: 1, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 14, padding: '12px 14px' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.4)', margin: '0 0 4px' }}>{t.nav.expenses}</p>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.expenses}</p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#F87171', margin: 0 }}>-{formatAmount(totalExpenses)}</p>
           {expensesChange !== null && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: expensesChange <= 0 ? '#34D399' : '#F87171', marginTop: 2 }}>

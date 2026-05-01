@@ -235,10 +235,11 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => setCsvOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 14px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            className="flex items-center justify-center w-10 h-10 lg:w-auto lg:h-9 lg:gap-1.5 lg:px-3.5"
+            style={{ borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
           >
             <FileUp size={16} />
-            <span className="hidden sm:inline">Import CSV</span>
+            <span className="hidden lg:inline">Import CSV</span>
           </button>
           <button
             onClick={openAdd}
@@ -331,9 +332,6 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                 <span className="empty-state-emoji">💰</span>
                 <p className="empty-state-title">{t.income.noIncome}</p>
                 <p className="empty-state-subtitle">{t.income.noIncomeSubtitle}</p>
-                <button onClick={openAdd} className="btn-primary mt-2" style={{ borderRadius: 14, padding: '10px 24px' }}>
-                  <Plus size={16} />{t.income.add}
-                </button>
               </div>
             </div>
           ) : (
@@ -476,7 +474,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
+          style={{ position: 'fixed', bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

@@ -142,9 +142,6 @@ export function CategoriesPage() {
               <span style={{ fontSize: 40 }}>🏷️</span>
               <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.categories.noCategories}</p>
               <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.categories.noCategoriesSubtitle}</p>
-              <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
-                <Plus size={16} />{t.common.add}
-              </button>
             </div>
           ) : (
             <>
@@ -173,7 +170,7 @@ export function CategoriesPage() {
               </div>
 
               {/* Mobile list with swipe-to-delete */}
-              <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="lg:hidden flex flex-col" style={{ gap: 8 }}>
                 {categories.map((cat, idx) => (
                   <div key={cat.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: 16 }}>
                     <div style={{
@@ -295,6 +292,17 @@ export function CategoriesPage() {
         )}
 
       </div>
+
+      {/* FAB — mobile only */}
+      {!sheetOpen && deleteId === null && (
+        <button
+          onClick={openAdd}
+          className="lg:hidden flex items-center justify-center"
+          style={{ position: 'fixed', right: 20, bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+        >
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      )}
 
       {/* Edit/Add sheet */}
       <BottomSheet

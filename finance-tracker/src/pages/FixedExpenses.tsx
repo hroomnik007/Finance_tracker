@@ -243,10 +243,11 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 14px', borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+            className="flex items-center justify-center w-10 h-10 lg:w-auto lg:h-9 lg:gap-1.5 lg:px-3.5"
+            style={{ borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
           >
             <FileUp size={16} />
-            <span className="hidden sm:inline">Import CSV</span>
+            <span className="hidden lg:inline">Import CSV</span>
           </button>
           <button
             onClick={openAdd}
@@ -268,7 +269,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', right: 24, bottom: 'calc(96px + env(safe-area-inset-bottom, 20px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          style={{ position: 'fixed', right: 20, bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>
@@ -319,9 +320,6 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
               <span style={{ fontSize: 40 }}>🔒</span>
               <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.fixed.emptyTitle}</p>
               <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.fixed.emptySubtitle}</p>
-              <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
-                <Plus size={16} strokeWidth={2.5} />{t.expenses.fixed.add}
-              </button>
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--card-shadow)' }}>
