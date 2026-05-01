@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import type { Page } from '../App'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 
@@ -30,6 +31,25 @@ function getGreeting(hour: number): string {
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
+    document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+  )
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', next)
+    try { localStorage.setItem('theme_preference', JSON.stringify(next)) } catch { /* ignore */ }
+    setTheme(next)
+  }
 
   const now = new Date()
   const hour = now.getHours()
@@ -89,7 +109,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const avatarEl = (size: number) => (
     <button
       onClick={onOpenProfile}
-      style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : 'var(--violet)', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : 'var(--violet)', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 2px rgba(139,92,246,0.3)' }}
     >
       {isPhotoUrl(user?.avatarUrl) ? (
         <img src={user!.avatarUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -100,6 +120,16 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           {user?.name?.[0]?.toUpperCase() ?? '?'}
         </span>
       )}
+    </button>
+  )
+
+  const themeBtn = (
+    <button
+      onClick={toggleTheme}
+      title={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
+      style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+    >
+      {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
     </button>
   )
 
@@ -141,6 +171,10 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             {monthNav}
           </>
         )}
+
+        {/* Theme toggle */}
+        {divider}
+        {themeBtn}
       </div>
 
       {/* ── Mobile: row 1 always + row 2 conditionally ── */}
@@ -161,6 +195,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
               {dateStr}
             </div>
           </div>
+          {themeBtn}
           {avatarEl(32)}
         </div>
 

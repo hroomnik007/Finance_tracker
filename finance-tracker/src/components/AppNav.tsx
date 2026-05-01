@@ -312,6 +312,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
               overflow: 'hidden',
+              boxShadow: '0 0 0 2px rgba(139,92,246,0.3)',
             }}>
               {isPhotoUrl(user?.avatarUrl) ? (
                 <img src={user!.avatarUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
