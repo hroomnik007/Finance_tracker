@@ -537,6 +537,9 @@ export function SettingsPage() {
     try {
       await toggleHousehold(!householdEnabled)
       await refreshUser()
+      if (householdEnabled) {
+        localStorage.removeItem('finvu_dashboard_view')
+      }
     } finally {
       setHouseholdToggling(false)
     }

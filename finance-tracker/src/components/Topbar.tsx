@@ -51,15 +51,7 @@ export function Topbar({ page, onOpenProfile }: TopbarProps) {
     <div style={barStyle}>
       {/* Mobile only: logo left */}
       <div className="md:hidden flex items-center shrink-0" style={{ gap: 10 }}>
-        <div style={{
-          width: 32, height: 32,
-          background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-          borderRadius: 9,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 15,
-          flexShrink: 0,
-          boxShadow: '0 4px 12px rgba(139,92,246,0.4)',
-        }}>📊</div>
+        <img src="/logo.svg" alt="Finvu" style={{ width: 32, height: 32, flexShrink: 0 }} />
       </div>
 
       {/* Mobile only: page title center */}

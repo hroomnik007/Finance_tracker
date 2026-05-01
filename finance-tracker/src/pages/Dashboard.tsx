@@ -164,7 +164,7 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [dashView, setDashView] = useState<'personal' | 'family'>(() =>
-    (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'personal'
+    (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
   )
 
   const { incomes: allIncomes } = useIncomes(month, year)

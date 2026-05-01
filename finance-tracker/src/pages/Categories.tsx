@@ -33,18 +33,39 @@ export function CategoriesPage() {
   const [swipedId, setSwipedId] = useState<string | null>(null)
   const touchStartX = useRef<number>(0)
   const touchStartY = useRef<number>(0)
+  const isSwiping = useRef<boolean>(false)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
+    isSwiping.current = false
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const deltaX = e.touches[0].clientX - touchStartX.current
+    const deltaY = e.touches[0].clientY - touchStartY.current
+    if (!isSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
+      isSwiping.current = true
+    }
+    if (isSwiping.current && deltaX < 0) {
+      e.preventDefault()
+      const card = e.currentTarget as HTMLElement
+      card.style.transition = 'none'
+      card.style.transform = `translateX(${Math.max(deltaX, -80)}px)`
+    }
   }
 
   const handleTouchEnd = (e: React.TouchEvent, id: string) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current
-    const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
-    if (deltaY > 30) return
-    if (deltaX < -60) setSwipedId(id)
-    else if (deltaX > 30) setSwipedId(null)
+    const card = e.currentTarget as HTMLElement
+    card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+    if (isSwiping.current && deltaX < -50) {
+      card.style.transform = 'translateX(-80px)'
+      setSwipedId(id)
+    } else if (isSwiping.current) {
+      card.style.transform = 'translateX(0)'
+      setSwipedId(null)
+    }
   }
 
   const [name, setName] = useState('')
@@ -200,6 +221,7 @@ export function CategoriesPage() {
                         position: 'relative', zIndex: 1,
                       }}
                       onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
                       onTouchEnd={e => handleTouchEnd(e, cat.id!)}
                       onClick={e => {
                         e.stopPropagation()
