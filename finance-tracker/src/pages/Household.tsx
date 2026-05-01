@@ -4,7 +4,7 @@ import { MemberAvatar } from '../components/MemberAvatar'
 import { useAuth } from '../context/AuthContext'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import { getMyHousehold, getMonthlyStats, getActivity } from '../api/households'
+import { getMyHousehold, getMonthlyStats, getActivity, leaveHousehold } from '../api/households'
 import type { HouseholdData, MonthlyStats, ActivityItem } from '../api/households'
 
 function formatRelativeTime(isoStr: string): string {
@@ -25,7 +25,7 @@ function getMemberColor(userId: string): string {
 }
 
 export function HouseholdPage() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
   const { household: ht } = t
@@ -36,9 +36,25 @@ export function HouseholdPage() {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [leavePending, setLeavePending] = useState(false)
+  const [leaveLoading, setLeaveLoading] = useState(false)
 
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
+
+  const handleLeaveHousehold = async () => {
+    setLeaveLoading(true)
+    try {
+      await leaveHousehold()
+      localStorage.removeItem('finvu_dashboard_view')
+      await refreshUser()
+      setLeavePending(false)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      alert(msg ?? 'Chyba pri opúšťaní domácnosti')
+    } finally {
+      setLeaveLoading(false)
+    }
+  }
 
   const load = useCallback(async () => {
     if (!householdEnabled || !householdId) { setLoading(false); return }
@@ -228,7 +244,7 @@ export function HouseholdPage() {
               <p style={{ fontSize: 13, color: 'var(--text3)' }}>Naozaj chceš opustiť domácnosť?</p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setLeavePending(false)} style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušiť</button>
-                <button style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Áno, opustiť</button>
+                <button onClick={handleLeaveHousehold} disabled={leaveLoading} style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}>{leaveLoading ? '...' : 'Áno, opustiť'}</button>
               </div>
             </div>
           ) : (
@@ -270,7 +286,7 @@ export function HouseholdPage() {
               <p style={{ fontSize: 12, color: 'var(--text3)' }}>Naozaj chceš opustiť domácnosť?</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setLeavePending(false)} style={{ flex: 1, padding: '8px', borderRadius: 10, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušiť</button>
-                <button style={{ flex: 1, padding: '8px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Opustiť</button>
+                <button onClick={handleLeaveHousehold} disabled={leaveLoading} style={{ flex: 1, padding: '8px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}>{leaveLoading ? '...' : 'Opustiť'}</button>
               </div>
             </div>
           ) : (

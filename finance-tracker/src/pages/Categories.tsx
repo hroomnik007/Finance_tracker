@@ -145,7 +145,7 @@ export function CategoriesPage() {
         </button>
         <button
           onClick={openAdd}
-          className="lg:hidden flex items-center justify-center"
+          className="hidden flex items-center justify-center"
           style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', flexShrink: 0 }}
         >
           <Plus size={20} />

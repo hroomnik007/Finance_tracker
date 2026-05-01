@@ -5,7 +5,6 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
-import { MonthSwitcher } from '../components/MonthSwitcher'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useIncomes } from '../hooks/useIncomes'
@@ -34,7 +33,6 @@ function getLast12Months(monthsShort: string[]) {
 interface IncomePageProps {
   month: number
   year: number
-  onMonthChange: (month: number, year: number) => void
 }
 
 interface FormState {
@@ -142,7 +140,7 @@ const rpSection = (title: string, children: React.ReactNode) => (
   </div>
 )
 
-export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
+export function IncomePage({ month, year }: IncomePageProps) {
   const { incomes, addIncome, updateIncome, deleteIncome } = useIncomes(month, year)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
@@ -230,8 +228,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)' }}>
-        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)' }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => setCsvOpen(true)}
@@ -303,7 +300,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
           )}
 
           {/* Mobile: recurring section */}
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }} className="lg:hidden">
+          {recurringIncomes.length > 0 && <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }} className="lg:hidden">
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)' }}>{t.income.recurringSection}</span>
               <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{recurringIncomes.length}×</span>
@@ -323,7 +320,7 @@ export function IncomePage({ month, year, onMonthChange }: IncomePageProps) {
                 </div>
               ))
             )}
-          </div>
+          </div>}
 
           {/* List / empty state */}
           {sorted.length === 0 ? (

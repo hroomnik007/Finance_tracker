@@ -5,7 +5,6 @@ import {
   BarChart, Bar,
 } from 'recharts'
 import { ArrowUp, ArrowDown } from 'lucide-react'
-import { MonthSwitcher } from '../components/MonthSwitcher'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -23,10 +22,6 @@ import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
 import type { HouseholdMember } from '../api/households'
-
-function isPhotoUrl(url: string | null | undefined): url is string {
-  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
-}
 
 function getLast6Months(monthsShort: string[]) {
   const now = new Date()
@@ -140,8 +135,8 @@ function ToggleBtn({ active, onClick, children }: { active: boolean; onClick: ()
 interface DashboardProps {
   month: number
   year: number
-  onMonthChange: (month: number, year: number) => void
   onNavigate: (page: Page) => void
+  dashView: 'personal' | 'family'
 }
 
 type Tab = 'income' | 'expenses'
@@ -155,7 +150,7 @@ const TOOLTIP_STYLE = {
 }
 
 
-export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardProps) {
+export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
@@ -163,9 +158,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
-  const [dashView, setDashView] = useState<'personal' | 'family'>(() =>
-    (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
-  )
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -186,11 +178,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   const variableExpenses = householdEnabled && dashView === 'personal'
     ? allVariableExpenses.filter(e => e.created_by === user?.id || !e.created_by)
     : allVariableExpenses
-
-  function handleDashViewChange(v: 'personal' | 'family') {
-    setDashView(v)
-    localStorage.setItem('finvu_dashboard_view', v)
-  }
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
@@ -822,63 +809,6 @@ export function Dashboard({ month, year, onMonthChange, onNavigate }: DashboardP
   return (
     <div style={{ flex: 1, overflowY: 'auto' }}>
     <div style={{ padding: '20px', minHeight: '100%' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
-
-      {/* Mobile header */}
-      <div className="flex items-center justify-between gap-3 lg:hidden">
-        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        {householdEnabled && (
-          <div style={{ display: 'flex', borderRadius: 20, background: 'var(--bg3)', border: '1px solid var(--border)', padding: 2, gap: 2, flexShrink: 0 }}>
-            {(['personal', 'family'] as const).map(v => (
-              <button key={v} onClick={() => handleDashViewChange(v)} style={{ height: 28, padding: '0 12px', borderRadius: 18, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: dashView === v ? 'var(--violet)' : 'transparent', color: dashView === v ? 'white' : 'var(--text2)', transition: 'all 0.15s' }}>
-                {v === 'personal' ? 'Moje' : 'Rodinné'}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Desktop top bar — sticky */}
-      <div
-        className="hidden lg:flex items-center justify-between"
-        style={{
-          borderBottom: '1px solid var(--border)',
-          position: 'sticky', top: -20, zIndex: 20,
-          background: 'var(--bg)',
-          margin: '-20px -20px 0 -20px',
-          padding: '16px 20px 12px',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {isPhotoUrl(user?.avatarUrl) ? (
-              <img src={user!.avatarUrl!} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border2)' }} />
-            ) : user?.avatarUrl ? (
-              <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, background: 'var(--violet-glow)' }}>{user.avatarUrl}</span>
-            ) : (
-              <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0, background: 'var(--violet)' }}>{user?.name?.[0]?.toUpperCase() ?? '?'}</span>
-            )}
-            <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)' }}>{greeting.text} {greeting.emoji}</span>
-            {(user?.currentStreak ?? 0) > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}>
-                🔥 {user!.currentStreak}
-              </span>
-            )}
-          </div>
-          <span style={{ fontSize: 12, color: 'var(--text3)', paddingLeft: 42 }}>{todayStr}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {householdEnabled && (
-            <div style={{ display: 'flex', borderRadius: 20, background: 'var(--bg3)', border: '1px solid var(--border)', padding: 2, gap: 2 }}>
-              {(['personal', 'family'] as const).map(v => (
-                <button key={v} onClick={() => handleDashViewChange(v)} style={{ height: 28, padding: '0 12px', borderRadius: 18, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: dashView === v ? 'var(--violet)' : 'transparent', color: dashView === v ? 'white' : 'var(--text2)', transition: 'all 0.15s' }}>
-                  {v === 'personal' ? 'Moje' : 'Rodinné'}
-                </button>
-              ))}
-            </div>
-          )}
-          <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
-        </div>
-      </div>
 
       {/* ════════════════════════════════════════
           MOBILE LAYOUT

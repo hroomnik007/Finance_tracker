@@ -6,8 +6,9 @@ export function useFormatters() {
   const formatAmount = (amount: number): string => {
     const symbols: Record<string, string> = { EUR: '€', USD: '$', GBP: '£', CZK: 'Kč' }
     const symbol = symbols[settings.currency] ?? settings.currency
-    const abs = Math.abs(amount)
-    const sign = amount < 0 ? '-' : ''
+    const rounded = parseFloat(amount.toFixed(2))
+    const abs = Math.abs(rounded)
+    const sign = rounded < 0 ? '-' : ''
     const fmt = settings.currencyFormat ?? 'sk'
     if (fmt === 'en') {
       const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')

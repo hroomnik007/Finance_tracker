@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { Pencil, Trash2, Plus, FileUp } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
-import { MonthSwitcher } from '../components/MonthSwitcher'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -25,10 +24,9 @@ const CAT_CONFIG: Record<FixedCategory, CatConfig> = {
 interface FixedExpensesPageProps {
   month: number
   year: number
-  onMonthChange: (month: number, year: number) => void
 }
 
-export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesPageProps) {
+export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const { fixedExpenses, addFixedExpense, updateFixedExpense, deleteFixedExpense } = useFixedExpenses()
   const { variableExpenses } = useVariableExpenses(month, year)
   const { formatAmount } = useFormatters()
@@ -238,8 +236,7 @@ export function FixedExpensesPage({ month, year, onMonthChange }: FixedExpensesP
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
-        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}

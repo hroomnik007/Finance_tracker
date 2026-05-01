@@ -86,6 +86,9 @@ function App() {
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
+  const [dashView, setDashView] = useState<'personal' | 'family'>(() =>
+    (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
+  )
   const { toasts, showToast } = useToast()
   const { locked, verifyPin } = usePinLock()
   const { showOnboarding, completeOnboarding } = useOnboarding()
@@ -176,6 +179,11 @@ function App() {
   const handleMonthChange = (m: number, y: number) => {
     setMonth(m)
     setYear(y)
+  }
+
+  const handleDashViewChange = (v: 'personal' | 'family') => {
+    setDashView(v)
+    localStorage.setItem('finvu_dashboard_view', v)
   }
 
   const handleLogout = async () => {
@@ -278,24 +286,27 @@ function App() {
         overflow: 'hidden',
         background: 'var(--bg)',
       }}>
-        <Topbar page={page} onOpenProfile={() => setIsProfileOpen(true)} />
+        <Topbar
+          page={page}
+          month={month}
+          year={year}
+          onMonthChange={handleMonthChange}
+          dashView={dashView}
+          onDashViewChange={handleDashViewChange}
+          onOpenProfile={() => setIsProfileOpen(true)}
+        />
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {page === 'dashboard' && (
-            <Dashboard month={month} year={year} onMonthChange={handleMonthChange} onNavigate={setPage} />
+            <Dashboard month={month} year={year} onNavigate={setPage} dashView={dashView} />
           )}
           {page === 'income' && (
-            <IncomePage month={month} year={year} onMonthChange={handleMonthChange} />
+            <IncomePage month={month} year={year} />
           )}
           {page === 'variable-expenses' && (
-            <VariableExpensesPage
-              month={month}
-              year={year}
-              onMonthChange={handleMonthChange}
-              showToast={showToast}
-            />
+            <VariableExpensesPage month={month} year={year} showToast={showToast} />
           )}
           {page === 'fixed-expenses' && (
-            <FixedExpensesPage month={month} year={year} onMonthChange={handleMonthChange} />
+            <FixedExpensesPage month={month} year={year} />
           )}
           {page === 'categories' && <CategoriesPage />}
           {(page === 'settings' || page === 'household') && (

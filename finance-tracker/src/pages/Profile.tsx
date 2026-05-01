@@ -145,8 +145,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[860px] max-h-[94vh] rounded-[20px] overflow-hidden flex flex-col"
-        style={{ background: 'var(--bg)', border: '1px solid var(--border)', isolation: 'isolate' }}
+        className="relative w-full max-w-[860px] max-h-[94vh] rounded-[20px] flex flex-col"
+        style={{ background: 'var(--bg)', border: '1px solid var(--border)', isolation: 'isolate', borderRadius: '20px', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Close */}
@@ -222,7 +222,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-7">
 
           {/* LEFT column */}
-          <div className="flex flex-col gap-4 rounded-bl-[20px] overflow-hidden">
+          <div className="flex flex-col gap-4" style={{ borderBottomLeftRadius: '20px', overflow: 'hidden' }}>
 
             {/* Osobné údaje */}
             <div
@@ -401,7 +401,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           </div>
 
           {/* RIGHT column */}
-          <div className="flex flex-col gap-4 rounded-br-[20px] overflow-hidden">
+          <div className="flex flex-col gap-4" style={{ borderBottomRightRadius: '20px', overflow: 'hidden' }}>
 
             {/* Preferencie */}
             <div

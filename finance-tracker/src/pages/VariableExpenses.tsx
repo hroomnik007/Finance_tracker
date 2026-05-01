@@ -4,7 +4,6 @@ import { Edit2, Trash2, Plus, FileUp, TrendingUp, TrendingDown } from 'lucide-re
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
-import { MonthSwitcher } from '../components/MonthSwitcher'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -23,7 +22,6 @@ import React from 'react'
 interface VariableExpensesPageProps {
   month: number
   year: number
-  onMonthChange: (month: number, year: number) => void
   showToast: (msg: string) => void
 }
 
@@ -43,7 +41,7 @@ const getBudgetBarColor = (pct: number) => {
 }
 
 
-export function VariableExpensesPage({ month, year, onMonthChange, showToast }: VariableExpensesPageProps) {
+export function VariableExpensesPage({ month, year, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
     useVariableExpenses(month, year)
   const { categories, addCategory } = useCategories()
@@ -192,8 +190,7 @@ export function VariableExpensesPage({ month, year, onMonthChange, showToast }: 
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
-        <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}
