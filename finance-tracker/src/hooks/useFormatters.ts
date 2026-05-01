@@ -6,7 +6,8 @@ export function useFormatters() {
   const formatAmount = (amount: number): string => {
     const symbols: Record<string, string> = { EUR: '€', USD: '$', GBP: '£', CZK: 'Kč' }
     const symbol = symbols[settings.currency] ?? settings.currency
-    const rounded = parseFloat(amount.toFixed(2))
+    const normalized = Object.is(amount, -0) ? 0 : amount
+    const rounded = parseFloat(normalized.toFixed(2))
     const abs = Math.abs(rounded)
     const sign = rounded < 0 ? '-' : ''
     const fmt = settings.currencyFormat ?? 'sk'

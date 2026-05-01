@@ -840,6 +840,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
 
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
+          {mobileHeroCard}
           <div className="grid grid-cols-3" style={{ gap: 16 }}>{desktopStatCards}</div>
           {miniStatsRow}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

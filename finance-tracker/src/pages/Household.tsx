@@ -17,12 +17,6 @@ function formatRelativeTime(isoStr: string): string {
   return `${Math.floor(hrs / 24)} d`
 }
 
-const MEMBER_COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#EF4444']
-function getMemberColor(userId: string): string {
-  let hash = 0
-  for (const c of userId) hash = (hash * 31 + c.charCodeAt(0)) & 0xffffffff
-  return MEMBER_COLORS[Math.abs(hash) % MEMBER_COLORS.length]
-}
 
 export function HouseholdPage() {
   const { user, refreshUser } = useAuth()
@@ -119,7 +113,6 @@ export function HouseholdPage() {
   }
 
   const balance = (stats?.total_income ?? 0) - (stats?.total_expenses ?? 0)
-  const totalExpenses = stats?.total_expenses ?? 0
 
   return (
     <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
@@ -152,63 +145,57 @@ export function HouseholdPage() {
           </div>
         )}
 
-        {/* Stat cards */}
-        {stats && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
-            {statCard(ht.totalExpenses, formatAmount(stats.total_expenses), 'var(--red)')}
-            {statCard(ht.totalIncome, formatAmount(stats.total_income), 'var(--green)')}
-            {statCard(ht.balance, formatAmount(balance), balance >= 0 ? 'var(--green)' : 'var(--red)')}
+        {/* Member cards grid */}
+        {householdData && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+            {householdData.members.map(m => {
+              const memberStats = stats?.per_member.find(p => p.user_id === m.id)
+              return (
+                <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--card-shadow)' }}>
+                  {/* Avatar + name + role */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <MemberAvatar userId={m.id} userName={m.name} size={40} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                      {m.is_owner && (
+                        <span style={{ fontSize: 10, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '2px 8px', fontWeight: 600 }}>
+                          <Crown size={9} style={{ display: 'inline', marginRight: 3 }} />Správca
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Income + Expenses sub-cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: 4 }}>Príjmy</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#34D399', fontFamily: "'DM Mono', monospace" }}>
+                        +{formatAmount(memberStats?.income ?? 0)}
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: 4 }}>Výdavky</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#F87171', fontFamily: "'DM Mono', monospace" }}>
+                        -{formatAmount(memberStats?.expenses ?? 0)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* 2-col grid: Members + Per-member expenses */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-
-          {/* Members card */}
-          {householdData && (
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: 'var(--card-shadow)' }}>
-              {sectionLabel('ČLENOVIA')}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {householdData.members.map(m => (
-                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={36} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                    </div>
-                    {m.is_owner && (
-                      <span style={{ fontSize: 10, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '3px 8px', fontWeight: 600, flexShrink: 0 }}>
-                        <Crown size={9} style={{ display: 'inline', marginRight: 3 }} />{ht.owner}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+        {/* Household summary card */}
+        {stats && (
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }}>
+            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 16 }}>SÚHRN DOMÁCNOSTI</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              {statCard(ht.totalIncome, formatAmount(stats.total_income), 'var(--green)')}
+              {statCard(ht.totalExpenses, formatAmount(stats.total_expenses), 'var(--red)')}
+              {statCard(ht.balance, formatAmount(balance), balance >= 0 ? 'var(--green)' : 'var(--red)')}
             </div>
-          )}
-
-          {/* Per-member expenses */}
-          {stats && stats.per_member.length > 0 && (
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: 'var(--card-shadow)' }}>
-              {sectionLabel('VÝDAVKY TENTO MESIAC — PER ČLEN')}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {stats.per_member.map(m => (
-                  <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <MemberAvatar userId={m.user_id} userName={m.name} size={28} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                        <span style={{ fontSize: 12, color: 'var(--text2)' }}>{m.name}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>−{formatAmount(m.expenses)}</span>
-                      </div>
-                      <div style={{ height: 4, background: 'var(--bg4)', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${totalExpenses > 0 ? (m.expenses / totalExpenses) * 100 : 0}%`, background: getMemberColor(m.user_id), borderRadius: 4 }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Activity feed */}
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: 'var(--card-shadow)' }}>

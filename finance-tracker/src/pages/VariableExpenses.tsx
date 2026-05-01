@@ -175,13 +175,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     </div>
   )
 
-  const colParts: string[] = []
-  if (householdEnabled) colParts.push('32px')
-  colParts.push('110px', '1fr')
-  if (hasAnyNote) colParts.push('1fr')
-  colParts.push('100px', '70px')
-  const cols = colParts.join(' ')
-
   const hdrCell = (label: string, align: 'left' | 'right' | 'center' = 'left') => (
     <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", textAlign: align }}>{label}</div>
   )
@@ -190,7 +183,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }} className="hidden lg:block">{t.nav.expenses}</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}
@@ -264,7 +258,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             </div>
           )}
 
-          {/* Desktop table */}
+          {/* Desktop grouped-by-date list */}
           <div className="hidden lg:block">
             {filteredSorted.length === 0 ? (
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
@@ -272,60 +266,91 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
                 <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
               </div>
-            ) : (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 0, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', alignItems: 'center' }}>
-                  {householdEnabled && <div />}
-                  {hdrCell(t.expenses.variable.date_col)}
-                  {hdrCell(t.expenses.variable.category_col)}
-                  {hasAnyNote && hdrCell(t.expenses.variable.note_col)}
-                  {hdrCell(t.expenses.variable.amount_col, 'right')}
-                  {hdrCell(t.expenses.variable.actions_col, 'center')}
+            ) : (() => {
+              const groupedByDate = filteredSorted.reduce<Record<string, VariableExpense[]>>((acc, e) => {
+                if (!acc[e.date]) acc[e.date] = []
+                acc[e.date].push(e)
+                return acc
+              }, {})
+              const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a))
+              const groupCols = [
+                ...(householdEnabled ? ['32px'] : []),
+                '1fr',
+                ...(hasAnyNote ? ['1fr'] : []),
+                '100px',
+                '70px',
+              ].join(' ')
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {sortedDates.map(date => {
+                    const dayExpenses = groupedByDate[date]
+                    const dayTotal = dayExpenses.reduce((s, e) => s + e.amount, 0)
+                    return (
+                      <div key={date}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', marginBottom: 6 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
+                            {formatDate(date)}
+                          </span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>
+                            -{formatAmount(dayTotal)}
+                          </span>
+                        </div>
+                        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--card-shadow)', marginBottom: 16 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: groupCols, gap: 0, padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', alignItems: 'center' }}>
+                            {householdEnabled && <div />}
+                            {hdrCell(t.expenses.variable.category_col)}
+                            {hasAnyNote && hdrCell(t.expenses.variable.note_col)}
+                            {hdrCell(t.expenses.variable.amount_col, 'right')}
+                            {hdrCell(t.expenses.variable.actions_col, 'center')}
+                          </div>
+                          {dayExpenses.map((e: VariableExpense) => {
+                            const cat = getCategoryById(e.categoryId)
+                            const bs = cat?.id ? getBudgetForCat(cat.id) : null
+                            const creator = members.find(m => m.id === e.created_by)
+                            return (
+                              <div
+                                key={e.id}
+                                style={{ display: 'grid', gridTemplateColumns: groupCols, gap: 0, padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center' }}
+                                onClick={() => openEdit(e)}
+                                onMouseEnter={el => { (el.currentTarget as HTMLElement).style.background = 'var(--bg3)' }}
+                                onMouseLeave={el => { (el.currentTarget as HTMLElement).style.background = 'transparent' }}
+                              >
+                                {householdEnabled && (
+                                  <div>{e.created_by && <MemberAvatar userId={e.created_by} userName={creator?.name ?? '?'} size={24} />}</div>
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ width: 28, height: 28, borderRadius: 8, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                                    {cat?.icon ?? '📦'}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>{cat?.name ?? '—'}</div>
+                                    {bs && (
+                                      <div style={{ width: 48, height: 3, borderRadius: 2, background: 'var(--bg4)', marginTop: 3, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: cat?.color ?? '#9D84D4' }} />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {hasAnyNote && <div style={{ fontSize: 13, color: e.note ? 'var(--text2)' : 'var(--text3)' }}>{e.note || '—'}</div>}
+                                <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={ev => ev.stopPropagation()}>
+                                  <button onClick={() => openEdit(e)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Edit2 size={13} />
+                                  </button>
+                                  <button onClick={() => setConfirmId(e.id!)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                {filteredSorted.map((e: VariableExpense) => {
-                  const cat = getCategoryById(e.categoryId)
-                  const bs = cat?.id ? getBudgetForCat(cat.id) : null
-                  const creator = members.find(m => m.id === e.created_by)
-                  return (
-                    <div
-                      key={e.id}
-                      style={{ display: 'grid', gridTemplateColumns: cols, gap: 0, padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center' }}
-                      onClick={() => openEdit(e)}
-                      onMouseEnter={el => { (el.currentTarget as HTMLElement).style.background = 'var(--bg3)' }}
-                      onMouseLeave={el => { (el.currentTarget as HTMLElement).style.background = 'transparent' }}
-                    >
-                      {householdEnabled && (
-                        <div>{e.created_by && <MemberAvatar userId={e.created_by} userName={creator?.name ?? '?'} size={24} />}</div>
-                      )}
-                      <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{formatDate(e.date)}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 8, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
-                          {cat?.icon ?? '📦'}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>{cat?.name ?? '—'}</div>
-                          {bs && (
-                            <div style={{ width: 48, height: 3, borderRadius: 2, background: 'var(--bg4)', marginTop: 3, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: cat?.color ?? '#9D84D4' }} />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {hasAnyNote && <div style={{ fontSize: 13, color: e.note ? 'var(--text2)' : 'var(--text3)' }}>{e.note || '—'}</div>}
-                      <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={ev => ev.stopPropagation()}>
-                        <button onClick={() => openEdit(e)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Edit2 size={13} />
-                        </button>
-                        <button onClick={() => setConfirmId(e.id!)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+              )
+            })()}
           </div>
 
           {/* Mobile: flat rows */}

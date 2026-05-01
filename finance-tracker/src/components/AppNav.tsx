@@ -13,18 +13,14 @@ interface AppNavProps {
   onChange: (page: Page) => void
   collapsed: boolean
   onToggle: () => void
-  onOpenProfile: () => void
+  onOpenProfile?: () => void
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
 
 const EXPENSE_CHILDREN: Page[] = ['variable-expenses', 'fixed-expenses', 'categories']
 
-function isPhotoUrl(url: string | null | undefined): url is string {
-  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
-}
-
-export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, mobileOpen, onMobileClose }: AppNavProps) {
+export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onMobileClose }: AppNavProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const isExpanded = !collapsed
@@ -288,56 +284,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, onOpenProfile, 
             {isExpanded && t.nav.settings}
           </button>
 
-          {/* Profile */}
-          <div
-            onClick={onOpenProfile}
-            role="button"
-            tabIndex={0}
-            onKeyDown={e => { if (e.key === 'Enter') onOpenProfile() }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: isExpanded ? '10px 10px' : '10px',
-              justifyContent: isExpanded ? 'flex-start' : 'center',
-              borderRadius: 10,
-              cursor: 'pointer',
-              marginTop: 4,
-            }}
-          >
-            <div style={{
-              width: 30, height: 30,
-              borderRadius: '50%',
-              background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-              overflow: 'hidden',
-              boxShadow: '0 0 0 2px rgba(139,92,246,0.3)',
-            }}>
-              {isPhotoUrl(user?.avatarUrl) ? (
-                <img src={user!.avatarUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : user?.avatarUrl ? (
-                <span style={{ fontSize: 16, lineHeight: 1 }}>{user.avatarUrl}</span>
-              ) : (
-                <span style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>
-                  {user?.name?.[0]?.toUpperCase() ?? '?'}
-                </span>
-              )}
-            </div>
-            {isExpanded && (
-              <span style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--text2)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {user?.name || 'Profil'}
-              </span>
-            )}
           </div>
-        </div>
 
         {/* Expand/collapse toggle */}
         <button

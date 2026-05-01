@@ -128,27 +128,20 @@ export function CategoriesPage() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
         <div>
           <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{t.expenses.categories.title}</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.subtitle}</div>
         </div>
         <button
           onClick={openAdd}
-          className="hidden lg:flex"
-          style={{ alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
+          className="hidden lg:flex items-center gap-2"
+          style={{ padding: '10px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)' }}
         >
           <Plus size={16} />
-          {t.expenses.categories.title}
-        </button>
-        <button
-          onClick={openAdd}
-          className="hidden flex items-center justify-center"
-          style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', flexShrink: 0 }}
-        >
-          <Plus size={20} />
+          + Nová
         </button>
       </div>
 
@@ -166,29 +159,56 @@ export function CategoriesPage() {
             </div>
           ) : (
             <>
-              {/* Desktop list */}
+              {/* Desktop 2-column grid */}
               <div className="hidden lg:block">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {categories.map(cat => (
-                  <div
-                    key={cat.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', transition: 'border-color 0.15s', boxShadow: 'var(--card-shadow)' }}
-                    onClick={() => openEdit(cat)}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-                  >
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: cat.color + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
-                      {cat.icon}
-                    </div>
-                    <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{cat.name}</span>
-                    <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: cat.type === 'income' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: cat.type === 'income' ? '#10B981' : '#EF4444', fontWeight: 500 }}>
-                      {cat.type === 'income' ? 'Príjem' : 'Výdavok'}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", minWidth: 80, textAlign: 'right' }}>
-                      {cat.budgetLimit != null ? formatAmount(cat.budgetLimit) : t.expenses.categories.noLimit}
-                    </span>
-                  </div>
-                ))}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {categories.map(cat => {
+                    const status = budgetStatuses.find(b => b.categoryId === cat.id)
+                    const pct = status ? Math.min(status.percentage, 100) : 0
+                    const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
+                    return (
+                      <div key={cat.id} onClick={() => openEdit(cat)} style={{
+                        background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16,
+                        padding: 16, cursor: 'pointer', transition: 'border-color 0.15s',
+                      }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+                      >
+                        {/* Icon + name row */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 12, background: cat.color + '25',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+                            {cat.icon}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+                            {cat.budgetLimit != null
+                              ? <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
+                              : <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.noLimit}</div>
+                            }
+                          </div>
+                        </div>
+                        {/* Spent amount */}
+                        {status && status.spent > 0 && (
+                          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+                            -{formatAmount(status.spent)}
+                          </div>
+                        )}
+                        {/* Progress bar */}
+                        {cat.budgetLimit != null && (
+                          <>
+                            <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 6 }}>
+                              <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)' }}>
+                              <span>Minuté</span>
+                              <span style={{ fontWeight: 600, color: barColor }}>{Math.round(pct)}%</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
