@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
 import type { Income, ApiTransaction } from '../types'
 
+function adjustDateToMonth(originalDate: string, targetMonth: number, targetYear: number): string {
+  const originalDay = parseInt(originalDate.split('-')[2], 10)
+  const daysInTarget = new Date(targetYear, targetMonth, 0).getDate()
+  const day = Math.min(originalDay, daysInTarget)
+  return `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
 function toIncome(t: ApiTransaction): Income {
   return {
     id: t.id,
@@ -29,9 +36,12 @@ export function useIncomes(month?: number, year?: number) {
         // appear in every month from their creation date onward.
         const { data: recurring } = await getTransactions({ type: 'income', isFixed: true, limit: 200 })
         const existingIds = new Set(data.map(t => t.id))
-        const extra = recurring.filter(
-          t => !existingIds.has(t.id) && t.date.substring(0, 7) <= monthStr
-        )
+        const extra = recurring
+          .filter(t => !existingIds.has(t.id) && t.date.substring(0, 7) <= monthStr)
+          .map(t => t.date.substring(0, 7) !== monthStr
+            ? { ...t, date: adjustDateToMonth(t.date, month!, year!) }
+            : t
+          )
         setIncomes([...data, ...extra].map(toIncome))
       } else {
         setIncomes(data.map(toIncome))

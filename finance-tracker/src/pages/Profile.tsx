@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Check, Pencil } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLock } from '../hooks/usePinLock'
-import { updateAvatar, savePin, deletePin } from '../api/auth'
+import { updateAvatar, savePin, deletePin, changePassword } from '../api/auth'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -33,6 +33,32 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   const [logoutConfirm, setLogoutConfirm] = useState(false)
   const [pinRemoveConfirm, setPinRemoveConfirm] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [changePwLoading, setChangePwLoading] = useState(false)
+  const [changePwError, setChangePwError] = useState<string | null>(null)
+  const [changePwOk, setChangePwOk] = useState(false)
+
+  async function handleChangePassword() {
+    setChangePwError(null)
+    if (!currentPw || !newPw || !confirmPw) { setChangePwError('Vyplňte všetky polia'); return }
+    if (newPw.length < 8) { setChangePwError('Nové heslo musí mať aspoň 8 znakov'); return }
+    if (newPw !== confirmPw) { setChangePwError('Heslá sa nezhodujú'); return }
+    setChangePwLoading(true)
+    try {
+      await changePassword(currentPw, newPw)
+      setChangePwOk(true)
+      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+      setTimeout(() => { setChangePwOk(false); setChangePasswordOpen(false) }, 2000)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setChangePwError(msg ?? 'Zmena hesla zlyhala')
+    } finally {
+      setChangePwLoading(false)
+    }
+  }
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -143,7 +169,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   Upraviť profil
                 </button>
                 <button
-                  onClick={() => { localStorage.setItem('settings_open_section', 'security'); window.location.hash = 'settings'; onClose() }}
+                  onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
                   style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
                 >
                   Zmeniť heslo
@@ -283,6 +309,68 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               >
                 Zrušiť PIN
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change password modal */}
+      {changePasswordOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setChangePasswordOpen(false)}
+        >
+          <div
+            className="rounded-2xl w-full max-w-[360px]"
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Zmeniť heslo</h3>
+              <button onClick={() => setChangePasswordOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4 }}><X size={16} /></button>
+            </div>
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(['Aktuálne heslo', 'Nové heslo', 'Potvrdiť nové heslo'] as const).map((label, idx) => {
+                const val = idx === 0 ? currentPw : idx === 1 ? newPw : confirmPw
+                const setter = idx === 0 ? setCurrentPw : idx === 1 ? setNewPw : setConfirmPw
+                return (
+                  <div key={label}>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text2)', display: 'block', marginBottom: 4 }}>{label}</label>
+                    <input
+                      type="password"
+                      value={val}
+                      onChange={e => setter(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleChangePassword() }}
+                      className="input-field"
+                      style={{ height: 42, width: '100%' }}
+                    />
+                  </div>
+                )
+              })}
+              {changePwError && (
+                <p style={{ fontSize: 13, color: '#f87171', margin: 0 }}>{changePwError}</p>
+              )}
+              {changePwOk ? (
+                <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                  <Check size={15} /> Heslo zmenené
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <button
+                    onClick={() => setChangePasswordOpen(false)}
+                    style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    Zrušiť
+                  </button>
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={changePwLoading}
+                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', border: 'none', cursor: changePwLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: changePwLoading ? 0.7 : 1 }}
+                  >
+                    {changePwLoading ? 'Ukladám...' : 'Zmeniť heslo'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

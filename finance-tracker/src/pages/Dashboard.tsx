@@ -319,7 +319,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         margin: '0 0 20px',
       }}>{formatAmount(balance)}</p>
       <div style={{ display: 'flex', gap: 10 }}>
-        <div style={{ flex: 1, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 14, padding: '12px 14px' }}>
+        <div onClick={() => onNavigate('income')} style={{ flex: 1, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.income}</p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#34D399', margin: 0 }}>+{formatAmount(totalIncome)}</p>
           {incomeChange !== null && (
@@ -329,7 +329,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
             </div>
           )}
         </div>
-        <div style={{ flex: 1, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 14, padding: '12px 14px' }}>
+        <div onClick={() => onNavigate('variable-expenses')} style={{ flex: 1, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.expenses}</p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#F87171', margin: 0 }}>-{formatAmount(totalExpenses)}</p>
           {expensesChange !== null && (
@@ -473,9 +473,8 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           {legendItems.map((item, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
-              <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
+              <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#F87171', flexShrink: 0 }}>-{formatAmount(item.value)}</span>
             </div>
           ))}
           {remainingPieCount > 0 && (

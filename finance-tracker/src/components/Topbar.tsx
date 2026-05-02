@@ -111,14 +111,14 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
 
   return (
     <div style={barStyle}>
-      {/* ── Desktop: single row ── */}
+      {/* ── Desktop: left greeting | right controls ── */}
       <div
         className="hidden md:flex items-center"
-        style={{ height: 56, padding: '0 20px', gap: 14 }}
+        style={{ height: 64, padding: '0 20px', gap: 14 }}
       >
-        {/* Greeting + date */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+        {/* Left: greeting + date stacked */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {greeting}, {user?.name ?? ''} 👋
           </span>
           <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
@@ -126,25 +126,13 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           </span>
         </div>
 
-        {/* Toggle (dashboard only when household enabled) */}
-        {showToggle && (
-          <>
-            {divider}
-            {familyToggle}
-          </>
-        )}
-
-        {/* Month nav (relevant pages only) */}
-        {showMonth && (
-          <>
-            {divider}
-            {monthNav}
-          </>
-        )}
-
-        {/* Avatar — always right side on desktop */}
-        {divider}
-        {avatarEl(34)}
+        {/* Right: toggle + month nav + avatar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {showToggle && familyToggle}
+          {showMonth && monthNav}
+          {divider}
+          {avatarEl(34)}
+        </div>
       </div>
 
       {/* ── Mobile: row 1 always + row 2 conditionally ── */}
