@@ -39,6 +39,7 @@ export const users = pgTable("users", {
   currencyFormat: varchar("currency_format", { length: 10 }).default("sk"),
   householdId: integer("household_id"),
   householdEnabled: boolean("household_enabled").default(false),
+  theme: varchar("theme", { length: 20 }).default("dark"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

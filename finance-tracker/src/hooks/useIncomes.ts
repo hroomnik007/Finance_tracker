@@ -23,7 +23,19 @@ export function useIncomes(month?: number, year?: number) {
           ? `${year}-${String(month).padStart(2, '0')}`
           : undefined
       const { data } = await getTransactions({ type: 'income', month: monthStr, limit: 200 })
-      setIncomes(data.map(toIncome))
+
+      if (monthStr) {
+        // Also include recurring (isFixed) incomes from earlier months so they
+        // appear in every month from their creation date onward.
+        const { data: recurring } = await getTransactions({ type: 'income', isFixed: true, limit: 200 })
+        const existingIds = new Set(data.map(t => t.id))
+        const extra = recurring.filter(
+          t => !existingIds.has(t.id) && t.date.substring(0, 7) <= monthStr
+        )
+        setIncomes([...data, ...extra].map(toIncome))
+      } else {
+        setIncomes(data.map(toIncome))
+      }
     } catch { /* guest or not authenticated */ }
   }, [month, year])
 

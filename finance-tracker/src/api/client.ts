@@ -47,6 +47,10 @@ apiClient.interceptors.response.use(
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error)
     }
+    // Never attempt to re-refresh if the refresh endpoint itself returned 401
+    if (originalRequest.url?.includes('/api/auth/refresh')) {
+      return Promise.reject(error)
+    }
 
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
