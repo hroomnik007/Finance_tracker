@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, createSharedReport, updateUserSettings } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import { usePinLock } from '../hooks/usePinLock'
+import { PinSetupModal } from '../components/PinSetupModal'
 import type { ApiTransaction, ApiCategory } from '../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -179,11 +181,15 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail, refreshUser } = useAuth()
+  const { setupPin } = usePinLock()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
   const compactDefault = window.innerWidth < 768
 
-  // Apply saved appearance preferences on mount
+  const securityRef = useRef<HTMLDivElement>(null)
+  const dataRef = useRef<HTMLDivElement>(null)
+
+  // Apply saved appearance preferences on mount + auto-scroll to section
   useEffect(() => {
     const savedTheme = loadLocalPref<string>('theme_preference', 'dark')
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
@@ -192,6 +198,15 @@ export function SettingsPage() {
     html.setAttribute('data-theme', savedTheme !== 'system' ? savedTheme : 'dark')
     html.style.setProperty('--accent-color', savedAccent)
     html.classList.toggle('compact', savedCompact)
+
+    const section = localStorage.getItem('settings_open_section')
+    if (section) {
+      localStorage.removeItem('settings_open_section')
+      setTimeout(() => {
+        const el = section === 'security' ? securityRef.current : section === 'data' ? dataRef.current : null
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 200)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -225,6 +240,36 @@ export function SettingsPage() {
     setCompactModeState(next)
     saveLocalPref(compactStorageKey, next)
     document.documentElement.classList.toggle('compact', next)
+  }
+
+  // ── Security section ─────────────────────────────────────────────────────
+  const [pinSetupOpen, setPinSetupOpen] = useState(false)
+  const [biometriaEnabled, setBiometriaEnabled] = useState(() => loadLocalPref<boolean>('finvu_biometria', false))
+  const [changePwOpen, setChangePwOpen] = useState(false)
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [changePwLoading, setChangePwLoading] = useState(false)
+  const [changePwError, setChangePwError] = useState<string | null>(null)
+  const [changePwOk, setChangePwOk] = useState(false)
+
+  async function handleChangePassword() {
+    setChangePwError(null)
+    if (!currentPw || !newPw || !confirmPw) { setChangePwError('Vyplňte všetky polia'); return }
+    if (newPw.length < 8) { setChangePwError('Nové heslo musí mať aspoň 8 znakov'); return }
+    if (newPw !== confirmPw) { setChangePwError('Heslá sa nezhodujú'); return }
+    setChangePwLoading(true)
+    try {
+      await changePassword(currentPw, newPw)
+      setChangePwOk(true)
+      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+      setTimeout(() => { setChangePwOk(false); setChangePwOpen(false) }, 2000)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setChangePwError(msg ?? 'Zmena hesla zlyhala')
+    } finally {
+      setChangePwLoading(false)
+    }
   }
 
   // ── Section 3: Notifications ──────────────────────────────────────────────
@@ -690,6 +735,89 @@ export function SettingsPage() {
             </div>
           </SectionCard>
 
+          {/* Section: Bezpečnosť */}
+          <div ref={securityRef} id="bezpecnost-section">
+          <SectionCard>
+            <SectionHeader emoji="🔐" label="Bezpečnosť" />
+            <div className="divide-y divide-white/[0.04]">
+
+              {/* Zmeniť heslo */}
+              <div>
+                <SettingRow label="Zmeniť heslo" sublabel="Aktualizovať prihlasovacie heslo">
+                  <button
+                    onClick={() => { setChangePwOpen(o => !o); setChangePwError(null) }}
+                    className="btn-secondary py-1.5 text-xs"
+                  >
+                    {changePwOpen ? 'Zavrieť' : 'Zmeniť'}
+                  </button>
+                </SettingRow>
+                {changePwOpen && (
+                  <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {changePwError && (
+                      <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{changePwError}</p>
+                    )}
+                    {changePwOk && (
+                      <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Heslo zmenené</p>
+                    )}
+                    <input
+                      type="password"
+                      placeholder="Aktuálne heslo"
+                      value={currentPw}
+                      onChange={e => setCurrentPw(e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Nové heslo (min. 8 znakov)"
+                      value={newPw}
+                      onChange={e => setNewPw(e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Potvrď nové heslo"
+                      value={confirmPw}
+                      onChange={e => setConfirmPw(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
+                      className="input-field text-sm"
+                    />
+                    <button
+                      onClick={handleChangePassword}
+                      disabled={changePwLoading}
+                      className="btn-primary py-2 text-sm justify-center disabled:opacity-40"
+                    >
+                      {changePwLoading ? 'Ukladám...' : 'Uložiť heslo'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* PIN */}
+              <SettingRow label="PIN kód" sublabel="Rýchle prihlásenie a zámok">
+                <button
+                  onClick={() => setPinSetupOpen(true)}
+                  className="btn-secondary py-1.5 text-xs"
+                >
+                  Nastaviť
+                </button>
+              </SettingRow>
+
+              {/* Biometria */}
+              <SettingRow label="Biometria" sublabel="Touch ID / Face ID">
+                <Toggle
+                  checked={biometriaEnabled}
+                  onChange={() => {
+                    const next = !biometriaEnabled
+                    setBiometriaEnabled(next)
+                    saveLocalPref('finvu_biometria', next)
+                  }}
+                />
+              </SettingRow>
+
+            </div>
+          </SectionCard>
+          </div>
+
           {/* Section 3: Notifikácie */}
           <SectionCard>
             <SectionHeader emoji="🔔" label={t.settings.notificationsSection} />
@@ -739,6 +867,7 @@ export function SettingsPage() {
         <div className="flex flex-col gap-6">
 
           {/* Section 4: Dáta */}
+          <div ref={dataRef} id="data-section">
           <SectionCard>
             <SectionHeader emoji="💾" label={t.settings.data} />
             <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
@@ -797,6 +926,7 @@ export function SettingsPage() {
               </p>
             </div>
           </SectionCard>
+          </div>
 
           {/* Section: Rodinné financie */}
           <SectionCard>
@@ -1137,6 +1267,16 @@ export function SettingsPage() {
           </div>
         </div>
       )}
+
+      <PinSetupModal
+        open={pinSetupOpen}
+        onClose={() => setPinSetupOpen(false)}
+        onSetPin={async (pin) => {
+          setupPin(pin)
+          try { await savePin(pin) } catch { /* local PIN is set */ }
+          if (user?.email) localStorage.setItem(`pin_enabled_${user.email}`, '1')
+        }}
+      />
 
     </div>
   )

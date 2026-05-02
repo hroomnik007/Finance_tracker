@@ -4,7 +4,7 @@ import {
   register, login, refresh, logout, me,
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
   updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth, updateUserSettings,
-  pinLogin, updatePin, removePin,
+  pinLogin, updatePin, removePin, changePassword,
 } from "../controllers/auth.controller";
 import {
   webauthnRegisterOptions, webauthnRegisterVerify,
@@ -56,6 +56,7 @@ router.post("/google",          loginLimiter, googleAuth);
 router.post("/pin-login",       loginLimiter, pinLogin);
 router.patch("/pin",            authenticateToken, updatePin);
 router.delete("/pin",           authenticateToken, removePin);
+router.patch("/password",       authenticateToken, changePassword);
 
 // WebAuthn
 router.get("/webauthn/register-options",      authenticateToken, webauthnRegisterOptions);

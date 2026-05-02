@@ -146,6 +146,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   onClick={() => { localStorage.setItem('settings_open_section', 'security'); window.location.hash = 'settings'; onClose() }}
                   style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
                 >
+                  Zmeniť heslo
+                </button>
+                <button
+                  onClick={() => setPinSetupOpen(true)}
+                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                >
                   Nastaviť PIN
                 </button>
                 <button

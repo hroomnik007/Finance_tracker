@@ -7,16 +7,10 @@ interface RegisterPageProps {
   onNavigatePrivacyPolicy: () => void
 }
 
-const inputStyle: React.CSSProperties = {
-  background: 'var(--bg3)',
-  border: '1px solid var(--border)',
-  borderRadius: 12,
-  padding: '12px 16px',
-  color: 'var(--text)',
-  fontSize: 15,
-  width: '100%',
-  outline: 'none',
-}
+const BG = '#0a0814'
+const FIELD_BG = '#1a1535'
+const FIELD_BORDER = '#2d2650'
+const LABEL_COLOR = '#6b6387'
 
 export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: RegisterPageProps) {
   const { t } = useTranslation()
@@ -56,24 +50,40 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
     }
   }
 
+  const inputStyle = (focused: boolean): React.CSSProperties => ({
+    background: FIELD_BG,
+    border: `1px solid ${focused ? '#7C3AED' : FIELD_BORDER}`,
+    borderRadius: 12,
+    padding: '14px 16px',
+    color: 'white',
+    fontSize: 15,
+    width: '100%',
+    outline: 'none',
+    transition: 'border-color 0.15s',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box',
+  })
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    color: LABEL_COLOR,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  }
+
   if (verificationSent) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center px-4"
-        style={{ background: 'var(--bg)' }}
-      >
-        <div className="w-full flex flex-col items-center gap-6 text-center" style={{ maxWidth: '400px' }}>
-          <img src="/logo.svg" alt="Finvu" className="w-20 h-20" />
-          <div>
-            <p className="text-5xl mb-4">📧</p>
-            <h2 className="text-xl font-bold mb-3" style={{ color: 'var(--text)' }}>Skontrolujte email</h2>
-            <p className="text-[14px] leading-relaxed" style={{ color: 'var(--text2)' }}>{t.auth.verificationSent}</p>
-          </div>
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: BG }}>
+        <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16 }}>
+          <img src="/logo.svg" alt="Finvu" style={{ width: 80, height: 80, borderRadius: 20 }} />
+          <p style={{ fontSize: 48, margin: 0 }}>📧</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: 'white', margin: 0 }}>Skontrolujte email</h2>
+          <p style={{ fontSize: 14, color: LABEL_COLOR, lineHeight: 1.6, maxWidth: 320 }}>{t.auth.verificationSent}</p>
           <button
             type="button"
             onClick={onNavigateLogin}
-            className="text-sm font-medium transition-colors"
-            style={{ color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ fontSize: 14, fontWeight: 500, color: '#8B5CF6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
           >
             {t.auth.backToLogin}
           </button>
@@ -83,38 +93,28 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--bg)' }}
-    >
-      <div className="w-full flex flex-col gap-6" style={{ maxWidth: '400px' }}>
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <img src="/logo.svg" alt="Finvu" className="w-20 h-20" />
-          <div className="text-center">
-            <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text)' }}>Finvu</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text3)' }}>Financie pod kontrolou</p>
-          </div>
+    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: BG }}>
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+        {/* Logo + title */}
+        <img src="/logo.svg" alt="Finvu" style={{ width: 80, height: 80, borderRadius: 20 }} />
+        <div style={{ fontSize: 32, fontWeight: 700, color: 'white', marginTop: 16 }}>Finvu</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: LABEL_COLOR, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 6 }}>
+          FINANCIE POD KONTROLOU
         </div>
 
-        <div
-          className="flex flex-col gap-4 p-6 rounded-[24px]"
-          style={{
-            background: 'var(--bg2)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--card-shadow)',
-          }}
-        >
+        {/* Form section */}
+        <div style={{ width: '100%', marginTop: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
           {error && (
-            <div
-              className="rounded-xl px-4 py-3 text-sm"
-              style={{ background: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid rgba(248,113,113,0.3)' }}
-            >
+            <div style={{ borderRadius: 12, padding: '12px 16px', fontSize: 14, background: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid rgba(248,113,113,0.3)' }}>
               {error}
             </div>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text3)' }}>Meno</label>
+          {/* Name */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={labelStyle}>MENO</label>
             <input
               type="text"
               placeholder="Vaše meno"
@@ -122,14 +122,13 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
               onChange={e => setName(e.target.value)}
               onFocus={() => setNameFocused(true)}
               onBlur={() => setNameFocused(false)}
-              style={{ ...inputStyle, border: nameFocused ? '1px solid var(--violet)' : '1px solid var(--border)' }}
+              style={inputStyle(nameFocused)}
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text3)' }}>
-              {t.auth.email}
-            </label>
+          {/* Email */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={labelStyle}>{t.auth.email}</label>
             <input
               type="email"
               placeholder="vas@email.com"
@@ -137,14 +136,13 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
               onChange={e => setEmail(e.target.value)}
               onFocus={() => setEmailFocused(true)}
               onBlur={() => setEmailFocused(false)}
-              style={{ ...inputStyle, border: emailFocused ? '1px solid var(--violet)' : '1px solid var(--border)' }}
+              style={inputStyle(emailFocused)}
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text3)' }}>
-              {t.auth.password}
-            </label>
+          {/* Password */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={labelStyle}>{t.auth.password}</label>
             <input
               type="password"
               placeholder="min. 8 znakov"
@@ -152,14 +150,13 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
               onChange={e => setPassword(e.target.value)}
               onFocus={() => setPasswordFocused(true)}
               onBlur={() => setPasswordFocused(false)}
-              style={{ ...inputStyle, border: passwordFocused ? '1px solid var(--violet)' : '1px solid var(--border)' }}
+              style={inputStyle(passwordFocused)}
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text3)' }}>
-              {t.auth.confirmPassword}
-            </label>
+          {/* Confirm password */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={labelStyle}>{t.auth.confirmPassword}</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -168,57 +165,66 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
               onFocus={() => setConfirmFocused(true)}
               onBlur={() => setConfirmFocused(false)}
               onKeyDown={e => e.key === 'Enter' && handleRegister()}
-              style={{ ...inputStyle, border: confirmFocused ? '1px solid var(--violet)' : '1px solid var(--border)' }}
+              style={inputStyle(confirmFocused)}
             />
           </div>
 
-          {/* GDPR consent */}
-          <div className="flex items-start gap-3 mt-1">
+          {/* GDPR */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <input
               type="checkbox"
               id="gdpr"
               checked={gdprConsent}
               onChange={e => setGdprConsent(e.target.checked)}
-              style={{ width: 18, height: 18, accentColor: 'var(--violet)', cursor: 'pointer', marginTop: 2, flexShrink: 0 }}
+              style={{ width: 18, height: 18, accentColor: '#7C3AED', cursor: 'pointer', marginTop: 2, flexShrink: 0 }}
             />
-            <label htmlFor="gdpr" style={{ fontSize: 13, color: 'var(--text2)', cursor: 'pointer', lineHeight: 1.5 }}>
+            <label htmlFor="gdpr" style={{ fontSize: 13, color: LABEL_COLOR, cursor: 'pointer', lineHeight: 1.5 }}>
               {t.auth.gdprConsent}{' '}
               <button
                 type="button"
                 onClick={onNavigatePrivacyPolicy}
-                style={{ color: 'var(--violet)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0 }}
+                style={{ color: '#8B5CF6', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}
               >
                 ({t.auth.privacyPolicy})
               </button>
             </label>
           </div>
 
+          {/* Register button */}
           <button
             onClick={handleRegister}
             disabled={isLoading || !gdprConsent}
-            className="w-full font-semibold text-[15px] text-white rounded-2xl transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              height: '48px',
-              background: 'var(--violet)',
+              marginTop: 4,
+              background: 'linear-gradient(135deg, #7C3AED, #9D4FD6)',
               border: 'none',
+              borderRadius: 12,
+              padding: '15px',
+              width: '100%',
+              fontSize: 16,
+              fontWeight: 600,
+              color: 'white',
               cursor: 'pointer',
-              marginTop: '4px',
+              fontFamily: 'inherit',
+              opacity: (isLoading || !gdprConsent) ? 0.5 : 1,
+              transition: 'opacity 0.15s',
             }}
           >
-            {isLoading ? 'Registrácia...' : t.auth.createAccount}
+            {isLoading ? 'Registrácia...' : 'Registrovať sa →'}
           </button>
 
-          <p className="text-center text-[13px]" style={{ color: 'var(--text2)' }}>
-            {t.auth.hasAccount}{' '}
+          {/* Login link */}
+          <p style={{ textAlign: 'center', fontSize: 13, color: LABEL_COLOR, marginTop: 8 }}>
+            Máte účet?{' '}
             <button
               type="button"
               onClick={onNavigateLogin}
-              className="font-medium transition-colors"
-              style={{ color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
+              style={{ color: '#8B5CF6', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}
             >
               {t.auth.login} →
             </button>
           </p>
+
         </div>
       </div>
     </div>

@@ -475,3 +475,29 @@ export async function removePin(req: AuthRequest, res: Response): Promise<void> 
   await db.update(users).set({ pinHash: null, updatedAt: new Date() }).where(eq(users.id, userId));
   res.json({ success: true });
 }
+
+export async function changePassword(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!;
+  const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
+
+  if (!currentPassword || !newPassword || newPassword.length < 8) {
+    res.status(400).json({ error: "Neplatná požiadavka." });
+    return;
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user?.passwordHash) {
+    res.status(400).json({ error: "Zmena hesla nie je dostupná pre tento typ účtu." });
+    return;
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    res.status(401).json({ error: "Nesprávne aktuálne heslo." });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
+  await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  res.json({ success: true });
+}

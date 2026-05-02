@@ -141,7 +141,7 @@ export function CategoriesPage() {
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)' }}
         >
           <Plus size={16} />
-          + Nová
+          + Pridať kategóriu
         </button>
       </div>
 

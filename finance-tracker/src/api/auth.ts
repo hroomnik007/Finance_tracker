@@ -126,3 +126,7 @@ export async function webauthnAuthenticateVerify(body: object): Promise<{ user: 
   const { data } = await apiClient.post('/api/auth/webauthn/authenticate-verify', body)
   return data
 }
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiClient.patch('/api/auth/password', { currentPassword, newPassword })
+}

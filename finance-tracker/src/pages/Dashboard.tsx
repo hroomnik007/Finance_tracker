@@ -260,8 +260,8 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       if (daysUntil < 0) daysUntil += daysInMonth
       return { ...fe, daysUntil }
     })
-    .filter(fe => fe.daysUntil <= 7)
     .sort((a, b) => a.daysUntil - b.daysUntil)
+    .slice(0, 5)
 
   const motivationalMsg = (() => {
     if (balance > 0 && balance > totalIncome * 0.3) return { msg: t.dashboard.motivationalGood, color: '#34D399' }
@@ -624,9 +624,9 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
 
   const rightPanelCards = (
     <>
-      {upcomingFixed.length > 0 && (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.upcomingPayments}</p>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.upcomingPayments}</p>
+        {upcomingFixed.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {upcomingFixed.map(fe => (
               <div key={fe.id ?? fe.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -642,8 +642,10 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>Žiadne nadchádzajúce platby</p>
+        )}
+      </div>
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>

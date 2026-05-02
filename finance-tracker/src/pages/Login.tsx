@@ -9,16 +9,10 @@ interface LoginPageProps {
   onNavigateForgotPassword: () => void
 }
 
-const inputStyle: React.CSSProperties = {
-  background: 'var(--bg-elevated)',
-  border: '1px solid var(--border-subtle)',
-  borderRadius: 12,
-  padding: '12px 16px',
-  color: 'var(--text-primary)',
-  fontSize: 15,
-  width: '100%',
-  outline: 'none',
-}
+const BG = '#0a0814'
+const FIELD_BG = '#1a1535'
+const FIELD_BORDER = '#2d2650'
+const LABEL_COLOR = '#6b6387'
 
 export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
@@ -26,14 +20,12 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
-  // PIN modal state
   const [pinModalOpen, setPinModalOpen] = useState(false)
   const [pinValue, setPinValue] = useState('')
   const [pinLoading, setPinLoading] = useState(false)
@@ -65,7 +57,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     setError(null)
     setIsLoading(true)
     try {
-      await login(email, password, rememberMe)
+      await login(email, password)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
       setError(msg ?? 'Prihlásenie zlyhalo')
@@ -97,9 +89,9 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     try {
       const { startAuthentication } = await import('@simplewebauthn/browser')
       const options = await webauthnAuthenticateOptions(email)
-      const response = await startAuthentication({ optionsJSON: options as any })
-      const body = { ...response, _challengeKey: (options as any)._challengeKey }
-      const { user: authUser, accessToken } = await webauthnAuthenticateVerify(body as any)
+      const response = await startAuthentication({ optionsJSON: options as Parameters<typeof startAuthentication>[0]['optionsJSON'] })
+      const body = { ...response, _challengeKey: (options as { _challengeKey?: string })._challengeKey }
+      const { user: authUser, accessToken } = await webauthnAuthenticateVerify(body as Parameters<typeof webauthnAuthenticateVerify>[0])
       loginWithToken(authUser, accessToken)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
@@ -110,43 +102,51 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     }
   }
 
+  const inputStyle = (focused: boolean): React.CSSProperties => ({
+    background: FIELD_BG,
+    border: `1px solid ${focused ? '#7C3AED' : FIELD_BORDER}`,
+    borderRadius: 12,
+    padding: '14px 16px',
+    color: 'white',
+    fontSize: 15,
+    width: '100%',
+    outline: 'none',
+    transition: 'border-color 0.15s',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box',
+  })
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    color: LABEL_COLOR,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  }
+
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--bg-primary)' }}
-    >
-      <div className="w-full flex flex-col gap-6" style={{ maxWidth: '400px' }}>
+    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: BG }}>
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
         {/* Logo + title */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <img src="/logo.svg" alt="Finvu" className="w-20 h-20" />
-          <div className="text-center">
-            <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Finvu</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Financie pod kontrolou</p>
-          </div>
+        <img src="/logo.svg" alt="Finvu" style={{ width: 80, height: 80, borderRadius: 20 }} />
+        <div style={{ fontSize: 32, fontWeight: 700, color: 'white', marginTop: 16 }}>Finvu</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: LABEL_COLOR, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 6 }}>
+          FINANCIE POD KONTROLOU
         </div>
 
-        {/* Card */}
-        <div
-          className="flex flex-col gap-4 p-6 rounded-[24px]"
-          style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-elevated)',
-          }}
-        >
+        {/* Form section */}
+        <div style={{ width: '100%', marginTop: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
           {error && (
-            <div
-              className="rounded-xl px-4 py-3 text-sm"
-              style={{ background: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid rgba(248,113,113,0.3)' }}
-            >
+            <div style={{ borderRadius: 12, padding: '12px 16px', fontSize: 14, background: 'rgba(248,113,113,0.12)', color: '#F87171', border: '1px solid rgba(248,113,113,0.3)' }}>
               {error}
             </div>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text-muted)' }}>
-              {t.auth.email}
-            </label>
+          {/* Email */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={labelStyle}>{t.auth.email}</label>
             <input
               type="email"
               placeholder="vas@email.com"
@@ -155,14 +155,22 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
               onFocus={() => setEmailFocused(true)}
               onBlur={() => setEmailFocused(false)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              style={{ ...inputStyle, border: emailFocused ? '1px solid #7C3AED' : `1px solid var(--border-subtle)` }}
+              style={inputStyle(emailFocused)}
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text-muted)' }}>
-              {t.auth.password}
-            </label>
+          {/* Password */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={labelStyle}>HESLO</label>
+              <button
+                type="button"
+                onClick={onNavigateForgotPassword}
+                style={{ fontSize: 13, color: '#8B5CF6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+              >
+                Zabudnuté heslo?
+              </button>
+            </div>
             <input
               type="password"
               placeholder="••••••••"
@@ -171,109 +179,86 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
               onFocus={() => setPasswordFocused(true)}
               onBlur={() => setPasswordFocused(false)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              style={{ ...inputStyle, border: passwordFocused ? '1px solid #7C3AED' : `1px solid var(--border-subtle)` }}
+              style={inputStyle(passwordFocused)}
             />
           </div>
 
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={rememberMe}
-                onChange={e => setRememberMe(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: '#7C3AED', cursor: 'pointer' }}
-              />
-              <label htmlFor="remember" style={{ fontSize: 14, color: 'var(--text-muted)', cursor: 'pointer' }}>
-                {t.auth.rememberMe}
-              </label>
-            </div>
-            <button
-              type="button"
-              onClick={onNavigateForgotPassword}
-              className="text-[13px] text-[#A78BFA] hover:text-[#C4B5FD] transition-colors"
-            >
-              {t.auth.forgotPassword}
-            </button>
-          </div>
-
+          {/* Login button */}
           <button
             onClick={handleLogin}
             disabled={isLoading || !email || !password}
-            className="w-full font-semibold text-[15px] text-white rounded-2xl transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              height: '48px',
-              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              marginTop: 4,
+              background: 'linear-gradient(135deg, #7C3AED, #9D4FD6)',
               border: 'none',
+              borderRadius: 12,
+              padding: '15px',
+              width: '100%',
+              fontSize: 16,
+              fontWeight: 600,
+              color: 'white',
               cursor: 'pointer',
-              marginTop: '4px',
+              fontFamily: 'inherit',
+              opacity: (isLoading || !email || !password) ? 0.5 : 1,
+              transition: 'opacity 0.15s',
             }}
           >
-            {isLoading ? 'Prihlasovanie...' : t.auth.login}
+            {isLoading ? 'Prihlasovanie...' : 'Prihlásiť sa →'}
           </button>
 
-          {/* PIN login button — shown when PIN is enabled for this email */}
+          {/* PIN login */}
           {hasPinForEmail && (
             <button
               type="button"
               onClick={() => { setPinModalOpen(true); setPinValue(''); setPinError(null) }}
-              className="w-full font-semibold text-[14px] rounded-2xl transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
               style={{
-                height: '44px',
-                background: 'rgba(167,139,250,0.1)',
-                border: '1px solid rgba(167,139,250,0.3)',
-                color: '#A78BFA',
-                cursor: 'pointer',
+                background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)',
+                borderRadius: 12, padding: '12px', width: '100%',
+                fontSize: 14, fontWeight: 600, color: '#A78BFA',
+                cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
               🔢 Prihlásiť sa PINom
             </button>
           )}
 
-          {/* Biometric login button — shown when WebAuthn is enabled for this email */}
+          {/* Biometric login */}
           {hasWebAuthnForEmail && webauthnSupported && (
             <button
               type="button"
               onClick={handleBiometricLogin}
               disabled={biometricLoading}
-              className="w-full font-semibold text-[14px] rounded-2xl transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
               style={{
-                height: '44px',
-                background: 'rgba(52,211,153,0.1)',
-                border: '1px solid rgba(52,211,153,0.3)',
-                color: '#34d399',
-                cursor: 'pointer',
+                background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)',
+                borderRadius: 12, padding: '12px', width: '100%',
+                fontSize: 14, fontWeight: 600, color: '#34d399',
+                cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                opacity: biometricLoading ? 0.6 : 1,
               }}
             >
               🔐 {biometricLoading ? 'Overujem...' : 'Biometrické prihlásenie'}
             </button>
           )}
 
-          <p className="text-center text-[13px]" style={{ color: 'var(--text-muted)' }}>
-            {t.auth.noAccount}{' '}
-            <button
-              type="button"
-              onClick={onNavigateRegister}
-              className="text-[#A78BFA] hover:text-[#C4B5FD] font-medium transition-colors"
-            >
-              {t.auth.createAccount} →
-            </button>
-          </p>
-        </div>
+          {/* Alebo divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0' }}>
+            <div style={{ flex: 1, height: 1, background: FIELD_BORDER }} />
+            <span style={{ fontSize: 13, color: LABEL_COLOR }}>alebo</span>
+            <div style={{ flex: 1, height: 1, background: FIELD_BORDER }} />
+          </div>
 
-        <div className="flex flex-col items-center gap-3">
-          {/* Google login button */}
+          {/* Google button */}
           <button
             type="button"
             onClick={() => googleLogin()}
             disabled={isGoogleLoading}
-            className="w-full font-semibold text-[14px] rounded-2xl transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3"
             style={{
-              height: '44px',
-              background: 'white',
-              border: '1px solid var(--border2)',
-              color: '#3c4043',
-              cursor: 'pointer',
+              background: FIELD_BG, border: `1px solid ${FIELD_BORDER}`,
+              borderRadius: 12, padding: '14px', width: '100%',
+              fontSize: 15, color: 'white', fontWeight: 500,
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              opacity: isGoogleLoading ? 0.6 : 1,
             }}
           >
             {isGoogleLoading ? (
@@ -291,65 +276,66 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             )}
           </button>
 
+          {/* Register link */}
+          <p style={{ textAlign: 'center', fontSize: 13, color: LABEL_COLOR, marginTop: 8 }}>
+            Nemáte účet?{' '}
+            <button
+              type="button"
+              onClick={onNavigateRegister}
+              style={{ color: '#8B5CF6', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}
+            >
+              Registrovať sa →
+            </button>
+          </p>
+
         </div>
       </div>
 
       {/* PIN modal */}
       {pinModalOpen && (
         <div
-          className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ background: 'rgba(0,0,0,0.6)', zIndex: 200 }}
+          style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.6)', zIndex: 200 }}
           onClick={() => setPinModalOpen(false)}
         >
           <div
-            className="w-full max-w-xs p-6 rounded-[24px] flex flex-col gap-5"
-            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+            style={{ width: '100%', maxWidth: 320, padding: 24, borderRadius: 24, background: '#1a1535', border: '1px solid #2d2650', display: 'flex', flexDirection: 'column', gap: 20 }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="text-center">
+            <div style={{ textAlign: 'center' }}>
               <span style={{ fontSize: 40 }}>🔢</span>
-              <h2 className="text-lg font-bold mt-2" style={{ color: 'var(--text-primary)' }}>Zadajte PIN</h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>4-miestny PIN kód</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 8, color: 'white' }}>Zadajte PIN</h2>
+              <p style={{ fontSize: 13, marginTop: 4, color: LABEL_COLOR }}>4-miestny PIN kód</p>
             </div>
 
-            <div className="flex justify-center gap-3">
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
               {[0,1,2,3].map(i => (
-                <div
-                  key={i}
-                  className="w-4 h-4 rounded-full transition-all"
-                  style={{ background: i < pinValue.length ? '#7C3AED' : 'var(--border-subtle)' }}
-                />
+                <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: i < pinValue.length ? '#7C3AED' : FIELD_BORDER, transition: 'background 0.15s' }} />
               ))}
             </div>
 
-            {pinError && (
-              <p className="text-center text-xs" style={{ color: '#f87171' }}>{pinError}</p>
-            )}
+            {pinError && <p style={{ textAlign: 'center', fontSize: 12, color: '#f87171' }}>{pinError}</p>}
 
-            <div className="grid grid-cols-3 gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
                 <button
                   key={idx}
                   disabled={k === ''}
                   onClick={() => {
-                    if (k === '⌫') {
-                      setPinValue(v => v.slice(0, -1))
-                      setPinError(null)
-                    } else if (k !== '' && pinValue.length < 4) {
+                    if (k === '⌫') { setPinValue(v => v.slice(0, -1)); setPinError(null) }
+                    else if (k !== '' && pinValue.length < 4) {
                       const next = pinValue + String(k)
                       setPinValue(next)
-                      if (next.length === 4) {
-                        setTimeout(() => handlePinLogin(next), 100)
-                      }
+                      if (next.length === 4) setTimeout(() => handlePinLogin(next), 100)
                     }
                   }}
-                  className="h-12 rounded-2xl text-lg font-semibold transition-all active:scale-95 disabled:opacity-0"
                   style={{
-                    background: k === '' ? 'transparent' : 'var(--bg-elevated)',
-                    color: 'var(--text-primary)',
-                    border: `1px solid ${k === '' ? 'transparent' : 'var(--border-subtle)'}`,
+                    height: 48, borderRadius: 12,
+                    background: k === '' ? 'transparent' : FIELD_BG,
+                    color: 'white', fontSize: 18, fontWeight: 600,
+                    border: k === '' ? 'none' : `1px solid ${FIELD_BORDER}`,
                     cursor: k === '' ? 'default' : 'pointer',
-                    opacity: pinLoading ? 0.6 : 1,
+                    opacity: (pinLoading || k === '') ? (k === '' ? 0 : 0.6) : 1,
+                    fontFamily: 'inherit',
                   }}
                 >
                   {k}
@@ -359,8 +345,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
 
             <button
               onClick={() => setPinModalOpen(false)}
-              className="text-sm text-center"
-              style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ fontSize: 13, color: LABEL_COLOR, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
             >
               Zrušiť
             </button>
