@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, CartesianGrid,
@@ -151,12 +151,17 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const householdEnabled = user?.household_enabled ?? false
   const greeting = getGreeting(displayName, t)
 
-  const incomes = householdEnabled && dashView === 'personal'
-    ? allIncomes.filter(i => i.created_by === user?.id || !i.created_by)
-    : allIncomes
-  const variableExpenses = householdEnabled && dashView === 'personal'
-    ? allVariableExpenses.filter(e => e.created_by === user?.id || !e.created_by)
-    : allVariableExpenses
+  const incomes = useMemo(() =>
+    householdEnabled && dashView === 'personal'
+      ? allIncomes.filter(i => i.created_by === user?.id || !i.created_by)
+      : allIncomes,
+  [householdEnabled, dashView, allIncomes, user?.id])
+
+  const variableExpenses = useMemo(() =>
+    householdEnabled && dashView === 'personal'
+      ? allVariableExpenses.filter(e => e.created_by === user?.id || !e.created_by)
+      : allVariableExpenses,
+  [householdEnabled, dashView, allVariableExpenses, user?.id])
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
   const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)

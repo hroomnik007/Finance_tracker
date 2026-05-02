@@ -181,6 +181,16 @@ function App() {
     setYear(y)
   }
 
+  const householdEnabled = user?.household_enabled ?? false
+
+  useEffect(() => {
+    if (!isLoading && !householdEnabled && dashView === 'family') {
+      setDashView('personal')
+      localStorage.removeItem('finvu_dashboard_view')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [householdEnabled, isLoading])
+
   const handleDashViewChange = (v: 'personal' | 'family') => {
     setDashView(v)
     localStorage.setItem('finvu_dashboard_view', v)
