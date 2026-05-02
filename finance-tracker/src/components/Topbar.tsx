@@ -118,10 +118,10 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
       >
         {/* Greeting + date */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
             {greeting}, {user?.name ?? ''} 👋
           </span>
-          <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
             {dateStr}
           </span>
         </div>
@@ -158,10 +158,10 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             onClick={() => { window.location.hash = 'dashboard' }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {greeting}, {user?.name ?? ''} 👋
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+            <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
               {dateStr}
             </div>
           </div>

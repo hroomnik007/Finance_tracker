@@ -89,12 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    refreshToken()
-      .then(({ accessToken }) => {
+    const initAuth = async () => {
+      try {
+        const { accessToken } = await refreshToken()
         setAccessToken(accessToken)
-        return getMe()
-      })
-      .then(({ user: me }) => {
+        const { user: me } = await getMe()
         setUser(me)
         if (me.theme) {
           try {
@@ -102,12 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
           } catch { /* ignore */ }
         }
-      })
-      .catch(() => { /* no valid session */ })
-      .finally(() => {
+      } catch {
+        setUser(null)
+      } finally {
         setInitializingAuth(false)
         setIsLoading(false)
-      })
+      }
+    }
+
+    initAuth()
   }, [])
 
   useEffect(() => {

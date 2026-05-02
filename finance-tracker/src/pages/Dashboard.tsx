@@ -54,27 +54,6 @@ function getLast7Days(): string[] {
 
 // ── Local helper components ────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, accentColor = 'var(--text2)' }: {
-  label: string; value: string; sub?: React.ReactNode; accentColor?: string
-}) {
-  return (
-    <div style={{
-      background: 'var(--bg2)',
-      border: '1px solid var(--border)',
-      borderRadius: 20,
-      padding: '20px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 6,
-      boxShadow: 'var(--card-shadow)',
-      borderTop: `3px solid ${accentColor}`,
-    }}>
-      <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{label}</p>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 'clamp(18px, 2.2vw, 26px)', color: accentColor, lineHeight: 1, margin: 0 }}>{value}</p>
-      {sub && <div style={{ fontSize: 12 }}>{sub}</div>}
-    </div>
-  )
-}
 
 function MiniStatCard({ label, value, color = 'var(--text2)' }: { label: string; value: string; color?: string }) {
   return (
@@ -374,44 +353,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     </div>
   )
 
-  // Desktop stat cards — 3-column
-  const desktopStatCards = (
-    <>
-      <StatCard
-        label={t.dashboard.balance}
-        value={formatAmount(balance)}
-        accentColor={balance >= 0 ? '#34D399' : '#F87171'}
-        sub={
-          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: balance >= 0 ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)', color: balance >= 0 ? '#34D399' : '#F87171' }}>
-            {balance >= 0 ? t.dashboard.positive : t.dashboard.negative}
-          </span>
-        }
-      />
-      <StatCard
-        label={t.nav.income}
-        value={formatAmount(totalIncome)}
-        accentColor="#34D399"
-        sub={incomeChange !== null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: incomeChange >= 0 ? '#34D399' : '#F87171' }}>
-            {incomeChange >= 0 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
-            <span>{Math.abs(incomeChange).toFixed(1)}% {t.dashboard.vsLastMonth}</span>
-          </div>
-        )}
-      />
-      <StatCard
-        label={t.nav.expenses}
-        value={formatAmount(totalExpenses)}
-        accentColor="#F87171"
-        sub={expensesChange !== null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: expensesChange <= 0 ? '#34D399' : '#F87171' }}>
-            {expensesChange >= 0 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
-            <span>{Math.abs(expensesChange).toFixed(1)}% {t.dashboard.vsLastMonth}</span>
-          </div>
-        )}
-      />
-    </>
-  )
-
   // Mini stats row
   const miniStatsRow = (
     <div style={{ display: 'flex', gap: 8 }}>
@@ -525,9 +466,11 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
           {legendItems.map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: item.color }} />
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
               <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#F87171', flexShrink: 0 }}>-{formatAmount(item.value)}</span>
             </div>
           ))}
           {remainingPieCount > 0 && (
@@ -841,7 +784,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
           {mobileHeroCard}
-          <div className="grid grid-cols-3" style={{ gap: 16 }}>{desktopStatCards}</div>
           {miniStatsRow}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {toggleRow}
