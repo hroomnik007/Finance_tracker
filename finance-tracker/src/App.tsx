@@ -191,6 +191,12 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [householdEnabled, isLoading])
 
+  useEffect(() => {
+    if (householdEnabled && !localStorage.getItem('finvu_dashboard_view')) {
+      setDashView('family')
+    }
+  }, [householdEnabled])
+
   const handleDashViewChange = (v: 'personal' | 'family') => {
     setDashView(v)
     localStorage.setItem('finvu_dashboard_view', v)

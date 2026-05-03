@@ -34,13 +34,24 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Príliš veľa pokusov. Skúste neskôr." },
+})
+
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Príliš veľa pokusov. Skúste neskôr." },
+  keyGenerator: (req) => {
+    return (req.cookies as Record<string, string> | undefined)?.rt ?? req.ip ?? 'unknown'
+  },
 });
 
 const router = Router();
 
 router.post("/register",        registerLimiter, register);
 router.post("/login",           loginLimiter,    login);
-router.post("/refresh",         generalLimiter,  refresh);
+router.post("/refresh",         refreshLimiter,  refresh);
 router.post("/logout",          logout);
 router.get("/me",               authenticateToken, me);
 router.get("/verify-email",     generalLimiter, verifyEmail);

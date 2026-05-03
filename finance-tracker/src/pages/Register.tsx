@@ -25,6 +25,17 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
   const [isLoading, setIsLoading] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
 
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
+  })
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('theme_preference', next)
+    document.documentElement.setAttribute('data-theme', next)
+  }
+
   const [nameFocused, setNameFocused] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
@@ -94,6 +105,21 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
 
   return (
     <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: BG }}>
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: 'fixed', top: 16, right: 16,
+          width: 38, height: 38, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          cursor: 'pointer', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          fontSize: 16, zIndex: 100,
+        }}
+        title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
       <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Logo + title */}

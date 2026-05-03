@@ -123,7 +123,7 @@ export function HouseholdPage() {
         {/* Header */}
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0 }}>
-            {householdData?.name ?? ht.title}
+            Rodina {householdData?.name ?? ht.title}
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>{ht.subtitle}</p>
         </div>
@@ -147,7 +147,14 @@ export function HouseholdPage() {
 
         {/* Member cards grid */}
         {householdData && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 12,
+            justifyContent: 'center',
+            maxWidth: householdData.members.length <= 2 ? 640 : '100%',
+            margin: '0 auto',
+          }}>
             {householdData.members.map(m => {
               const memberStats = stats?.per_member.find(p => p.user_id === m.id)
               return (
