@@ -7,11 +7,12 @@ Inšpirovaná Monarch Money. Hostovaná na `pedani.eu` (Hetzner CX23).
 ## Tech Stack
 
 ### Frontend
-- React 19 + TypeScript 6 + Vite 8
+- React 19 + TypeScript 5.7 + Vite 8
 - Tailwind CSS 4 (Vite plugin)
 - Recharts — grafy
 - Vite PWA Plugin + Workbox — offline/PWA
 - jsPDF + xlsx + papaparse — export (PDF, XLSX, CSV)
+- CSV import: Revolut, Tatra banka, SLSP, mBank, 365.bank (via CsvImportModal)
 - i18n — SK (primárny jazyk) / EN
 
 ### Autentifikácia
@@ -46,6 +47,7 @@ finance-tracker/src/
 ├── db/           # DEPRECATED — zmazať
 ├── types/        # TypeScript typy
 └── utils/        # pomocné funkcie
+    └── csv365bank.ts    # parser pre 365.bank CSV export
 ```
 
 ## Auth flows (implementované)
@@ -84,6 +86,10 @@ npm run preview   # preview buildu
 - Všetky API volania cez `src/api/client.ts` — nikdy priamy fetch/axios mimo klienta
 - `src/db/database.ts` je deprecated — nepoužívať, nereferencovať
 - Token nikdy do localStorage — iba pamäť (access) + httpOnly cookie (refresh)
+- `household_enabled` sa ukladá do DB (`users.household_enabled`) — nie len localStorage
+- Stav domácnosti sa číta z `user.household_enabled` (AuthContext) — nie localStorage
+- Avatar sa ukladá ako base64 data URL v DB (`users.avatar_url`), max 10MB
+- Theme preference: ukladá sa do DB aj localStorage cache
 
 ### Deploy
 - Server: pedani.eu (Hetzner CX23), deploy cez SSH → `./deploy.sh frontend`
@@ -110,6 +116,36 @@ npm run preview   # preview buildu
 - Ak nastane EACCES/permission denied: `sudo chown -R deploy:deploy /var/www/finance-tracker-repo /var/www/finance-tracker`
 - .env súbor pre frontend: `/var/www/finance-tracker-repo/finance-tracker/.env` s `VITE_API_URL=https://api.pedani.eu`
 - Backend .env: `/var/www/finance-tracker-api/.env`
+
+## Backend infraštruktúra
+
+### Docker
+- Backend beží ako Docker container: `finance-tracker-repo-backend-1`
+- PostgreSQL beží ako separátny Docker container: `finance-tracker-postgres-1`
+- Príkazy (BEZ pomlčky — nová syntax):
+```bash
+docker compose restart backend
+docker compose logs backend --tail=50
+docker compose up --build -d
+```
+- **NIKDY nepoužívať `docker-compose` (s pomlčkou)** — na tomto serveri nie je k dispozícii
+
+### Nginx
+- Config: `/etc/nginx/sites-enabled/api.pedani.eu.conf`
+- `client_max_body_size 20M` — potrebné pre avatar upload (base64 ~5MB)
+- Po zmene nginx configu: `sudo nginx -t && sudo systemctl reload nginx`
+
+### Rate limiting (`backend/src/routes/auth.ts`)
+- `registerLimiter`: 5 req / 15 min
+- `loginLimiter`: 10 req / 15 min
+- `refreshLimiter`: 200 req / 15 min — **MUSÍ byť vysoký**, inak F5 spôsobuje logout
+- `generalLimiter`: 20 req / 15 min
+- `refreshLimiter` **NESMIE** používať custom `keyGenerator` s `req.ip` priamo (IPv6 bug)
+
+### Avatar upload
+- Max veľkosť: 10MB (kontrolované v `auth.controller.ts` — `avatarUrl.length > 10 * 1024 * 1024`)
+- Formát: base64 data URL poslaný ako JSON `{ avatarUrl: string }`
+- Nginx limit: 20M, Express limit: 15mb
 
 ---
 
@@ -142,3 +178,26 @@ npm run preview   # preview buildu
 ### Responsive pravidlo
 - Desktop (lg+): sidebar + 2-stĺpcový grid
 - Mobile: bottom pill nav, single column, FAB pre pridávanie
+
+### Topbar
+- Desktop: 2 sekcie — ľavá (greeting 22px bold + dátum) | pravá (toggle + monthNav + themeBtn + avatar)
+- Mobile: 2 riadky — Row1: logo + greeting + avatar | Row2: monthNav + toggle (len na relevantných stránkach)
+- Theme toggle: ☀️/🌙 button v Topbar (desktop aj mobile) — mení `data-theme` na `<html>` + localStorage
+
+### Login/Register stránky
+- Background: `var(--bg)` — NIE hardcoded `#0a0814` (kvôli light mode kompatibilite)
+- Input polia: theme-aware — svetlé pozadie v light mode cez `inputStyle(focused, theme)` funkciu
+- Theme toggle: `position: fixed, top: 16, right: 16` — dostupný pred prihlásením
+
+### CsvImportModal
+- Podporované banky: Revolut, Tatra banka, SLSP, mBank, 365.bank, Vlastný CSV
+- 365.bank: semicolon delimiter, stĺpce `Dátum`/`Popis`/`Suma`/`Mena`/`Zostatok`
+- Dostupný v: Príjmy, Variabilné výdavky, Fixné výdavky
+
+### Kategórie
+- Desktop header button: `Pridať kategóriu` (BEZ leading `+` — `Plus` ikona ho už zobrazuje)
+- Celkové využitie rozpočtu: summary bar nad gridom — `totalSpent`/`totalLimit` zo všetkých kategórií s limitom
+
+### Domácnosť
+- Názov domácnosti sa zobrazuje s prefixom `"Rodina "` — napr. `"Rodina Bližňákovcov"`
+- Default dashboard view: `family` keď `householdEnabled === true` a nie je uložená preferencia
