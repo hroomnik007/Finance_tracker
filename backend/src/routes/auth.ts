@@ -41,10 +41,7 @@ const refreshLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Príliš veľa pokusov. Skúste neskôr." },
-  keyGenerator: (req) => {
-    return (req.cookies as Record<string, string> | undefined)?.rt ?? req.ip ?? 'unknown'
-  },
+  message: { error: 'Príliš veľa pokusov. Skúste neskôr.' },
 });
 
 const router = Router();
