@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { Page } from '../App'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -30,6 +31,20 @@ function getGreeting(hour: number): string {
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
+  })
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('theme_preference', next)
+    document.documentElement.setAttribute('data-theme', next)
+    import('../api/auth').then(({ updateUserSettings }) => {
+      updateUserSettings({ theme: next }).catch(() => {})
+    })
+  }
 
   const now = new Date()
   const hour = now.getHours()
@@ -103,6 +118,23 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     </button>
   )
 
+  const themeToggleBtn = (
+    <button
+      onClick={toggleTheme}
+      style={{
+        width: 32, height: 32, borderRadius: '50%',
+        background: 'var(--bg3)',
+        border: '1px solid var(--border)',
+        cursor: 'pointer', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        fontSize: 14, flexShrink: 0,
+      }}
+      title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
+    >
+      {theme === 'dark' ? '☀️' : '🌙'}
+    </button>
+  )
+
   const barStyle: CSSProperties = {
     background: 'var(--bg2)',
     borderBottom: '1px solid var(--border)',
@@ -126,11 +158,12 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           </span>
         </div>
 
-        {/* Right: toggle + month nav + avatar */}
+        {/* Right: toggle + month nav + theme + avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {showToggle && familyToggle}
           {showMonth && monthNav}
           {divider}
+          {themeToggleBtn}
           {avatarEl(34)}
         </div>
       </div>
@@ -153,6 +186,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
               {dateStr}
             </div>
           </div>
+          {themeToggleBtn}
           {avatarEl(32)}
         </div>
 

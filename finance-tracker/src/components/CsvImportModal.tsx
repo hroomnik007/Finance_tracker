@@ -17,13 +17,14 @@ interface CsvImportModalProps {
   filterType?: 'income' | 'expense'
 }
 
-type BankFormat = 'revolut' | 'tatra' | 'slsp' | 'mbank' | 'custom'
+type BankFormat = 'revolut' | 'tatra' | 'slsp' | 'mbank' | 'bank365' | 'custom'
 
 const BANK_FORMATS: { id: BankFormat; label: string; emoji: string }[] = [
   { id: 'revolut', label: 'Revolut', emoji: '🌀' },
   { id: 'tatra',   label: 'Tatra banka', emoji: '🏦' },
   { id: 'slsp',    label: 'Slovenská sporiteľňa', emoji: '🏦' },
   { id: 'mbank',   label: 'mBank', emoji: '🏦' },
+  { id: 'bank365', label: '365.bank', emoji: '🏦' },
   { id: 'custom',  label: 'Vlastný CSV', emoji: '📋' },
 ]
 
@@ -102,6 +103,24 @@ function parseSLSP(rows: CsvRow[]): ImportRow[] {
     .filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
 }
 
+function parse365Bank(rows: CsvRow[]): ImportRow[] {
+  return rows
+    .map(r => {
+      const rawDate = r['Dátum'] ?? r['Datum'] ?? r['Date'] ?? ''
+      const rawAmount = r['Suma'] ?? r['Amount'] ?? '0'
+      const desc = r['Popis'] ?? r['Description'] ?? ''
+      const amount = parseAmount(rawAmount)
+      return {
+        date: parseDate(rawDate),
+        description: desc,
+        amount: Math.abs(amount),
+        type: amount >= 0 ? 'income' as const : 'expense' as const,
+        selected: true,
+      }
+    })
+    .filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
+}
+
 function parseMBank(rows: CsvRow[]): ImportRow[] {
   // mBank SK: #Data operacji, #Opis operacji, #Kwota, or Dátum, Opis, Suma
   return rows
@@ -147,7 +166,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
     Papa.parse<CsvRow>(file, {
       header: true,
       skipEmptyLines: true,
-      delimiter: format === 'mbank' ? ';' : undefined,
+      delimiter: (format === 'mbank' || format === 'bank365') ? ';' : undefined,
       complete: (result) => {
         const headers = result.meta.fields ?? []
         if (format === 'custom') {
@@ -158,10 +177,11 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
         }
         let parsed: ImportRow[] = []
         switch (format) {
-          case 'revolut': parsed = parseRevolut(result.data); break
-          case 'tatra':   parsed = parseTatra(result.data); break
-          case 'slsp':    parsed = parseSLSP(result.data); break
-          case 'mbank':   parsed = parseMBank(result.data); break
+          case 'revolut':  parsed = parseRevolut(result.data); break
+          case 'tatra':    parsed = parseTatra(result.data); break
+          case 'slsp':     parsed = parseSLSP(result.data); break
+          case 'mbank':    parsed = parseMBank(result.data); break
+          case 'bank365':  parsed = parse365Bank(result.data); break
         }
         if (parsed.length === 0) {
           setError('Žiadne platné záznamy neboli nájdené. Skontrolujte formát súboru.')

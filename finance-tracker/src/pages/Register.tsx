@@ -7,7 +7,6 @@ interface RegisterPageProps {
   onNavigatePrivacyPolicy: () => void
 }
 
-const BG = '#0a0814'
 const FIELD_BG = '#1a1535'
 const FIELD_BORDER = '#2d2650'
 const LABEL_COLOR = '#6b6387'
@@ -62,17 +61,17 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
   }
 
   const inputStyle = (focused: boolean): React.CSSProperties => ({
-    background: FIELD_BG,
-    border: `1px solid ${focused ? '#7C3AED' : FIELD_BORDER}`,
+    background: theme === 'light' ? '#f0ebff' : FIELD_BG,
+    border: `1px solid ${focused ? '#7C3AED' : (theme === 'light' ? '#c4b5fd' : FIELD_BORDER)}`,
+    color: theme === 'light' ? '#1a0a3e' : 'white',
     borderRadius: 12,
     padding: '14px 16px',
-    color: 'white',
     fontSize: 15,
     width: '100%',
     outline: 'none',
     transition: 'border-color 0.15s',
     fontFamily: 'inherit',
-    boxSizing: 'border-box',
+    boxSizing: 'border-box' as const,
   })
 
   const labelStyle: React.CSSProperties = {
@@ -85,7 +84,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
 
   if (verificationSent) {
     return (
-      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: BG }}>
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--bg)' }}>
         <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16 }}>
           <img src="/logo.svg" alt="Finvu" style={{ width: 80, height: 80, borderRadius: 20 }} />
           <p style={{ fontSize: 48, margin: 0 }}>📧</p>
@@ -104,14 +103,14 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
   }
 
   return (
-    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: BG }}>
+    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--bg)' }}>
       <button
         onClick={toggleTheme}
         style={{
           position: 'fixed', top: 16, right: 16,
           width: 38, height: 38, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.12)',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
           cursor: 'pointer', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
           fontSize: 16, zIndex: 100,

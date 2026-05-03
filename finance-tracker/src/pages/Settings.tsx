@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { parse365BankCSV } from '../utils/csv365bank'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
@@ -524,51 +523,6 @@ export function SettingsPage() {
     }
   }
 
-  const [import365Loading, setImport365Loading] = useState(false)
-  const [import365Result, setImport365Result] = useState<string | null>(null)
-
-  function handle365BankImport() {
-    setImport365Result(null)
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.csv'
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = async (ev) => {
-        const text = ev.target?.result as string
-        const rows = parse365BankCSV(text)
-        if (rows.length === 0) {
-          setImport365Result('Žiadne platné riadky neboli nájdené.')
-          return
-        }
-        setImport365Loading(true)
-        let imported = 0
-        let skipped = 0
-        for (const row of rows) {
-          try {
-            await createTransaction({
-              type: row.amount < 0 ? 'expense' : 'income',
-              amount: Math.abs(row.amount),
-              description: row.description || undefined,
-              date: row.date,
-              isFixed: false,
-            })
-            imported++
-          } catch {
-            skipped++
-          }
-        }
-        setImport365Loading(false)
-        setImport365Result(`Importovaných: ${imported}, preskočených: ${skipped}`)
-        setTimeout(() => setImport365Result(null), 5000)
-      }
-      reader.readAsText(file, 'utf-8')
-    }
-    input.click()
-  }
-
   // ── Section 5: Danger Zone ────────────────────────────────────────────────
   const [dangerAction, setDangerAction] = useState<DangerAction | null>(null)
   const [dangerConfirmText, setDangerConfirmText] = useState('')
@@ -959,24 +913,12 @@ export function SettingsPage() {
 
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                 <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 6 }}>Import</p>
-                <div className="flex flex-col gap-1.5">
-                  <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
-                    <Upload size={13} />
-                    {t.settings.importJson}
-                  </button>
-                  <button
-                    onClick={handle365BankImport}
-                    disabled={import365Loading}
-                    className="btn-secondary w-full justify-center py-1.5 text-xs"
-                    style={{ opacity: import365Loading ? 0.6 : 1 }}
-                  >
-                    <Upload size={13} />
-                    {import365Loading ? 'Importujem...' : 'Importovať z 365.bank'}
-                  </button>
-                </div>
+                <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
+                  <Upload size={13} />
+                  {t.settings.importJson}
+                </button>
                 {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
                 {importOk && <p className="text-xs text-emerald-400 mt-2">{t.settings.importSuccess}</p>}
-                {import365Result && <p className="text-xs text-emerald-400 mt-2">{import365Result}</p>}
               </div>
 
               <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
