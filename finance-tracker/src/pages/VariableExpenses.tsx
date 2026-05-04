@@ -183,7 +183,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
+      <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }} className="hidden lg:block">{t.nav.expenses}</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
@@ -439,6 +439,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
+        onImportCsv={editing ? undefined : () => { setSheetOpen(false); setTimeout(() => setCsvOpen(true), 150) }}
         footer={
           <button
             type="button"
