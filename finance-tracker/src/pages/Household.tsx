@@ -5,18 +5,8 @@ import { BottomSheet } from '../components/BottomSheet'
 import { useAuth } from '../context/AuthContext'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import { getMyHousehold, getMonthlyStats, getActivity, leaveHousehold } from '../api/households'
-import type { HouseholdData, MonthlyStats, ActivityItem } from '../api/households'
-
-function formatRelativeTime(isoStr: string): string {
-  const diff = Date.now() - new Date(isoStr).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '< 1 min'
-  if (mins < 60) return `${mins} min`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs} h`
-  return `${Math.floor(hrs / 24)} d`
-}
+import { getMyHousehold, getMonthlyStats, leaveHousehold } from '../api/households'
+import type { HouseholdData, MonthlyStats } from '../api/households'
 
 export function HouseholdPage() {
   const { user, refreshUser } = useAuth()
@@ -26,7 +16,6 @@ export function HouseholdPage() {
 
   const [householdData, setHouseholdData] = useState<HouseholdData | null>(null)
   const [stats, setStats] = useState<MonthlyStats | null>(null)
-  const [activity, setActivity] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [leavePending, setLeavePending] = useState(false)
@@ -55,14 +44,12 @@ export function HouseholdPage() {
     if (!householdEnabled || !householdId) { setLoading(false); return }
     setLoading(true)
     try {
-      const [hd, ms, act] = await Promise.all([
+      const [hd, ms] = await Promise.all([
         getMyHousehold(),
         getMonthlyStats(householdId),
-        getActivity(householdId, 20),
       ])
       setHouseholdData(hd)
       setStats(ms)
-      setActivity(act)
     } catch { /* not authenticated or no household */ }
     setLoading(false)
   }, [householdEnabled, householdId])
@@ -76,12 +63,6 @@ export function HouseholdPage() {
       setTimeout(() => setCopied(false), 2000)
     })
   }
-
-  const sectionLabel = (text: string) => (
-    <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 14 }}>
-      {text}
-    </div>
-  )
 
   const statCard = (label: string, value: string, color: string) => (
     <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
@@ -144,13 +125,7 @@ export function HouseholdPage() {
 
         {/* Member cards grid */}
         {householdData && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 16,
-            maxWidth: householdData.members.length <= 2 ? 680 : '100%',
-            margin: '0 auto', width: '100%',
-          }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 16 }}>
             {householdData.members.map(m => {
               const memberStats = stats?.per_member.find(p => p.user_id === m.id)
               return (
@@ -204,35 +179,8 @@ export function HouseholdPage() {
           </div>
         )}
 
-        {/* Activity feed */}
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, boxShadow: 'var(--card-shadow)' }}>
-          {sectionLabel('NEDÁVNA AKTIVITA')}
-          {activity.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'var(--text3)' }}>{ht.noActivity}</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0 24px' }}>
-              {activity.map((item, idx) => (
-                <div key={idx} className={idx >= 5 ? 'hidden lg:flex' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: item.type === 'expense' ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>
-                    {item.type === 'expense' ? '💸' : '💰'}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--text)' }}>{item.created_by_name ?? '—'}</strong> · {item.description || ht[item.type as 'expense' | 'income']}
-                    </div>
-                    <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 1, fontFamily: "'DM Mono', monospace" }}>{formatRelativeTime(item.created_at)}</div>
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace", color: item.type === 'expense' ? 'var(--red)' : 'var(--green)', flexShrink: 0 }}>
-                    {item.type === 'expense' ? '−' : '+'}{formatAmount(item.amount)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Leave household — discrete */}
-        <div style={{ paddingTop: 8, borderTop: '1px solid var(--border)', marginTop: 8 }}>
+        {/* Leave household — mobile only */}
+        <div className="lg:hidden" style={{ paddingTop: 8, borderTop: '1px solid var(--border)', marginTop: 8 }}>
           {leavePending ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>
@@ -293,6 +241,41 @@ export function HouseholdPage() {
             </div>
           </div>
         )}
+
+        {/* Leave — desktop right panel bottom */}
+        <div style={{ marginTop: 'auto', paddingTop: 16 }}>
+          {leavePending ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>
+                Naozaj chceš opustiť?
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setLeavePending(false)}
+                  style={{ flex: 1, height: 36, borderRadius: 10, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Zrušiť
+                </button>
+                <button
+                  onClick={handleLeaveHousehold}
+                  disabled={leaveLoading}
+                  style={{ flex: 1, height: 36, borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: 'var(--red)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
+                >
+                  {leaveLoading ? '...' : 'Opustiť'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setLeavePending(true)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.6, padding: '4px 0', display: 'block', width: '100%', textAlign: 'center' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0.6'}
+            >
+              Opustiť domácnosť
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Invite BottomSheet */}
