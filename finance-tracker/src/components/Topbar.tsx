@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import type { Page } from '../App'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -35,6 +35,15 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
   })
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const current = document.documentElement.getAttribute('data-theme') as 'dark' | 'light'
+      if (current === 'dark' || current === 'light') setTheme(current)
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { VariableExpense, Category } from '../types'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
@@ -43,7 +43,17 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const { t } = useTranslation()
   const [tooltip, setTooltip] = useState<TooltipState>(null)
   const [lastClickedDay, setLastClickedDay] = useState<string | null>(null)
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light'
+  const [isLight, setIsLight] = useState(
+    () => document.documentElement.getAttribute('data-theme') === 'light'
+  )
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLight(document.documentElement.getAttribute('data-theme') === 'light')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
 
   const daysInMonth = new Date(year, month, 0).getDate()
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay()
@@ -74,7 +84,6 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
     categories.find(c => c.id === categoryId)?.icon ?? '📦'
 
   const monthLabel = `${t.months[month - 1]} ${year}`
-  const legendBg = isLight ? 'white' : '#1a1035'
   const legendBorder = isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)'
 
   return (
@@ -191,7 +200,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
             left: tooltip.x,
             top: tooltip.y,
             transform: 'translateX(-50%) translateY(-100%)',
-            background: legendBg,
+            background: 'var(--bg2)',
             border: legendBorder,
             borderRadius: 10,
             padding: '8px 12px',

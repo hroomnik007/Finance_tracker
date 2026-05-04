@@ -214,6 +214,16 @@ export function SettingsPage() {
   const [theme, setThemeState] = useState<'dark' | 'light' | 'system'>(() =>
     loadLocalPref<'dark' | 'light' | 'system'>('theme_preference', 'dark')
   )
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const current = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | 'system'
+      if (current) setThemeState(current)
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
+
   const [accentColor, setAccentColorState] = useState<string>(() =>
     loadLocalPref<string>('accent_color', '#7C3AED')
   )
@@ -991,19 +1001,22 @@ export function SettingsPage() {
             <div className="p-5 flex flex-col gap-2.5">
               <button
                 onClick={() => { setDangerAction('expenses'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-center justify-center"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
+                style={{ background: 'transparent' }}
               >
                 🗑️ {t.settings.deleteExpenses}
               </button>
               <button
                 onClick={() => { setDangerAction('incomes'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-center justify-center"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
+                style={{ background: 'transparent' }}
               >
                 🗑️ {t.settings.deleteIncomes}
               </button>
               <button
                 onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer text-center justify-center"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
+                style={{ background: 'transparent' }}
               >
                 💥 {t.settings.resetApp}
               </button>

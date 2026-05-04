@@ -307,7 +307,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       position: 'relative',
       overflow: 'hidden',
     }}>
-      <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'var(--violet-glow)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: isLight ? 'rgba(124,58,237,0.08)' : 'var(--violet-glow)', filter: 'blur(40px)', pointerEvents: 'none' }} />
       <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', textAlign: 'center', margin: '0 0 8px' }}>{t.dashboard.balance}</p>
       <p style={{
         fontFamily: "'DM Mono', monospace",
@@ -756,7 +756,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   )
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto' }}>
+    <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
     <div style={{ padding: '20px', minHeight: '100%' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
       {/* ════════════════════════════════════════

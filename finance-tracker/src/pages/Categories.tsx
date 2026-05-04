@@ -136,9 +136,7 @@ export function CategoriesPage() {
         <button
           onClick={openAdd}
           className="hidden lg:flex items-center gap-2"
-          style={{ padding: '10px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)' }}
+          style={{ height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
         >
           <Plus size={16} />
           Pridať kategóriu
@@ -238,7 +236,7 @@ export function CategoriesPage() {
               </div>
 
               {/* Mobile list with swipe-to-delete */}
-              <div className="lg:hidden flex flex-col" style={{ gap: 8 }}>
+              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 0 }}>
                 {categories.map((cat, idx) => (
                   <div key={cat.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: 16 }}>
                     <div style={{
@@ -291,6 +289,8 @@ export function CategoriesPage() {
               </div>
             </>
           )}
+
+          <div className="lg:hidden" style={{ height: 160 }} />
         </div>
 
         {/* Right panel — desktop only */}

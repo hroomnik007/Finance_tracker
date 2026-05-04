@@ -120,9 +120,9 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   })
 
   const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)', flex: 1 }}>
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
       <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
+      <div style={{ fontSize: 'clamp(16px, 4vw, 26px)', fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
     </div>
   )
@@ -239,20 +239,17 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }} className="hidden lg:block">{t.expenses.fixed.title}</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button
-            onClick={() => setCsvOpen(true)}
-            className="flex items-center justify-center w-10 h-10 lg:w-auto lg:h-9 lg:gap-1.5 lg:px-3.5"
-            style={{ borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
-          >
+          <button onClick={() => setCsvOpen(true)} className="lg:hidden" style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <FileUp size={16} />
-            <span className="hidden lg:inline">Import CSV</span>
+          </button>
+          <button onClick={() => setCsvOpen(true)} className="hidden lg:flex" style={{ alignItems: 'center', gap: 6, height: 40, padding: '0 16px', borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+            <FileUp size={15} />
+            Import CSV
           </button>
           <button
             onClick={openAdd}
             className="hidden lg:flex"
-            style={{ alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(124,58,237,0.4)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
           >
             <Plus size={16} strokeWidth={2.5} />
             {t.expenses.fixed.add}
@@ -280,7 +277,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Stat cards */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
             {statCard(t.expenses.fixed.monthly, formatAmount(total), 'var(--red)')}
             {statCard(t.expenses.fixed.itemCount, String(fixedExpenses.length), 'var(--text)', <span>{t.expenses.fixed.itemsCount}</span>)}
             {statCard(t.expenses.fixed.avgPayment, fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—', 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
@@ -358,6 +355,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               })}
             </div>
           )}
+
+          <div className="lg:hidden" style={{ height: 160 }} />
 
         </div>
 
