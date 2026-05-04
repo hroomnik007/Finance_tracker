@@ -136,14 +136,14 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
                 onClick={onImportCsv}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 30, height: 30, borderRadius: 8,
+                  width: 36, height: 36, borderRadius: 10,
                   background: 'rgba(139,92,246,0.1)',
-                  border: '1px solid rgba(139,92,246,0.25)',
+                  border: '1px solid rgba(139,92,246,0.3)',
                   color: 'var(--violet)', cursor: 'pointer',
                 }}
                 title="Import CSV"
               >
-                <FileUp size={14} />
+                <FileUp size={17} />
               </button>
             )}
             <button

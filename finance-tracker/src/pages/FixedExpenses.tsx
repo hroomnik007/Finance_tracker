@@ -241,11 +241,13 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}
-            className="flex items-center justify-center w-10 lg:w-auto lg:px-4 lg:gap-1.5"
-            style={{ height: 40, borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+            className="hidden lg:flex"
+            style={{ alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'transparent', border: '1.5px solid var(--violet)', color: 'var(--violet)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(124,58,237,0.08)'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
           >
             <FileUp size={15} />
-            <span className="hidden lg:inline" style={{ fontSize: 13, fontWeight: 600 }}>Import CSV</span>
+            Import CSV
           </button>
           <button
             onClick={openAdd}

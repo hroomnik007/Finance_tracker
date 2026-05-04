@@ -184,18 +184,18 @@ function App() {
   const householdEnabled = user?.household_enabled ?? false
 
   useEffect(() => {
-    if (!isLoading && !householdEnabled && dashView === 'family') {
+    if (!isLoading && user && !householdEnabled && dashView === 'family') {
       setDashView('personal')
       localStorage.removeItem('finvu_dashboard_view')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [householdEnabled, isLoading])
+  }, [householdEnabled, isLoading, user])
 
   useEffect(() => {
-    if (householdEnabled && !localStorage.getItem('finvu_dashboard_view')) {
+    if (!isLoading && user && householdEnabled && !localStorage.getItem('finvu_dashboard_view')) {
       setDashView('family')
     }
-  }, [householdEnabled])
+  }, [householdEnabled, isLoading, user])
 
   const handleDashViewChange = (v: 'personal' | 'family') => {
     setDashView(v)
