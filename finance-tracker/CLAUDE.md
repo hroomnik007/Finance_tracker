@@ -201,3 +201,24 @@ docker compose up --build -d
 ### Domácnosť
 - Názov domácnosti sa zobrazuje s prefixom `"Rodina "` — napr. `"Rodina Bližňákovcov"`
 - Default dashboard view: `family` keď `householdEnabled === true` a nie je uložená preferencia
+
+## Known patterns & conventions
+- **BottomSheet swipe-to-close**: drag handle + header area are touch targets. Swipe down >80px closes with 250ms slide-out animation. `translateY` state + `isDragging` ref control the gesture. `touchAction: 'none'` on panel prevents scroll conflict.
+- **BottomSheet `onImportCsv` prop**: optional prop — when provided, shows a 36×36px `FileUp` icon button in the header (right of title, left of close). Only pass when NOT in edit mode. On click: close sheet first, open CSV modal after 150ms timeout.
+- **Import CSV button — desktop**: outlined style — `height: 40px`, `padding: 0 20px`, `borderRadius: 12px`, `border: 1.5px solid var(--violet)`, `background: transparent`, hover `rgba(124,58,237,0.08)`. Same height as primary Pridať button.
+- **Import CSV button — mobile**: removed from header row entirely. Accessible via BottomSheet header icon when user taps FAB.
+- **Header row — mobile**: Income, VariableExpenses, FixedExpenses pages use `className="hidden lg:flex"` on the header row — completely hidden on mobile. FAB handles add action, BottomSheet header handles Import CSV.
+- **dashView default**: initializes from `localStorage || 'family'`. Force-reset to `'personal'` only fires after `!isLoading && user && !householdEnabled` — never before user data is loaded. Complementary effect sets `'family'` when household becomes enabled and no saved preference exists.
+- **Pie chart reset**: outer `pieChartCard` div has `onClick={() => setClickedIndex(null)}`. PieChart `ResponsiveContainer` wrapper stops propagation with `onClick={e => e.stopPropagation()}`. Clicking anywhere outside the pie ring resets center display to total.
+- **Settings useEffect**: NEVER call `html.setAttribute('data-theme', ...)` in Settings mount useEffect. Theme is managed by App.tsx IIFE on load and Topbar/Login `toggleTheme`. Settings only applies accent color and compact mode on mount.
+- **Theme toggle buttons in Settings**: column layout (icon 18px above label 11px), `minWidth: 56px`, `padding: 8px 12px`, `borderRadius: 12px`, violet border+bg when active, `var(--bg3)` when inactive.
+- **MutationObserver for theme reactivity**: ExpenseHeatmap, Settings theme state, and Topbar theme state all use `MutationObserver` on `document.documentElement` watching `data-theme` attribute to stay in sync when theme changes from another component.
+- **Login/Register light mode**: background uses `var(--bg)` not hardcoded `#0a0814`. Input styles use theme-aware colors via `inputStyle(focused, theme)` function. Google button background/color also theme-aware.
+
+## Modules
+- **BottomSheet** (`components/BottomSheet.tsx`): props: `open`, `onClose`, `title`, `children`, `footer?`, `onImportCsv?`. Mobile: slides up from bottom with drag-to-close. Desktop: centered modal. Drag handle + header are swipe targets on mobile.
+
+## Key constraints
+- `BottomSheet` `onImportCsv` must be `undefined` when in edit mode — import only makes sense when adding new records
+- Never render both mobile and desktop Import CSV buttons simultaneously — use `hidden lg:flex` / `lg:hidden` pattern
+- `dashView` force-reset to `'personal'` requires `user` to be loaded — add `&& user` guard to prevent premature reset on initial render
