@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, Crown } from 'lucide-react'
 import { MemberAvatar } from '../components/MemberAvatar'
+import { BottomSheet } from '../components/BottomSheet'
 import { useAuth } from '../context/AuthContext'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
@@ -17,7 +18,6 @@ function formatRelativeTime(isoStr: string): string {
   return `${Math.floor(hrs / 24)} d`
 }
 
-
 export function HouseholdPage() {
   const { user, refreshUser } = useAuth()
   const { formatAmount } = useFormatters()
@@ -31,6 +31,7 @@ export function HouseholdPage() {
   const [copied, setCopied] = useState(false)
   const [leavePending, setLeavePending] = useState(false)
   const [leaveLoading, setLeaveLoading] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
@@ -83,9 +84,9 @@ export function HouseholdPage() {
   )
 
   const statCard = (label: string, value: string, color: string) => (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
+    <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
       <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
     </div>
   )
 
@@ -118,70 +119,69 @@ export function HouseholdPage() {
     <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
 
       {/* Main content */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Header */}
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0 }}>
-            Rodina {householdData?.name ?? ht.title}
-          </h1>
-          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>{ht.subtitle}</p>
-        </div>
-
-        {/* Invite code — main content area (all viewports) */}
-        {householdData?.invite_code && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 16, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', gap: 12 }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>{ht.inviteCode}</div>
-              <code style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--violet)', letterSpacing: '3px', fontSize: 18 }}>{householdData.invite_code}</code>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>
+              DOMÁCNOSŤ
             </div>
-            <button
-              onClick={handleCopy}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}
-            >
-              {copied ? <Check size={13} /> : <Copy size={13} />}
-              {copied ? ht.copied : ht.copyCode}
-            </button>
+            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px', margin: 0 }}>
+              Rodina {householdData?.name ?? ht.title}
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4, marginBottom: 0 }}>{ht.subtitle}</p>
           </div>
-        )}
+          {householdData?.invite_code && (
+            <button
+              onClick={() => setInviteOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.3)', flexShrink: 0 }}
+            >
+              Pozvať člena
+            </button>
+          )}
+        </div>
 
         {/* Member cards grid */}
         {householdData && (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 12,
-            justifyContent: 'center',
-            maxWidth: householdData.members.length <= 2 ? 640 : '100%',
-            margin: '0 auto',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 16,
+            maxWidth: householdData.members.length <= 2 ? 680 : '100%',
+            margin: '0 auto', width: '100%',
           }}>
             {householdData.members.map(m => {
               const memberStats = stats?.per_member.find(p => p.user_id === m.id)
               return (
-                <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--card-shadow)' }}>
+                <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, boxShadow: 'var(--card-shadow)' }}>
                   {/* Avatar + name + role */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={40} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                      {m.is_owner && (
-                        <span style={{ fontSize: 10, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '2px 8px', fontWeight: 600 }}>
-                          <Crown size={9} style={{ display: 'inline', marginRight: 3 }} />Správca
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                    <MemberAvatar userId={m.id} userName={m.name} size={52} />
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{m.name}</div>
+                      {m.is_owner ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '2px 8px', fontWeight: 600, marginTop: 3 }}>
+                          <Crown size={10} />Správca
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', fontSize: 11, background: 'rgba(148,163,184,0.1)', color: 'var(--text3)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 8px', fontWeight: 500, marginTop: 3 }}>
+                          Člen
                         </span>
                       )}
                     </div>
                   </div>
                   {/* Income + Expenses sub-cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 10, padding: '10px 12px' }}>
-                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: 4 }}>Príjmy</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#34D399', fontFamily: "'DM Mono', monospace" }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 12, padding: '12px 14px' }}>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>Príjmy</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#34D399', fontFamily: "'DM Mono', monospace" }}>
                         +{formatAmount(memberStats?.income ?? 0)}
                       </div>
                     </div>
-                    <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 10, padding: '10px 12px' }}>
-                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: 4 }}>Výdavky</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#F87171', fontFamily: "'DM Mono', monospace" }}>
+                    <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 12, padding: '12px 14px' }}>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>Výdavky</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#F87171', fontFamily: "'DM Mono', monospace" }}>
                         -{formatAmount(memberStats?.expenses ?? 0)}
                       </div>
                     </div>
@@ -194,7 +194,7 @@ export function HouseholdPage() {
 
         {/* Household summary card */}
         {stats && (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}>
             <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 16 }}>SÚHRN DOMÁCNOSTI</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {statCard(ht.totalIncome, formatAmount(stats.total_income), 'var(--green)')}
@@ -205,7 +205,7 @@ export function HouseholdPage() {
         )}
 
         {/* Activity feed */}
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: 'var(--card-shadow)' }}>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, boxShadow: 'var(--card-shadow)' }}>
           {sectionLabel('NEDÁVNA AKTIVITA')}
           {activity.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--text3)' }}>{ht.noActivity}</p>
@@ -231,69 +231,97 @@ export function HouseholdPage() {
           )}
         </div>
 
-        {/* Mobile bottom nav spacer */}
-        <div className="lg:hidden" style={{ height: 80 }} />
-
-        {/* Mobile: Leave button */}
-        <div className="lg:hidden">
+        {/* Leave household — discrete */}
+        <div style={{ paddingTop: 8, borderTop: '1px solid var(--border)', marginTop: 8 }}>
           {leavePending ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 13, color: 'var(--text3)' }}>Naozaj chceš opustiť domácnosť?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>
+                Naozaj chceš opustiť domácnosť?
+              </p>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setLeavePending(false)} style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušiť</button>
-                <button onClick={handleLeaveHousehold} disabled={leaveLoading} style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}>{leaveLoading ? '...' : 'Áno, opustiť'}</button>
+                <button
+                  onClick={() => setLeavePending(false)}
+                  style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Zrušiť
+                </button>
+                <button
+                  onClick={handleLeaveHousehold}
+                  disabled={leaveLoading}
+                  style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
+                >
+                  {leaveLoading ? '...' : 'Áno, opustiť'}
+                </button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setLeavePending(true)} style={{ width: '100%', padding: '10px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.2)', background: 'transparent', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+            <button
+              onClick={() => setLeavePending(true)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.7, padding: '4px 0', display: 'block', margin: '0 auto' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0.7'}
+            >
               Opustiť domácnosť
             </button>
           )}
         </div>
 
+        {/* Bottom spacer mobile */}
+        <div className="lg:hidden" style={{ height: 100 }} />
+
       </div>
 
       {/* Right panel — desktop only */}
-      <div className="hidden lg:flex" style={{ width: 280, flexShrink: 0, flexDirection: 'column', gap: 20 }}>
-
-        {/* Members list */}
+      <div className="hidden lg:flex" style={{ width: 260, flexShrink: 0, flexDirection: 'column', gap: 16 }}>
         {householdData && (
-          <div>
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
               ČLENOVIA ({householdData.members.length})
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {householdData.members.map(m => (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                  <MemberAvatar userId={m.id} userName={m.name} size={28} />
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                  <MemberAvatar userId={m.id} userName={m.name} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                    {m.is_owner && <div style={{ fontSize: 10, color: 'var(--violet)' }}>Správca</div>}
+                    <div style={{ fontSize: 11, color: m.is_owner ? 'var(--violet)' : 'var(--text3)' }}>
+                      {m.is_owner ? 'Správca' : 'Člen'}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-
-        {/* Danger zone */}
-        <div style={{ marginTop: 'auto' }}>
-          {leavePending ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, color: 'var(--text3)' }}>Naozaj chceš opustiť domácnosť?</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setLeavePending(false)} style={{ flex: 1, padding: '8px', borderRadius: 10, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušiť</button>
-                <button onClick={handleLeaveHousehold} disabled={leaveLoading} style={{ flex: 1, padding: '8px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}>{leaveLoading ? '...' : 'Opustiť'}</button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setLeavePending(true)} style={{ width: '100%', padding: '10px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
-              Opustiť domácnosť
-            </button>
-          )}
-        </div>
-
       </div>
+
+      {/* Invite BottomSheet */}
+      <BottomSheet
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        title="Pozvať člena"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', padding: '8px 0' }}>
+          <div style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', lineHeight: 1.6 }}>
+            Zdieľaj tento kód s členom rodiny. Kód zadá v sekcii Rodinné financie v Nastaveniach.
+          </div>
+          <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 16, padding: '20px 32px', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+              {ht.inviteCode}
+            </div>
+            <code style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--violet)', letterSpacing: '4px', fontSize: 28 }}>
+              {householdData?.invite_code}
+            </code>
+          </div>
+          <button
+            onClick={handleCopy}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 32px', borderRadius: 14, background: copied ? 'rgba(52,211,153,0.15)' : 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: copied ? '#34D399' : 'white', fontSize: 15, fontWeight: 600, border: copied ? '1px solid rgba(52,211,153,0.3)' : 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', width: '100%', justifyContent: 'center' }}
+          >
+            {copied ? <><Check size={16} /> Skopírované!</> : <><Copy size={16} /> Kopírovať kód</>}
+          </button>
+        </div>
+      </BottomSheet>
+
     </div>
   )
 }
