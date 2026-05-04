@@ -239,12 +239,13 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }} className="hidden lg:block">{t.expenses.fixed.title}</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button onClick={() => setCsvOpen(true)} className="lg:hidden" style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FileUp size={16} />
-          </button>
-          <button onClick={() => setCsvOpen(true)} className="hidden lg:flex" style={{ alignItems: 'center', gap: 6, height: 40, padding: '0 16px', borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+          <button
+            onClick={() => setCsvOpen(true)}
+            className="flex items-center justify-center w-10 lg:w-auto lg:px-4 lg:gap-1.5"
+            style={{ height: 40, borderRadius: 12, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--violet)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+          >
             <FileUp size={15} />
-            Import CSV
+            <span className="hidden lg:inline" style={{ fontSize: 13, fontWeight: 600 }}>Import CSV</span>
           </button>
           <button
             onClick={openAdd}

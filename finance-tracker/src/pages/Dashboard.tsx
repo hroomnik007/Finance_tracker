@@ -466,7 +466,10 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   )
 
   const pieChartCard = pieData.length > 0 ? (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}>
+    <div
+      style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}
+      onClick={() => setClickedIndex(null)}
+    >
       <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
@@ -486,7 +489,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
             </button>
           )}
         </div>
-        <div style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }}>
+        <div style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }} onClick={e => e.stopPropagation()}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

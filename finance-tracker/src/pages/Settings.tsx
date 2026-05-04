@@ -697,19 +697,26 @@ export function SettingsPage() {
             <SectionHeader emoji="🎨" label={t.settings.appearanceSection} />
             <div className="divide-y divide-white/[0.04]">
               <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
-                <div className="flex gap-1.5">
-                  {(['dark', 'light', 'system'] as const).map(th => (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {([
+                    { id: 'dark', icon: '🌙', label: 'Dark' },
+                    { id: 'light', icon: '☀️', label: 'Light' },
+                    { id: 'system', icon: '⚙️', label: 'System' },
+                  ] as const).map(({ id, icon, label }) => (
                     <button
-                      key={th}
-                      onClick={() => handleThemeChange(th)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                        theme === th
-                          ? 'text-white'
-                          : 'bg-white/5 text-[#9D84D4] border border-white/10 hover:bg-white/10'
-                      }`}
-                      style={theme === th ? { background: 'var(--accent-color)' } : undefined}
+                      key={id}
+                      onClick={() => handleThemeChange(id)}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                        padding: '8px 12px', borderRadius: 12, cursor: 'pointer',
+                        border: theme === id ? '2px solid var(--violet)' : '1px solid var(--border)',
+                        background: theme === id ? 'rgba(124,58,237,0.12)' : 'var(--bg3)',
+                        color: theme === id ? 'var(--violet)' : 'var(--text2)',
+                        minWidth: 56, transition: 'all 0.15s',
+                      }}
                     >
-                      {th === 'dark' ? '🌙 Dark' : th === 'light' ? '☀️ Light' : '⚙️ System'}
+                      <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+                      <span style={{ fontSize: 11, fontWeight: theme === id ? 600 : 400 }}>{label}</span>
                     </button>
                   ))}
                 </div>
@@ -1026,10 +1033,10 @@ export function SettingsPage() {
           {/* Delete account */}
           <SectionCard>
             <SectionHeader emoji="🗑️" label={t.settings.deleteAccount} />
-            <div className="p-5 flex flex-col gap-4">
-              <p className="text-sm text-[#9D84D4] leading-relaxed">{t.settings.deleteAccountDesc}</p>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#F87171]">
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: 14, color: 'var(--text3)', margin: 0, lineHeight: 1.6 }}>{t.settings.deleteAccountDesc}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
                   {t.settings.deleteAccountConfirmLabel}
                 </label>
                 <input
@@ -1040,7 +1047,7 @@ export function SettingsPage() {
                   className="input-field"
                 />
               </div>
-              {deleteError && <p className="text-xs text-[#F87171]">{deleteError}</p>}
+              {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deleteError}</p>}
               <button
                 disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
                 onClick={async () => {
@@ -1057,11 +1064,16 @@ export function SettingsPage() {
                     setIsDeleting(false)
                   }
                 }}
-                className="w-full rounded-2xl font-semibold text-[15px] transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer py-3"
                 style={{
+                  width: '100%', height: 48, borderRadius: 12,
                   background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
                   border: '1px solid #DC2626',
-                  color: deleteConfirm === 'ZMAZAŤ' ? 'white' : '#F87171',
+                  color: deleteConfirm === 'ZMAZAŤ' ? 'white' : 'var(--red)',
+                  fontSize: 15, fontWeight: 600,
+                  cursor: deleteConfirm === 'ZMAZAŤ' && !isDeleting ? 'pointer' : 'not-allowed',
+                  opacity: isDeleting ? 0.6 : 1,
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s',
                 }}
               >
                 {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
