@@ -351,7 +351,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           </div>
 
           {/* Mobile: flat rows */}
-          <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 160 }}>
+          <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }}>
             {filteredSorted.length === 0 ? (
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '48px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
                 <span style={{ fontSize: 40 }}>💸</span>
@@ -428,7 +428,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', right: 20, bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          style={{ position: 'fixed', right: 20, bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

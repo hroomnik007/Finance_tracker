@@ -123,7 +123,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
 
         {/* Logo + title */}
         <img src="/logo.svg" alt="Finvu" style={{ width: 80, height: 80, borderRadius: 20 }} />
-        <div style={{ fontSize: 32, fontWeight: 700, color: 'white', marginTop: 16 }}>Finvu</div>
+        <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text)', marginTop: 16 }}>Finvu</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: LABEL_COLOR, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 6 }}>
           FINANCIE POD KONTROLOU
         </div>

@@ -191,11 +191,9 @@ export function SettingsPage() {
 
   // Apply saved appearance preferences on mount + auto-scroll to section
   useEffect(() => {
-    const savedTheme = loadLocalPref<string>('theme_preference', 'dark')
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
     const savedCompact = loadLocalPref<boolean>(compactStorageKey, compactDefault)
     const html = document.documentElement
-    html.setAttribute('data-theme', savedTheme !== 'system' ? savedTheme : 'dark')
     html.style.setProperty('--accent-color', savedAccent)
     html.classList.toggle('compact', savedCompact)
 
@@ -994,34 +992,36 @@ export function SettingsPage() {
           </SectionCard>
 
           {/* Section 5: Danger Zone */}
-          <div style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(239,68,68,0.1)' }}>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>⚠️ {t.settings.dangerZone}</p>
+          <SectionCard>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
+                ⚠️ {t.settings.dangerZone}
+              </p>
             </div>
-            <div className="p-5 flex flex-col gap-2.5">
-              <button
-                onClick={() => { setDangerAction('expenses'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
-                style={{ background: 'transparent' }}
-              >
-                🗑️ {t.settings.deleteExpenses}
-              </button>
-              <button
-                onClick={() => { setDangerAction('incomes'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
-                style={{ background: 'transparent' }}
-              >
-                🗑️ {t.settings.deleteIncomes}
-              </button>
-              <button
-                onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }}
-                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
-                style={{ background: 'transparent' }}
-              >
-                💥 {t.settings.resetApp}
-              </button>
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {([
+                { key: 'expenses', label: `🗑️ ${t.settings.deleteExpenses}` },
+                { key: 'incomes', label: `🗑️ ${t.settings.deleteIncomes}` },
+                { key: 'reset', label: `💥 ${t.settings.resetApp}` },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setDangerAction(key); setDangerConfirmText('') }}
+                  style={{
+                    width: '100%', padding: '12px 16px', borderRadius: 12,
+                    background: 'transparent',
+                    border: '1px solid rgba(239,68,68,0.25)',
+                    color: 'var(--red)', fontSize: 14, fontWeight: 500,
+                    cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                  }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.06)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          </div>
+          </SectionCard>
 
           {/* Delete account */}
           <SectionCard>

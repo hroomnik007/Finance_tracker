@@ -334,7 +334,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
           ) : (
             <>
               {/* Mobile: flat rows */}
-              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 160 }}>
+              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }}>
                 {sorted.map(income => (
                   <div
                     key={income.id}
@@ -471,7 +471,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', bottom: 'calc(80px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
+          style={{ position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

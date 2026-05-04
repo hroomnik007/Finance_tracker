@@ -115,7 +115,7 @@ export function HouseholdPage() {
   const balance = (stats?.total_income ?? 0) - (stats?.total_expenses ?? 0)
 
   return (
-    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
 
       {/* Main content */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -230,6 +230,9 @@ export function HouseholdPage() {
             </div>
           )}
         </div>
+
+        {/* Mobile bottom nav spacer */}
+        <div className="lg:hidden" style={{ height: 80 }} />
 
         {/* Mobile: Leave button */}
         <div className="lg:hidden">

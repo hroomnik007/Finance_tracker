@@ -155,7 +155,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
 
         {/* Logo + title */}
         <img src="/logo.svg" alt="Finvu" style={{ width: 80, height: 80, borderRadius: 20 }} />
-        <div style={{ fontSize: 32, fontWeight: 700, color: 'white', marginTop: 16 }}>Finvu</div>
+        <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text)', marginTop: 16 }}>Finvu</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: LABEL_COLOR, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 6 }}>
           FINANCIE POD KONTROLOU
         </div>
@@ -278,9 +278,10 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             onClick={() => googleLogin()}
             disabled={isGoogleLoading}
             style={{
-              background: FIELD_BG, border: `1px solid ${FIELD_BORDER}`,
+              background: theme === 'light' ? '#f0ebff' : FIELD_BG,
+              border: `1px solid ${theme === 'light' ? '#c4b5fd' : FIELD_BORDER}`,
               borderRadius: 12, padding: '14px', width: '100%',
-              fontSize: 15, color: 'white', fontWeight: 500,
+              fontSize: 15, color: theme === 'light' ? '#1a0a3e' : 'white', fontWeight: 500,
               cursor: 'pointer', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
               opacity: isGoogleLoading ? 0.6 : 1,

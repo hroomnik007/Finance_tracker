@@ -283,17 +283,20 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           onClick={() => setPinRemoveConfirm(false)}
         >
           <div
-            className="rounded-2xl p-6 w-full max-w-[320px]"
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text)' }}>Zrušiť PIN?</h3>
-            <p className="text-sm mb-5" style={{ color: 'var(--text3)' }}>PIN prihlásenie a zámok budú deaktivované.</p>
-            <div className="flex gap-3">
+            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 12 }}>🔢</div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', textAlign: 'center', margin: '0 0 8px' }}>
+              Zrušiť PIN?
+            </h3>
+            <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
+              PIN prihlásenie a zámok budú deaktivované.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
               <button
                 onClick={() => setPinRemoveConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
-                style={{ background: 'var(--bg3)', color: 'var(--text2)', border: '1px solid var(--border)' }}
+                style={{ flex: 1, height: 48, borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Zrušiť
               </button>
@@ -304,8 +307,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   if (user?.email) localStorage.removeItem(`pin_enabled_${user.email}`)
                   try { await deletePin() } catch { /* ok */ }
                 }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-                style={{ background: '#ef4444', color: 'white', border: 'none' }}
+                style={{ flex: 1, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Zrušiť PIN
               </button>
@@ -383,24 +385,26 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           onClick={() => setLogoutConfirm(false)}
         >
           <div
-            className="rounded-2xl p-6 w-full max-w-[320px]"
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text)' }}>Odhlásiť sa?</h3>
-            <p className="text-sm mb-5" style={{ color: 'var(--text3)' }}>Budete presmerovaný na prihlasovaciu stránku.</p>
-            <div className="flex gap-3">
+            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 12 }}>👋</div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', textAlign: 'center', margin: '0 0 8px' }}>
+              Odhlásiť sa?
+            </h3>
+            <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
+              Budete presmerovaný na prihlasovaciu stránku.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
               <button
                 onClick={() => setLogoutConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
-                style={{ background: 'var(--bg3)', color: 'var(--text2)', border: '1px solid var(--border)' }}
+                style={{ flex: 1, height: 48, borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Zrušiť
               </button>
               <button
                 onClick={() => { setLogoutConfirm(false); onLogout?.() }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-                style={{ background: '#ef4444', color: 'white', border: 'none' }}
+                style={{ flex: 1, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Odhlásiť sa
               </button>
