@@ -137,6 +137,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
+  const [streakTapped, setStreakTapped] = useState(false)
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -284,12 +285,20 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           {greeting.text} {greeting.emoji}
         </span>
         {(user?.currentStreak ?? 0) > 0 && (
-          <span
-            style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}
-            title={`${user!.currentStreak} ${t.dashboard.streakTooltip}`}
-          >
-            🔥 {user!.currentStreak}
-          </span>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <span
+              style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', display: 'inline-block', cursor: 'pointer' }}
+              title="Počet dní v rade, kedy si zaznamenal transakciu"
+              onClick={() => { setStreakTapped(true); setTimeout(() => setStreakTapped(false), 3000) }}
+            >
+              🔥 {user!.currentStreak}
+            </span>
+            {streakTapped && (
+              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 11, color: 'var(--text2)', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                Streak — dni v rade so záznamom. Pokračuj!
+              </div>
+            )}
+          </div>
         )}
       </div>
       <span style={{ fontSize: 11, color: 'var(--text3)', flexShrink: 0, whiteSpace: 'nowrap' }}>{todayStr}</span>

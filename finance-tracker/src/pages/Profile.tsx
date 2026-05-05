@@ -32,6 +32,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     isPhotoUrl(user?.avatarUrl) ? user!.avatarUrl! : null
   )
   const [photoUploading, setPhotoUploading] = useState(false)
+  const [streakTapped, setStreakTapped] = useState(false)
   const [profileSaveOk, setProfileSaveOk] = useState(false)
 
   const { setupPin, removePin } = usePinLock()
@@ -160,9 +161,20 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 </p>
                 <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', marginTop: 4, marginBottom: 0 }}>{user?.email}</p>
                 {(user?.currentStreak ?? 0) > 0 && (
-                  <span style={{ marginTop: 10, fontSize: 13, fontWeight: 600, padding: '4px 12px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C' }}>
-                    🔥 {formatStreak(user!.currentStreak!)}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 10 }}>
+                    <span
+                      title="Počet dní v rade, kedy si zaznamenal transakciu"
+                      onClick={() => { setStreakTapped(true); setTimeout(() => setStreakTapped(false), 3000) }}
+                      style={{ fontSize: 13, fontWeight: 600, padding: '4px 12px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', cursor: 'pointer' }}
+                    >
+                      🔥 {formatStreak(user!.currentStreak!)}
+                    </span>
+                    {streakTapped && (
+                      <span style={{ fontSize: 12, color: 'var(--text2)', textAlign: 'center', maxWidth: 220 }}>
+                        Streak — počet dní v rade, kedy si zaznamenal transakciu. Aktuálne: {formatStreak(user!.currentStreak!)} v rade. Pokračuj!
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
 
