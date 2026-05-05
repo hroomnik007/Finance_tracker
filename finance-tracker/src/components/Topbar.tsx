@@ -4,6 +4,7 @@ import type { Page } from '../App'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import { updateUserSettings } from '../api/auth'
 
 // Pages where month navigation is relevant
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses']
@@ -50,9 +51,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     setTheme(next)
     localStorage.setItem('theme_preference', next)
     document.documentElement.setAttribute('data-theme', next)
-    import('../api/auth').then(({ updateUserSettings }) => {
-      updateUserSettings({ theme: next }).catch(() => {})
-    })
+    updateUserSettings({ theme: next }).catch(() => {})
   }
 
   const now = new Date()

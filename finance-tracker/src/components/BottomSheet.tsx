@@ -59,8 +59,9 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
     }
   }
 
+  const [isMobile] = useState(() => window.innerWidth < 768)
+
   if (!open) return null
-  const isMobile = window.innerWidth < 768
 
   return (
     <div

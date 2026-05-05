@@ -66,6 +66,6 @@ export async function getMonthlyStats(householdId: number): Promise<MonthlyStats
 }
 
 export async function getActivity(householdId: number, limit = 10): Promise<ActivityItem[]> {
-  const { data } = await apiClient.get(`/api/households/${householdId}/activity?limit=${limit}`)
+  const { data } = await apiClient.get(`/api/households/${householdId}/activity`, { params: { limit } })
   return data as ActivityItem[]
 }
