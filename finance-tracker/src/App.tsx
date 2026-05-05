@@ -29,6 +29,7 @@ import { useSettingsContext } from './context/SettingsContext'
 import { useFixedExpenses } from './hooks/useFixedExpenses'
 import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
 import { HouseholdPage } from './pages/Household'
+import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -276,6 +277,7 @@ function App() {
       overflow: 'hidden',
       background: 'var(--bg)',
     }}>
+      <PWAUpdateBanner />
       {locked && isAuthenticated && <PinLock onVerify={verifyPin} />}
       <ToastContainer toasts={toasts} />
 
