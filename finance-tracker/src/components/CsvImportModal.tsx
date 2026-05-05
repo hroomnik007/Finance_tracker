@@ -147,6 +147,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
   const [importing, setImporting] = useState(false)
   const [importedCount, setImportedCount] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
   // Custom CSV mapping
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [rawCsvRows, setRawCsvRows] = useState<CsvRow[]>([])
@@ -186,6 +187,12 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
         if (parsed.length === 0) {
           setError('Žiadne platné záznamy neboli nájdené. Skontrolujte formát súboru.')
         } else {
+          if (parsed.length > 500) {
+            setWarning('CSV obsahuje viac ako 500 riadkov. Importuje sa prvých 500.')
+            parsed = parsed.slice(0, 500)
+          } else {
+            setWarning(null)
+          }
           setRows(applyFilter(parsed))
         }
       },
@@ -216,7 +223,14 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
       setError('Žiadne platné záznamy. Skontrolujte mapovanie stĺpcov.')
     } else {
       setError(null)
-      setRows(applyFilter(parsed))
+      let limited = parsed
+      if (parsed.length > 500) {
+        setWarning('CSV obsahuje viac ako 500 riadkov. Importuje sa prvých 500.')
+        limited = parsed.slice(0, 500)
+      } else {
+        setWarning(null)
+      }
+      setRows(applyFilter(limited))
       setCsvHeaders([])
     }
   }
@@ -225,9 +239,11 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
     const selected = rows.filter(r => r.selected)
     if (selected.length === 0) return
     setImporting(true)
+    const BATCH_SIZE = 20
     try {
-      for (const row of selected) {
-        await createTransaction({ type: row.type, amount: row.amount, description: row.description, date: row.date, isFixed: false })
+      for (let i = 0; i < selected.length; i += BATCH_SIZE) {
+        const batch = selected.slice(i, i + BATCH_SIZE)
+        await Promise.all(batch.map(row => createTransaction({ type: row.type, amount: row.amount, description: row.description, date: row.date, isFixed: false })))
       }
       setImportedCount(selected.length)
       setRows([])
@@ -239,7 +255,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
   }
 
   function reset() {
-    setRows([]); setError(null); setCsvHeaders([]); setRawCsvRows([])
+    setRows([]); setError(null); setWarning(null); setCsvHeaders([]); setRawCsvRows([])
   }
 
   const allSelected = rows.length > 0 && rows.every(r => r.selected)
@@ -332,6 +348,9 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
             </div>
           ) : (
             <div>
+              {warning && (
+                <p style={{ fontSize: 12, color: '#FBBF24', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>{warning}</p>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <p style={{ fontSize: 13, color: '#9D84D4' }}>{rows.length} záznamov · <span style={{ color: '#A78BFA' }}>{selectedCount}</span> vybraných</p>
                 <button onClick={() => setRows(r => r.map(x => ({ ...x, selected: !allSelected })))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A78BFA', fontSize: 13, fontFamily: 'inherit' }}>
