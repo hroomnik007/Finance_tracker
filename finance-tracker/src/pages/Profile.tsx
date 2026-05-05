@@ -8,6 +8,12 @@ import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👤','👨','👩','🧔','👨‍💼','👩‍💼','🧑‍💻','🦸']
 
+function formatStreak(days: number): string {
+  if (days === 1) return '1 deň'
+  if (days >= 2 && days <= 4) return `${days} dni`
+  return `${days} dní`
+}
+
 function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
@@ -155,7 +161,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', marginTop: 4, marginBottom: 0 }}>{user?.email}</p>
                 {(user?.currentStreak ?? 0) > 0 && (
                   <span style={{ marginTop: 10, fontSize: 13, fontWeight: 600, padding: '4px 12px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C' }}>
-                    🔥 {user!.currentStreak} dní
+                    🔥 {formatStreak(user!.currentStreak!)}
                   </span>
                 )}
               </div>
