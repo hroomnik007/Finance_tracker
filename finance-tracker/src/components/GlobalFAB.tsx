@@ -45,10 +45,10 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
 
   // ── Data hooks ────────────────────────────────────────────────────────────
   const { addIncome } = useIncomes(month, year)
-  const { addVariableExpense } = useVariableExpenses(month, year)
+  const { addVariableExpense, variableExpenses } = useVariableExpenses(month, year)
   const { addFixedExpense } = useFixedExpenses()
   const { categories, addCategory } = useCategories()
-  const budgetStatuses = useBudgetStatus(month, year)
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
 

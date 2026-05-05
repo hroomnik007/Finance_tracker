@@ -45,7 +45,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
     useVariableExpenses(month, year)
   const { categories, addCategory } = useCategories()
-  const budgetStatuses = useBudgetStatus(month, year)
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
   const { user } = useAuth()

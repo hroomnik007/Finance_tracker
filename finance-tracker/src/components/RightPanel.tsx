@@ -1,10 +1,9 @@
-import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
+import type { BudgetStatus } from '../types'
 
 interface RightPanelProps {
-  month: number
-  year: number
+  budgetStatuses: BudgetStatus[]
 }
 
 const getBudgetBarColor = (pct: number) => {
@@ -13,8 +12,7 @@ const getBudgetBarColor = (pct: number) => {
   return '#A78BFA'
 }
 
-export function RightPanel({ month, year }: RightPanelProps) {
-  const budgetStatuses = useBudgetStatus(month, year)
+export function RightPanel({ budgetStatuses }: RightPanelProps) {
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
 

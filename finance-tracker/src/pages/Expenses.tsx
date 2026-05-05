@@ -74,7 +74,7 @@ export function ExpensesPage({
     useVariableExpenses(month, year)
   const { fixedExpenses, addFixedExpense, updateFixedExpense, deleteFixedExpense } = useFixedExpenses()
   const { categories, addCategory } = useCategories()
-  const budgetStatuses = useBudgetStatus(month, year)
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
   const { formatAmount } = useFormatters()
 
   const getCategoryById = (id: string) => categories.find((c) => c.id === id)

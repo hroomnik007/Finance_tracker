@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { useCategories } from '../hooks/useCategories'
+import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFormatters } from '../hooks/useFormatters'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useTranslation } from '../i18n'
@@ -25,7 +26,8 @@ export function CategoriesPage() {
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
   const now = new Date()
-  const budgetStatuses = useBudgetStatus(now.getMonth() + 1, now.getFullYear())
+  const { variableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
