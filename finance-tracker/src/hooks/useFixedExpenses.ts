@@ -70,19 +70,17 @@ export function useFixedExpenses(month?: number, year?: number) {
   }, [load])
 
   const updateFixedExpense = useCallback(async (id: string, changes: Partial<FixedExpense>): Promise<void> => {
+    const existing = fixedExpenses.find(e => e.id === id)
+    const label = changes.label ?? existing?.label ?? ''
+    const category = changes.category ?? existing?.category ?? 'other'
+    const note = changes.note ?? existing?.note ?? ''
+    const dayOfMonth = changes.dayOfMonth ?? existing?.dayOfMonth ?? 1
     await updateTransaction(id, {
       amount: changes.amount,
-      description: changes.label !== undefined
-        ? encodeDescription(
-            changes.label,
-            changes.category ?? 'other',
-            changes.note ?? '',
-            changes.dayOfMonth ?? 1
-          )
-        : undefined,
+      description: encodeDescription(label, category, note, dayOfMonth),
     })
     await load()
-  }, [load])
+  }, [load, fixedExpenses])
 
   const deleteFixedExpense = useCallback(async (id: string): Promise<void> => {
     await deleteTransaction(id)
