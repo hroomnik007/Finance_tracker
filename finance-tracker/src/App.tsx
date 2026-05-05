@@ -207,6 +207,7 @@ function App() {
   const handleLogout = async () => {
     hasNavigated.current = false
     setPage('dashboard')
+    setIsProfileOpen(false)
     window.location.hash = ''
     await logout()
     setAuthPage('login')
