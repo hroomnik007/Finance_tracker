@@ -265,10 +265,10 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '92vh', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 24, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '92vh', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: '#E2D9F3' }}>Import CSV</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9D84D4', padding: 4 }}>
             <X size={18} />
@@ -382,7 +382,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
 
         {/* Footer */}
         {rows.length > 0 && importedCount === null && (
-          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 12, flexShrink: 0 }}>
+          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, flexShrink: 0 }}>
             <button onClick={reset} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 14, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušiť</button>
             <button onClick={handleImport} disabled={selectedCount === 0 || importing}
               style={{ flex: 2, height: 48, background: selectedCount > 0 ? 'linear-gradient(135deg,#7C3AED,#6D28D9)' : '#32265A', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: selectedCount > 0 && !importing ? 'pointer' : 'default', opacity: importing ? 0.7 : 1, fontFamily: 'inherit' }}>

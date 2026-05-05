@@ -34,7 +34,7 @@ export function PinLock({ onVerify }: PinLockProps) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: '#0D0A1A',
+      background: 'var(--bg)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       gap: 40,
     }}>
