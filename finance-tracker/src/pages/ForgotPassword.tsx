@@ -138,7 +138,7 @@ export function ForgotPasswordPage({ onNavigateLogin }: ForgotPasswordPageProps)
               onClick={handleSubmit}
               disabled={isLoading || !email}
               style={{
-                background: '#0090E6',
+                background: 'linear-gradient(135deg, #7C3AED, #9D4FD6)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 8,
