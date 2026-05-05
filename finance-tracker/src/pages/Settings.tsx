@@ -335,7 +335,7 @@ export function SettingsPage() {
 
   // ── Section 4: Export ─────────────────────────────────────────────────────
   const [exportError, setExportError] = useState<string | null>(null)
-  const [csvSubMenuOpen, setCsvSubMenuOpen] = useState(false)
+
 
   async function handleExportJSON() {
     try {
@@ -360,34 +360,16 @@ export function SettingsPage() {
     }
   }
 
-  async function handleExportCSVIncome() {
+  async function handleExportCSV() {
     try {
       setExportError(null)
       const transactions = await fetchAllTransactions({})
-      const incomes = transactions.filter(t => t.type === 'income')
-      const rows = incomes.map(t =>
-        `${t.date},"${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
+      const rows = transactions.map(t =>
+        `${t.date},${t.type},"${(t.categoryName ?? '').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
       )
       downloadBlob(
-        new Blob([['Dátum,Popis,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
-        `finvu-prijmy-${new Date().toISOString().split('T')[0]}.csv`
-      )
-    } catch {
-      setExportError('Export zlyhal. Skúste znova.')
-    }
-  }
-
-  async function handleExportCSVExpenses() {
-    try {
-      setExportError(null)
-      const transactions = await fetchAllTransactions({})
-      const expenses = transactions.filter(t => t.type === 'expense' && !t.isFixed)
-      const rows = expenses.map(t =>
-        `${t.date},"${(t.categoryName ?? '—').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
-      )
-      downloadBlob(
-        new Blob([['Dátum,Kategória,Poznámka,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
-        `finvu-vydavky-${new Date().toISOString().split('T')[0]}.csv`
+        new Blob([['Dátum,Typ,Kategória,Poznámka,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
+        `finvu-export-${new Date().toISOString().split('T')[0]}.csv`
       )
     } catch {
       setExportError('Export zlyhal. Skúste znova.')
@@ -909,24 +891,9 @@ export function SettingsPage() {
                   <button onClick={handleExportPDF} className="btn-secondary justify-center py-1.5 text-xs">
                     🖨️ {t.settings.printPdf}
                   </button>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => setCsvSubMenuOpen(o => !o)}
-                      className="btn-secondary justify-center py-1.5 text-xs w-full"
-                    >
-                      📋 {t.settings.exportCsv} {csvSubMenuOpen ? '▲' : '▼'}
-                    </button>
-                    {csvSubMenuOpen && (
-                      <div className="flex flex-col gap-1 pl-1">
-                        <button onClick={() => { handleExportCSVIncome(); setCsvSubMenuOpen(false) }} className="btn-secondary justify-center py-1.5 text-xs w-full">
-                          {t.settings.exportCsvIncome}
-                        </button>
-                        <button onClick={() => { handleExportCSVExpenses(); setCsvSubMenuOpen(false) }} className="btn-secondary justify-center py-1.5 text-xs w-full">
-                          {t.settings.exportCsvExpenses}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <button onClick={handleExportCSV} className="btn-secondary justify-center py-1.5 text-xs">
+                    📋 {t.settings.exportCsv}
+                  </button>
                   <button onClick={handleExportXlsx} className="btn-secondary justify-center py-1.5 text-xs">
                     📊 {t.settings.exportXlsx}
                   </button>
