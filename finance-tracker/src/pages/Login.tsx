@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
@@ -32,6 +32,28 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
 
   const [biometricLoading, setBiometricLoading] = useState(false)
 
+  const [authMethods, setAuthMethods] = useState({ pin: false, webauthn: false })
+
+  useEffect(() => {
+    if (!email.includes('@')) {
+      setAuthMethods({ pin: false, webauthn: false })
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        // TODO: replace with GET /api/auth/methods?email= when endpoint is available
+        // Fallback to localStorage for now
+        throw new Error('endpoint not available')
+      } catch {
+        setAuthMethods({
+          pin: !!localStorage.getItem(`pin_enabled_${email}`),
+          webauthn: !!localStorage.getItem(`webauthn_enabled_${email}`),
+        })
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [email])
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
   })
@@ -43,8 +65,8 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     document.documentElement.setAttribute('data-theme', next)
   }
 
-  const hasPinForEmail = email.includes('@') && !!localStorage.getItem(`pin_enabled_${email}`)
-  const hasWebAuthnForEmail = email.includes('@') && !!localStorage.getItem(`webauthn_enabled_${email}`)
+  const hasPinForEmail = authMethods.pin
+  const hasWebAuthnForEmail = authMethods.webauthn
   const webauthnSupported = typeof window !== 'undefined' && !!window.PublicKeyCredential
 
   const googleLogin = useGoogleLogin({
