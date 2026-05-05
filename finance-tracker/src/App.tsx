@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
 import { Topbar } from './components/Topbar'
@@ -104,18 +104,20 @@ function App() {
     return () => window.removeEventListener('resize', handler)
   }, [])
 
+  const hasNavigated = useRef(false)
+
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && !hasNavigated.current) {
       if (sessionStorage.getItem('just_logged_in') === 'true') {
         sessionStorage.removeItem('just_logged_in')
+        hasNavigated.current = true
         const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
         const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
         setPage(dest)
         window.location.hash = dest
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isLoading])
+  }, [isAuthenticated, isLoading, user, settings])
 
   useEffect(() => {
     if (isAuthenticated) window.location.hash = page
@@ -203,6 +205,7 @@ function App() {
   }
 
   const handleLogout = async () => {
+    hasNavigated.current = false
     setPage('dashboard')
     window.location.hash = ''
     await logout()
