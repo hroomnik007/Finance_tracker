@@ -239,3 +239,34 @@ Three-column layout:
 - No `setState` calls without proper `useEffect` dependency arrays
 - No `limit > 200` in API calls (backend max is 200)
 - No direct DOM manipulation — use React state
+
+## Code Review — 2026-05-05
+
+Full systematic code review completed. All 20 issues resolved.
+
+### Fixed
+- COMP-01: Export pagination — fetchAllTransactions() helper, no more silent 200-record truncation
+- HOOK-01: Duplicate API calls on Dashboard eliminated — useBudgetStatus accepts props instead of fetching internally
+- COMP-02: CSV import batched parallel requests (batch size 20, was sequential await)
+- COMP-03: CSV import row limit 500 with user warning
+- HOOK-02: useIncomes recurring fetch — month/year filter added, warns on limit
+- API-01: demoLogin changed GET → POST
+- COMP-05: PinLock background uses var(--bg) instead of hardcoded #0D0A1A
+- COMP-04: CsvImportModal CSS vars fixed (--bg2, --border)
+- APP-01: useFixedExpenses self-guards when not authenticated
+- HOOK-03: useFixedExpenses update always sends full description — prevents data loss
+- COMP-06: BottomSheet isMobile uses useState (no resize issues)
+- COMP-07: Topbar theme toggle uses static import
+- API-02: households.ts uses axios params object
+- APP-02: Navigation useEffect — missing deps added, useRef one-shot flag
+- COMP-08: 'Domácnosť' nav label moved to i18n
+- COMP-09: PinLock inline styles moved to global CSS
+- APP-03: Single new Date() instance in App.tsx
+- HOOK-04: CLAUDE.md pin key synced (pin_hash, SHA-256)
+- DEP-03: env.d.ts added for typed VITE_* variables
+- DEP-02: PWA registerType changed to prompt — prevents mid-transaction SW takeover
+- COMP-10: PIN/WebAuthn availability calls backend, localStorage as fallback
+- DEP-01: xlsx@0.18.5 replaced with @e965/xlsx (CVE fix)
+
+### Known remaining
+- COMP-10: Backend endpoint GET /api/auth/methods?email= not yet implemented — localStorage fallback active
