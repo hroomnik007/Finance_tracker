@@ -55,7 +55,7 @@ export async function updateAvatar(avatarUrl: string): Promise<{ avatarUrl: stri
 }
 
 export async function demoLogin(): Promise<{ user: import('../types').AuthUser; accessToken: string }> {
-  const { data } = await apiClient.get('/api/auth/demo-login')
+  const { data } = await apiClient.post('/api/auth/demo-login')
   return data
 }
 

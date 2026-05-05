@@ -58,7 +58,7 @@ router.delete("/account",       authenticateToken, deleteAccount);
 router.patch("/avatar",         authenticateToken, updateAvatar);
 router.patch("/weekly-email",   authenticateToken, updateWeeklyEmail);
 router.patch("/settings",       authenticateToken, updateUserSettings);
-router.get("/demo-login",       demoLogin);
+router.post("/demo-login",      demoLogin);
 router.post("/admin-login",     loginLimiter, adminLogin);
 router.post("/google",          loginLimiter, googleAuth);
 router.post("/pin-login",       loginLimiter, pinLogin);
