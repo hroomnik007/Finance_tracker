@@ -595,3 +595,15 @@ html.compact .card { padding: var(--card-padding); }
 [data-theme="light"] [class~="text-[#9D84D4]"],
 [data-theme="light"] [class~="text-[#6B5A9E]"],
 [data-theme="light"] [class~="text-[#B8A3E8]"] { color: var(--text2) !important; }
+
+/* PinLock */
+.pin-lock-shake {
+  animation: pin-lock-shake 0.5s ease-in-out;
+}
+@keyframes pin-lock-shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}

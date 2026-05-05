@@ -46,7 +46,7 @@ export function PinLock({ onVerify }: PinLockProps) {
 
       <div
         style={{ display: 'flex', gap: 16 }}
-        className={shake ? 'pin-shake' : ''}
+        className={shake ? 'pin-lock-shake' : ''}
       >
         {[0,1,2,3].map(i => (
           <div
@@ -87,18 +87,6 @@ export function PinLock({ onVerify }: PinLockProps) {
         ))}
       </div>
 
-      <style>{`
-        .pin-shake {
-          animation: pinShake 0.5s ease-in-out;
-        }
-        @keyframes pinShake {
-          0%,100% { transform: translateX(0); }
-          20% { transform: translateX(-8px); }
-          40% { transform: translateX(8px); }
-          60% { transform: translateX(-8px); }
-          80% { transform: translateX(8px); }
-        }
-      `}</style>
     </div>
   )
 }
