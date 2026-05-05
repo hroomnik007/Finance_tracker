@@ -1,81 +1,76 @@
-# 💰 Rodinné financie
+# 💰 FinVu — Rodinné financie
 
-> PWA aplikácia na sledovanie rodinných financií — jednoduchá, rýchla a privacy-first.
-
-[![Deploy to GitHub Pages](https://github.com/hroomnik007/Finance_tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/hroomnik007/Finance_tracker/actions/workflows/deploy.yml)
-
----
+> PWA aplikácia na sledovanie rodinných financií — jednoduchá, rýchla, s cloudovou synchronizáciou.
 
 ## ✨ Funkcie
 
 | Funkcia | Popis |
 |---|---|
 | 📊 Prehľad | Mesačný dashboard s príjmami, výdavkami a zostatkom |
-| 💳 Variabilné výdavky | Manuálne zadávanie s vlastnými kategóriami |
+| 💳 Variabilné výdavky | Manuálne zadávanie s vlastnými kategóriami a rozpočtovými limitmi |
 | 🔒 Fixné výdavky | Opakujúce sa výdavky definované používateľom |
-| 🎯 Rozpočtové limity | Mesačný limit per kategória s progress barom |
-| 📈 Grafy | Vizualizácia výdavkov podľa kategórií |
-| 💾 Export / Import | Záloha a obnova dát cez JSON |
+| 📈 Grafy | Vizualizácia výdavkov podľa kategórií (Recharts) |
+| 💾 Export | JSON, CSV, XLSX export transakcií s plnou históriou |
+| 📥 Import | CSV import transakcií (365.bank formát a vlastný) |
 | 📱 PWA | Inštalovateľné na mobil (Android/iOS) |
-| 🔐 Privacy-first | Všetky dáta zostávajú lokálne v prehliadači |
-
----
+| 🔐 Autentifikácia | Email/heslo, Google OAuth, WebAuthn, PIN, Demo účet |
+| 👨‍👩‍👧 Domácnosti | Podpora viacerých domácností |
+| 🌍 i18n | Slovenčina / Angličtina |
 
 ## 🛠️ Tech stack
 
-- **[React 18](https://react.dev/)** + **[Vite 5](https://vitejs.dev/)** — frontend framework
-- **[TypeScript](https://www.typescriptlang.org/)** — typová bezpečnosť
-- **[Dexie.js](https://dexie.org/)** — IndexedDB wrapper (lokálne ukladanie dát)
-- **[Tailwind CSS](https://tailwindcss.com/)** — styling
-- **[Recharts](https://recharts.org/)** — grafy a vizualizácie
-- **[Vite PWA Plugin](https://vite-pwa-org.netlify.app/)** — PWA podpora
+### Frontend
+- **React 19** + **Vite 8** — frontend framework
+- **TypeScript** — typová bezpečnosť
+- **Tailwind CSS 4** — styling
+- **Recharts** — grafy a vizualizácie
+- **Vite PWA Plugin** — PWA podpora
+- **axios** — HTTP klient s JWT interceptormi
 
----
+### Backend
+- **Node.js / Express** — REST API
+- **PostgreSQL** — databáza
+- **Docker** — kontajnerizácia
+- **JWT** — autentifikácia (httpOnly cookies)
 
-## 📦 Inštalácia a spustenie
+### Infraštruktúra
+- **Hetzner CX23** — VPS (Debian 13)
+- **Nginx** — reverse proxy + SSL
+- **GitHub Actions** — CI/CD pipeline
+- **Let's Encrypt** — SSL certifikáty
+
+## 🌐 Live
+
+| | URL |
+|---|---|
+| Frontend | https://finvu.pedani.eu |
+| API | https://api.pedani.eu |
+
+## 📦 Lokálny vývoj
 
 ```bash
-# Klonovanie repozitára
+# Klonovanie
 git clone https://github.com/hroomnik007/Finance_tracker.git
-cd Finance_tracker
+cd Finance_tracker/finance-tracker
 
-# Inštalácia závislostí
-npm install
+# Inštalácia
+npm install --legacy-peer-deps
 
-# Spustenie vývojového servera
+# Vývojový server
 npm run dev
 ```
 
-Appka beží na `http://localhost:5173`
+Vyžaduje `.env` s `VITE_API_URL=https://api.pedani.eu`
 
----
-
-## 🏗️ Build
+## 🏗️ Build + Deploy
 
 ```bash
 # Produkčný build
 npm run build
 
-# Lokálny preview produkčného buildu
-npm run preview
+# Deploy prebieha automaticky cez GitHub Actions pri push na main
 ```
-
----
-
-## 📱 Inštalácia ako PWA
-
-1. Otvor appku v Chrome/Safari na mobile
-2. Klikni **"Pridať na plochu"** (Add to Home Screen)
-3. Appka sa správa ako natívna — funguje aj offline
-
----
-
-## 🔐 Ochrana súkromia
-
-Všetky dáta sú uložené **výhradne lokálne** v tvojom prehliadači (IndexedDB). Žiadne dáta sa neodosielajú na žiadny server. Export/Import JSON slúži na manuálnu zálohu.
-
----
 
 ## 📄 Licencia
 
-Tento projekt je určený na súkromné použitie.
+Súkromné použitie.
