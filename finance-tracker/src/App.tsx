@@ -65,8 +65,8 @@ function getPageFromHash(): Page {
 function App() {
   const { isAuthenticated, isLoading, logout, user } = useAuth()
   const { settings } = useSettingsContext()
-  const now2 = new Date()
-  const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now2.getMonth() + 1, now2.getFullYear())
+  const now = new Date()
+  const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
   useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
 
   const [page, setPage] = useState<Page>(getPageFromHash)
@@ -83,7 +83,6 @@ function App() {
   }
 
   const [authPage, setAuthPage] = useState<AuthPage>(getAuthPageFromHash)
-  const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const [dashView, setDashView] = useState<'personal' | 'family'>(() =>

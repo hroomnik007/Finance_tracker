@@ -93,7 +93,7 @@ Git remotes: `origin` = GitHub (triggers Actions for frontend), `gitea` = self-h
 When Profile saves a new avatar it calls `updateAvatar(avatarUrl)` → `PATCH /api/auth/avatar` → then `refreshUser()` to re-sync `AuthContext`. Any component that reads `user.avatarUrl` from `useAuth()` will re-render automatically.
 
 ### PIN — two separate systems
-1. **App-lock PIN** (`usePinLock` hook, `components/PinLock.tsx`): stored in `localStorage` key `finvu_pin` (btoa encoded). Locks the UI after 5 min idle. Entirely client-side.
+1. **App-lock PIN** (`usePinLock` hook, `components/PinLock.tsx`): stored in `localStorage` key `pin_hash` (SHA-256 hash). Locks the UI after 5 min idle. Entirely client-side.
 2. **Login PIN** (`/api/auth/pin-login`): bcrypt hash stored in `users.pin_hash` in DB. Used on the login page to authenticate without password. Set via `PATCH /api/auth/pin`.
 
 ### Category budget limits
@@ -193,7 +193,7 @@ Three-column layout:
 
 ### Navigation from Profile modal
 - "Zmeniť heslo" → navigate to `#settings` + scroll to `#bezpecnost-section`
-- "Nastaviť PIN" → open PIN setup modal (4-digit, numpad, confirm step, stored btoa encoded in `localStorage` key `finvu_pin`)
+- "Nastaviť PIN" → open PIN setup modal (4-digit, numpad, confirm step, stored as SHA-256 hash in `localStorage` key `pin_hash`)
 - "Exportovať dáta" → navigate to `#settings` + scroll to `#data-section`
 - "Odhlásiť sa" → logout + redirect to `#login`
 

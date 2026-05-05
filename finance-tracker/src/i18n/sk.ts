@@ -6,6 +6,7 @@ export const sk = {
     variable: 'Variabilné',
     fixed: 'Fixné',
     categories: 'Kategórie',
+    household: 'Domácnosť',
     settings: 'Nastavenia',
     currentMonth: 'Aktuálny mesiac',
     appName: 'Finvu',

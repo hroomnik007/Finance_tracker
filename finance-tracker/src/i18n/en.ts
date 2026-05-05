@@ -8,6 +8,7 @@ export const en: Translations = {
     variable: 'Variable',
     fixed: 'Fixed',
     categories: 'Categories',
+    household: 'Household',
     settings: 'Settings',
     currentMonth: 'Current month',
     appName: 'Finvu',
