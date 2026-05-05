@@ -32,20 +32,27 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: ConfirmDia
         onClick={onCancel}
       />
       <div
-        className="relative mx-4 w-full max-w-sm p-6 modal-in"
+        className="relative mx-4 w-full max-w-sm modal-in"
         style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '24px',
-          boxShadow: 'var(--shadow-elevated)',
+          background: 'var(--bg)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          padding: 24,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
         }}
       >
-        <p className="text-sm text-[#B8A3E8] text-center mb-6 leading-relaxed">{message}</p>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="btn-secondary flex-1 justify-center py-2.5">
+        <p style={{ color: 'var(--text)', fontSize: 16, fontWeight: 600, textAlign: 'center', margin: 0 }}>{message}</p>
+        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+          <button
+            onClick={onCancel}
+            style={{ flex: 1, background: 'var(--bg2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 8, minHeight: 44, fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
             {t.common.cancel}
           </button>
-          <button onClick={onConfirm} className="btn-danger flex-1 justify-center py-2.5 rounded-2xl">
+          <button
+            onClick={onConfirm}
+            style={{ flex: 1, background: '#f52e1d', color: 'white', border: 'none', borderRadius: 8, minHeight: 44, fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
             {t.common.delete}
           </button>
         </div>
