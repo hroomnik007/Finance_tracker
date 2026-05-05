@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
+import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
 import { useSettingsContext } from '../context/SettingsContext'
@@ -142,6 +143,18 @@ function downloadBlob(blob: Blob, filename: string) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+async function fetchAllTransactions(params: Omit<TransactionParams, 'limit' | 'offset'>): Promise<ApiTransaction[]> {
+  const all: ApiTransaction[] = []
+  let offset = 0
+  while (true) {
+    const { data } = await getTransactions({ ...params, limit: 200, offset })
+    all.push(...data)
+    if (data.length < 200) break
+    offset += 200
+  }
+  return all
 }
 
 function loadLocalPref<T>(key: string, fallback: T): T {
@@ -327,8 +340,8 @@ export function SettingsPage() {
   async function handleExportJSON() {
     try {
       setExportError(null)
-      const [{ data: transactions }, { data: categories }] = await Promise.all([
-        getTransactions({ limit: 10000 }),
+      const [transactions, { data: categories }] = await Promise.all([
+        fetchAllTransactions({}),
         getCategories(),
       ])
       const payload = {
@@ -350,7 +363,7 @@ export function SettingsPage() {
   async function handleExportCSVIncome() {
     try {
       setExportError(null)
-      const { data: transactions } = await getTransactions({ limit: 10000 })
+      const transactions = await fetchAllTransactions({})
       const incomes = transactions.filter(t => t.type === 'income')
       const rows = incomes.map(t =>
         `${t.date},"${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
@@ -367,7 +380,7 @@ export function SettingsPage() {
   async function handleExportCSVExpenses() {
     try {
       setExportError(null)
-      const { data: transactions } = await getTransactions({ limit: 10000 })
+      const transactions = await fetchAllTransactions({})
       const expenses = transactions.filter(t => t.type === 'expense' && !t.isFixed)
       const rows = expenses.map(t =>
         `${t.date},"${(t.categoryName ?? '—').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
@@ -388,8 +401,8 @@ export function SettingsPage() {
   async function handleExportXlsx() {
     try {
       setExportError(null)
-      const [{ data: transactions }, { data: categories }] = await Promise.all([
-        getTransactions({ limit: 10000 }),
+      const [transactions, { data: categories }] = await Promise.all([
+        fetchAllTransactions({}),
         getCategories(),
       ])
       const incomesData = transactions.filter(t => t.type === 'income').map(t => ({
@@ -421,8 +434,8 @@ export function SettingsPage() {
 
   async function handleShareReport() {
     try {
-      const [{ data: allT }, { data: cats }] = await Promise.all([
-        getTransactions({ limit: 10000 }),
+      const [allT, { data: cats }] = await Promise.all([
+        fetchAllTransactions({}),
         getCategories(),
       ])
       const totalIncome = allT.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
