@@ -36,9 +36,9 @@ export function useIncomes(month?: number, year?: number) {
         // month must appear in every subsequent month. The backend month param
         // filters by creation date, not recurrence — adding it would hide older
         // recurring incomes. Client-side filter on line below enforces t.date <= monthStr.
-        // TODO: paginate if a user accumulates >500 recurring income records.
-        const { data: recurring } = await getTransactions({ type: 'income', isFixed: true, limit: 500 })
-        if (recurring.length === 500) {
+        // TODO: paginate if a user accumulates >200 recurring income records.
+        const { data: recurring } = await getTransactions({ type: 'income', isFixed: true, limit: 200 })
+        if (recurring.length === 200) {
           console.warn('useIncomes: recurring income limit reached, some records may be missing')
         }
         const existingIds = new Set(data.map(t => t.id))
