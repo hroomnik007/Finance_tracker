@@ -1,11 +1,11 @@
-import { randomUUID, timingSafeEqual } from "crypto";
+import { randomBytes, randomUUID, timingSafeEqual } from "crypto";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
-import { users, refreshTokens, categories, transactions, webauthnCredentials, households } from "../db/schema";
+import { users, refreshTokens, categories, transactions, webauthnCredentials, households, passwordResetTokens } from "../db/schema";
 import { env } from "../config/env";
 import {
   signAccessToken,
@@ -18,7 +18,7 @@ import {
   REFRESH_COOKIE,
   REFRESH_COOKIE_OPTIONS,
 } from "../lib/tokens";
-import { sendEmail, verificationEmailHtml, resetPasswordEmailHtml } from "../lib/email";
+import { sendEmail, verificationEmailHtml, resetPasswordEmailHtml, resetPasswordEmailText } from "../lib/email";
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories";
 import { AuthRequest } from "../middleware/authenticate";
 
@@ -269,19 +269,25 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
   const { email } = req.body as { email?: string };
   const OK_MSG = "Ak email existuje, bol odoslaný odkaz na obnovenie hesla.";
 
-  if (!email) { res.json({ message: OK_MSG }); return; }
+  if (!email || !z.string().email().safeParse(email).success) {
+    res.json({ message: OK_MSG });
+    return;
+  }
 
-  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   if (user) {
-    const resetToken = randomUUID();
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    await db
-      .update(users)
-      .set({ resetToken, resetTokenExpiry })
-      .where(eq(users.id, user.id));
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, user.id));
+    await db.insert(passwordResetTokens).values({ userId: user.id, token, expiresAt });
 
-    await sendEmail(email, "Finvu — Obnova hesla", resetPasswordEmailHtml(resetToken));
+    await sendEmail(
+      email,
+      "Obnova hesla — FinVu",
+      resetPasswordEmailHtml(token),
+      resetPasswordEmailText(token),
+    );
   }
 
   res.json({ message: OK_MSG });
@@ -296,13 +302,13 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   }
 
   const now = new Date();
-  const [user] = await db
+  const [resetRecord] = await db
     .select()
-    .from(users)
-    .where(and(eq(users.resetToken, token), gt(users.resetTokenExpiry, now)))
+    .from(passwordResetTokens)
+    .where(and(eq(passwordResetTokens.token, token), gt(passwordResetTokens.expiresAt, now)))
     .limit(1);
 
-  if (!user) {
+  if (!resetRecord) {
     res.status(400).json({ error: "Neplatný alebo vypršaný odkaz na obnovu hesla." });
     return;
   }
@@ -310,11 +316,11 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
   await db
     .update(users)
-    .set({ passwordHash, resetToken: null, resetTokenExpiry: null })
-    .where(eq(users.id, user.id));
+    .set({ passwordHash })
+    .where(eq(users.id, resetRecord.userId));
 
-  // Invalidate all refresh tokens
-  await db.delete(refreshTokens).where(eq(refreshTokens.userId, user.id));
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id, resetRecord.id));
+  await db.delete(refreshTokens).where(eq(refreshTokens.userId, resetRecord.userId));
 
   res.json({ message: "Heslo bolo úspešne zmenené." });
 }

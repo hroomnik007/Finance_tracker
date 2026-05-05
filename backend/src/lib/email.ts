@@ -10,12 +10,12 @@ const transporter = env.SMTP_HOST
     })
   : null;
 
-export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+export async function sendEmail(to: string, subject: string, html: string, text?: string): Promise<void> {
   if (!transporter) {
     console.log(`[email] SMTP not configured. To: ${to} | Subject: ${subject}`);
     return;
   }
-  await transporter.sendMail({ from: env.SMTP_FROM, to, subject, html });
+  await transporter.sendMail({ from: env.SMTP_FROM, to, subject, html, ...(text ? { text } : {}) });
 }
 
 export function verificationEmailHtml(token: string): string {
@@ -32,16 +32,36 @@ export function verificationEmailHtml(token: string): string {
   `;
 }
 
+export function resetPasswordEmailText(token: string): string {
+  const link = `${env.APP_URL}/#reset-password?token=${token}`;
+  return `Dobrý deň,
+
+Dostali sme žiadosť o obnovu hesla pre váš účet FinVu.
+
+Kliknite na odkaz nižšie pre nastavenie nového hesla:
+${link}
+
+Odkaz je platný 1 hodinu.
+
+Ak ste túto žiadosť nezaslali, ignorujte tento email.
+
+Tím FinVu`;
+}
+
 export function resetPasswordEmailHtml(token: string): string {
   const link = `${env.APP_URL}/#reset-password?token=${token}`;
   return `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <h2 style="color:#7C3AED">Obnovenie hesla — Finvu</h2>
+      <h2 style="color:#7C3AED">Obnova hesla — FinVu</h2>
+      <p>Dobrý deň,</p>
+      <p>Dostali sme žiadosť o obnovu hesla pre váš účet FinVu.</p>
       <p>Kliknite na odkaz nižšie pre nastavenie nového hesla:</p>
       <a href="${link}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;margin:16px 0">
         Obnoviť heslo
       </a>
-      <p style="color:#666;font-size:13px">Odkaz je platný 1 hodinu. Ak ste nepožiadali o obnovu hesla, ignorujte tento email.</p>
+      <p style="color:#666;font-size:13px">Odkaz je platný 1 hodinu.</p>
+      <p style="color:#666;font-size:13px">Ak ste túto žiadosť nezaslali, ignorujte tento email.</p>
+      <p>Tím FinVu</p>
     </div>
   `;
 }
