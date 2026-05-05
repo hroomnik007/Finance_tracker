@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
+import { useAuth } from '../context/AuthContext'
 import type { FixedExpense, FixedCategory, ApiTransaction } from '../types'
 
 const VALID_CATS: FixedCategory[] = ['housing', 'utilities', 'subscriptions', 'insurance', 'other']
@@ -39,9 +40,11 @@ function toFixedExpense(t: ApiTransaction): FixedExpense {
 }
 
 export function useFixedExpenses(month?: number, year?: number) {
+  const { isAuthenticated } = useAuth()
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([])
 
   const load = useCallback(async () => {
+    if (!isAuthenticated) return
     try {
       const monthStr =
         month !== undefined && year !== undefined
@@ -50,7 +53,7 @@ export function useFixedExpenses(month?: number, year?: number) {
       const { data } = await getTransactions({ type: 'expense', isFixed: true, month: monthStr, limit: 200 })
       setFixedExpenses(data.map(toFixedExpense))
     } catch { /* guest or not authenticated */ }
-  }, [month, year])
+  }, [month, year, isAuthenticated])
 
   useEffect(() => { load() }, [load])
 
