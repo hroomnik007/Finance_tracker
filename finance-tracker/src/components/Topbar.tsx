@@ -177,7 +177,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
       </div>
 
       {/* ── Mobile: row 1 always + row 2 conditionally ── */}
-      <div className="md:hidden">
+      <div className="md:hidden" style={{ paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
         {/* Row 1 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 52, padding: '0 14px' }}>
           <img
