@@ -270,3 +270,39 @@ Full systematic code review completed. All 20 issues resolved.
 
 ### Known remaining
 - COMP-10: Backend endpoint GET /api/auth/methods?email= not yet implemented — localStorage fallback active
+
+## Notifications — Architecture (2026-05-06)
+
+### Overview
+Five notification types in Settings → Notifikácie:
+
+| Setting | Storage | Trigger | Status |
+|---|---|---|---|
+| Pripomienky fixných výdavkov | localStorage `fixed_expense_notifications_enabled` | Web Notification API, day of month match | ✅ implemented |
+| Upozornenia na rozpočet | localStorage `budget_warnings_enabled` | Web Notification API, category reaches 80% of limit | ✅ implemented |
+| Mesačné pripomienky | localStorage `monthly_summary_enabled` | Web Notification API, last day of month on app open | ✅ implemented |
+| Týždenný email | DB `users.weeklyEmailEnabled` | cron job every Monday 08:00 | ✅ implemented |
+| Mesačný email | DB `users.monthlyEmailEnabled` | cron job 1st of month 09:00 | ✅ implemented |
+
+### Web Notification pattern
+All in-app notifications follow the same pattern (see `useFixedExpenseNotifications.ts`):
+- Check `Notification.permission`, request if `'default'`
+- Store already-notified state in localStorage to avoid same-day repeats
+- Only trigger when authenticated
+- Requires app to be open (PWA limitation — no background push)
+
+### Email (backend)
+- SMTP via ProtonMail: `smtp.protonmail.ch:587`, user `noreply@pedani.eu`
+- Config in `backend/.env` (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
+- Jobs in `backend/src/jobs/weeklyReport.ts` (exports `startWeeklyReportJob` + `startMonthlyReportJob`)
+- Both jobs started in `backend/src/index.ts`
+- Email templates: inline HTML, dark theme (#0D0A1A), violet accent (#7C3AED)
+
+### Budget warning hook
+- `src/hooks/useBudgetWarningNotifications.ts` — checks all categories against their budgetLimit
+- localStorage key for notified state: `budget_warning_notified` (Record<categoryId, dateString>)
+- Called in App.tsx alongside useFixedExpenseNotifications
+
+### Monthly reminder hook
+- `src/hooks/useMonthlyReminderNotification.ts` — checks if today is last day of month
+- localStorage key: `monthly_reminder_notified` (string YYYY-MM-DD)
