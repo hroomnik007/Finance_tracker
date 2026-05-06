@@ -28,6 +28,11 @@ import { useAuth } from './context/AuthContext'
 import { useSettingsContext } from './context/SettingsContext'
 import { useFixedExpenses } from './hooks/useFixedExpenses'
 import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
+import { useVariableExpenses } from './hooks/useVariableExpenses'
+import { useCategories } from './hooks/useCategories'
+import { useBudgetStatus } from './hooks/useBudgetStatus'
+import { useBudgetWarningNotifications } from './hooks/useBudgetWarningNotifications'
+import { useMonthlyReminderNotification } from './hooks/useMonthlyReminderNotification'
 import { HouseholdPage } from './pages/Household'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 
@@ -70,7 +75,12 @@ function App() {
   const { settings } = useSettingsContext()
   const now = new Date()
   const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
+  const { variableExpenses: allVariableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
+  const { categories } = useCategories()
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses })
   useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
+  useBudgetWarningNotifications(budgetStatuses, isAuthenticated)
+  useMonthlyReminderNotification(isAuthenticated)
 
   const [page, setPage] = useState<Page>(getPageFromHash)
   type AuthPage = 'login' | 'register' | 'demo-login' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
