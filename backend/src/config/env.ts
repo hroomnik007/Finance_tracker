@@ -19,6 +19,9 @@ const envSchema = z.object({
   ADMIN_USERNAME: z.string().min(1).default("admin"),
   ADMIN_PASSWORD: z.string().min(1).default("changeme"),
   GOOGLE_CLIENT_ID: z.string().optional(),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:noreply@pedani.eu'),
 });
 
 export const env = envSchema.parse(process.env);

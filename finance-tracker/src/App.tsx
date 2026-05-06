@@ -33,6 +33,7 @@ import { useCategories } from './hooks/useCategories'
 import { useBudgetStatus } from './hooks/useBudgetStatus'
 import { useBudgetWarningNotifications } from './hooks/useBudgetWarningNotifications'
 import { useMonthlyReminderNotification } from './hooks/useMonthlyReminderNotification'
+import { usePushSubscription } from './hooks/usePushSubscription'
 import { HouseholdPage } from './pages/Household'
 import { SavingsPage } from './pages/Savings'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
@@ -83,6 +84,7 @@ function App() {
   useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
   useBudgetWarningNotifications(budgetStatuses, isAuthenticated)
   useMonthlyReminderNotification(isAuthenticated)
+  usePushSubscription(isAuthenticated && !isLoading)
 
   const [page, setPage] = useState<Page>(getPageFromHash)
   type AuthPage = 'login' | 'register' | 'demo-login' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
