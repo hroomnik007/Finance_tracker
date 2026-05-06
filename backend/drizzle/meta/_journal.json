@@ -43,6 +43,13 @@
       "when": 1777741405085,
       "tag": "0005_add_theme",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1746518400000,
+      "tag": "0006_password_reset_tokens",
+      "breakpoints": true
     }
   ]
 }

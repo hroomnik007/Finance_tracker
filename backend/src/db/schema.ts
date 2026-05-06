@@ -124,6 +124,14 @@ export const webauthnCredentials = pgTable("webauthn_credentials", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const sharedReports = pgTable("shared_reports", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid("user_id")
@@ -147,3 +155,4 @@ export type NewWebAuthnCredential = typeof webauthnCredentials.$inferInsert;
 export type Household = typeof households.$inferSelect;
 export type NewHousehold = typeof households.$inferInsert;
 export type HouseholdMember = typeof householdMembers.$inferSelect;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
