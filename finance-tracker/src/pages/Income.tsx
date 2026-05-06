@@ -115,9 +115,11 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
 }
 
 const TOOLTIP_STYLE = {
-  backgroundColor: '#1a1630',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 12,
+  background: 'var(--bg2)',
+  border: '1px solid var(--border)',
+  borderRadius: 8,
+  padding: '8px 12px',
+  color: 'var(--text)',
   fontFamily: "'DM Sans', sans-serif",
   fontSize: 13,
 }

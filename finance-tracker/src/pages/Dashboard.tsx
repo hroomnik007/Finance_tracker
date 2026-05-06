@@ -121,9 +121,11 @@ interface DashboardProps {
 type Tab = 'income' | 'expenses'
 
 const TOOLTIP_STYLE = {
-  backgroundColor: '#1a1630',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 12,
+  background: 'var(--bg2)',
+  border: '1px solid var(--border)',
+  borderRadius: 8,
+  padding: '8px 12px',
+  color: 'var(--text)',
   fontFamily: "'DM Sans', sans-serif",
   fontSize: 13,
 }
@@ -453,7 +455,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#F87171' }} formatter={(val) => formatAmount(Number(val))} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#F87171' }} formatter={(val) => formatAmount(Number(val))} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 100 }} />
                 <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
