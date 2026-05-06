@@ -132,6 +132,31 @@ export interface ApiTransaction {
   household_id?: number | null
 }
 
+export interface ApiSavingsGoal {
+  id: string
+  userId: string
+  name: string
+  targetAmount: number
+  savedAmount: number
+  deadline: string | null
+  icon: string | null
+  color: string | null
+  note: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SavingsGoal {
+  id?: string
+  name: string
+  targetAmount: number
+  savedAmount: number
+  deadline?: string | null
+  icon?: string
+  color?: string
+  note?: string
+}
+
 export interface ApiSummary {
   totalIncome: number
   totalExpenses: number

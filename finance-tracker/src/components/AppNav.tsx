@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import {
   LayoutDashboard, TrendingUp, CreditCard, Settings,
-  Receipt, Lock, Tag, ChevronLeft, ChevronRight, ChevronDown,
+  Receipt, Lock, Tag, ChevronLeft, ChevronRight, ChevronDown, PiggyBank,
 } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
@@ -253,6 +253,17 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               ))}
             </div>
           )}
+
+          {/* Sporenie */}
+          <button
+            onClick={() => handleChange('savings')}
+            style={navItemStyle(current === 'savings')}
+            onMouseEnter={e => hoverOn(e, current === 'savings')}
+            onMouseLeave={e => hoverOff(e, current === 'savings')}
+          >
+            <PiggyBank size={18} style={{ flexShrink: 0 }} />
+            {isExpanded && t.nav.savings}
+          </button>
 
           {/* Domácnosť */}
           {user?.household_enabled && (

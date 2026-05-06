@@ -18,6 +18,7 @@ import { getSummary } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
+import { useSavings } from '../hooks/useSavings'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
@@ -146,6 +147,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses })
+  const { goals: savingsGoals } = useSavings()
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
   const { profileName } = useSettingsContext()
@@ -789,6 +791,39 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           <p style={{ fontSize: 12, color: 'var(--text3)', margin: '6px 0 0' }}>
             {formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)
           </p>
+        </div>
+      )}
+
+      {savingsGoals.length > 0 && (
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{t.savings.dashboardTitle}</p>
+            <button
+              onClick={() => onNavigate('savings')}
+              style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', fontFamily: 'inherit' }}
+            >
+              {t.savings.viewAll} →
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {savingsGoals.slice(0, 3).map(goal => {
+              const pct = goal.targetAmount > 0 ? Math.min((goal.savedAmount / goal.targetAmount) * 100, 100) : 0
+              return (
+                <div key={goal.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {goal.icon && <span>{goal.icon}</span>}
+                      {goal.name}
+                    </span>
+                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: 'var(--text3)', flexShrink: 0, marginLeft: 8 }}>{Math.round(pct)}%</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: goal.color ?? 'var(--violet)', transition: 'width 0.4s' }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

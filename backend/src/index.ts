@@ -11,6 +11,7 @@ import categoriesRouter from "./routes/categories";
 import adminRouter from "./routes/admin";
 import sharedReportsRouter from "./routes/sharedReports";
 import householdsRouter from "./routes/households";
+import savingsRouter from "./routes/savings";
 import { authenticateToken } from "./middleware/authenticate";
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/reports", sharedReportsRouter);
 app.use("/api/households", authenticateToken, householdsRouter);
+app.use("/api/savings", savingsRouter);
 
 app.use(errorHandler);
 

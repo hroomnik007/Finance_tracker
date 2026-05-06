@@ -143,6 +143,20 @@ export const sharedReports = pgTable("shared_reports", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const savingsGoals = pgTable("savings_goals", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  targetAmount: numeric("target_amount", { precision: 12, scale: 2 }).notNull(),
+  savedAmount: numeric("saved_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  deadline: date("deadline"),
+  icon: varchar("icon", { length: 50 }),
+  color: varchar("color", { length: 7 }),
+  note: varchar("note", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Category = typeof categories.$inferSelect;
@@ -156,3 +170,5 @@ export type Household = typeof households.$inferSelect;
 export type NewHousehold = typeof households.$inferInsert;
 export type HouseholdMember = typeof householdMembers.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type SavingsGoal = typeof savingsGoals.$inferSelect;
+export type NewSavingsGoal = typeof savingsGoals.$inferInsert;

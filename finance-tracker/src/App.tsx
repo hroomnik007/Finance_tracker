@@ -34,6 +34,7 @@ import { useBudgetStatus } from './hooks/useBudgetStatus'
 import { useBudgetWarningNotifications } from './hooks/useBudgetWarningNotifications'
 import { useMonthlyReminderNotification } from './hooks/useMonthlyReminderNotification'
 import { HouseholdPage } from './pages/Household'
+import { SavingsPage } from './pages/Savings'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 
 // Initialize appearance preferences from localStorage before first render
@@ -62,8 +63,9 @@ export type Page =
   | 'categories'
   | 'settings'
   | 'household'
+  | 'savings'
 
-const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'household']
+const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'household', 'savings']
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.slice(1) as Page
@@ -350,6 +352,7 @@ function App() {
               </div>
             </div>
           )}
+          {page === 'savings' && <SavingsPage />}
         </div>
       </main>
 
