@@ -476,7 +476,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
 
   const pieChartCard = pieData.length > 0 ? (
     <div
-      style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}
+      style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
       onClick={() => setClickedIndex(null)}
     >
       <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
@@ -842,6 +842,12 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       </div>
 
     </div>
+    {clickedIndex !== null && (
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+        onClick={() => setClickedIndex(null)}
+      />
+    )}
     </div>
   )
 }
