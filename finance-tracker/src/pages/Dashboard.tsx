@@ -476,87 +476,114 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     </div>
   )
 
-  const pieChartCard = pieData.length > 0 ? (
+  const pieChartCard = (
     <div
       style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
       onClick={() => setClickedIndex(null)}
     >
       <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
-          {legendItems.map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
-              <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
+      {pieData.length === 0 ? (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: 190, height: 190 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[{ value: 1 }]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={90}
+                  dataKey="value"
+                  startAngle={90}
+                  endAngle={-270}
+                  isAnimationActive={false}
+                >
+                  <Cell fill="var(--bg3)" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>{t.dashboard.noExpenses}</p>
             </div>
-          ))}
-          {remainingPieCount > 0 && (
-            <button
-              onClick={() => setShowAllPie(p => !p)}
-              style={{ fontSize: 12, color: 'var(--violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}
-            >
-              {showAllPie ? 'Zobraziť menej ↑' : `+ ${remainingPieCount} ďalších →`}
-            </button>
-          )}
+          </div>
         </div>
-        <div style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }} onClick={e => e.stopPropagation()}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={90}
-                paddingAngle={3}
-                dataKey="value"
-                startAngle={90}
-                endAngle={-270}
-                {...(activeIndex !== null ? { activeIndex } : {})}
-                activeShape={renderPieShape}
-                onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
-                onMouseLeave={() => setActiveIndex(null)}
-                onClick={(_: unknown, index: number) => setClickedIndex(prev => prev === index ? null : index)}
-                style={{ cursor: 'pointer' }}
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
+            {legendItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
+                <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
+              </div>
+            ))}
+            {remainingPieCount > 0 && (
+              <button
+                onClick={() => setShowAllPie(p => !p)}
+                style={{ fontSize: 12, color: 'var(--violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}
               >
-                {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          {(() => {
-            const displayIndex = clickedIndex ?? activeIndex
-            const slice = displayIndex !== null ? pieData[displayIndex] : null
-            return (
-              <>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                  {slice ? (
-                    <>
-                      <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
-                      <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalVariable) * 100)}%</p>
-                    </>
-                  ) : (
-                    <>
-                      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalVariable)}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
-                    </>
+                {showAllPie ? 'Zobraziť menej ↑' : `+ ${remainingPieCount} ďalších →`}
+              </button>
+            )}
+          </div>
+          <div style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }} onClick={e => e.stopPropagation()}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  dataKey="value"
+                  startAngle={90}
+                  endAngle={-270}
+                  {...(activeIndex !== null ? { activeIndex } : {})}
+                  activeShape={renderPieShape}
+                  onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                  onClick={(_: unknown, index: number) => setClickedIndex(prev => prev === index ? null : index)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            {(() => {
+              const displayIndex = clickedIndex ?? activeIndex
+              const slice = displayIndex !== null ? pieData[displayIndex] : null
+              return (
+                <>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                    {slice ? (
+                      <>
+                        <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
+                        <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
+                        <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalVariable) * 100)}%</p>
+                      </>
+                    ) : (
+                      <>
+                        <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalVariable)}</p>
+                        <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
+                      </>
+                    )}
+                  </div>
+                  {clickedIndex !== null && (
+                    <div
+                      style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 80, height: 80, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
+                      onClick={() => setClickedIndex(null)}
+                    />
                   )}
-                </div>
-                {clickedIndex !== null && (
-                  <div
-                    style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 80, height: 80, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
-                    onClick={() => setClickedIndex(null)}
-                  />
-                )}
-              </>
-            )
-          })()}
+                </>
+              )
+            })()}
+          </div>
         </div>
-      </div>
+      )}
     </div>
-  ) : null
+  )
 
   const heatmapCard = (
     <ExpenseHeatmap
