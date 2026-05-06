@@ -3,6 +3,7 @@ import { X, Upload } from 'lucide-react'
 import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
+import { apiClient } from '../api/client'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -330,6 +331,21 @@ export function SettingsPage() {
       setMonthlyEmail(next)
     } finally {
       setMonthlyEmailSaving(false)
+    }
+  }
+
+  // ── Push test (TODO: remove before production) ───────────────────────────
+  const [pushTestMsg, setPushTestMsg] = useState<{ text: string; ok: boolean } | null>(null)
+
+  async function handlePushTest() {
+    try {
+      await apiClient.post('/api/push/test')
+      setPushTestMsg({ text: 'Push notifikácia odoslaná!', ok: true })
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Neznáma chyba'
+      setPushTestMsg({ text: 'Chyba: ' + msg, ok: false })
+    } finally {
+      setTimeout(() => setPushTestMsg(null), 4000)
     }
   }
 
@@ -882,6 +898,20 @@ export function SettingsPage() {
             </div>
             <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
               <p className="text-xs text-[#6B5A9E]">{t.settings.notificationsNote}</p>
+              {/* TODO: remove before production */}
+              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  onClick={handlePushTest}
+                  className="btn-secondary py-1.5 text-xs"
+                >
+                  🔔 Test push notifikácie
+                </button>
+                {pushTestMsg && (
+                  <span style={{ fontSize: 12, color: pushTestMsg.ok ? 'var(--green)' : 'var(--red)' }}>
+                    {pushTestMsg.text}
+                  </span>
+                )}
+              </div>
             </div>
           </SectionCard>
 
