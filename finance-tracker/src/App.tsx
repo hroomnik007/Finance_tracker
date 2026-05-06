@@ -40,10 +40,12 @@ import { PWAUpdateBanner } from './components/PWAUpdateBanner'
     const compactKey = isMobile ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
     const compactDefault = isMobile ? 'true' : 'false'
     const compact = JSON.parse(localStorage.getItem(compactKey) ?? compactDefault) as boolean
-    const theme = JSON.parse(localStorage.getItem('theme_preference') ?? '"dark"') as string
+    const theme = localStorage.getItem('theme_preference') ?? 'dark'
+    const resolvedTheme = theme === 'system' ? 'dark' : theme
     if (accent) html.style.setProperty('--accent-color', accent)
     html.classList.toggle('compact', compact)
-    html.setAttribute('data-theme', theme !== 'system' ? theme : 'dark')
+    html.setAttribute('data-theme', resolvedTheme)
+    html.classList.add(resolvedTheme)
   } catch { /* ignore */ }
 })()
 
