@@ -131,7 +131,7 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
           }}>{title}</h2>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {onImportCsv && (
+            {onImportCsv && isMobile && (
               <button
                 type="button"
                 onClick={onImportCsv}
