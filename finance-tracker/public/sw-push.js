@@ -19,7 +19,7 @@ self.addEventListener('notificationclick', event => {
           return client.focus()
         }
       }
-      return clients.openWindow('https://financie.pedani.eu/')
+      return clients.openWindow(self.registration.scope)
     })
   )
 })
