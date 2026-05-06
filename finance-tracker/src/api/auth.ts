@@ -80,6 +80,7 @@ export async function updateUserSettings(settings: {
   defaultPage?: string
   currencyFormat?: string
   theme?: string
+  savingsEnabled?: boolean
 }): Promise<void> {
   await apiClient.patch('/api/auth/settings', settings)
 }

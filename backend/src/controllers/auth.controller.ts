@@ -40,6 +40,7 @@ function userPublic(u: {
   currentStreak?: number; longestStreak?: number; badges?: string[];
   defaultPage?: string | null; currencyFormat?: string | null;
   householdId?: number | null; householdEnabled?: boolean | null;
+  savingsEnabled?: boolean | null;
   theme?: string | null;
 }) {
   return {
@@ -53,6 +54,7 @@ function userPublic(u: {
     currencyFormat: u.currencyFormat ?? 'sk',
     household_id: u.householdId ?? null,
     household_enabled: u.householdEnabled ?? false,
+    savings_enabled: u.savingsEnabled ?? false,
     theme: u.theme ?? null,
   };
 }
@@ -194,6 +196,7 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       currentStreak: users.currentStreak, longestStreak: users.longestStreak, badges: users.badges,
       defaultPage: users.defaultPage, currencyFormat: users.currencyFormat,
       householdId: users.householdId, householdEnabled: users.householdEnabled,
+      savingsEnabled: users.savingsEnabled,
       theme: users.theme,
     })
     .from(users)
@@ -363,12 +366,13 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
 
 export async function updateUserSettings(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme } = req.body as {
+  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled } = req.body as {
     onboardingComplete?: boolean;
     monthlyEmailEnabled?: boolean;
     defaultPage?: string;
     currencyFormat?: string;
     theme?: string;
+    savingsEnabled?: boolean;
   };
   const VALID_PAGES = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings'];
   const VALID_FORMATS = ['sk', 'en', 'de'];
@@ -379,6 +383,7 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
   if (typeof defaultPage === 'string' && VALID_PAGES.includes(defaultPage)) update.defaultPage = defaultPage;
   if (typeof currencyFormat === 'string' && VALID_FORMATS.includes(currencyFormat)) update.currencyFormat = currencyFormat;
   if (typeof theme === 'string' && VALID_THEMES.includes(theme)) update.theme = theme;
+  if (typeof savingsEnabled === 'boolean') update.savingsEnabled = savingsEnabled;
   await db.update(users).set(update).where(eq(users.id, userId));
   res.json({ success: true });
 }

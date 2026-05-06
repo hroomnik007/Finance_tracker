@@ -95,6 +95,7 @@ export interface AuthUser {
   theme?: string
   household_id?: number | null
   household_enabled?: boolean
+  savings_enabled?: boolean
   household?: {
     id: number
     name: string

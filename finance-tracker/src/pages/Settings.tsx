@@ -570,6 +570,20 @@ export function SettingsPage() {
   const [showAbout, setShowAbout] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
 
+  // ── Savings toggle ────────────────────────────────────────────────────────
+  const savingsEnabled = user?.savings_enabled ?? false
+  const [savingsToggling, setSavingsToggling] = useState(false)
+
+  async function handleSavingsToggle() {
+    setSavingsToggling(true)
+    try {
+      await updateUserSettings({ savingsEnabled: !savingsEnabled })
+      await refreshUser()
+    } finally {
+      setSavingsToggling(false)
+    }
+  }
+
   // ── Household ─────────────────────────────────────────────────────────────
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
@@ -976,6 +990,16 @@ export function SettingsPage() {
                 </div>
               </div>
             )}
+          </SectionCard>
+
+          {/* Section: Sporenie */}
+          <SectionCard>
+            <SectionHeader emoji="🐷" label={t.settings.savingsTitle} />
+            <div className="divide-y divide-white/[0.04]">
+              <SettingRow label={t.settings.savingsTitle} sublabel={t.settings.savingsSubtitle}>
+                <Toggle checked={savingsEnabled} onChange={handleSavingsToggle} disabled={savingsToggling} />
+              </SettingRow>
+            </div>
           </SectionCard>
 
           {/* Section 5: Danger Zone */}

@@ -221,6 +221,8 @@ export const en: Translations = {
   settings: {
     title: 'Settings',
     subtitle: 'Customize your app',
+    savingsTitle: 'Savings',
+    savingsSubtitle: 'Track your savings goals',
     householdTitle: 'Household finances',
     householdSubtitleNew: 'Share finances with family or partner',
     householdSubtitleJoined: 'To disable, leave the household',

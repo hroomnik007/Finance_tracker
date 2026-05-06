@@ -219,6 +219,8 @@ export const sk = {
   settings: {
     title: 'Nastavenia',
     subtitle: 'Prispôsobenie aplikácie',
+    savingsTitle: 'Sporenie',
+    savingsSubtitle: 'Sledovanie sporiacich cieľov',
     householdTitle: 'Rodinné financie',
     householdSubtitleNew: 'Zdieľajte financie s rodinou alebo partnerom',
     householdSubtitleJoined: 'Pre vypnutie opustite domácnosť',

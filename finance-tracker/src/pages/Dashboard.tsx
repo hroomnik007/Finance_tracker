@@ -794,7 +794,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         </div>
       )}
 
-      {savingsGoals.length > 0 && (
+      {(user?.savings_enabled && savingsGoals.length > 0) && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{t.savings.dashboardTitle}</p>
@@ -882,22 +882,17 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           </div>
         </div>
 
-        {/* RIGHT — sticky panel */}
+        {/* RIGHT panel */}
         <div
           style={{
             background: 'var(--bg2)',
             border: '1px solid var(--border)',
             borderRadius: 20,
             padding: '16px 12px',
-            position: 'sticky',
-            top: 60,
-            alignSelf: 'start',
-            overflowY: 'auto',
             overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
-            maxHeight: 'calc(100svh - 80px)',
           }}
         >
           {rightPanelCards}

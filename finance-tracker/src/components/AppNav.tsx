@@ -255,15 +255,17 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           )}
 
           {/* Sporenie */}
-          <button
-            onClick={() => handleChange('savings')}
-            style={navItemStyle(current === 'savings')}
-            onMouseEnter={e => hoverOn(e, current === 'savings')}
-            onMouseLeave={e => hoverOff(e, current === 'savings')}
-          >
-            <PiggyBank size={18} style={{ flexShrink: 0 }} />
-            {isExpanded && t.nav.savings}
-          </button>
+          {user?.savings_enabled && (
+            <button
+              onClick={() => handleChange('savings')}
+              style={navItemStyle(current === 'savings')}
+              onMouseEnter={e => hoverOn(e, current === 'savings')}
+              onMouseLeave={e => hoverOff(e, current === 'savings')}
+            >
+              <PiggyBank size={18} style={{ flexShrink: 0 }} />
+              {isExpanded && t.nav.savings}
+            </button>
+          )}
 
           {/* Domácnosť */}
           {user?.household_enabled && (
