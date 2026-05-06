@@ -1,13 +1,13 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
+import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFormatters } from '../hooks/useFormatters'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useTranslation } from '../i18n'
 import type { Category } from '../types'
-import React from 'react'
 
 const PRESET_COLORS = [
   '#ef4444', '#f97316', '#f59e0b', '#22c55e',
@@ -32,43 +32,6 @@ export function CategoriesPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [swipedId, setSwipedId] = useState<string | null>(null)
-  const touchStartX = useRef<number>(0)
-  const touchStartY = useRef<number>(0)
-  const isSwiping = useRef<boolean>(false)
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchStartY.current = e.touches[0].clientY
-    isSwiping.current = false
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const deltaX = e.touches[0].clientX - touchStartX.current
-    const deltaY = e.touches[0].clientY - touchStartY.current
-    if (!isSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
-      isSwiping.current = true
-    }
-    if (isSwiping.current && deltaX < 0) {
-      e.preventDefault()
-      const card = e.currentTarget as HTMLElement
-      card.style.transition = 'none'
-      card.style.transform = `translateX(${Math.max(deltaX, -80)}px)`
-    }
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent, id: string) => {
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current
-    const card = e.currentTarget as HTMLElement
-    card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
-    if (isSwiping.current && deltaX < -50) {
-      card.style.transform = 'translateX(-80px)'
-      setSwipedId(id)
-    } else if (isSwiping.current) {
-      card.style.transform = 'translateX(0)'
-      setSwipedId(null)
-    }
-  }
 
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[6])
@@ -149,7 +112,7 @@ export function CategoriesPage() {
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
         {/* Main scroll area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }} onClick={() => setSwipedId(null)}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {withLimit.length > 0 && (() => {
             const totalLimit = budgetStatuses.reduce((s, b) => s + b.limit, 0)
@@ -239,40 +202,19 @@ export function CategoriesPage() {
 
               {/* Mobile list with swipe-to-delete */}
               <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 0 }}>
-                {categories.map((cat, idx) => (
-                  <div key={cat.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: 16 }}>
-                    <div style={{
-                      position: 'absolute', right: 0, top: 0, bottom: 0, width: 80,
-                      background: '#ef4444',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                      borderRadius: '0 16px 16px 0',
-                    }}>
-                      <button
-                        onClick={e => { e.stopPropagation(); setDeleteId(cat.id!) }}
-                        style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: 0 }}
-                      >
-                        <span style={{ fontSize: 18 }}>🗑️</span>
-                        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.03em' }}>Zmazať</span>
-                      </button>
-                    </div>
+                {categories.map(cat => (
+                  <SwipeableRow
+                    key={cat.id}
+                    onDelete={() => handleDelete(cat.id!)}
+                  >
                     <div
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
                         borderRadius: 16, cursor: 'pointer',
                         background: 'var(--bg2)', border: `1px solid ${cat.color}30`,
-                        animationDelay: `${idx * 40}ms`, minHeight: 64,
-                        transform: `translateX(${swipedId === cat.id ? '-80px' : '0px'})`,
-                        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative', zIndex: 1,
+                        minHeight: 64,
                       }}
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={e => handleTouchEnd(e, cat.id!)}
-                      onClick={e => {
-                        e.stopPropagation()
-                        if (swipedId === cat.id) { setSwipedId(null); return }
-                        openEdit(cat)
-                      }}
+                      onClick={() => openEdit(cat)}
                     >
                       <div style={{ width: 44, height: 44, borderRadius: '50%', background: cat.color + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
                         {cat.icon}
@@ -286,7 +228,7 @@ export function CategoriesPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </SwipeableRow>
                 ))}
               </div>
             </>
