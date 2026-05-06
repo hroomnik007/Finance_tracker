@@ -21,6 +21,7 @@ export function HouseholdPage() {
   const [leavePending, setLeavePending] = useState(false)
   const [leaveLoading, setLeaveLoading] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [isMobile] = useState(() => window.innerWidth < 768)
 
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
@@ -171,7 +172,7 @@ export function HouseholdPage() {
         {stats && (
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}>
             <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 16 }}>SÚHRN DOMÁCNOSTI</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 12 }}>
               {statCard(ht.totalIncome, formatAmount(stats.total_income), 'var(--green)')}
               {statCard(ht.totalExpenses, formatAmount(stats.total_expenses), 'var(--red)')}
               {statCard(ht.balance, formatAmount(balance), balance >= 0 ? 'var(--green)' : 'var(--red)')}
