@@ -276,6 +276,56 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
+      {/* Category filter pills — outside scroll area */}
+      {usedCategoryIds.length > 1 && (
+        <div style={{ padding: '8px 20px 0 20px', flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none' } as React.CSSProperties}>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setActiveCat(null)}
+            onKeyDown={e => e.key === 'Enter' && setActiveCat(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 20, fontSize: 13,
+              fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+              fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+              border: activeCat === null ? 'none' : '1px solid var(--border)',
+              background: activeCat === null ? 'var(--violet)' : 'var(--bg3)',
+              color: activeCat === null ? 'white' : 'var(--text2)',
+              userSelect: 'none',
+            }}
+          >
+            {t.expenses.fixed.allCategories}
+          </div>
+          {usedCategoryIds.map(catId => {
+            const cat = getCat(catId)
+            const isActive = activeCat === catId
+            return (
+              <div
+                key={catId || '__none__'}
+                role="button"
+                tabIndex={0}
+                onClick={() => setActiveCat(isActive ? null : catId)}
+                onKeyDown={e => e.key === 'Enter' && setActiveCat(isActive ? null : catId)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                  border: isActive ? 'none' : '1px solid var(--border)',
+                  background: isActive ? 'var(--violet)' : 'var(--bg3)',
+                  color: isActive ? 'white' : 'var(--text2)',
+                  userSelect: 'none',
+                }}
+              >
+                <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                <span>{cat?.name ?? '—'}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* FAB — mobile only */}
       {!sheetOpen && (
         <button
@@ -299,56 +349,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             {statCard(t.expenses.fixed.itemCount, String(fixedExpenses.length), 'var(--text)', <span>{t.expenses.fixed.itemsCount}</span>)}
             {statCard(t.expenses.fixed.avgPayment, fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—', 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
           </div>
-
-          {/* Category filter pills */}
-          {usedCategoryIds.length > 1 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setActiveCat(null)}
-                onKeyDown={e => e.key === 'Enter' && setActiveCat(null)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                  border: activeCat === null ? 'none' : '1px solid var(--border)',
-                  background: activeCat === null ? 'var(--violet)' : 'var(--bg3)',
-                  color: activeCat === null ? 'white' : 'var(--text2)',
-                  userSelect: 'none',
-                }}
-              >
-                {t.expenses.fixed.allCategories}
-              </div>
-              {usedCategoryIds.map(catId => {
-                const cat = getCat(catId)
-                const isActive = activeCat === catId
-                return (
-                  <div
-                    key={catId || '__none__'}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setActiveCat(isActive ? null : catId)}
-                    onKeyDown={e => e.key === 'Enter' && setActiveCat(isActive ? null : catId)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                      fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                      fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                      border: isActive ? 'none' : '1px solid var(--border)',
-                      background: isActive ? 'var(--violet)' : 'var(--bg3)',
-                      color: isActive ? 'white' : 'var(--text2)',
-                      userSelect: 'none',
-                    }}
-                  >
-                    <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
-                    <span>{cat?.name ?? '—'}</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
 
           {/* Mobile: vs variable card */}
           <div className="lg:hidden">

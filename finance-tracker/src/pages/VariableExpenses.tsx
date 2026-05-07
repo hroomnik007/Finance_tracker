@@ -201,32 +201,11 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
-      {/* Content row */}
-      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'visible' }}>
-
-        {/* Main scroll area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
-            {statCard(
-              t.expenses.variable.totalTitle,
-              formatAmount(totalAmount),
-              'var(--red)',
-              changeVsPrev !== null && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: changeVsPrev >= 0 ? 'var(--red)' : 'var(--green)' }}>
-                  {changeVsPrev >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                  {Math.abs(changeVsPrev).toFixed(1)}% {t.expenses.variable.vsLastMonth}
-                </span>
-              )
-            )}
-            {statCard(t.expenses.variable.countTitle, String(count), 'var(--text)', <span>{t.expenses.variable.itemsThisMonth}</span>)}
-            {statCard(t.expenses.variable.avgExpense, formatAmount(avgAmount), 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
-          </div>
-
-          {/* Category filter pills */}
+      {/* Category + member filter pills — outside scroll area */}
+      {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
           {categoriesWithExpenses.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+            <div style={{ padding: '8px 20px 0 20px', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none' } as React.CSSProperties}>
               <div
                 role="button"
                 tabIndex={0}
@@ -269,10 +248,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               ))}
             </div>
           )}
-
-          {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+            <div style={{ padding: '0 20px', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none' } as React.CSSProperties}>
               <div
                 role="button"
                 tabIndex={0}
@@ -314,6 +291,31 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Content row */}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'visible' }}>
+
+        {/* Main scroll area */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
+            {statCard(
+              t.expenses.variable.totalTitle,
+              formatAmount(totalAmount),
+              'var(--red)',
+              changeVsPrev !== null && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: changeVsPrev >= 0 ? 'var(--red)' : 'var(--green)' }}>
+                  {changeVsPrev >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                  {Math.abs(changeVsPrev).toFixed(1)}% {t.expenses.variable.vsLastMonth}
+                </span>
+              )
+            )}
+            {statCard(t.expenses.variable.countTitle, String(count), 'var(--text)', <span>{t.expenses.variable.itemsThisMonth}</span>)}
+            {statCard(t.expenses.variable.avgExpense, formatAmount(avgAmount), 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
+          </div>
 
           {/* Desktop grouped-by-date list */}
           <div className="hidden lg:block">
