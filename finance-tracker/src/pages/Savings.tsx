@@ -342,33 +342,16 @@ export function SavingsPage() {
       </div>
       </div>
 
-      {/* Mobile FAB */}
-      <button
-        onClick={openAdd}
-        aria-label="Pridať cieľ"
-        style={{
-          display: window.innerWidth >= 1024 ? 'none' : 'flex',
-          position: 'fixed',
-          right: 20,
-          bottom: 'calc(72px + env(safe-area-inset-bottom, 16px))',
-          width: 56,
-          height: 56,
-          minWidth: 56,
-          minHeight: 56,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'white',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'visible',
-          boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
-          zIndex: 50,
-        }}
-      >
-        <Plus size={24} />
-      </button>
+      {/* FAB — mobile only */}
+      {!showSheet && (
+        <button
+          onClick={openAdd}
+          className="lg:hidden flex items-center justify-center"
+          style={{ position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
+        >
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      )}
 
       <SavingsDetailModal
         goal={detailGoal}
