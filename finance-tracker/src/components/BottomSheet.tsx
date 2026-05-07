@@ -105,7 +105,7 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
           >
             <div style={{
               width: 36, height: 4,
-              background: 'rgba(255,255,255,0.2)',
+              background: 'var(--border)',
               borderRadius: 2,
               margin: '0 auto',
             }} />
@@ -153,7 +153,7 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
               style={{
                 width: 30, height: 30, borderRadius: '50%',
                 background: 'var(--bg3)', border: 'none',
-                color: 'var(--text3)', cursor: 'pointer',
+                color: 'var(--text2)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 14,
               }}

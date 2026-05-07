@@ -345,19 +345,17 @@ export function SavingsPage() {
 
       {/* Mobile FAB */}
       <button
-        className="lg:hidden"
+        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white cursor-pointer border-none"
         onClick={openAdd}
+        aria-label="Pridať cieľ"
         style={{
-          position: 'fixed', right: 20,
           bottom: 'calc(72px + env(safe-area-inset-bottom, 16px))',
-          width: 56, height: 56, borderRadius: '50%',
           background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-          border: 'none', cursor: 'pointer', color: 'white',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50,
+          boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
+          zIndex: 50,
         }}
       >
-        <Plus size={24} />
+        <Plus size={26} />
       </button>
 
       <SavingsDetailModal
