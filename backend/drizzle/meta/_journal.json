@@ -50,6 +50,13 @@
       "when": 1746518400000,
       "tag": "0006_password_reset_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778194580408,
+      "tag": "0007_nebulous_pepper_potts",
+      "breakpoints": true
     }
   ]
 }

@@ -36,7 +36,7 @@ function toFixedExpense(t: ApiTransaction): FixedExpense {
 }
 
 export function useFixedExpenses(month?: number, year?: number) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([])
 
   const load = useCallback(async () => {
@@ -46,10 +46,16 @@ export function useFixedExpenses(month?: number, year?: number) {
         month !== undefined && year !== undefined
           ? `${year}-${String(month).padStart(2, '0')}`
           : undefined
+      const trackingYM = user?.tracking_start_date ? user.tracking_start_date.substring(0, 7) : null
+      // If tracking_start_date is set and the viewed month is before it, show no fixed expenses
+      if (monthStr && trackingYM && monthStr < trackingYM) {
+        setFixedExpenses([])
+        return
+      }
       const { data } = await getTransactions({ type: 'expense', isFixed: true, month: monthStr, limit: 200 })
       setFixedExpenses(data.map(toFixedExpense))
     } catch { /* guest or not authenticated */ }
-  }, [month, year, isAuthenticated])
+  }, [month, year, isAuthenticated, user?.tracking_start_date])
 
   useEffect(() => { load() }, [load])
 

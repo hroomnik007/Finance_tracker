@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS tracking_start_date DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_banner_dismissed BOOLEAN NOT NULL DEFAULT FALSE;

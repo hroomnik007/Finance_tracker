@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
+import { useAuth } from '../context/AuthContext'
 import type { Income, ApiTransaction } from '../types'
 
 function adjustDateToMonth(originalDate: string, targetMonth: number, targetYear: number): string {
@@ -22,6 +23,7 @@ function toIncome(t: ApiTransaction): Income {
 
 export function useIncomes(month?: number, year?: number) {
   const [incomes, setIncomes] = useState<Income[]>([])
+  const { user } = useAuth()
 
   const load = useCallback(async () => {
     try {
@@ -32,6 +34,12 @@ export function useIncomes(month?: number, year?: number) {
       const { data } = await getTransactions({ type: 'income', month: monthStr, limit: 200 })
 
       if (monthStr) {
+        const trackingYM = user?.tracking_start_date ? user.tracking_start_date.substring(0, 7) : null
+        // If tracking_start_date is set and the viewed month is before it, return only non-recurring incomes
+        if (trackingYM && monthStr < trackingYM) {
+          setIncomes(data.filter(t => !t.isFixed).map(toIncome))
+          return
+        }
         // No month filter here by design: a recurring income created in any past
         // month must appear in every subsequent month. The backend month param
         // filters by creation date, not recurrence — adding it would hide older
@@ -43,7 +51,13 @@ export function useIncomes(month?: number, year?: number) {
         }
         const existingIds = new Set(data.map(t => t.id))
         const extra = recurring
-          .filter(t => !existingIds.has(t.id) && t.date.substring(0, 7) <= monthStr)
+          .filter(t => {
+            if (existingIds.has(t.id)) return false
+            if (t.date.substring(0, 7) > monthStr) return false
+            // If tracking_start_date is set, don't project before it
+            if (trackingYM && t.date.substring(0, 7) < trackingYM) return false
+            return true
+          })
           .map(t => t.date.substring(0, 7) !== monthStr
             ? { ...t, date: adjustDateToMonth(t.date, month!, year!) }
             : t
@@ -53,7 +67,7 @@ export function useIncomes(month?: number, year?: number) {
         setIncomes(data.map(toIncome))
       }
     } catch { /* guest or not authenticated */ }
-  }, [month, year])
+  }, [month, year, user?.tracking_start_date])
 
   useEffect(() => { load() }, [load])
 

@@ -81,6 +81,8 @@ export async function updateUserSettings(settings: {
   currencyFormat?: string
   theme?: string
   savingsEnabled?: boolean
+  trackingStartDate?: string | null
+  onboardingBannerDismissed?: boolean
 }): Promise<void> {
   await apiClient.patch('/api/auth/settings', settings)
 }

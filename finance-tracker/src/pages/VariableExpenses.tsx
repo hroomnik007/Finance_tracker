@@ -162,7 +162,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const pillStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 6,
     padding: '6px 14px', borderRadius: 20, fontSize: 13,
-    fontWeight: active ? 600 : 500, cursor: 'pointer',
+    fontWeight: 500, cursor: 'pointer',
     border: active ? 'none' : '1px solid var(--border)',
     background: active ? 'var(--violet)' : 'var(--bg3)',
     color: active ? 'white' : 'var(--text2)',

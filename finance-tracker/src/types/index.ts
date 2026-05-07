@@ -94,6 +94,8 @@ export interface AuthUser {
   household_id?: number | null
   household_enabled?: boolean
   savings_enabled?: boolean
+  tracking_start_date?: string | null
+  onboarding_banner_dismissed?: boolean
   household?: {
     id: number
     name: string

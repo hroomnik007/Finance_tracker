@@ -42,6 +42,8 @@ function userPublic(u: {
   householdId?: number | null; householdEnabled?: boolean | null;
   savingsEnabled?: boolean | null;
   theme?: string | null;
+  trackingStartDate?: string | null;
+  onboardingBannerDismissed?: boolean | null;
 }) {
   return {
     id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null,
@@ -56,6 +58,8 @@ function userPublic(u: {
     household_enabled: u.householdEnabled ?? false,
     savings_enabled: u.savingsEnabled ?? false,
     theme: u.theme ?? null,
+    tracking_start_date: u.trackingStartDate ?? null,
+    onboarding_banner_dismissed: u.onboardingBannerDismissed ?? false,
   };
 }
 
@@ -198,6 +202,8 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       householdId: users.householdId, householdEnabled: users.householdEnabled,
       savingsEnabled: users.savingsEnabled,
       theme: users.theme,
+      trackingStartDate: users.trackingStartDate,
+      onboardingBannerDismissed: users.onboardingBannerDismissed,
     })
     .from(users)
     .where(eq(users.id, req.userId!))
@@ -366,17 +372,20 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
 
 export async function updateUserSettings(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled } = req.body as {
+  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled, trackingStartDate, onboardingBannerDismissed } = req.body as {
     onboardingComplete?: boolean;
     monthlyEmailEnabled?: boolean;
     defaultPage?: string;
     currencyFormat?: string;
     theme?: string;
     savingsEnabled?: boolean;
+    trackingStartDate?: string | null;
+    onboardingBannerDismissed?: boolean;
   };
   const VALID_PAGES = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings'];
   const VALID_FORMATS = ['sk', 'en', 'de'];
   const VALID_THEMES = ['dark', 'light', 'system'];
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const update: Record<string, unknown> = { updatedAt: new Date() };
   if (typeof onboardingComplete === 'boolean') update.onboardingComplete = onboardingComplete;
   if (typeof monthlyEmailEnabled === 'boolean') update.monthlyEmailEnabled = monthlyEmailEnabled;
@@ -384,6 +393,10 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
   if (typeof currencyFormat === 'string' && VALID_FORMATS.includes(currencyFormat)) update.currencyFormat = currencyFormat;
   if (typeof theme === 'string' && VALID_THEMES.includes(theme)) update.theme = theme;
   if (typeof savingsEnabled === 'boolean') update.savingsEnabled = savingsEnabled;
+  if (trackingStartDate === null || (typeof trackingStartDate === 'string' && DATE_RE.test(trackingStartDate))) {
+    update.trackingStartDate = trackingStartDate ?? null;
+  }
+  if (typeof onboardingBannerDismissed === 'boolean') update.onboardingBannerDismissed = onboardingBannerDismissed;
   await db.update(users).set(update).where(eq(users.id, userId));
   res.json({ success: true });
 }
@@ -432,7 +445,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark' };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', trackingStartDate: null, onboardingBannerDismissed: false };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }

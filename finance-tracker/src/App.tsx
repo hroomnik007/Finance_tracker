@@ -36,6 +36,7 @@ import { useMonthlyReminderNotification } from './hooks/useMonthlyReminderNotifi
 import { HouseholdPage } from './pages/Household'
 import { SavingsPage } from './pages/Savings'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
+import { TrackingDateOnboarding } from './components/TrackingDateOnboarding'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -108,6 +109,7 @@ function App() {
   const needsBudgetTemplate = useBudgetTemplate()
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [showTrackingOnboarding, setShowTrackingOnboarding] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024)
 
@@ -137,7 +139,13 @@ function App() {
   }, [page, isAuthenticated])
 
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && user) {
+      const needsTracking = !user.tracking_start_date && !user.onboarding_banner_dismissed
+      if (needsTracking && !localStorage.getItem('finvu_tracking_onboarding_shown')) {
+        localStorage.setItem('finvu_tracking_onboarding_shown', 'true')
+        setShowTrackingOnboarding(true)
+        return
+      }
       if (needsBudgetTemplate) {
         setShowBudgetTemplate(true)
       } else if (showOnboarding) {
@@ -145,7 +153,7 @@ function App() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isLoading])
+  }, [isAuthenticated, isLoading, user])
 
   useEffect(() => {
     const handler = () => {
@@ -371,6 +379,9 @@ function App() {
       )}
 
       {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} onLogout={handleLogout} />}
+      {showTrackingOnboarding && (
+        <TrackingDateOnboarding onDone={() => setShowTrackingOnboarding(false)} />
+      )}
     </div>
   )
 }

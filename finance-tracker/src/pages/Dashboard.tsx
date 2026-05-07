@@ -16,6 +16,7 @@ import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { getSummary, getTotalBalance } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
+import { updateUserSettings } from '../api/auth'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useSavings } from '../hooks/useSavings'
@@ -142,6 +143,9 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [streakTapped, setStreakTapped] = useState(false)
   const [cumulativeBalance, setCumulativeBalance] = useState<number | null>(null)
+  const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [trackingSaving, setTrackingSaving] = useState(false)
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -152,7 +156,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
   const { profileName } = useSettingsContext()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const displayName = user?.name || profileName
   const householdEnabled = user?.household_enabled ?? false
   const greeting = getGreeting(displayName, t)
@@ -284,6 +288,26 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: t.dashboard.motivationalAvg, color: '#A78BFA' }
     return null
   })()
+
+  async function handleDismissBanner() {
+    try {
+      await updateUserSettings({ onboardingBannerDismissed: true })
+      await refreshUser()
+    } catch { /* non-critical */ }
+  }
+
+  async function handleSaveTrackingDate() {
+    if (!trackingDate) return
+    setTrackingSaving(true)
+    try {
+      await updateUserSettings({ trackingStartDate: trackingDate })
+      await refreshUser()
+      setShowTrackingModal(false)
+    } catch { /* non-critical */ }
+    finally { setTrackingSaving(false) }
+  }
+
+  const showTrackingBanner = !user?.tracking_start_date && !user?.onboarding_banner_dismissed
 
   // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
@@ -839,6 +863,104 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   return (
     <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
     <div style={{ padding: '20px', minHeight: '100%' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
+
+      {/* Tracking start date banner */}
+      {showTrackingBanner && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 12, padding: '12px 16px',
+          background: 'rgba(124,58,237,0.1)',
+          border: '1px solid rgba(124,58,237,0.3)',
+          borderRadius: 14,
+          flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 18, flexShrink: 0 }}>📅</span>
+            <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.4 }}>
+              Nastav počiatočný dátum sledovania financií
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={() => setShowTrackingModal(true)}
+              style={{
+                padding: '6px 14px', borderRadius: 10,
+                background: 'var(--violet)', color: 'white',
+                fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Nastaviť
+            </button>
+            <button
+              onClick={handleDismissBanner}
+              style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: 'transparent', border: '1px solid var(--border)',
+                color: 'var(--text3)', fontSize: 14, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'inherit', flexShrink: 0,
+              }}
+              title="Zavrieť natrvalo"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tracking date modal */}
+      {showTrackingModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowTrackingModal(false) }}
+        >
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px' }}>Sledovanie od dátumu</h3>
+              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Transakcie pred týmto dátumom sa nebudú zobrazovať v histórii.</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Počiatočný dátum</label>
+              <input
+                type="date"
+                value={trackingDate}
+                onChange={e => setTrackingDate(e.target.value)}
+                style={{
+                  background: 'var(--bg3)', border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '12px 14px', fontSize: 14,
+                  color: 'var(--text)', width: '100%', outline: 'none',
+                  fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowTrackingModal(false)}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 10,
+                  background: 'var(--bg3)', border: '1px solid var(--border)',
+                  color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Zrušiť
+              </button>
+              <button
+                onClick={handleSaveTrackingDate}
+                disabled={trackingSaving || !trackingDate}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 10,
+                  background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                  color: 'white', fontSize: 14, fontWeight: 600, border: 'none',
+                  cursor: trackingSaving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                  opacity: (trackingSaving || !trackingDate) ? 0.6 : 1,
+                }}
+              >
+                {trackingSaving ? 'Ukladám...' : 'Uložiť'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ════════════════════════════════════════
           MOBILE LAYOUT

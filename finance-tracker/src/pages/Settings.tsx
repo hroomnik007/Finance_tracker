@@ -642,6 +642,33 @@ export function SettingsPage() {
     { value: 'sunday', label: t.settings.sunday },
   ]
 
+  // ── Tracking start date ───────────────────────────────────────────────────
+  const [trackingDate, setTrackingDate] = useState(() => user?.tracking_start_date ?? '')
+  const [trackingSaving, setTrackingSaving] = useState(false)
+  const [trackingOk, setTrackingOk] = useState(false)
+
+  async function handleSaveTrackingDate() {
+    setTrackingSaving(true)
+    setTrackingOk(false)
+    try {
+      await updateUserSettings({ trackingStartDate: trackingDate || null })
+      await refreshUser()
+      setTrackingOk(true)
+      setTimeout(() => setTrackingOk(false), 2500)
+    } catch { /* non-critical */ }
+    finally { setTrackingSaving(false) }
+  }
+
+  async function handleClearTrackingDate() {
+    setTrackingSaving(true)
+    try {
+      await updateUserSettings({ trackingStartDate: null })
+      await refreshUser()
+      setTrackingDate('')
+    } catch { /* non-critical */ }
+    finally { setTrackingSaving(false) }
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -700,6 +727,55 @@ export function SettingsPage() {
             </div>
           </SectionCard>
           </div>
+
+          {/* Section: Sledovanie od dátumu */}
+          <SectionCard>
+            <SectionHeader emoji="📅" label="Sledovanie od dátumu" />
+            <div style={{ padding: '4px 20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, lineHeight: 1.5 }}>
+                Nastav dátum, od ktorého chceš sledovať financie. Príjmy a výdavky pred týmto dátumom sa nebudú zobrazovať v histórii.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Sledovanie od
+                </label>
+                <input
+                  type="date"
+                  value={trackingDate}
+                  onChange={e => setTrackingDate(e.target.value)}
+                  style={{
+                    background: 'var(--bg3)', border: '1px solid var(--border)',
+                    borderRadius: 10, padding: '11px 14px', fontSize: 14,
+                    color: 'var(--text)', width: '100%', outline: 'none',
+                    fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark',
+                  }}
+                />
+              </div>
+              {trackingOk && (
+                <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Dátum bol uložený</p>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={handleSaveTrackingDate}
+                  disabled={trackingSaving}
+                  className="btn-primary py-2 text-sm"
+                  style={{ flex: 1, opacity: trackingSaving ? 0.6 : 1 }}
+                >
+                  {trackingSaving ? 'Ukladám...' : 'Uložiť'}
+                </button>
+                {(user?.tracking_start_date) && (
+                  <button
+                    onClick={handleClearTrackingDate}
+                    disabled={trackingSaving}
+                    className="btn-secondary py-2 text-sm"
+                    style={{ opacity: trackingSaving ? 0.6 : 1 }}
+                  >
+                    Vymazať
+                  </button>
+                )}
+              </div>
+            </div>
+          </SectionCard>
 
           {/* Section 2: Vzhľad & Téma */}
           <SectionCard>
