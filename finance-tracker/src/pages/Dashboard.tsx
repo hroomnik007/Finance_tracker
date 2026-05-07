@@ -312,7 +312,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   // Mobile hero card — gradient balance card with income/expense rows
   const mobileHeroCard = (
     <div style={{
-      background: isLight ? 'linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 50%, var(--bg3) 100%)' : 'linear-gradient(135deg, #1a1035 0%, #2d1b69 50%, #1a1035 100%)',
+      background: 'linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 50%, var(--bg3) 100%)',
       border: '1px solid var(--border)',
       borderRadius: 24,
       padding: '24px 20px',
