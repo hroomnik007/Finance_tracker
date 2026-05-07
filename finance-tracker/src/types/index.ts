@@ -18,14 +18,12 @@ export interface Income {
   created_by?: string | null
 }
 
-export type FixedCategory = 'housing' | 'utilities' | 'subscriptions' | 'insurance' | 'other'
-
 export interface FixedExpense {
   id?: string
   label: string
   amount: number
   dayOfMonth: number
-  category: FixedCategory
+  categoryId?: string | null
   note: string
 }
 

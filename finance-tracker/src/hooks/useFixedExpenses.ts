@@ -1,29 +1,25 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
 import { useAuth } from '../context/AuthContext'
-import type { FixedExpense, FixedCategory, ApiTransaction } from '../types'
+import type { FixedExpense, ApiTransaction } from '../types'
 
-const VALID_CATS: FixedCategory[] = ['housing', 'utilities', 'subscriptions', 'insurance', 'other']
-
-function parseDescription(desc: string | null, fallbackDay: number): { label: string; category: FixedCategory; note: string; dayOfMonth: number } {
-  if (!desc) return { label: '', category: 'other', note: '', dayOfMonth: fallbackDay }
+function parseDescription(desc: string | null, fallbackDay: number): { label: string; note: string; dayOfMonth: number } {
+  if (!desc) return { label: '', note: '', dayOfMonth: fallbackDay }
   try {
     const obj = JSON.parse(desc)
     if (obj && typeof obj === 'object' && 'l' in obj) {
-      const cat: FixedCategory = VALID_CATS.includes(obj.c) ? obj.c : 'other'
       return {
         label: String(obj.l ?? ''),
-        category: cat,
         note: String(obj.n ?? ''),
         dayOfMonth: typeof obj.d === 'number' && obj.d >= 1 && obj.d <= 31 ? obj.d : fallbackDay,
       }
     }
   } catch { /* not JSON — legacy plain text */ }
-  return { label: desc, category: 'other', note: '', dayOfMonth: fallbackDay }
+  return { label: desc, note: '', dayOfMonth: fallbackDay }
 }
 
-function encodeDescription(label: string, category: FixedCategory, note: string, dayOfMonth: number): string {
-  return JSON.stringify({ l: label, c: category, n: note, d: dayOfMonth })
+function encodeDescription(label: string, note: string, dayOfMonth: number): string {
+  return JSON.stringify({ l: label, n: note, d: dayOfMonth })
 }
 
 function toFixedExpense(t: ApiTransaction): FixedExpense {
@@ -34,7 +30,7 @@ function toFixedExpense(t: ApiTransaction): FixedExpense {
     label: parsed.label,
     amount: t.amount,
     dayOfMonth: parsed.dayOfMonth,
-    category: parsed.category,
+    categoryId: t.categoryId ?? null,
     note: parsed.note,
   }
 }
@@ -62,9 +58,10 @@ export function useFixedExpenses(month?: number, year?: number) {
     await createTransaction({
       type: 'expense',
       amount: expense.amount,
-      description: encodeDescription(expense.label, expense.category, expense.note, expense.dayOfMonth),
+      description: encodeDescription(expense.label, expense.note, expense.dayOfMonth),
       date: today,
       isFixed: true,
+      categoryId: expense.categoryId ?? null,
     })
     await load()
   }, [load])
@@ -72,12 +69,12 @@ export function useFixedExpenses(month?: number, year?: number) {
   const updateFixedExpense = useCallback(async (id: string, changes: Partial<FixedExpense>): Promise<void> => {
     const existing = fixedExpenses.find(e => e.id === id)
     const label = changes.label ?? existing?.label ?? ''
-    const category = changes.category ?? existing?.category ?? 'other'
     const note = changes.note ?? existing?.note ?? ''
     const dayOfMonth = changes.dayOfMonth ?? existing?.dayOfMonth ?? 1
     await updateTransaction(id, {
       amount: changes.amount,
-      description: encodeDescription(label, category, note, dayOfMonth),
+      description: encodeDescription(label, note, dayOfMonth),
+      categoryId: changes.categoryId !== undefined ? changes.categoryId : existing?.categoryId,
     })
     await load()
   }, [load, fixedExpenses])

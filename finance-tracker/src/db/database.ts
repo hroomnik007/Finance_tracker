@@ -45,7 +45,7 @@ async function seedDatabase() {
     label: 'Nájom',
     amount: 650,
     dayOfMonth: 1,
-    category: 'housing' as const,
+    categoryId: null,
     note: '',
   })
 

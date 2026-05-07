@@ -5,21 +5,18 @@ import { BottomSheet } from '../components/BottomSheet'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
+import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import type { FixedExpense, FixedCategory } from '../types'
+import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 import React from 'react'
 
-const ALL_CATS: FixedCategory[] = ['housing', 'utilities', 'subscriptions', 'insurance', 'other']
+const FALLBACK_ICON = '📦'
+const FALLBACK_COLOR = '#6b7280'
 
-type CatConfig = { emoji: string; color: string; bg: string }
-const CAT_CONFIG: Record<FixedCategory, CatConfig> = {
-  housing:       { emoji: '🏠', color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
-  utilities:     { emoji: '⚡', color: '#eab308', bg: 'rgba(234,179,8,0.15)' },
-  subscriptions: { emoji: '📱', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
-  insurance:     { emoji: '🛡️', color: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
-  other:         { emoji: '📦', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' },
+function catBg(color: string) {
+  return color + '26'
 }
 
 interface FixedExpensesPageProps {
@@ -30,33 +27,53 @@ interface FixedExpensesPageProps {
 export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const { fixedExpenses, addFixedExpense, updateFixedExpense, deleteFixedExpense } = useFixedExpenses()
   const { variableExpenses } = useVariableExpenses(month, year)
+  const { categories } = useCategories()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
+
+  const expenseCategories = useMemo(
+    () => categories.filter(c => c.type === 'expense'),
+    [categories]
+  )
+
+  const getCat = (id?: string | null): Category | null =>
+    expenseCategories.find(c => c.id === id) ?? null
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<FixedExpense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [activeCat, setActiveCat] = useState<FixedCategory | null>(null)
+  const [activeCat, setActiveCat] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
 
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
   const [dayOfMonth, setDayOfMonth] = useState('1')
-  const [category, setCategory] = useState<FixedCategory>('other')
+  const [categoryId, setCategoryId] = useState<string>('')
   const [note, setNote] = useState('')
 
   const total = useMemo(() => fixedExpenses.reduce((s, e) => s + e.amount, 0), [fixedExpenses])
   const variableTotal = useMemo(() => variableExpenses.reduce((s, e) => s + e.amount, 0), [variableExpenses])
 
   const filtered = useMemo(
-    () => activeCat ? fixedExpenses.filter(e => e.category === activeCat) : fixedExpenses,
+    () => activeCat === null
+      ? fixedExpenses
+      : fixedExpenses.filter(e => (e.categoryId ?? '') === activeCat),
     [fixedExpenses, activeCat]
   )
 
-  const categoryTotals = useMemo(
-    () => ALL_CATS
-      .map(cat => ({ id: cat, amount: fixedExpenses.filter(e => e.category === cat).reduce((s, e) => s + e.amount, 0) }))
-      .filter(c => c.amount > 0),
+  const categoryTotals = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const e of fixedExpenses) {
+      const key = e.categoryId ?? ''
+      map.set(key, (map.get(key) ?? 0) + e.amount)
+    }
+    return Array.from(map.entries())
+      .filter(([, amt]) => amt > 0)
+      .map(([id, amount]) => ({ id, amount }))
+  }, [fixedExpenses])
+
+  const usedCategoryIds = useMemo(
+    () => [...new Set(fixedExpenses.map(e => e.categoryId ?? ''))],
     [fixedExpenses]
   )
 
@@ -77,13 +94,16 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   }
 
   function openAdd() {
-    setEditing(null); setLabel(''); setAmount(''); setDayOfMonth('1'); setCategory('other'); setNote('')
+    setEditing(null)
+    setLabel(''); setAmount(''); setDayOfMonth('1')
+    setCategoryId(expenseCategories[0]?.id ?? '')
+    setNote('')
     setSheetOpen(true)
   }
 
   function openEdit(e: FixedExpense) {
     setEditing(e); setLabel(e.label); setAmount(String(e.amount))
-    setDayOfMonth(String(e.dayOfMonth)); setCategory(e.category); setNote(e.note)
+    setDayOfMonth(String(e.dayOfMonth)); setCategoryId(e.categoryId ?? ''); setNote(e.note)
     setSheetOpen(true)
   }
 
@@ -93,10 +113,11 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     const amt = parseFloat(amount.replace(',', '.'))
     const day = parseInt(dayOfMonth)
     if (!label.trim() || isNaN(amt) || amt <= 0 || isNaN(day) || day < 1 || day > 28) return
+    const catId = categoryId || null
     if (editing?.id != null) {
-      await updateFixedExpense(editing.id, { label: label.trim(), amount: amt, dayOfMonth: day, category, note })
+      await updateFixedExpense(editing.id, { label: label.trim(), amount: amt, dayOfMonth: day, categoryId: catId, note })
     } else {
-      await addFixedExpense({ label: label.trim(), amount: amt, dayOfMonth: day, category, note })
+      await addFixedExpense({ label: label.trim(), amount: amt, dayOfMonth: day, categoryId: catId, note })
     }
     closeSheet()
   }
@@ -105,8 +126,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     await deleteFixedExpense(id)
     setDeleteId(null)
   }
-
-  const catLabel = (cat: FixedCategory) => t.expenses.fixed.categories[cat]
 
   const pillStyle = (active: boolean, color?: string): React.CSSProperties => active ? ({
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 50,
@@ -142,18 +161,21 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       {categoryTotals.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
           {categoryTotals.map(({ id, amount: catAmt }) => {
-            const cfg = CAT_CONFIG[id]
+            const cat = getCat(id)
+            const icon = cat?.icon ?? FALLBACK_ICON
+            const color = cat?.color ?? FALLBACK_COLOR
+            const name = cat?.name ?? '—'
             const pct = total > 0 ? (catAmt / total) * 100 : 0
             return (
-              <div key={id}>
+              <div key={id || '__none__'}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{cfg.emoji}</span><span>{catLabel(id)}</span>
+                    <span>{icon}</span><span>{name}</span>
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{formatAmount(catAmt)}</span>
                 </div>
                 <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: cfg.color, transition: 'width 0.5s' }} />
+                  <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: color, transition: 'width 0.5s' }} />
                 </div>
               </div>
             )
@@ -169,11 +191,13 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {upcomingPayments.map(e => {
         const badge = countdownBadge(e.daysUntil)
-        const cfg = CAT_CONFIG[e.category]
+        const cat = getCat(e.categoryId)
+        const icon = cat?.icon ?? FALLBACK_ICON
+        const color = cat?.color ?? FALLBACK_COLOR
         return (
           <div key={e.id ?? e.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-              {cfg.emoji}
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+              {icon}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
@@ -288,20 +312,22 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           </div>
 
           {/* Category filter pills */}
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-            <button onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
-              {t.expenses.fixed.allCategories}
-            </button>
-            {ALL_CATS.filter(cat => fixedExpenses.some(e => e.category === cat)).map(cat => {
-              const cfg = CAT_CONFIG[cat]
-              const isActive = activeCat === cat
-              return (
-                <button key={cat} onClick={() => setActiveCat(isActive ? null : cat)} style={pillStyle(isActive, cfg.color)}>
-                  <span>{cfg.emoji}</span>{catLabel(cat)}
-                </button>
-              )
-            })}
-          </div>
+          {usedCategoryIds.length > 1 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+              <button onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
+                {t.expenses.fixed.allCategories}
+              </button>
+              {usedCategoryIds.map(catId => {
+                const cat = getCat(catId)
+                const isActive = activeCat === catId
+                return (
+                  <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive, cat?.color)}>
+                    <span>{cat?.icon ?? FALLBACK_ICON}</span>{cat?.name ?? '—'}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           {/* Mobile: vs variable card */}
           <div className="lg:hidden">
@@ -327,7 +353,9 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {filtered.map(expense => {
-                const cfg = CAT_CONFIG[expense.category]
+                const cat = getCat(expense.categoryId)
+                const icon = cat?.icon ?? FALLBACK_ICON
+                const color = cat?.color ?? FALLBACK_COLOR
                 const today = new Date().getDate()
                 const daysUntil = ((expense.dayOfMonth - today + 31) % 31)
                 const badge = countdownBadge(daysUntil)
@@ -339,12 +367,14 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
                   >
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
-                      {cfg.emoji}
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                      {icon}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.label}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{catLabel(expense.category)} · {t.expenses.fixed.dueDay}: {expense.dayOfMonth}.</div>
+                      <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
+                        {cat?.name ?? '—'} · {t.expenses.fixed.dueDay}: {expense.dayOfMonth}.
+                      </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                       <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)' }}>{formatAmount(expense.amount)}</span>
@@ -442,20 +472,23 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               onChange={e => setDayOfMonth(e.target.value)}
             />
           </div>
-          <div>
-            <label className="form-label">{t.expenses.fixed.categoryLabel}</label>
-            <select
-              className="input-field"
-              value={category}
-              onChange={e => setCategory(e.target.value as FixedCategory)}
-            >
-              {ALL_CATS.map(cat => (
-                <option key={cat} value={cat}>
-                  {CAT_CONFIG[cat].emoji} {catLabel(cat)}
-                </option>
-              ))}
-            </select>
-          </div>
+          {expenseCategories.length > 0 && (
+            <div>
+              <label className="form-label">{t.expenses.fixed.categoryLabel}</label>
+              <select
+                className="input-field"
+                value={categoryId}
+                onChange={e => setCategoryId(e.target.value)}
+              >
+                <option value="">— Bez kategórie —</option>
+                {expenseCategories.map(cat => (
+                  <option key={cat.id} value={cat.id ?? ''}>
+                    {cat.icon} {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="form-label">
               {t.expenses.fixed.noteLabel}{' '}
