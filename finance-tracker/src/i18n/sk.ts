@@ -11,6 +11,7 @@ export const sk = {
     currentMonth: 'Aktuálny mesiac',
     appName: 'Finvu',
     savings: 'Sporenie',
+    more: 'Viac',
   },
   months: [
     'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',

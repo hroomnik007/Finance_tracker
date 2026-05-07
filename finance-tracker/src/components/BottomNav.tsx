@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Home, TrendingUp, Settings, Receipt, Lock, Tag, PiggyBank } from 'lucide-react'
+import { Home, TrendingUp, Settings, Receipt, Lock, Tag, PiggyBank, MoreHorizontal } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import { BottomSheet } from './BottomSheet'
 
 interface BottomNavProps {
   current: Page
@@ -10,6 +11,7 @@ interface BottomNavProps {
 }
 
 const EXPENSE_PAGES: Page[] = ['variable-expenses', 'fixed-expenses', 'categories']
+const VIAC_PAGES: Page[] = ['savings', 'household']
 
 export function BottomNav({ current, onChange }: BottomNavProps) {
   const { t } = useTranslation()
@@ -17,11 +19,20 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   const expensesActive = EXPENSE_PAGES.includes(current)
   const householdEnabled = user?.household_enabled ?? false
   const savingsEnabled = user?.savings_enabled ?? false
+  const showViac = savingsEnabled || householdEnabled
+  const viacActive = VIAC_PAGES.includes(current)
+
   const [showExpenseMenu, setShowExpenseMenu] = useState(false)
+  const [showViacSheet, setShowViacSheet] = useState(false)
 
   function handleExpenseNav(page: Page) {
     onChange(page)
     setShowExpenseMenu(false)
+  }
+
+  function handleViacNav(page: Page) {
+    onChange(page)
+    setShowViacSheet(false)
   }
 
   return (
@@ -80,6 +91,83 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         </>
       )}
 
+      {/* Viac bottom sheet */}
+      <BottomSheet
+        open={showViacSheet}
+        onClose={() => setShowViacSheet(false)}
+        title={t.nav.more}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {savingsEnabled && (
+            <button
+              onClick={() => handleViacNav('savings')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                width: '100%',
+                padding: '14px 16px',
+                background: current === 'savings' ? 'rgba(139,92,246,0.12)' : 'transparent',
+                border: 'none',
+                borderRadius: '12px',
+                color: current === 'savings' ? 'var(--violet)' : 'var(--text)',
+                fontSize: '15px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: current === 'savings' ? 600 : 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: current === 'savings' ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: current === 'savings' ? 'var(--violet)' : 'var(--text2)',
+                flexShrink: 0,
+              }}>
+                <PiggyBank size={18} />
+              </div>
+              {t.nav.savings}
+            </button>
+          )}
+          {householdEnabled && (
+            <button
+              onClick={() => handleViacNav('household')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                width: '100%',
+                padding: '14px 16px',
+                background: current === 'household' ? 'rgba(139,92,246,0.12)' : 'transparent',
+                border: 'none',
+                borderRadius: '12px',
+                color: current === 'household' ? 'var(--violet)' : 'var(--text)',
+                fontSize: '15px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: current === 'household' ? 600 : 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: current === 'household' ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: current === 'household' ? 'var(--violet)' : 'var(--text2)',
+                flexShrink: 0,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              {t.nav.household}
+            </button>
+          )}
+        </div>
+      </BottomSheet>
+
       <nav
         className="bottom-nav-bar"
         style={{
@@ -116,34 +204,22 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             </svg>
           }
           label={t.nav.expenses}
-          onClick={() => setShowExpenseMenu(s => !s)}
+          onClick={() => { setShowViacSheet(false); setShowExpenseMenu(s => !s) }}
         />
-        {savingsEnabled ? (
-          <NavTab
-            active={current === 'savings'}
-            icon={<PiggyBank size={20} />}
-            label={t.nav.savings}
-            onClick={() => { setShowExpenseMenu(false); onChange('savings') }}
-          />
-        ) : householdEnabled && (
-          <NavTab
-            active={current === 'household'}
-            icon={
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            }
-            label={t.nav.household}
-            onClick={() => { setShowExpenseMenu(false); onChange('household') }}
-          />
-        )}
         <NavTab
           active={current === 'settings'}
           icon={<Settings size={20} />}
           label={t.nav.settings}
-          onClick={() => { setShowExpenseMenu(false); onChange('settings') }}
+          onClick={() => { setShowExpenseMenu(false); setShowViacSheet(false); onChange('settings') }}
         />
+        {showViac && (
+          <NavTab
+            active={viacActive || showViacSheet}
+            icon={<MoreHorizontal size={20} />}
+            label={t.nav.more}
+            onClick={() => { setShowExpenseMenu(false); setShowViacSheet(s => !s) }}
+          />
+        )}
       </nav>
     </>
   )

@@ -13,6 +13,7 @@ export const en: Translations = {
     currentMonth: 'Current month',
     appName: 'Finvu',
     savings: 'Savings',
+    more: 'More',
   },
   months: [
     'January', 'February', 'March', 'April', 'May', 'June',
