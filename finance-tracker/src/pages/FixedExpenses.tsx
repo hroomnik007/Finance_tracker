@@ -303,17 +303,48 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Category filter pills */}
           {usedCategoryIds.length > 1 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <button onClick={() => setActiveCat(null)} className={`filter-pill${activeCat === null ? ' active' : ''}`}>
-                <span>{t.expenses.fixed.allCategories}</span>
-              </button>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setActiveCat(null)}
+                onKeyDown={e => e.key === 'Enter' && setActiveCat(null)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                  border: activeCat === null ? 'none' : '1px solid var(--border)',
+                  background: activeCat === null ? 'var(--violet)' : 'var(--bg3)',
+                  color: activeCat === null ? 'white' : 'var(--text2)',
+                  userSelect: 'none',
+                }}
+              >
+                {t.expenses.fixed.allCategories}
+              </div>
               {usedCategoryIds.map(catId => {
                 const cat = getCat(catId)
                 const isActive = activeCat === catId
                 return (
-                  <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} className={`filter-pill${isActive ? ' active' : ''}`}>
+                  <div
+                    key={catId || '__none__'}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setActiveCat(isActive ? null : catId)}
+                    onKeyDown={e => e.key === 'Enter' && setActiveCat(isActive ? null : catId)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                      fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                      fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                      border: isActive ? 'none' : '1px solid var(--border)',
+                      background: isActive ? 'var(--violet)' : 'var(--bg3)',
+                      color: isActive ? 'white' : 'var(--text2)',
+                      userSelect: 'none',
+                    }}
+                  >
                     <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
                     <span>{cat?.name ?? '—'}</span>
-                  </button>
+                  </div>
                 )
               })}
             </div>

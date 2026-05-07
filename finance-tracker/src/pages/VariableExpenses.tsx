@@ -227,14 +227,45 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           {/* Category filter pills */}
           {categoriesWithExpenses.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <button onClick={() => setActiveCategory(null)} className={`filter-pill${activeCategory === null ? ' active' : ''}`}>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setActiveCategory(null)}
+                onKeyDown={e => e.key === 'Enter' && setActiveCategory(null)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                  border: activeCategory === null ? 'none' : '1px solid var(--border)',
+                  background: activeCategory === null ? 'var(--violet)' : 'var(--bg3)',
+                  color: activeCategory === null ? 'white' : 'var(--text2)',
+                  userSelect: 'none',
+                }}
+              >
                 {t.expenses.variable.allCategories}
-              </button>
+              </div>
               {categoriesWithExpenses.map(c => (
-                <button key={c.id} onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} className={`filter-pill${activeCategory === c.id ? ' active' : ''}`}>
+                <div
+                  key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
+                  onKeyDown={e => e.key === 'Enter' && setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                    fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                    border: activeCategory === c.id ? 'none' : '1px solid var(--border)',
+                    background: activeCategory === c.id ? 'var(--violet)' : 'var(--bg3)',
+                    color: activeCategory === c.id ? 'white' : 'var(--text2)',
+                    userSelect: 'none',
+                  }}
+                >
                   <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
                   <span>{c.name}</span>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -242,11 +273,44 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <button onClick={() => setMemberFilter('all')} className={`filter-pill${memberFilter === 'all' ? ' active' : ''}`}>👥 Všetci</button>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setMemberFilter('all')}
+                onKeyDown={e => e.key === 'Enter' && setMemberFilter('all')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                  border: memberFilter === 'all' ? 'none' : '1px solid var(--border)',
+                  background: memberFilter === 'all' ? 'var(--violet)' : 'var(--bg3)',
+                  color: memberFilter === 'all' ? 'white' : 'var(--text2)',
+                  userSelect: 'none',
+                }}
+              >
+                👥 Všetci
+              </div>
               {members.map(m => (
-                <button key={m.id} onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} className={`filter-pill${memberFilter === m.id ? ' active' : ''}`}>
+                <div
+                  key={m.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
+                  onKeyDown={e => e.key === 'Enter' && setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                    fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
+                    border: memberFilter === m.id ? 'none' : '1px solid var(--border)',
+                    background: memberFilter === m.id ? 'var(--violet)' : 'var(--bg3)',
+                    color: memberFilter === m.id ? 'white' : 'var(--text2)',
+                    userSelect: 'none',
+                  }}
+                >
                   <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
-                </button>
+                </div>
               ))}
             </div>
           )}
