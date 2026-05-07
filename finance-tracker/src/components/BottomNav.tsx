@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Home, TrendingUp, Settings, Receipt, Lock, Tag } from 'lucide-react'
+import { Home, TrendingUp, Settings, Receipt, Lock, Tag, PiggyBank } from 'lucide-react'
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
@@ -16,6 +16,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   const { user } = useAuth()
   const expensesActive = EXPENSE_PAGES.includes(current)
   const householdEnabled = user?.household_enabled ?? false
+  const savingsEnabled = user?.savings_enabled ?? false
   const [showExpenseMenu, setShowExpenseMenu] = useState(false)
 
   function handleExpenseNav(page: Page) {
@@ -117,7 +118,14 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           label={t.nav.expenses}
           onClick={() => setShowExpenseMenu(s => !s)}
         />
-        {householdEnabled && (
+        {savingsEnabled ? (
+          <NavTab
+            active={current === 'savings'}
+            icon={<PiggyBank size={20} />}
+            label={t.nav.savings}
+            onClick={() => { setShowExpenseMenu(false); onChange('savings') }}
+          />
+        ) : householdEnabled && (
           <NavTab
             active={current === 'household'}
             icon={
@@ -126,7 +134,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
             }
-            label="Domácnosť"
+            label={t.nav.household}
             onClick={() => { setShowExpenseMenu(false); onChange('household') }}
           />
         )}
