@@ -85,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (guestFlag) {
       setIsGuest(true)
+      setInitializingAuth(false)
       setIsLoading(false)
       return
     }
