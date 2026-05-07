@@ -159,15 +159,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     </div>
   )
 
-  const pillStyle = (active: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 20, fontSize: 13,
-    fontWeight: 500, cursor: 'pointer',
-    border: active ? 'none' : '1px solid var(--border)',
-    background: active ? 'var(--violet)' : 'var(--bg3)',
-    color: active ? 'white' : 'var(--text2)',
-    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
-  })
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -236,11 +227,11 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           {/* Category filter pills */}
           {categoriesWithExpenses.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <button onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
+              <button onClick={() => setActiveCategory(null)} className={`filter-pill${activeCategory === null ? ' active' : ''}`}>
                 {t.expenses.variable.allCategories}
               </button>
               {categoriesWithExpenses.map(c => (
-                <button key={c.id} onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
+                <button key={c.id} onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} className={`filter-pill${activeCategory === c.id ? ' active' : ''}`}>
                   <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
                   <span>{c.name}</span>
                 </button>
@@ -251,9 +242,9 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <button onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>👥 Všetci</button>
+              <button onClick={() => setMemberFilter('all')} className={`filter-pill${memberFilter === 'all' ? ' active' : ''}`}>👥 Všetci</button>
               {members.map(m => (
-                <button key={m.id} onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
+                <button key={m.id} onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} className={`filter-pill${memberFilter === m.id ? ' active' : ''}`}>
                   <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
                 </button>
               ))}

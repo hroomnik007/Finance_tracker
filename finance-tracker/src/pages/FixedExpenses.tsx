@@ -127,14 +127,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     setDeleteId(null)
   }
 
-  const pillStyle = (active: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 20,
-    fontSize: 13, fontWeight: 500, cursor: 'pointer',
-    border: active ? 'none' : '1px solid var(--border)',
-    background: active ? 'var(--violet)' : 'var(--bg3)',
-    color: active ? 'white' : 'var(--text2)',
-    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
-  })
 
   const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
     <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
@@ -311,14 +303,14 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Category filter pills */}
           {usedCategoryIds.length > 1 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-              <button onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
+              <button onClick={() => setActiveCat(null)} className={`filter-pill${activeCat === null ? ' active' : ''}`}>
                 <span>{t.expenses.fixed.allCategories}</span>
               </button>
               {usedCategoryIds.map(catId => {
                 const cat = getCat(catId)
                 const isActive = activeCat === catId
                 return (
-                  <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
+                  <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} className={`filter-pill${isActive ? ' active' : ''}`}>
                     <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
                     <span>{cat?.name ?? '—'}</span>
                   </button>
