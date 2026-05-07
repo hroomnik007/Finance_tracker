@@ -263,7 +263,8 @@ export function SavingsPage() {
   )
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
       <div style={{ padding: 20, minHeight: '100%' }}>
 
         {/* Desktop header */}
@@ -338,6 +339,7 @@ export function SavingsPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       {/* Mobile FAB */}
