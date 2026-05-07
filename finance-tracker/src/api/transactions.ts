@@ -55,3 +55,8 @@ export async function getSummary(month: string): Promise<ApiSummary> {
   const { data } = await apiClient.get('/api/transactions/summary', { params: { month } })
   return data
 }
+
+export async function getTotalBalance(): Promise<{ totalIncome: number; totalExpenses: number; balance: number }> {
+  const { data } = await apiClient.get('/api/reports/total-balance')
+  return data
+}

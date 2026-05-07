@@ -14,7 +14,7 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
-import { getSummary } from '../api/transactions'
+import { getSummary, getTotalBalance } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
@@ -141,6 +141,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [streakTapped, setStreakTapped] = useState(false)
+  const [cumulativeBalance, setCumulativeBalance] = useState<number | null>(null)
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -223,6 +224,10 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
     }
   }, [householdEnabled, user?.household_id])
+
+  useEffect(() => {
+    getTotalBalance().then(d => setCumulativeBalance(d.balance)).catch(() => {})
+  }, [])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderPieShape = (props: any) => {
@@ -326,11 +331,11 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         fontFamily: "'DM Mono', monospace",
         fontWeight: 700,
         fontSize: 'clamp(32px, 8vw, 44px)',
-        color: balance >= 0 ? '#34D399' : '#F87171',
+        color: (cumulativeBalance ?? balance) >= 0 ? '#34D399' : '#F87171',
         textAlign: 'center',
         lineHeight: 1,
         margin: '0 0 20px',
-      }}>{formatAmount(balance)}</p>
+      }}>{formatAmount(cumulativeBalance ?? balance)}</p>
       <div style={{ display: 'flex', gap: 10 }}>
         <div onClick={() => onNavigate('income')} style={{ flex: 1, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.income}</p>

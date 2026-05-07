@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import { db } from "../db";
-import { sharedReports } from "../db/schema";
+import { sharedReports, transactions, users } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 
 export async function createSharedReport(req: AuthRequest, res: Response): Promise<void> {
@@ -42,4 +42,38 @@ export async function getSharedReport(req: Request, res: Response): Promise<void
   }
 
   res.json({ data: report.data });
+}
+
+export async function getTotalBalance(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!;
+
+  const [userRow] = await db
+    .select({ householdId: users.householdId, householdEnabled: users.householdEnabled })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const baseFilter =
+    userRow?.householdEnabled && userRow?.householdId
+      ? or(
+          eq(transactions.householdId, userRow.householdId),
+          and(eq(transactions.userId, userId), isNull(transactions.householdId))
+        )
+      : and(eq(transactions.userId, userId), isNull(transactions.householdId));
+
+  const rows = await db
+    .select({
+      type: transactions.type,
+      total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`,
+    })
+    .from(transactions)
+    .where(baseFilter)
+    .groupBy(transactions.type);
+
+  const incomeRow = rows.find(r => r.type === "income");
+  const expenseRow = rows.find(r => r.type === "expense");
+  const totalIncome = incomeRow ? parseFloat(incomeRow.total) : 0;
+  const totalExpenses = expenseRow ? parseFloat(expenseRow.total) : 0;
+
+  res.json({ totalIncome, totalExpenses, balance: totalIncome - totalExpenses });
 }
