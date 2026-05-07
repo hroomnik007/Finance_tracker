@@ -324,14 +324,6 @@ export function CategoriesPage() {
         title={editing ? t.expenses.categories.editTitle : t.expenses.categories.newTitle}
         footer={
           <div style={{ display: 'flex', gap: '12px' }}>
-            {editing && (
-              <button
-                onClick={() => { closeSheet(); setDeleteId(editing.id!) }}
-                style={{ height: '56px', borderRadius: '16px', paddingLeft: 20, paddingRight: 20, background: 'rgba(239,68,68,0.1)', color: '#f87171', fontSize: '14px', border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                {t.common.delete}
-              </button>
-            )}
             <button
               onClick={closeSheet}
               style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'transparent', color: '#9D84D4', fontSize: '14px', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
