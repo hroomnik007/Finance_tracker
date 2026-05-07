@@ -9,7 +9,7 @@ import { useTranslation } from '../i18n'
 import type { SavingsGoal } from '../types'
 
 const PRESET_COLORS = [
-  '#7C3AED', '#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899',
+  '#7C3AED', '#A78BFA', '#10B981', '#34D399', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899',
 ]
 
 const PRESET_ICONS = [
@@ -342,17 +342,31 @@ export function SavingsPage() {
 
       {/* Mobile FAB */}
       <button
-        className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white cursor-pointer border-none"
+        className="lg:hidden"
         onClick={openAdd}
         aria-label="Pridať cieľ"
         style={{
+          position: 'fixed',
+          right: 20,
           bottom: 'calc(72px + env(safe-area-inset-bottom, 16px))',
+          width: 56,
+          height: 56,
+          minWidth: 56,
+          minHeight: 56,
+          borderRadius: '50%',
           background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'visible',
           boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
           zIndex: 50,
         }}
       >
-        <Plus size={26} />
+        <Plus size={24} />
       </button>
 
       <SavingsDetailModal
