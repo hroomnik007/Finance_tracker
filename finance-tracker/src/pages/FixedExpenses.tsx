@@ -302,7 +302,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
         {/* Main scroll area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ flex: 1, overflowY: 'auto', paddingTop: 20, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
@@ -315,14 +315,15 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {usedCategoryIds.length > 1 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
               <button onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
-                {t.expenses.fixed.allCategories}
+                <span>{t.expenses.fixed.allCategories}</span>
               </button>
               {usedCategoryIds.map(catId => {
                 const cat = getCat(catId)
                 const isActive = activeCat === catId
                 return (
                   <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive, cat?.color)}>
-                    <span>{cat?.icon ?? FALLBACK_ICON}</span>{cat?.name ?? '—'}
+                    <span style={{ fontSize: 15, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                    <span>{cat?.name ?? '—'}</span>
                   </button>
                 )
               })}
@@ -391,7 +392,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             </div>
           )}
 
-          <div className="lg:hidden" style={{ height: 180 }} />
 
         </div>
 
