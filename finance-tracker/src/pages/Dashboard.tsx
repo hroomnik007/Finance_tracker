@@ -839,7 +839,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           MOBILE LAYOUT
       ════════════════════════════════════════ */}
       <div className="flex flex-col gap-4 lg:hidden">
-        {greetingRow}
+        <div className="hidden md:block">{greetingRow}</div>
         {mobileHeroCard}
         {miniStatsRow}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

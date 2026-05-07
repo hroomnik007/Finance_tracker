@@ -24,9 +24,10 @@ function isPhotoUrl(url: string | null | undefined): url is string {
 }
 
 function getGreeting(hour: number): string {
-  if (hour < 12) return 'Dobré ráno'
-  if (hour < 18) return 'Dobrý deň'
-  return 'Dobrý večer'
+  if (hour >= 5 && hour < 12) return 'Dobré ráno'
+  if (hour >= 12 && hour < 18) return 'Dobré popoludní'
+  if (hour >= 18 && hour < 23) return 'Dobrý večer'
+  return 'Dobrú noc'
 }
 
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile }: TopbarProps) {
@@ -58,6 +59,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const hour = now.getHours()
   const greeting = getGreeting(hour)
   const householdEnabled = user?.household_enabled ?? false
+  const streak = user?.currentStreak ?? 0
   const showMonth = MONTH_PAGES.includes(page)
   const showToggle = householdEnabled && page === 'dashboard'
 
@@ -158,9 +160,16 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
       >
         {/* Left: greeting + date stacked */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {greeting}, {user?.name ?? ''} 👋
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {greeting}, {user?.name ?? ''} 👋
+            </span>
+            {streak > 0 && (
+              <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}>
+                🔥 {streak}
+              </span>
+            )}
+          </div>
           <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
             {dateStr}
           </span>
@@ -187,8 +196,15 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             onClick={() => { window.location.hash = 'dashboard' }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {greeting}, {user?.name ?? ''} 👋
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+              <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {greeting}, {user?.name ?? ''} 👋
+              </span>
+              {streak > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}>
+                  🔥 {streak}
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
               {dateStr}

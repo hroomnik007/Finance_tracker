@@ -1,15 +1,16 @@
 import { useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, PiggyBank, Target, CalendarDays } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
+import { SavingsDetailModal } from '../components/SavingsDetailModal'
 import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { SavingsGoal } from '../types'
 
 const PRESET_COLORS = [
-  '#7C3AED', '#6D28D9', '#A78BFA', '#34D399', '#10B981',
+  '#7C3AED', '#A78BFA', '#34D399', '#10B981',
   '#F87171', '#F59E0B', '#3B82F6', '#EC4899', '#14B8A6',
-  '#F97316', '#8B5CF6',
+  '#F97316',
 ]
 
 const PRESET_ICONS = [
@@ -54,6 +55,7 @@ export function SavingsPage() {
 
   const [showSheet, setShowSheet] = useState(false)
   const [editGoal, setEditGoal] = useState<SavingsGoal | null>(null)
+  const [detailGoal, setDetailGoal] = useState<SavingsGoal | null>(null)
 
   const [formName, setFormName] = useState('')
   const [formTarget, setFormTarget] = useState('')
@@ -77,6 +79,17 @@ export function SavingsPage() {
     setFormColor('#7C3AED')
     setFormNote('')
     setShowSheet(true)
+  }
+
+  function openDetail(goal: SavingsGoal) {
+    setDetailGoal(goal)
+  }
+
+  async function handleDeposit(amount: number) {
+    if (!detailGoal?.id) return
+    const newSaved = detailGoal.savedAmount + amount
+    await updateGoal(detailGoal.id, { savedAmount: newSaved })
+    setDetailGoal(prev => prev ? { ...prev, savedAmount: newSaved } : null)
   }
 
   function openEdit(goal: SavingsGoal) {
@@ -319,6 +332,7 @@ export function SavingsPage() {
                 goal={goal}
                 formatAmount={formatAmount}
                 t={t.savings}
+                onClick={() => openDetail(goal)}
                 onEdit={() => openEdit(goal)}
                 onDelete={() => handleDelete(goal)}
               />
@@ -343,6 +357,14 @@ export function SavingsPage() {
       >
         <Plus size={24} />
       </button>
+
+      <SavingsDetailModal
+        goal={detailGoal}
+        onClose={() => setDetailGoal(null)}
+        onEdit={() => { setDetailGoal(null); openEdit(detailGoal!) }}
+        onDeposit={handleDeposit}
+        formatAmount={formatAmount}
+      />
 
       <BottomSheet
         open={showSheet}
@@ -384,11 +406,12 @@ function StatCard({
 }
 
 function GoalCard({
-  goal, formatAmount, t, onEdit, onDelete,
+  goal, formatAmount, t, onClick, onEdit, onDelete,
 }: {
   goal: SavingsGoal
   formatAmount: (n: number) => string
   t: { of: string; completed: string; daysLeft: string; overdue: string; remaining: string }
+  onClick: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -418,10 +441,16 @@ function GoalCard({
   }
 
   return (
-    <div style={{
-      background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16,
-      padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12,
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16,
+        padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12,
+        cursor: 'pointer', transition: 'border-color 0.15s',
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+    >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
@@ -439,13 +468,13 @@ function GoalCard({
         </div>
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
           <button
-            onClick={onEdit}
+            onClick={e => { e.stopPropagation(); onEdit() }}
             style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}
           >
             <Pencil size={13} />
           </button>
           <button
-            onClick={onDelete}
+            onClick={e => { e.stopPropagation(); onDelete() }}
             style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}
           >
             <Trash2 size={13} />
