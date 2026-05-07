@@ -160,12 +160,12 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   )
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 50, fontSize: 13,
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '6px 14px', borderRadius: 20, fontSize: 13,
     fontWeight: active ? 600 : 500, cursor: 'pointer',
-    border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
-    background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-    color: active ? 'var(--violet)' : 'var(--text2)',
+    border: active ? 'none' : '1px solid var(--border)',
+    background: active ? 'var(--violet)' : 'var(--bg3)',
+    color: active ? 'white' : 'var(--text2)',
     fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
   })
 
@@ -241,7 +241,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               </button>
               {categoriesWithExpenses.map(c => (
                 <button key={c.id} onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
-                  <span>{c.icon}</span>{c.name}
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
+                  <span>{c.name}</span>
                 </button>
               ))}
             </div>

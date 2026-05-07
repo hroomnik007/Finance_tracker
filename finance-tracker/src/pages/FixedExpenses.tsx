@@ -127,15 +127,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     setDeleteId(null)
   }
 
-  const pillStyle = (active: boolean, color?: string): React.CSSProperties => active ? ({
-    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 50,
-    fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1px solid ${color ?? 'rgba(139,92,246,0.3)'}`,
-    background: color ? color + '20' : 'rgba(139,92,246,0.12)', color: color ?? 'var(--violet)',
-    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
-  }) : ({
-    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 50,
-    fontSize: 13, fontWeight: 500, cursor: 'pointer', border: '1px solid var(--border2)',
-    background: 'var(--bg3)', color: 'var(--text2)',
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 20,
+    fontSize: 13, fontWeight: active ? 600 : 500, cursor: 'pointer',
+    border: active ? 'none' : '1px solid var(--border)',
+    background: active ? 'var(--violet)' : 'var(--bg3)',
+    color: active ? 'white' : 'var(--text2)',
     fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
   })
 
@@ -321,8 +318,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 const cat = getCat(catId)
                 const isActive = activeCat === catId
                 return (
-                  <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive, cat?.color)}>
-                    <span style={{ fontSize: 15, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                  <button key={catId || '__none__'} onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
                     <span>{cat?.name ?? '—'}</span>
                   </button>
                 )
