@@ -3,7 +3,6 @@ import { Home, TrendingUp, Settings, Receipt, Lock, Tag, PiggyBank, MoreHorizont
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
-import { BottomSheet } from './BottomSheet'
 
 interface BottomNavProps {
   current: Page
@@ -91,82 +90,81 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         </>
       )}
 
-      {/* Viac bottom sheet */}
-      <BottomSheet
-        open={showViacSheet}
-        onClose={() => setShowViacSheet(false)}
-        title={t.nav.more}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {savingsEnabled && (
-            <button
-              onClick={() => handleViacNav('savings')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                width: '100%',
-                padding: '14px 16px',
-                background: current === 'savings' ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-                border: 'none',
-                borderRadius: '12px',
-                color: current === 'savings' ? 'var(--violet)' : 'var(--text)',
-                fontSize: '15px',
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: current === 'savings' ? 600 : 500,
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: current === 'savings' ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: current === 'savings' ? 'var(--violet)' : 'var(--text2)',
-                flexShrink: 0,
-              }}>
-                <PiggyBank size={18} />
-              </div>
-              {t.nav.savings}
-            </button>
-          )}
-          {householdEnabled && (
-            <button
-              onClick={() => handleViacNav('household')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                width: '100%',
-                padding: '14px 16px',
-                background: current === 'household' ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-                border: 'none',
-                borderRadius: '12px',
-                color: current === 'household' ? 'var(--violet)' : 'var(--text)',
-                fontSize: '15px',
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: current === 'household' ? 600 : 500,
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: current === 'household' ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: current === 'household' ? 'var(--violet)' : 'var(--text2)',
-                flexShrink: 0,
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {/* Viac popup */}
+      {showViacSheet && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 98 }}
+            onClick={() => setShowViacSheet(false)}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+              left: '8px',
+              right: '8px',
+              background: 'var(--bg3)',
+              border: '1px solid var(--border2)',
+              borderRadius: '16px',
+              padding: '8px',
+              zIndex: 99,
+              boxShadow: 'var(--card-shadow)',
+            }}
+          >
+            {savingsEnabled && (
+              <button
+                onClick={() => handleViacNav('savings')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: current === 'savings' ? 'rgba(139,92,246,0.12)' : 'transparent',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: current === 'savings' ? 'var(--violet)' : 'var(--text2)',
+                  fontSize: '14px',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: current === 'savings' ? 600 : 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <PiggyBank size={16} />
+                {t.nav.savings}
+              </button>
+            )}
+            {householdEnabled && (
+              <button
+                onClick={() => handleViacNav('household')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: current === 'household' ? 'rgba(139,92,246,0.12)' : 'transparent',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: current === 'household' ? 'var(--violet)' : 'var(--text2)',
+                  fontSize: '14px',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: current === 'household' ? 600 : 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                   <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
-              </div>
-              {t.nav.household}
-            </button>
-          )}
-        </div>
-      </BottomSheet>
+                {t.nav.household}
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       <nav
         className="bottom-nav-bar"

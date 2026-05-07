@@ -342,10 +342,10 @@ export function SavingsPage() {
 
       {/* Mobile FAB */}
       <button
-        className="lg:hidden"
         onClick={openAdd}
         aria-label="Pridať cieľ"
         style={{
+          display: window.innerWidth >= 1024 ? 'none' : 'flex',
           position: 'fixed',
           right: 20,
           bottom: 'calc(72px + env(safe-area-inset-bottom, 16px))',
@@ -358,7 +358,6 @@ export function SavingsPage() {
           border: 'none',
           cursor: 'pointer',
           color: 'white',
-          display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'visible',
