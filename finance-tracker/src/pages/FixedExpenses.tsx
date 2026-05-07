@@ -8,6 +8,7 @@ import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { FixedExpense, FixedCategory } from '../types'
+import { SwipeableRow } from '../components/SwipeableRow'
 import React from 'react'
 
 const ALL_CATS: FixedCategory[] = ['housing', 'utilities', 'subscriptions', 'insurance', 'other']
@@ -331,8 +332,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 const daysUntil = ((expense.dayOfMonth - today + 31) % 31)
                 const badge = countdownBadge(daysUntil)
                 return (
+                  <SwipeableRow key={expense.id} onDelete={() => handleDelete(expense.id!)}>
                   <div
-                    key={expense.id}
                     style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 0.15s' }}
                     onClick={() => openEdit(expense)}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
@@ -354,6 +355,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                       <button onClick={() => setDeleteId(expense.id!)} style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
                     </div>
                   </div>
+                  </SwipeableRow>
                 )
               })}
             </div>

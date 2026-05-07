@@ -17,6 +17,7 @@ import { getTransactions } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import type { HouseholdMember } from '../api/households'
 import type { VariableExpense, BudgetStatus } from '../types'
+import { SwipeableRow } from '../components/SwipeableRow'
 import React from 'react'
 
 interface VariableExpensesPageProps {
@@ -365,8 +366,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               filteredSorted.map((e: VariableExpense) => {
                 const cat = getCategoryById(e.categoryId)
                 return (
+                  <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)}>
                   <div
-                    key={e.id}
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
                     onClick={() => openEdit(e)}
                   >
@@ -382,6 +383,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                       <button onClick={() => setConfirmId(e.id!)} style={{ width: 32, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
                     </div>
                   </div>
+                  </SwipeableRow>
                 )
               })
             )}

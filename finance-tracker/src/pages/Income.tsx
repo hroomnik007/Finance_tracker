@@ -17,6 +17,7 @@ import { getTransactions } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import type { HouseholdMember } from '../api/households'
 import type { Income } from '../types'
+import { SwipeableRow } from '../components/SwipeableRow'
 
 function getLast12Months(monthsShort: string[]) {
   const now = new Date()
@@ -341,8 +342,8 @@ export function IncomePage({ month, year }: IncomePageProps) {
               {/* Mobile: flat rows */}
               <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }}>
                 {sorted.map(income => (
+                  <SwipeableRow key={income.id} onDelete={() => deleteIncome(income.id!)}>
                   <div
-                    key={income.id}
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
                     onClick={() => openEdit(income)}
                   >
@@ -365,6 +366,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
                       <button onClick={() => setConfirmId(income.id!)} style={{ width: 32, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
                     </div>
                   </div>
+                  </SwipeableRow>
                 ))}
               </div>
 
