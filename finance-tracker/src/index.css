@@ -15,37 +15,32 @@
 }
 *::-webkit-scrollbar { display: none; }
 
-/* === BUTTON RESET OVERRIDE === */
-button {
-  border-radius: inherit;
-}
-
-/* === FILTER PILLS === */
-.filter-pill {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 6px 14px !important;
-  border-radius: 20px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-  font-family: 'DM Sans', sans-serif !important;
-  transition: all 0.15s !important;
-  border: 1px solid var(--border) !important;
-  background: var(--bg3) !important;
-  color: var(--text2) !important;
-  height: auto !important;
-  min-height: 32px !important;
-  line-height: normal !important;
-}
-
-.filter-pill.active {
-  background: var(--violet) !important;
-  color: white !important;
-  border-color: transparent !important;
+@layer components {
+  .filter-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    height: auto;
+    min-height: 32px;
+    line-height: normal;
+  }
+  .filter-pill.active {
+    background: var(--violet);
+    color: white;
+    border-color: transparent;
+  }
 }
 
 /* === DARK THEME (default) === */
