@@ -230,7 +230,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
               <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {greeting}, {user?.name ?? ''} 👋
+                {user?.name?.split(' ')[0] ?? ''}
               </span>
               {streak > 0 && streakBadge('sm')}
             </div>

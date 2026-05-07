@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, PiggyBank, Target, CalendarDays } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
+import { SwipeableRow } from '../components/SwipeableRow'
 import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
@@ -327,15 +328,16 @@ export function SavingsPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 16 }}>
             {goals.map(goal => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                formatAmount={formatAmount}
-                t={t.savings}
-                onClick={() => openDetail(goal)}
-                onEdit={() => openEdit(goal)}
-                onDelete={() => handleDelete(goal)}
-              />
+              <SwipeableRow key={goal.id} onDelete={() => deleteGoal(goal.id!)}>
+                <GoalCard
+                  goal={goal}
+                  formatAmount={formatAmount}
+                  t={t.savings}
+                  onClick={() => openDetail(goal)}
+                  onEdit={() => openEdit(goal)}
+                  onDelete={() => handleDelete(goal)}
+                />
+              </SwipeableRow>
             ))}
           </div>
         )}
