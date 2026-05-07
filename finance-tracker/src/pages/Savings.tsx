@@ -9,15 +9,12 @@ import { useTranslation } from '../i18n'
 import type { SavingsGoal } from '../types'
 
 const PRESET_COLORS = [
-  '#7C3AED', '#A78BFA', '#34D399', '#10B981',
-  '#F87171', '#F59E0B', '#3B82F6', '#EC4899', '#14B8A6',
-  '#F97316',
+  '#7C3AED', '#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899',
 ]
 
 const PRESET_ICONS = [
-  '🎯', '🏖️', '🚗', '🏠', '💻', '📱', '✈️', '🎓',
-  '💍', '🛻', '🏋️', '🎮', '🏦', '🛍️', '🏕️', '🐣',
-  '🎸', '📷', '⌚', '🚀', '🌍', '💰', '🏡', '🎁',
+  '🏖️', '🚗', '🏠', '💻', '✈️', '🎓',
+  '💍', '🎮', '👶', '💰', '🎁', '🏋️',
 ]
 
 const inputStyle: React.CSSProperties = {
