@@ -26,19 +26,6 @@ apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`
   }
-  if (initializingAuth && !config.url?.includes('/api/auth/refresh')) {
-    return new Promise((resolve) => {
-      const interval = setInterval(() => {
-        if (!initializingAuth) {
-          clearInterval(interval)
-          if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`
-          }
-          resolve(config)
-        }
-      }, 20)
-    })
-  }
   return config
 })
 
