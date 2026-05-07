@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
@@ -174,6 +174,20 @@ export function CategoriesPage() {
                               ? <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
                               : <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.noLimit}</div>
                             }
+                          </div>
+                          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={() => openEdit(cat)}
+                              style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(cat.id!)}
+                              style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </div>
                         </div>
                         {/* Spent amount */}
