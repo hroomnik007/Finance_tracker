@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import type { Page } from '../App'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -33,6 +33,8 @@ function getGreeting(hour: number): string {
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const [streakTooltipVisible, setStreakTooltipVisible] = useState(false)
+  const hideStreakTooltip = useCallback(() => setStreakTooltipVisible(false), [])
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
@@ -145,6 +147,40 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     </button>
   )
 
+  const streakBadge = (size: 'lg' | 'sm') => (
+    <div
+      style={{ position: 'relative', flexShrink: 0, display: 'inline-flex' }}
+      onMouseEnter={() => setStreakTooltipVisible(true)}
+      onMouseLeave={hideStreakTooltip}
+      onClick={() => setStreakTooltipVisible(v => !v)}
+    >
+      <span style={{ fontSize: size === 'lg' ? 12 : 11, fontWeight: 600, padding: size === 'lg' ? '2px 7px' : '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', cursor: 'default', userSelect: 'none' }}>
+        🔥 {streak}
+      </span>
+      {streakTooltipVisible && (
+        <div style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 6px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--bg3)',
+          border: '1px solid var(--border)',
+          borderRadius: 8,
+          padding: '5px 10px',
+          fontSize: 12,
+          fontWeight: 500,
+          color: 'var(--text)',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 100,
+          pointerEvents: 'none',
+        }}>
+          Séria aktivity — {streak} dní za sebou
+        </div>
+      )}
+    </div>
+  )
+
   const barStyle: CSSProperties = {
     background: 'var(--bg2)',
     borderBottom: '1px solid var(--border)',
@@ -164,11 +200,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {greeting}, {user?.name ?? ''} 👋
             </span>
-            {streak > 0 && (
-              <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}>
-                🔥 {streak}
-              </span>
-            )}
+            {streak > 0 && streakBadge('lg')}
           </div>
           <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
             {dateStr}
@@ -200,11 +232,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
               <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {greeting}, {user?.name ?? ''} 👋
               </span>
-              {streak > 0 && (
-                <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', flexShrink: 0 }}>
-                  🔥 {streak}
-                </span>
-              )}
+              {streak > 0 && streakBadge('sm')}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
               {dateStr}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import type { SavingsGoal } from '../types'
 
@@ -14,6 +14,12 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
   const [depositMode, setDepositMode] = useState(false)
   const [depositInput, setDepositInput] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   if (!goal) return null
 
@@ -148,7 +154,7 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
                 cursor: 'pointer', fontFamily: 'inherit',
               }}
             >
-              + Pridať úsporu
+              Pridať úsporu
             </button>
             <button
               onClick={onEdit}

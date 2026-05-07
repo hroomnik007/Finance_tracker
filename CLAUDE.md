@@ -264,7 +264,7 @@ Full systematic code review completed. All 20 issues resolved.
 - APP-03: Single new Date() instance in App.tsx
 - HOOK-04: CLAUDE.md pin key synced (pin_hash, SHA-256)
 - DEP-03: env.d.ts added for typed VITE_* variables
-- DEP-02: PWA registerType changed to prompt — prevents mid-transaction SW takeover
+- DEP-02: PWA registerType changed to autoUpdate (skipWaiting: true, clientsClaim: true) — forces immediate SW takeover on deploy
 - COMP-10: PIN/WebAuthn availability calls backend, localStorage as fallback
 - DEP-01: xlsx@0.18.5 replaced with @e965/xlsx (CVE fix)
 
