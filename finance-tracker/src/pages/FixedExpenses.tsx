@@ -247,7 +247,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   ) : null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
       {/* Header row */}
       <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
@@ -278,22 +278,13 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
       {/* Category filter pills — outside scroll area */}
       {usedCategoryIds.length > 1 && (
-        <div style={{ padding: '8px 20px 0 20px', flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none' } as React.CSSProperties}>
+        <div style={{ padding: '8px 20px 4px', flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
           <div
             role="button"
             tabIndex={0}
+            className={`filter-pill${activeCat === null ? ' active' : ''}`}
             onClick={() => setActiveCat(null)}
             onKeyDown={e => e.key === 'Enter' && setActiveCat(null)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 20, fontSize: 13,
-              fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-              fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-              border: activeCat === null ? 'none' : '1px solid var(--border)',
-              background: activeCat === null ? 'var(--violet)' : 'var(--bg3)',
-              color: activeCat === null ? 'white' : 'var(--text2)',
-              userSelect: 'none',
-            }}
           >
             {t.expenses.fixed.allCategories}
           </div>
@@ -305,18 +296,9 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 key={catId || '__none__'}
                 role="button"
                 tabIndex={0}
+                className={`filter-pill${isActive ? ' active' : ''}`}
                 onClick={() => setActiveCat(isActive ? null : catId)}
                 onKeyDown={e => e.key === 'Enter' && setActiveCat(isActive ? null : catId)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                  border: isActive ? 'none' : '1px solid var(--border)',
-                  background: isActive ? 'var(--violet)' : 'var(--bg3)',
-                  color: isActive ? 'white' : 'var(--text2)',
-                  userSelect: 'none',
-                }}
               >
                 <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
                 <span>{cat?.name ?? '—'}</span>
@@ -338,7 +320,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       )}
 
       {/* Content row */}
-      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'visible' }}>
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
 
         {/* Main scroll area */}
         <div style={{ flex: 1, overflowY: 'auto', paddingTop: 20, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 16 }}>

@@ -172,7 +172,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
       {/* Header row */}
       <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
@@ -203,24 +203,15 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
       {/* Category + member filter pills — outside scroll area */}
       {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
           {categoriesWithExpenses.length > 0 && (
-            <div style={{ padding: '8px 20px 0 20px', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none' } as React.CSSProperties}>
+            <div style={{ padding: '8px 20px 0', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
               <div
                 role="button"
                 tabIndex={0}
+                className={`filter-pill${activeCategory === null ? ' active' : ''}`}
                 onClick={() => setActiveCategory(null)}
                 onKeyDown={e => e.key === 'Enter' && setActiveCategory(null)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                  border: activeCategory === null ? 'none' : '1px solid var(--border)',
-                  background: activeCategory === null ? 'var(--violet)' : 'var(--bg3)',
-                  color: activeCategory === null ? 'white' : 'var(--text2)',
-                  userSelect: 'none',
-                }}
               >
                 {t.expenses.variable.allCategories}
               </div>
@@ -229,18 +220,9 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                   key={c.id}
                   role="button"
                   tabIndex={0}
+                  className={`filter-pill${activeCategory === c.id ? ' active' : ''}`}
                   onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
                   onKeyDown={e => e.key === 'Enter' && setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                    fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                    border: activeCategory === c.id ? 'none' : '1px solid var(--border)',
-                    background: activeCategory === c.id ? 'var(--violet)' : 'var(--bg3)',
-                    color: activeCategory === c.id ? 'white' : 'var(--text2)',
-                    userSelect: 'none',
-                  }}
                 >
                   <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
                   <span>{c.name}</span>
@@ -249,22 +231,13 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             </div>
           )}
           {householdEnabled && members.length > 0 && (
-            <div style={{ padding: '0 20px', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none' } as React.CSSProperties}>
+            <div style={{ padding: '4px 20px 0', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
               <div
                 role="button"
                 tabIndex={0}
+                className={`filter-pill${memberFilter === 'all' ? ' active' : ''}`}
                 onClick={() => setMemberFilter('all')}
                 onKeyDown={e => e.key === 'Enter' && setMemberFilter('all')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                  fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                  border: memberFilter === 'all' ? 'none' : '1px solid var(--border)',
-                  background: memberFilter === 'all' ? 'var(--violet)' : 'var(--bg3)',
-                  color: memberFilter === 'all' ? 'white' : 'var(--text2)',
-                  userSelect: 'none',
-                }}
               >
                 👥 Všetci
               </div>
@@ -273,18 +246,9 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                   key={m.id}
                   role="button"
                   tabIndex={0}
+                  className={`filter-pill${memberFilter === m.id ? ' active' : ''}`}
                   onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
                   onKeyDown={e => e.key === 'Enter' && setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                    fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                    fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s',
-                    border: memberFilter === m.id ? 'none' : '1px solid var(--border)',
-                    background: memberFilter === m.id ? 'var(--violet)' : 'var(--bg3)',
-                    color: memberFilter === m.id ? 'white' : 'var(--text2)',
-                    userSelect: 'none',
-                  }}
                 >
                   <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
                 </div>
@@ -295,7 +259,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       )}
 
       {/* Content row */}
-      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'visible' }}>
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
 
         {/* Main scroll area */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
