@@ -1,4 +1,8 @@
-# 💰 FinVu — Rodinné financie
+<p align="center">
+  <img src="finance-tracker/public/icon-192.png" width="80" alt="Finvu" />
+</p>
+
+# Finvu — Rodinné financie / Family Finance Tracker
 
 > PWA aplikácia na sledovanie rodinných financií — jednoduchá, rýchla, s cloudovou synchronizáciou.
 
@@ -13,8 +17,9 @@
 | 💾 Export | JSON, CSV, XLSX export transakcií s plnou históriou |
 | 📥 Import | CSV import transakcií (365.bank formát a vlastný) |
 | 📱 PWA | Inštalovateľné na mobil (Android/iOS) |
-| 🔐 Autentifikácia | Email/heslo, Google OAuth, WebAuthn, PIN, Demo účet |
+| 🔐 Autentifikácia | Email/heslo, Google OAuth, PIN, Demo účet |
 | 👨‍👩‍👧 Domácnosti | Podpora viacerých domácností |
+| 🐷 Sporenie | Ciele sporenia s sledovaním pokroku |
 | 🌍 i18n | Slovenčina / Angličtina |
 
 ## 🛠️ Tech stack
@@ -50,8 +55,8 @@
 
 ```bash
 # Klonovanie
-git clone https://github.com/hroomnik007/Finance_tracker.git
-cd Finance_tracker/finance-tracker
+git clone https://github.com/hroomnik007/Finvu.git
+cd Finvu/finance-tracker
 
 # Inštalácia
 npm install --legacy-peer-deps
@@ -74,3 +79,80 @@ npm run build
 ## 📄 Licencia
 
 Súkromné použitie.
+
+---
+
+<p align="center">
+  <img src="finance-tracker/public/icon-192.png" width="80" alt="Finvu" />
+</p>
+
+# Finvu — Family Finance Tracker
+
+> A PWA application for tracking family finances — simple, fast, with cloud synchronization.
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 📊 Dashboard | Monthly overview with income, expenses and balance |
+| 💳 Variable expenses | Manual entry with custom categories and budget limits |
+| 🔒 Fixed expenses | User-defined recurring expenses |
+| 🐷 Savings | Savings goals with progress tracking |
+| 📈 Charts | Expense visualization by category (Recharts) |
+| 💾 Export | JSON, CSV, XLSX export with full history |
+| 📥 Import | CSV import (365.bank format and custom) |
+| 📱 PWA | Installable on mobile (Android/iOS) |
+| 🔐 Authentication | Email/password, Google OAuth, PIN, Demo account |
+| 👨‍👩‍👧 Households | Multi-household support |
+| 🌍 i18n | Slovak / English |
+
+## 🛠️ Tech stack
+
+### Frontend
+- **React 19** + **Vite 8** — frontend framework
+- **TypeScript** — type safety
+- **Tailwind CSS 4** — styling
+- **Recharts** — charts and visualizations
+- **Vite PWA Plugin** — PWA support
+- **axios** — HTTP client with JWT interceptors
+
+### Backend
+- **Node.js / Express** — REST API
+- **PostgreSQL** — database
+- **Docker** — containerization
+- **JWT** — authentication (httpOnly cookies)
+
+### Infrastructure
+- **Hetzner CX23** — VPS (Debian 13)
+- **Nginx** — reverse proxy + SSL
+- **GitHub Actions** — CI/CD pipeline
+- **Let's Encrypt** — SSL certificates
+
+## 🌐 Live
+
+| | URL |
+|---|---|
+| Frontend | https://finvu.pedani.eu |
+| API | https://api.pedani.eu |
+
+## 📦 Local development
+
+```bash
+git clone https://github.com/hroomnik007/Finvu.git
+cd Finvu/finance-tracker
+npm install --legacy-peer-deps
+npm run dev
+```
+
+Requires `.env` with `VITE_API_URL=https://api.pedani.eu`
+
+## 🏗️ Build + Deploy
+
+```bash
+npm run build
+# Deploy runs automatically via GitHub Actions on push to main
+```
+
+## 📄 License
+
+Private use.
