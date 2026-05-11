@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
@@ -90,7 +90,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     }
   }
 
-  const handlePinLogin = async (pin: string) => {
+  const handlePinLogin = useCallback(async (pin: string) => {
     if (!email || pin.length !== 4) return
     setPinError(null)
     setPinLoading(true)
@@ -104,7 +104,25 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     } finally {
       setPinLoading(false)
     }
-  }
+  }, [email, loginWithPin])
+
+  useEffect(() => {
+    if (!pinModalOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        if (pinValue.length < 4) {
+          const next = pinValue + e.key
+          setPinValue(next)
+          if (next.length === 4) setTimeout(() => handlePinLogin(next), 100)
+        }
+      } else if (e.key === 'Backspace') {
+        setPinValue(v => v.slice(0, -1))
+        setPinError(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [pinModalOpen, pinValue, handlePinLogin])
 
   const inputStyle = (focused: boolean): React.CSSProperties => ({
     background: theme === 'light' ? '#f0ebff' : FIELD_BG,
@@ -230,11 +248,14 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             <button
               type="button"
               onClick={() => { setPinModalOpen(true); setPinValue(''); setPinError(null) }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,92,246,0.18)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,92,246,0.1)')}
               style={{
-                background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)',
+                background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.4)',
                 borderRadius: 12, padding: '12px', width: '100%',
-                fontSize: 14, fontWeight: 600, color: '#A78BFA',
+                fontSize: 14, fontWeight: 600, color: 'var(--violet)',
                 cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                opacity: 1, transition: 'background 0.15s',
               }}
             >
               🔢 Prihlásiť sa PINom
