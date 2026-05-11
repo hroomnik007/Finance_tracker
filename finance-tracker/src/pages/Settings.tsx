@@ -4,6 +4,7 @@ import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
 import { startRegistration } from '@simplewebauthn/browser'
+import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -307,8 +308,8 @@ export function SettingsPage() {
     setBiometricError(null)
     setBiometricSaving(true)
     try {
-      const options = await webauthnRegisterOptions()
-      const registrationResponse = await startRegistration({ optionsJSON: options as Parameters<typeof startRegistration>[0]['optionsJSON'] })
+      const optionsJSON = await webauthnRegisterOptions()
+      const registrationResponse = await startRegistration({ optionsJSON: optionsJSON as PublicKeyCredentialCreationOptionsJSON })
       const result = await webauthnRegisterVerify(registrationResponse)
       if (result.success) setupBiometric()
     } catch (err: unknown) {

@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type { AuthUser } from '../types'
+import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser'
 
 export async function login(email: string, password: string): Promise<{ user: AuthUser; accessToken: string }> {
   const { data } = await apiClient.post('/api/auth/login', { email, password })
@@ -110,7 +111,7 @@ export async function deletePin(): Promise<void> {
   await apiClient.delete('/api/auth/pin')
 }
 
-export async function webauthnRegisterOptions(): Promise<object> {
+export async function webauthnRegisterOptions(): Promise<PublicKeyCredentialCreationOptionsJSON> {
   const { data } = await apiClient.get('/api/auth/webauthn/register-options')
   return data
 }
