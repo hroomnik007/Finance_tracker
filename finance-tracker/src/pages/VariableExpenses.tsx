@@ -41,6 +41,17 @@ const getBudgetBarColor = (pct: number) => {
   return 'var(--green)'
 }
 
+const pillStyle = (active: boolean): React.CSSProperties => ({
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '6px 14px', borderRadius: 50, fontSize: 13,
+  fontWeight: active ? 600 : 500, cursor: 'pointer',
+  border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
+  background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
+  color: active ? 'var(--violet)' : 'var(--text2)',
+  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
+  flexShrink: 0,
+})
+
 
 export function VariableExpensesPage({ month, year, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
@@ -206,53 +217,26 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
           {categoriesWithExpenses.length > 0 && (
             <div style={{ padding: '8px 20px 0', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-              <div
-                role="button"
-                tabIndex={0}
-                className={`filter-pill${activeCategory === null ? ' active' : ''}`}
-                style={{ borderRadius: '20px' }}
-                onClick={() => setActiveCategory(null)}
-                onKeyDown={e => e.key === 'Enter' && setActiveCategory(null)}
-              >
+              <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
                 {t.expenses.variable.allCategories}
-              </div>
+              </button>
               {categoriesWithExpenses.map(c => (
-                <div
-                  key={c.id}
-                  role="button"
-                  tabIndex={0}
-                  className={`filter-pill${activeCategory === c.id ? ' active' : ''}`}
-                  onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
-                  onKeyDown={e => e.key === 'Enter' && setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))}
-                >
+                <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
                   <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
                   <span>{c.name}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
           {householdEnabled && members.length > 0 && (
             <div style={{ padding: '4px 20px 0', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-              <div
-                role="button"
-                tabIndex={0}
-                className={`filter-pill${memberFilter === 'all' ? ' active' : ''}`}
-                onClick={() => setMemberFilter('all')}
-                onKeyDown={e => e.key === 'Enter' && setMemberFilter('all')}
-              >
+              <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
                 👥 Všetci
-              </div>
+              </button>
               {members.map(m => (
-                <div
-                  key={m.id}
-                  role="button"
-                  tabIndex={0}
-                  className={`filter-pill${memberFilter === m.id ? ' active' : ''}`}
-                  onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
-                  onKeyDown={e => e.key === 'Enter' && setMemberFilter(memberFilter === m.id ? 'all' : m.id)}
-                >
+                <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
                   <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
-                </div>
+                </button>
               ))}
             </div>
           )}

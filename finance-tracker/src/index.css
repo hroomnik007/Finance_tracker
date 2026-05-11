@@ -15,32 +15,6 @@
 }
 *::-webkit-scrollbar { display: none; }
 
-@layer components {
-  .filter-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 50px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid var(--border2);
-    background: var(--bg3);
-    color: var(--text2);
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .filter-pill.active {
-    background: rgba(139, 92, 246, 0.12);
-    color: var(--violet);
-    border-color: rgba(139, 92, 246, 0.3);
-    font-weight: 600;
-  }
-}
-
 /* === DARK THEME (default) === */
 :root, :root[data-theme="dark"] {
   --bg:        #0d0b18;

@@ -19,6 +19,17 @@ function catBg(color: string) {
   return color + '26'
 }
 
+const pillStyle = (active: boolean): React.CSSProperties => ({
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '6px 14px', borderRadius: 50, fontSize: 13,
+  fontWeight: active ? 600 : 500, cursor: 'pointer',
+  border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
+  background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
+  color: active ? 'var(--violet)' : 'var(--text2)',
+  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
+  flexShrink: 0,
+})
+
 interface FixedExpensesPageProps {
   month: number
   year: number
@@ -279,30 +290,17 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       {/* Category filter pills — outside scroll area */}
       {usedCategoryIds.length > 1 && (
         <div style={{ padding: '8px 20px 4px', flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-          <div
-            role="button"
-            tabIndex={0}
-            className={`filter-pill${activeCat === null ? ' active' : ''}`}
-            onClick={() => setActiveCat(null)}
-            onKeyDown={e => e.key === 'Enter' && setActiveCat(null)}
-          >
+          <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
             {t.expenses.fixed.allCategories}
-          </div>
+          </button>
           {usedCategoryIds.map(catId => {
             const cat = getCat(catId)
             const isActive = activeCat === catId
             return (
-              <div
-                key={catId || '__none__'}
-                role="button"
-                tabIndex={0}
-                className={`filter-pill${isActive ? ' active' : ''}`}
-                onClick={() => setActiveCat(isActive ? null : catId)}
-                onKeyDown={e => e.key === 'Enter' && setActiveCat(isActive ? null : catId)}
-              >
+              <button key={catId || '__none__'} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
                 <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
                 <span>{cat?.name ?? '—'}</span>
-              </div>
+              </button>
             )
           })}
         </div>
