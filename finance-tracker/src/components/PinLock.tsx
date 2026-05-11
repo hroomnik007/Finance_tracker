@@ -1,36 +1,17 @@
-import { useState, useEffect } from 'react'
-import { Delete, Fingerprint } from 'lucide-react'
+import { useState } from 'react'
+import { Delete } from 'lucide-react'
 
 interface PinLockProps {
   onVerify: (pin: string) => Promise<boolean>
-  onVerifyBiometric: () => Promise<boolean>
-  lockMethod: 'pin' | 'biometric' | null
   onFallbackToLogin?: () => void
 }
 
 const KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
-export function PinLock({ onVerify, onVerifyBiometric, lockMethod, onFallbackToLogin }: PinLockProps) {
+export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
   const [pin, setPin] = useState('')
   const [shake, setShake] = useState(false)
   const [checking, setChecking] = useState(false)
-  const [biometricError, setBiometricError] = useState<string | null>(null)
-  const [biometricPending, setBiometricPending] = useState(false)
-
-  useEffect(() => {
-    if (lockMethod === 'biometric') {
-      triggerBiometric()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  async function triggerBiometric() {
-    setBiometricError(null)
-    setBiometricPending(true)
-    const ok = await onVerifyBiometric()
-    setBiometricPending(false)
-    if (!ok) setBiometricError('Biometrická autentifikácia zlyhala')
-  }
 
   async function handleKey(k: string) {
     if (checking) return
@@ -46,51 +27,6 @@ export function PinLock({ onVerify, onVerifyBiometric, lockMethod, onFallbackToL
         setTimeout(() => { setShake(false); setPin(''); setChecking(false) }, 600)
       }
     }
-  }
-
-  if (lockMethod === 'biometric') {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'var(--bg)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 40,
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
-          <p style={{ fontSize: 18, fontWeight: 600, color: '#E2D9F3', marginBottom: 4 }}>Finvu je uzamknuté</p>
-          {biometricError && (
-            <p style={{ fontSize: 13, color: '#F87171', marginTop: 8 }}>{biometricError}</p>
-          )}
-        </div>
-
-        <button
-          onClick={triggerBiometric}
-          disabled={biometricPending}
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-            padding: '24px 40px', borderRadius: 20,
-            background: 'rgba(124,58,237,0.12)', border: '1.5px solid rgba(124,58,237,0.4)',
-            cursor: biometricPending ? 'wait' : 'pointer', color: '#E2D9F3',
-            opacity: biometricPending ? 0.7 : 1, transition: 'opacity 0.15s',
-          }}
-        >
-          <Fingerprint size={48} color="#7C3AED" />
-          <span style={{ fontSize: 15, fontWeight: 600 }}>
-            {biometricPending ? 'Overujem...' : 'Prihlásiť sa biometriou'}
-          </span>
-        </button>
-
-        {onFallbackToLogin && (
-          <button
-            onClick={onFallbackToLogin}
-            style={{ fontSize: 13, color: '#9D84D4', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            Prihlásiť sa inak
-          </button>
-        )}
-      </div>
-    )
   }
 
   return (
@@ -148,6 +84,15 @@ export function PinLock({ onVerify, onVerifyBiometric, lockMethod, onFallbackToL
           )
         ))}
       </div>
+
+      {onFallbackToLogin && (
+        <button
+          onClick={onFallbackToLogin}
+          style={{ fontSize: 13, color: '#9D84D4', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          Prihlásiť sa inak
+        </button>
+      )}
     </div>
   )
 }

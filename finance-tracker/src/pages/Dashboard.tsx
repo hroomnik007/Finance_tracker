@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, CartesianGrid,
@@ -181,7 +181,8 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
 
   const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
   const last5Income = [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  const getCategoryById = (id: string) => categories.find(c => c.id === id)
+  const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+  const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
 
   const pieData = categories
     .map(cat => ({

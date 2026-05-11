@@ -104,7 +104,7 @@ function App() {
     (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
   )
   const { toasts, showToast } = useToast()
-  const { locked, verifyPin, verifyBiometric, lockMethod } = usePinLockContext()
+  const { locked, verifyPin } = usePinLockContext()
   const { showOnboarding, completeOnboarding } = useOnboarding()
   const needsBudgetTemplate = useBudgetTemplate()
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
@@ -303,8 +303,6 @@ function App() {
       {locked && isAuthenticated && (
         <PinLock
           onVerify={verifyPin}
-          onVerifyBiometric={verifyBiometric}
-          lockMethod={lockMethod}
           onFallbackToLogin={handleLogout}
         />
       )}

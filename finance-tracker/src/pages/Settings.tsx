@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Upload } from 'lucide-react'
 import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
-import { startRegistration } from '@simplewebauthn/browser'
-import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser'
+import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -196,7 +194,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail, refreshUser } = useAuth()
-  const { setupPin, hasPin, removePin, hasBiometric, setupBiometric, removeBiometric, verifyPin: verifyLockPin } = usePinLockContext()
+  const { setupPin, hasPin, removePin, verifyPin: verifyLockPin } = usePinLockContext()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
   const compactDefault = window.innerWidth < 768
@@ -296,29 +294,6 @@ export function SettingsPage() {
       setChangePwError(msg ?? 'Zmena hesla zlyhala')
     } finally {
       setChangePwLoading(false)
-    }
-  }
-
-  // ── WebAuthn ─────────────────────────────────────────────────────────────
-  const webauthnSupported = !!window.PublicKeyCredential
-  const [biometricSaving, setBiometricSaving] = useState(false)
-  const [biometricError, setBiometricError] = useState<string | null>(null)
-
-  async function handleBiometricSetup() {
-    setBiometricError(null)
-    setBiometricSaving(true)
-    try {
-      const optionsJSON = await webauthnRegisterOptions()
-      const registrationResponse = await startRegistration({ optionsJSON: optionsJSON as PublicKeyCredentialCreationOptionsJSON })
-      const result = await webauthnRegisterVerify(registrationResponse)
-      if (result.success) setupBiometric()
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data?.error
-        ?? (err as { message?: string })?.message
-        ?? 'Registrácia biometrie zlyhala'
-      setBiometricError(msg)
-    } finally {
-      setBiometricSaving(false)
     }
   }
 
@@ -965,41 +940,15 @@ export function SettingsPage() {
                       Odstrániť
                     </button>
                   </div>
-                ) : !hasBiometric ? (
+                ) : (
                   <button
                     onClick={() => setPinSetupOpen(true)}
                     className="btn-secondary py-1.5 text-xs"
                   >
                     Nastaviť
                   </button>
-                ) : null}
+                )}
               </SettingRow>
-
-              {/* Biometria / WebAuthn */}
-              {webauthnSupported && (
-                <SettingRow
-                  label="Biometria"
-                  sublabel={hasBiometric ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>Aktívna</span> : biometricError ?? 'Touch ID / Face ID / Windows Hello'}
-                >
-                  {hasBiometric ? (
-                    <button
-                      onClick={() => removeBiometric()}
-                      className="btn-secondary py-1.5 text-xs"
-                      style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
-                    >
-                      Odstrániť
-                    </button>
-                  ) : !hasPin ? (
-                    <button
-                      onClick={handleBiometricSetup}
-                      disabled={biometricSaving}
-                      className="btn-secondary py-1.5 text-xs"
-                    >
-                      {biometricSaving ? 'Čakaj...' : 'Nastaviť'}
-                    </button>
-                  ) : null}
-                </SettingRow>
-              )}
 
             </div>
           </SectionCard>

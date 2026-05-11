@@ -142,8 +142,8 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
     .returning();
 
   const withCategory = await fetchWithCategory(row.id);
-  const newBadges = await updateStreakAndBadges(req.userId!, body.data.date);
-  res.status(201).json({ data: normalizeAmount(withCategory), newBadges });
+  updateStreakAndBadges(req.userId!, body.data.date).catch(err => console.error('streak update failed:', err));
+  res.status(201).json({ data: normalizeAmount(withCategory), newBadges: [] });
 }
 
 export async function updateTransaction(req: AuthRequest, res: Response): Promise<void> {

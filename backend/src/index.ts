@@ -1,6 +1,7 @@
 import 'express-async-errors';
 import express from "express";
 import helmet from "helmet";
+import compression from "compression";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env";
@@ -25,6 +26,7 @@ const allowedOrigins =
     : ["http://localhost:5173", "http://localhost:3000"];
 
 app.use(helmet());
+app.use(compression());
 app.use(
   cors({
     // Use a function so that requests without an Origin header (PWA standalone

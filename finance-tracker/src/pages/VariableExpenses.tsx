@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Edit2, Trash2, Plus, FileUp, TrendingUp, TrendingDown } from 'lucide-react'
 
 import { BottomSheet } from '../components/BottomSheet'
@@ -90,7 +90,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       .catch(() => {})
   }, [month, year])
 
-  const getCategoryById = (id: string) => categories.find(c => c.id === id)
+  const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+  const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
   const getBudgetForCat = (catId: string) => budgetStatuses.find(b => b.categoryId === catId)
 
   const selectedCatId = form.categoryId || null

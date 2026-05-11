@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { savePin, deletePin, pinLogin, webauthnAuthenticateOptions, webauthnAuthenticateVerify } from '../api/auth'
-import { startAuthentication } from '@simplewebauthn/browser'
+import { savePin, deletePin, pinLogin } from '../api/auth'
 
 const LOCK_METHOD_KEY = 'lock_method'
 const AUTO_LOCK_MS = 5 * 60 * 1000
 
 export function usePinLock() {
   const { user, refreshUser } = useAuth()
-  const [lockMethod, setLockMethod] = useState<'pin' | 'biometric' | null>(
-    () => localStorage.getItem(LOCK_METHOD_KEY) as 'pin' | 'biometric' | null
+  const [lockMethod, setLockMethod] = useState<'pin' | null>(
+    () => {
+      const v = localStorage.getItem(LOCK_METHOD_KEY)
+      return v === 'pin' ? 'pin' : null
+    }
   )
   const [locked, setLocked] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -17,7 +19,6 @@ export function usePinLock() {
   lockMethodRef.current = lockMethod
 
   const hasPin = lockMethod === 'pin'
-  const hasBiometric = lockMethod === 'biometric'
 
   const resetTimer = useCallback(() => {
     if (!lockMethod) return
@@ -48,7 +49,7 @@ export function usePinLock() {
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key !== LOCK_METHOD_KEY) return
-      const next = e.newValue as 'pin' | 'biometric' | null
+      const next = e.newValue === 'pin' ? 'pin' : null
       setLockMethod(next)
       if (!next) setLocked(false)
     }
@@ -102,36 +103,8 @@ export function usePinLock() {
     refreshUser()
   }, [refreshUser])
 
-  const setupBiometric = useCallback(() => {
-    localStorage.setItem(LOCK_METHOD_KEY, 'biometric')
-    setLockMethod('biometric')
-    setLocked(false)
-    resetTimer()
-  }, [resetTimer])
-
-  const verifyBiometric = useCallback(async (): Promise<boolean> => {
-    try {
-      const options = await webauthnAuthenticateOptions(user?.email)
-      const credential = await startAuthentication({ optionsJSON: options as Parameters<typeof startAuthentication>[0]['optionsJSON'] })
-      await webauthnAuthenticateVerify(credential)
-      setLocked(false)
-      resetTimer()
-      return true
-    } catch {
-      return false
-    }
-  }, [user, resetTimer])
-
-  const removeBiometric = useCallback(() => {
-    localStorage.removeItem(LOCK_METHOD_KEY)
-    setLockMethod(null)
-    setLocked(false)
-    if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
-
   return {
-    hasPin, hasBiometric, lockMethod, locked,
+    hasPin, lockMethod, locked,
     setupPin, verifyPin, removePin,
-    setupBiometric, verifyBiometric, removeBiometric,
   }
 }
