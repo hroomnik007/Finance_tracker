@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="finance-tracker/public/icon-192.png" width="80" alt="Finvu" />
-</p>
+<img width="72" height="72" alt="pwa-72x72" src="https://github.com/user-attachments/assets/51a1a231-48ab-4caf-9bb3-b241da102812" />
 
 # Finvu — Rodinné financie / Family Finance Tracker
 
