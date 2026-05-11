@@ -66,5 +66,19 @@ export function usePinLock() {
     if (timerRef.current) clearTimeout(timerRef.current)
   }, [])
 
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key !== PIN_HASH_KEY) return
+      const nowHasPin = !!e.newValue
+      setHasPin(nowHasPin)
+      if (!nowHasPin) {
+        setLocked(false)
+        if (timerRef.current) clearTimeout(timerRef.current)
+      }
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
+
   return { hasPin, locked, setupPin, verifyPin, removePin }
 }

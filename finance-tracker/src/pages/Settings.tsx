@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Upload } from 'lucide-react'
 import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
+import { startRegistration } from '@simplewebauthn/browser'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -99,7 +100,7 @@ function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
   )
 }
 
-function SettingRow({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) {
+function SettingRow({ label, sublabel, children }: { label: string; sublabel?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '13px 20px' }}>
       <div style={{ minWidth: 0, flex: 1 }}>
@@ -194,7 +195,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail, refreshUser } = useAuth()
-  const { setupPin } = usePinLockContext()
+  const { setupPin, hasPin, removePin } = usePinLockContext()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
   const compactDefault = window.innerWidth < 768
@@ -289,6 +290,30 @@ export function SettingsPage() {
       setChangePwError(msg ?? 'Zmena hesla zlyhala')
     } finally {
       setChangePwLoading(false)
+    }
+  }
+
+  // ── WebAuthn ─────────────────────────────────────────────────────────────
+  const webauthnSupported = !!window.PublicKeyCredential
+  const [biometricSaving, setBiometricSaving] = useState(false)
+  const [biometricRegistered, setBiometricRegistered] = useState(false)
+  const [biometricError, setBiometricError] = useState<string | null>(null)
+
+  async function handleBiometricSetup() {
+    setBiometricError(null)
+    setBiometricSaving(true)
+    try {
+      const options = await webauthnRegisterOptions()
+      const registrationResponse = await startRegistration({ optionsJSON: options as Parameters<typeof startRegistration>[0]['optionsJSON'] })
+      const result = await webauthnRegisterVerify(registrationResponse)
+      if (result.success) setBiometricRegistered(true)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data?.error
+        ?? (err as { message?: string })?.message
+        ?? 'Registrácia biometrie zlyhala'
+      setBiometricError(msg)
+    } finally {
+      setBiometricSaving(false)
     }
   }
 
@@ -892,16 +917,51 @@ export function SettingsPage() {
               </div>
 
               {/* PIN */}
-              <SettingRow label="PIN kód" sublabel="Rýchle prihlásenie a zámok">
-                <button
-                  onClick={() => setPinSetupOpen(true)}
-                  className="btn-secondary py-1.5 text-xs"
-                >
-                  Nastaviť
-                </button>
+              <SettingRow
+                label="PIN kód"
+                sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>PIN je aktívny</span> : 'Rýchle prihlásenie a zámok'}
+              >
+                {hasPin ? (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => setPinSetupOpen(true)}
+                      className="btn-secondary py-1.5 text-xs"
+                    >
+                      Zmeniť PIN
+                    </button>
+                    <button
+                      onClick={removePin}
+                      className="btn-secondary py-1.5 text-xs"
+                      style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                    >
+                      Odstrániť
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setPinSetupOpen(true)}
+                    className="btn-secondary py-1.5 text-xs"
+                  >
+                    Nastaviť
+                  </button>
+                )}
               </SettingRow>
 
-              {/* Biometria — TODO: not implemented yet */}
+              {/* Biometria / WebAuthn */}
+              {webauthnSupported && (
+                <SettingRow
+                  label="Biometria"
+                  sublabel={biometricRegistered ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>Zaregistrovaná</span> : biometricError ?? 'Prihlásenie odtlačkom prsta alebo Face ID'}
+                >
+                  <button
+                    onClick={handleBiometricSetup}
+                    disabled={biometricSaving || biometricRegistered}
+                    className="btn-secondary py-1.5 text-xs"
+                  >
+                    {biometricSaving ? 'Registrujem...' : biometricRegistered ? 'Aktívna' : 'Nastaviť'}
+                  </button>
+                </SettingRow>
+              )}
 
             </div>
           </SectionCard>
