@@ -173,25 +173,33 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       : allVariableExpenses,
   [householdEnabled, dashView, allVariableExpenses, user?.id])
 
-  const totalIncome = incomes.reduce((s, i) => s + i.amount, 0)
-  const totalFixed = fixedExpenses.reduce((s, f) => s + f.amount, 0)
-  const totalVariable = variableExpenses.reduce((s, v) => s + v.amount, 0)
+  const totalIncome = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes])
+  const totalFixed = useMemo(() => fixedExpenses.reduce((s, f) => s + f.amount, 0), [fixedExpenses])
+  const totalVariable = useMemo(() => variableExpenses.reduce((s, v) => s + v.amount, 0), [variableExpenses])
   const totalExpenses = totalFixed + totalVariable
   const balance = totalIncome - totalExpenses
 
-  const last5 = [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  const last5Income = [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  const last5 = useMemo(() =>
+    [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  , [variableExpenses])
+
+  const last5Income = useMemo(() =>
+    [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  , [incomes])
+
   const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
   const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
 
-  const pieData = categories
-    .map(cat => ({
-      name: cat.name,
-      icon: cat.icon,
-      value: variableExpenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0),
-      color: cat.color,
-    }))
-    .filter(d => d.value > 0)
+  const pieData = useMemo(() =>
+    categories
+      .map(cat => ({
+        name: cat.name,
+        icon: cat.icon,
+        value: variableExpenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0),
+        color: cat.color,
+      }))
+      .filter(d => d.value > 0)
+  , [categories, variableExpenses])
 
   const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
   const legendItems = showAllPie ? sortedPieData : sortedPieData.slice(0, 5)
@@ -268,8 +276,10 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const dayOfMonth = (month === now.getMonth() + 1 && year === now.getFullYear()) ? now.getDate() : daysInMonth
   const dailyAvgExpense = dayOfMonth > 0 ? totalExpenses / dayOfMonth : 0
 
-  const biggestExpense = variableExpenses.reduce<typeof variableExpenses[0] | null>((max, e) =>
-    (!max || e.amount > max.amount) ? e : max, null)
+  const biggestExpense = useMemo(() =>
+    variableExpenses.reduce<typeof variableExpenses[0] | null>((max, e) =>
+      (!max || e.amount > max.amount) ? e : max, null)
+  , [variableExpenses])
 
   const prevMonthData = chartData[chartData.length - 2]
   const monthChallengeTarget = prevMonthData?.expenses ?? 0
@@ -279,15 +289,18 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const incomeChange: number | null = prevMonthIncome > 0 ? ((totalIncome - prevMonthIncome) / prevMonthIncome * 100) : null
   const expensesChange: number | null = monthChallengeTarget > 0 ? ((totalExpenses - monthChallengeTarget) / monthChallengeTarget * 100) : null
 
-  const todayDay = now.getDate()
-  const upcomingFixed = fixedExpenses
-    .map(fe => {
-      let daysUntil = fe.dayOfMonth - todayDay
-      if (daysUntil < 0) daysUntil += daysInMonth
-      return { ...fe, daysUntil }
-    })
-    .sort((a, b) => a.daysUntil - b.daysUntil)
-    .slice(0, 5)
+  const upcomingFixed = useMemo(() => {
+    const today = new Date().getDate()
+    const daysInMo = new Date(year, month, 0).getDate()
+    return fixedExpenses
+      .map(fe => {
+        let daysUntil = fe.dayOfMonth - today
+        if (daysUntil < 0) daysUntil += daysInMo
+        return { ...fe, daysUntil }
+      })
+      .sort((a, b) => a.daysUntil - b.daysUntil)
+      .slice(0, 5)
+  }, [fixedExpenses, month, year])
 
   const motivationalMsg = (() => {
     if (balance > 0 && balance > totalIncome * 0.3) {

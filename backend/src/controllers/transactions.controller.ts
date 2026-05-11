@@ -316,12 +316,15 @@ const BADGE_DEFS: { id: string; check: (txCount: number, streak: number, longest
 ];
 
 async function updateStreakAndBadges(userId: string, txDate: string): Promise<string[]> {
-  const [user] = await db.select({
-    currentStreak: users.currentStreak,
-    longestStreak: users.longestStreak,
-    lastActivityDate: users.lastActivityDate,
-    badges: users.badges,
-  }).from(users).where(eq(users.id, userId)).limit(1);
+  const [[user], [{ txCount }]] = await Promise.all([
+    db.select({
+      currentStreak: users.currentStreak,
+      longestStreak: users.longestStreak,
+      lastActivityDate: users.lastActivityDate,
+      badges: users.badges,
+    }).from(users).where(eq(users.id, userId)).limit(1),
+    db.select({ txCount: count() }).from(transactions).where(eq(transactions.userId, userId)),
+  ]);
   if (!user) return [];
 
   const today = txDate;
@@ -339,7 +342,6 @@ async function updateStreakAndBadges(userId: string, txDate: string): Promise<st
 
   const longest = Math.max(user.longestStreak ?? 0, streak);
 
-  const [{ txCount }] = await db.select({ txCount: count() }).from(transactions).where(eq(transactions.userId, userId));
   const n = Number(txCount);
 
   const earned = new Set(user.badges ?? []);

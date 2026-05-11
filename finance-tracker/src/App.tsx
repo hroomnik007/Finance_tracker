@@ -115,8 +115,16 @@ function App() {
 
   useEffect(() => {
     const handler = () => setIsDesktop(window.innerWidth >= 1024)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    let resizeTimer: ReturnType<typeof setTimeout>
+    const debouncedHandler = () => {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(handler, 150)
+    }
+    window.addEventListener('resize', debouncedHandler)
+    return () => {
+      window.removeEventListener('resize', debouncedHandler)
+      clearTimeout(resizeTimer)
+    }
   }, [])
 
   const hasNavigated = useRef(false)

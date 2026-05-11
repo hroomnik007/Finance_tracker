@@ -146,21 +146,29 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     setSheetOpen(false)
   }
 
-  const totalAmount = variableExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const totalAmount = useMemo(() => variableExpenses.reduce((sum, e) => sum + e.amount, 0), [variableExpenses])
   const count = variableExpenses.length
   const avgAmount = count > 0 ? totalAmount / count : 0
   const changeVsPrev = prevMonthTotal !== null && prevMonthTotal > 0
     ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
 
-  const categoriesWithExpenses = categories.filter(c => variableExpenses.some(e => e.categoryId === c.id))
+  const categoriesWithExpenses = useMemo(
+    () => categories.filter(c => variableExpenses.some(e => e.categoryId === c.id)),
+    [categories, variableExpenses]
+  )
 
-  const filteredSorted = [...(activeCategory
-    ? variableExpenses.filter(e => e.categoryId === activeCategory)
-    : variableExpenses
-  )]
-    .filter(e => memberFilter === 'all' || e.created_by === memberFilter || (memberFilter === user?.id && !e.created_by))
-    .sort((a, b) => b.date.localeCompare(a.date))
-  const hasAnyNote = filteredSorted.some(e => e.note && e.note.trim() !== '')
+  const filteredSorted = useMemo(() =>
+    [...(activeCategory
+      ? variableExpenses.filter(e => e.categoryId === activeCategory)
+      : variableExpenses
+    )]
+      .filter(e => memberFilter === 'all' || e.created_by === memberFilter || (memberFilter === user?.id && !e.created_by))
+      .sort((a, b) => b.date.localeCompare(a.date))
+  , [variableExpenses, activeCategory, memberFilter, user?.id])
+
+  const hasAnyNote = useMemo(() =>
+    filteredSorted.some(e => e.note && e.note.trim() !== '')
+  , [filteredSorted])
 
 
   const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
