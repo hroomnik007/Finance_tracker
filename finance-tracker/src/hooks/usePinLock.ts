@@ -41,7 +41,17 @@ export function usePinLock() {
 
   useEffect(() => {
     if (!lockMethod) return
-    const handler = () => { if (document.hidden) setLocked(true) }
+    let hiddenAt: number | null = null
+    const handler = () => {
+      if (document.hidden) {
+        hiddenAt = Date.now()
+      } else {
+        if (hiddenAt !== null && Date.now() - hiddenAt > AUTO_LOCK_MS) {
+          setLocked(true)
+        }
+        hiddenAt = null
+      }
+    }
     document.addEventListener('visibilitychange', handler)
     return () => document.removeEventListener('visibilitychange', handler)
   }, [lockMethod])

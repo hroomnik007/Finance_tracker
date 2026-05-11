@@ -198,7 +198,12 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
 
   useEffect(() => {
-    const months = getLast6Months(t.monthsShort)
+    const src = user?.tracking_start_date ?? user?.createdAt
+    const minYear = src ? new Date(src).getFullYear() : 0
+    const minMonth = src ? new Date(src).getMonth() + 1 : 0
+    const months = getLast6Months(t.monthsShort).filter(m =>
+      m.year > minYear || (m.year === minYear && m.month >= minMonth)
+    )
     Promise.all(months.map(m => getSummary(m.key).catch(() => null)))
       .then(results => {
         setChartData(
@@ -212,7 +217,8 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           })
         )
       })
-  }, [month, year])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, year, user?.tracking_start_date, user?.createdAt])
 
   useEffect(() => {
     const days = getLast7Days()

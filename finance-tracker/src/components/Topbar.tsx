@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { CSSProperties } from 'react'
 import type { Page } from '../App'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -72,7 +72,20 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const yearNum = now.getFullYear()
   const dateStr = `${dayNameLower} ${day}.${monthNum}.${yearNum}`
 
+  const minDate = useMemo(() => {
+    const src = user?.tracking_start_date ?? user?.createdAt
+    if (src) {
+      const d = new Date(src)
+      return { year: d.getFullYear(), month: d.getMonth() + 1 }
+    }
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() + 1 }
+  }, [user])
+
+  const canGoPrev = year > minDate.year || (year === minDate.year && month > minDate.month)
+
   const prevMonth = () => {
+    if (!canGoPrev) return
     if (month === 1) onMonthChange(12, year - 1)
     else onMonthChange(month - 1, year)
   }
@@ -87,7 +100,11 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
 
   const monthNav = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      <button onClick={prevMonth} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', borderRadius: 8 }}>
+      <button
+        onClick={prevMonth}
+        disabled={!canGoPrev}
+        style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: canGoPrev ? 'pointer' : 'default', color: canGoPrev ? 'var(--text3)' : 'var(--border2)', borderRadius: 8 }}
+      >
         <ChevronLeft size={15} />
       </button>
       <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', padding: '0 4px' }}>

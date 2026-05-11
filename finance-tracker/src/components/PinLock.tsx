@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Delete } from 'lucide-react'
 
 interface PinLockProps {
@@ -29,6 +29,16 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
     }
   }
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') handleKey(e.key)
+      else if (e.key === 'Backspace') handleKey('⌫')
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, checking])
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -38,8 +48,8 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
-        <p style={{ fontSize: 18, fontWeight: 600, color: '#E2D9F3', marginBottom: 4 }}>Zadaj PIN</p>
-        <p style={{ fontSize: 13, color: '#9D84D4' }}>Finvu je uzamknuté</p>
+        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Zadaj PIN</p>
+        <p style={{ fontSize: 13, color: 'var(--text2)' }}>Finvu je uzamknuté</p>
       </div>
 
       <div
@@ -51,8 +61,8 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
             key={i}
             style={{
               width: 18, height: 18, borderRadius: '50%',
-              background: pin.length > i ? '#7C3AED' : 'transparent',
-              border: '2px solid ' + (pin.length > i ? '#7C3AED' : '#4C3A8A'),
+              background: pin.length > i ? 'var(--violet)' : 'transparent',
+              border: '2px solid ' + (pin.length > i ? 'var(--violet)' : 'var(--border2)'),
               transition: 'all 0.15s',
             }}
           />
@@ -69,15 +79,15 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
               onClick={() => handleKey(k)}
               style={{
                 width: 72, height: 72, borderRadius: '50%',
-                background: k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)',
-                border: k === '⌫' ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                color: '#E2D9F3', fontSize: k === '⌫' ? 20 : 24, fontWeight: 600,
+                background: k === '⌫' ? 'transparent' : 'var(--bg3)',
+                border: k === '⌫' ? 'none' : '1px solid var(--border2)',
+                color: 'var(--text)', fontSize: k === '⌫' ? 20 : 24, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'background 0.1s',
               }}
-              onPointerDown={e => (e.currentTarget.style.background = k === '⌫' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.15)')}
-              onPointerUp={e => (e.currentTarget.style.background = k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)')}
+              onPointerDown={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.15)')}
+              onPointerUp={e => (e.currentTarget.style.background = k === '⌫' ? 'transparent' : 'var(--bg3)')}
             >
               {k === '⌫' ? <Delete size={22} /> : k}
             </button>
@@ -88,7 +98,7 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
       {onFallbackToLogin && (
         <button
           onClick={onFallbackToLogin}
-          style={{ fontSize: 13, color: '#9D84D4', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
         >
           Prihlásiť sa inak
         </button>
