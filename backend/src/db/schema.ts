@@ -11,6 +11,7 @@ import {
   serial,
   check,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -55,7 +56,7 @@ export const refreshTokens = pgTable("refresh_tokens", {
   tokenHash: varchar("token_hash", { length: 255 }).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [index("refresh_tokens_user_id_idx").on(t.userId)]);
 
 export const households = pgTable("households", {
   id:         serial("id").primaryKey(),
@@ -87,7 +88,10 @@ export const categories = pgTable(
     budgetLimit: numeric("budget_limit"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (t) => [check("categories_type_check", sql`${t.type} IN ('income', 'expense')`)]
+  (t) => [
+    check("categories_type_check", sql`${t.type} IN ('income', 'expense')`),
+    index("categories_user_id_idx").on(t.userId),
+  ]
 );
 
 export const transactions = pgTable(
@@ -110,7 +114,12 @@ export const transactions = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (t) => [check("transactions_type_check", sql`${t.type} IN ('income', 'expense')`)]
+  (t) => [
+    check("transactions_type_check", sql`${t.type} IN ('income', 'expense')`),
+    index("transactions_user_id_idx").on(t.userId),
+    index("transactions_date_idx").on(t.date),
+    index("transactions_household_id_idx").on(t.householdId),
+  ]
 );
 
 export const webauthnCredentials = pgTable("webauthn_credentials", {

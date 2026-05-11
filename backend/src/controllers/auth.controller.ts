@@ -235,8 +235,12 @@ export async function updateAvatar(req: AuthRequest, res: Response): Promise<voi
     res.status(400).json({ error: "avatarUrl is required" });
     return;
   }
-  if (avatarUrl.length > 10 * 1024 * 1024) {
-    res.status(413).json({ error: "Avatar too large (max 10MB)" });
+  if (!avatarUrl.startsWith('data:image/')) {
+    res.status(400).json({ error: "avatarUrl must be an image data URL (data:image/...)" });
+    return;
+  }
+  if (avatarUrl.length > 2_800_000) {
+    res.status(413).json({ error: "Avatar too large (max ~2MB)" });
     return;
   }
   await db.update(users).set({ avatarUrl, updatedAt: new Date() }).where(eq(users.id, req.userId!));
