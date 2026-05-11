@@ -210,6 +210,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 role="button"
                 tabIndex={0}
                 className={`filter-pill${activeCategory === null ? ' active' : ''}`}
+                style={{ borderRadius: '20px' }}
                 onClick={() => setActiveCategory(null)}
                 onKeyDown={e => e.key === 'Enter' && setActiveCategory(null)}
               >
