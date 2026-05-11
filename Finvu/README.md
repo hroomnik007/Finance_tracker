@@ -1,4 +1,8 @@
-# 💰 FinVu — Rodinné financie
+<p align="center">
+  <img src="finance-tracker/public/icon-192.png" width="80" alt="Finvu" />
+</p>
+
+# Finvu — Rodinné financie / Family Finance Tracker
 
 > PWA aplikácia na sledovanie rodinných financií — jednoduchá, rýchla, s cloudovou synchronizáciou.
 
@@ -78,7 +82,11 @@ Súkromné použitie.
 
 ---
 
-# 💰 FinVu — Family Finance Tracker
+<p align="center">
+  <img src="finance-tracker/public/icon-192.png" width="80" alt="Finvu" />
+</p>
+
+# Finvu — Family Finance Tracker
 
 > A PWA application for tracking family finances — simple, fast, with cloud synchronization.
 
@@ -89,13 +97,13 @@ Súkromné použitie.
 | 📊 Dashboard | Monthly overview with income, expenses and balance |
 | 💳 Variable expenses | Manual entry with custom categories and budget limits |
 | 🔒 Fixed expenses | User-defined recurring expenses |
+| 🐷 Savings | Savings goals with progress tracking |
 | 📈 Charts | Expense visualization by category (Recharts) |
-| 💾 Export | JSON, CSV, XLSX export of transactions with full history |
-| 📥 Import | CSV transaction import (365.bank format and custom) |
+| 💾 Export | JSON, CSV, XLSX export with full history |
+| 📥 Import | CSV import (365.bank format and custom) |
 | 📱 PWA | Installable on mobile (Android/iOS) |
 | 🔐 Authentication | Email/password, Google OAuth, PIN, Demo account |
 | 👨‍👩‍👧 Households | Multi-household support |
-| 🐷 Savings | Savings goals with progress tracking |
 | 🌍 i18n | Slovak / English |
 
 ## 🛠️ Tech stack
@@ -130,14 +138,9 @@ Súkromné použitie.
 ## 📦 Local development
 
 ```bash
-# Clone
 git clone https://github.com/hroomnik007/Finvu.git
 cd Finvu/finance-tracker
-
-# Install
 npm install --legacy-peer-deps
-
-# Dev server
 npm run dev
 ```
 
@@ -146,10 +149,8 @@ Requires `.env` with `VITE_API_URL=https://api.pedani.eu`
 ## 🏗️ Build + Deploy
 
 ```bash
-# Production build
 npm run build
-
-# Deploy happens automatically via GitHub Actions on push to main
+# Deploy runs automatically via GitHub Actions on push to main
 ```
 
 ## 📄 License
