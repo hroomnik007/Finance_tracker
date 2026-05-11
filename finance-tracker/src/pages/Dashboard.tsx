@@ -290,7 +290,11 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     .slice(0, 5)
 
   const motivationalMsg = (() => {
-    if (balance > 0 && balance > totalIncome * 0.3) return { msg: t.dashboard.motivationalGood, color: '#34D399' }
+    if (balance > 0 && balance > totalIncome * 0.3) {
+      const savingsPct = totalIncome > 0 ? Math.floor((balance / totalIncome) * 100 / 5) * 5 : 30
+      const pct = Math.max(savingsPct, 30)
+      return { msg: t.dashboard.motivationalGood.replace('{pct}', String(pct)), color: '#34D399' }
+    }
     if (balance < 0) return { msg: t.dashboard.motivationalBad, color: '#F87171' }
     if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: t.dashboard.motivationalAvg, color: '#A78BFA' }
     return null

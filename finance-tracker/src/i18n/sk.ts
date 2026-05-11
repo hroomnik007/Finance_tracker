@@ -68,7 +68,7 @@ export const sk = {
     refresh: 'Aktualizovať',
     setLimits: 'Nastaviť',
     streakTooltip: 'dní v rade',
-    motivationalGood: 'Skvelá práca! Ušetrili ste viac ako 30 % príjmov.',
+    motivationalGood: 'Skvelá práca! Ušetrili ste viac ako {pct} % príjmov.',
     motivationalBad: 'Pozor — výdavky prevyšujú príjmy. Skúste obmedziť variabilné výdavky.',
     motivationalAvg: 'Výborné! Váš denný priemer je pod 20 €.',
   },

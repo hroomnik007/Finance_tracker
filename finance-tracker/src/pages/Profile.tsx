@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Pencil } from 'lucide-react'
+import { X, Check, Pencil, Delete } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
-import { usePinLock } from '../hooks/usePinLock'
-import { updateAvatar, savePin, deletePin, changePassword } from '../api/auth'
+import { usePinLockContext } from '../context/PinLockContext'
+import { updateAvatar, changePassword } from '../api/auth'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -35,8 +35,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [streakTapped, setStreakTapped] = useState(false)
   const [profileSaveOk, setProfileSaveOk] = useState(false)
 
-  const { setupPin, removePin } = usePinLock()
+  const { setupPin, removePin, hasPin, verifyPin } = usePinLockContext()
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
+  const [pinRemoveInput, setPinRemoveInput] = useState('')
+  const [pinRemoveError, setPinRemoveError] = useState<string | null>(null)
+  const [pinRemoveShake, setPinRemoveShake] = useState(false)
+  const [pinRemoveLoading, setPinRemoveLoading] = useState(false)
 
   const [logoutConfirm, setLogoutConfirm] = useState(false)
   const [pinRemoveConfirm, setPinRemoveConfirm] = useState(false)
@@ -192,12 +196,21 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 >
                   Zmeniť heslo
                 </button>
-                <button
-                  onClick={() => setPinSetupOpen(true)}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                >
-                  Nastaviť PIN
-                </button>
+                {!hasPin ? (
+                  <button
+                    onClick={() => setPinSetupOpen(true)}
+                    style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                  >
+                    Nastaviť PIN
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }}
+                    style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                  >
+                    Zmeniť / Odstrániť PIN
+                  </button>
+                )}
                 <button
                   onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
                   style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
@@ -286,50 +299,81 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         <PinSetupModal
           open={pinSetupOpen}
           onClose={() => setPinSetupOpen(false)}
-          onSetPin={async (pin) => {
-            setupPin(pin)
-            try { await savePin(pin) } catch { /* local PIN is set */ }
-            if (user?.email) localStorage.setItem(`pin_enabled_${user.email}`, '1')
-          }}
+          onSetPin={async (pin) => { await setupPin(pin) }}
         />
       </div>
 
-      {/* PIN remove confirm */}
+      {/* PIN remove — verify current PIN before removing */}
       {pinRemoveConfirm && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
           onClick={() => setPinRemoveConfirm(false)}
         >
           <div
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 12 }}>🔢</div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', textAlign: 'center', margin: '0 0 8px' }}>
-              Zrušiť PIN?
-            </h3>
-            <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
-              PIN prihlásenie a zámok budú deaktivované.
-            </p>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={() => setPinRemoveConfirm(false)}
-                style={{ flex: 1, height: 48, borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                Zrušiť
-              </button>
-              <button
-                onClick={async () => {
-                  setPinRemoveConfirm(false)
-                  removePin()
-                  if (user?.email) localStorage.removeItem(`pin_enabled_${user.email}`)
-                  try { await deletePin() } catch { /* ok */ }
-                }}
-                style={{ flex: 1, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                Zrušiť PIN
-              </button>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🔢</div>
+              <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>Zadaj aktuálny PIN</h3>
+              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Overenie pred odstránením</p>
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: i < pinRemoveInput.length ? 'var(--violet)' : 'transparent', border: '2px solid ' + (i < pinRemoveInput.length ? 'var(--violet)' : 'var(--border2)'), transition: 'all 0.15s' }} />
+              ))}
+            </div>
+
+            {pinRemoveError && <p style={{ textAlign: 'center', fontSize: 13, color: '#f87171', margin: 0 }}>{pinRemoveError}</p>}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
+                <button
+                  key={idx}
+                  disabled={k === '' || pinRemoveLoading}
+                  onClick={async () => {
+                    if (pinRemoveLoading) return
+                    if (k === '⌫') { setPinRemoveInput(v => v.slice(0, -1)); setPinRemoveError(null); return }
+                    if (k === '' || pinRemoveInput.length >= 4) return
+                    const next = pinRemoveInput + String(k)
+                    setPinRemoveInput(next)
+                    if (next.length === 4) {
+                      setPinRemoveLoading(true)
+                      const ok = await verifyPin(next)
+                      if (ok) {
+                        await removePin()
+                        setPinRemoveConfirm(false)
+                        setPinRemoveInput('')
+                      } else {
+                        setPinRemoveShake(true)
+                        setPinRemoveError('Nesprávny PIN')
+                        setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
+                      }
+                    }
+                  }}
+                  style={{
+                    height: 52, borderRadius: 12,
+                    background: k === '' ? 'transparent' : 'var(--bg3)',
+                    color: 'var(--text)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
+                    border: k === '' ? 'none' : '1px solid var(--border2)',
+                    cursor: k === '' ? 'default' : 'pointer',
+                    opacity: k === '' ? 0 : pinRemoveLoading ? 0.5 : 1,
+                    fontFamily: 'inherit',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  {k === '⌫' ? <Delete size={18} /> : k}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setPinRemoveConfirm(false)}
+              style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+            >
+              Zrušiť
+            </button>
           </div>
         </div>
       )}
