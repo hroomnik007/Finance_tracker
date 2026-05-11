@@ -16,48 +16,52 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
   const [shake, setShake] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // Keyboard input — must be before any conditional return
+  useEffect(() => {
+    if (!open || step === 'success') return
+    const onKey = (e: KeyboardEvent) => {
+      if (saving) return
+      if (e.key >= '0' && e.key <= '9') {
+        setPin(prev => prev.length >= 4 ? prev : prev + e.key)
+      } else if (e.key === 'Backspace') {
+        setPin(p => p.slice(0, -1))
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, step, saving])
+
+  // Pin completion logic — must be before any conditional return
+  useEffect(() => {
+    if (pin.length !== 4 || saving || step === 'success') return
+    if (step === 'enter') {
+      setFirst(pin)
+      setTimeout(() => { setStep('confirm'); setPin('') }, 150)
+    } else {
+      if (pin !== first) {
+        setShake(true)
+        setTimeout(() => { setShake(false); setPin('') }, 600)
+      } else {
+        setSaving(true)
+        onSetPin(pin).then(() => {
+          setSaving(false)
+          setStep('success')
+          setTimeout(() => {
+            setStep('enter'); setFirst(''); setPin('')
+            onClose()
+          }, 1500)
+        })
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin])
+
   if (!open) return null
 
   function handleClose() {
     setStep('enter'); setFirst(''); setPin('')
     onClose()
   }
-
-  async function handleKey(k: string) {
-    if (saving || step === 'success') return
-    if (k === '⌫') { setPin(p => p.slice(0, -1)); return }
-    if (pin.length >= 4) return
-    const next = pin + k
-    setPin(next)
-    if (next.length === 4) {
-      if (step === 'enter') {
-        setFirst(next)
-        setTimeout(() => { setStep('confirm'); setPin('') }, 150)
-      } else {
-        if (next !== first) {
-          setShake(true)
-          setTimeout(() => { setShake(false); setPin('') }, 600)
-        } else {
-          setSaving(true)
-          await onSetPin(next)
-          setSaving(false)
-          setStep('success')
-          setTimeout(() => { handleClose() }, 1500)
-        }
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (!open || step === 'success') return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') handleKey(e.key)
-      else if (e.key === 'Backspace') handleKey('⌫')
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, step, pin, saving])
 
   if (step === 'success') {
     return (
@@ -114,7 +118,11 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
               k === '' ? <div key={i} /> : (
                 <button
                   key={i}
-                  onClick={() => handleKey(k)}
+                  onClick={() => {
+                    if (saving) return
+                    if (k === '⌫') { setPin(p => p.slice(0, -1)); return }
+                    if (pin.length < 4) setPin(p => p + k)
+                  }}
                   style={{
                     width: 64, height: 64, borderRadius: '50%',
                     background: k === '⌫' ? 'transparent' : 'var(--bg3)',
