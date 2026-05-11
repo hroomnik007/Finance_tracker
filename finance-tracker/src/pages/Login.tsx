@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
-import { webauthnAuthenticateOptions, webauthnAuthenticateVerify } from '../api/auth'
 
 interface LoginPageProps {
   onNavigateRegister: () => void
@@ -15,7 +14,7 @@ const LABEL_COLOR = '#6b6387'
 
 export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
-  const { login, loginWithGoogle, loginWithPin, loginWithToken } = useAuth()
+  const { login, loginWithGoogle, loginWithPin } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,24 +29,20 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [pinLoading, setPinLoading] = useState(false)
   const [pinError, setPinError] = useState<string | null>(null)
 
-  const [biometricLoading, setBiometricLoading] = useState(false)
-
-  const [authMethods, setAuthMethods] = useState({ pin: false, webauthn: false })
+  const [authMethods, setAuthMethods] = useState({ pin: false })
 
   useEffect(() => {
     if (!email.includes('@')) {
-      setAuthMethods({ pin: false, webauthn: false })
+      setAuthMethods({ pin: false })
       return
     }
     const timer = setTimeout(async () => {
       try {
         // TODO: replace with GET /api/auth/methods?email= when endpoint is available
-        // Fallback to localStorage for now
         throw new Error('endpoint not available')
       } catch {
         setAuthMethods({
           pin: !!localStorage.getItem(`pin_enabled_${email}`),
-          webauthn: !!localStorage.getItem(`webauthn_enabled_${email}`),
         })
       }
     }, 500)
@@ -66,8 +61,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   }
 
   const hasPinForEmail = authMethods.pin
-  const hasWebAuthnForEmail = authMethods.webauthn
-  const webauthnSupported = typeof window !== 'undefined' && !!window.PublicKeyCredential
 
   const googleLogin = useGoogleLogin({
     onSuccess: async tokenResponse => {
@@ -111,26 +104,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       setPinValue('')
     } finally {
       setPinLoading(false)
-    }
-  }
-
-  const handleBiometricLogin = async () => {
-    if (!email) { setError('Najprv zadajte email.'); return }
-    setBiometricLoading(true)
-    setError(null)
-    try {
-      const { startAuthentication } = await import('@simplewebauthn/browser')
-      const options = await webauthnAuthenticateOptions(email)
-      const response = await startAuthentication({ optionsJSON: options as Parameters<typeof startAuthentication>[0]['optionsJSON'] })
-      const body = { ...response, _challengeKey: (options as { _challengeKey?: string })._challengeKey }
-      const { user: authUser, accessToken } = await webauthnAuthenticateVerify(body as Parameters<typeof webauthnAuthenticateVerify>[0])
-      loginWithToken(authUser, accessToken)
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-        ?? (err as Error)?.message
-      setError(msg ?? 'Biometrické prihlásenie zlyhalo.')
-    } finally {
-      setBiometricLoading(false)
     }
   }
 
@@ -269,24 +242,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             </button>
           )}
 
-          {/* Biometric login */}
-          {hasWebAuthnForEmail && webauthnSupported && (
-            <button
-              type="button"
-              onClick={handleBiometricLogin}
-              disabled={biometricLoading}
-              style={{
-                background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)',
-                borderRadius: 12, padding: '12px', width: '100%',
-                fontSize: 14, fontWeight: 600, color: '#34d399',
-                cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                opacity: biometricLoading ? 0.6 : 1,
-              }}
-            >
-              🔐 {biometricLoading ? 'Overujem...' : 'Biometrické prihlásenie'}
-            </button>
-          )}
-
           {/* Alebo divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0' }}>
             <div style={{ flex: 1, height: 1, background: FIELD_BORDER }} />
@@ -346,18 +301,18 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
           onClick={() => setPinModalOpen(false)}
         >
           <div
-            style={{ width: '100%', maxWidth: 320, padding: 24, borderRadius: 24, background: '#1a1535', border: '1px solid #2d2650', display: 'flex', flexDirection: 'column', gap: 20 }}
+            style={{ width: '100%', maxWidth: 320, padding: 24, borderRadius: 24, background: 'var(--bg2)', border: '1px solid var(--border2)', display: 'flex', flexDirection: 'column', gap: 20 }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ textAlign: 'center' }}>
               <span style={{ fontSize: 40 }}>🔢</span>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 8, color: 'white' }}>Zadajte PIN</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 8, color: 'var(--text)' }}>Zadajte PIN</h2>
               <p style={{ fontSize: 13, marginTop: 4, color: LABEL_COLOR }}>4-miestny PIN kód</p>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
               {[0,1,2,3].map(i => (
-                <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: i < pinValue.length ? '#7C3AED' : FIELD_BORDER, transition: 'background 0.15s' }} />
+                <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: i < pinValue.length ? '#7C3AED' : 'var(--border2)', transition: 'background 0.15s' }} />
               ))}
             </div>
 
@@ -378,9 +333,9 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
                   }}
                   style={{
                     height: 48, borderRadius: 12,
-                    background: k === '' ? 'transparent' : FIELD_BG,
-                    color: 'white', fontSize: 18, fontWeight: 600,
-                    border: k === '' ? 'none' : `1px solid ${FIELD_BORDER}`,
+                    background: k === '' ? 'transparent' : 'var(--bg3)',
+                    color: 'var(--text)', fontSize: 18, fontWeight: 600,
+                    border: k === '' ? 'none' : '1px solid var(--border2)',
                     cursor: k === '' ? 'default' : 'pointer',
                     opacity: (pinLoading || k === '') ? (k === '' ? 0 : 0.6) : 1,
                     fontFamily: 'inherit',

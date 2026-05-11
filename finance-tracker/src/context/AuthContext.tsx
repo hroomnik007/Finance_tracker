@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { setAccessToken, setInitializingAuth } from '../api/client'
@@ -218,27 +219,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(prev => prev ? { ...prev, monthlyEmailEnabled: enabled } : prev)
   }, [])
 
+  const contextValue = useMemo(() => ({
+    user,
+    isAuthenticated: !!user || isGuest,
+    isLoading,
+    isGuest,
+    login,
+    loginDemo,
+    loginWithGoogle,
+    loginWithPin,
+    loginWithToken,
+    register,
+    loginAsGuest,
+    logout,
+    deleteAccount,
+    refreshUser,
+    completeOnboarding,
+    updateMonthlyEmail,
+  }), [user, isLoading, isGuest, login, loginDemo, loginWithGoogle, loginWithPin, loginWithToken, register, loginAsGuest, logout, deleteAccount, refreshUser, completeOnboarding, updateMonthlyEmail])
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user || isGuest,
-        isLoading,
-        isGuest,
-        login,
-        loginDemo,
-        loginWithGoogle,
-        loginWithPin,
-        loginWithToken,
-        register,
-        loginAsGuest,
-        logout,
-        deleteAccount,
-        refreshUser,
-        completeOnboarding,
-        updateMonthlyEmail,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

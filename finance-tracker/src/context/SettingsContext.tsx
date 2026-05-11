@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
 import { DEFAULT_SETTINGS } from '../types'
 import type { AppSettings } from '../types'
 
@@ -46,32 +46,36 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     () => localStorage.getItem('profile_avatar') ?? '👤'
   )
 
-  const updateSettings = (partial: Partial<AppSettings>) => {
+  const updateSettings = useCallback((partial: Partial<AppSettings>) => {
     setSettings(prev => {
       const next = { ...prev, ...partial }
       persistSettings(next)
       return next
     })
-  }
+  }, [])
 
-  const setProfile = (name: string, avatar: string) => {
+  const refreshSettings = useCallback(async () => {
+    setSettings(loadSettings())
+  }, [])
+
+  const setProfile = useCallback((name: string, avatar: string) => {
     localStorage.setItem('profile_name', name)
     localStorage.setItem('profile_avatar', avatar)
     setProfileName(name)
     setProfileAvatar(avatar)
-  }
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    settings,
+    refreshSettings,
+    updateSettings,
+    profileName,
+    profileAvatar,
+    setProfile,
+  }), [settings, refreshSettings, updateSettings, profileName, profileAvatar, setProfile])
 
   return (
-    <SettingsContext.Provider
-      value={{
-        settings,
-        refreshSettings: async () => setSettings(loadSettings()),
-        updateSettings,
-        profileName,
-        profileAvatar,
-        setProfile,
-      }}
-    >
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   )
