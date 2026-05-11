@@ -78,7 +78,7 @@ Git remotes: `origin` = GitHub (triggers Actions for frontend), `gitea` = self-h
 - JWT access token in memory only (`src/api/client.ts` `accessToken` variable, set via `setAccessToken()`). Set as `Authorization: Bearer` on every request via axios interceptor.
 - Refresh token in httpOnly cookie `rt`. On 401, interceptor automatically calls `/api/auth/refresh` and retries.
 - On app mount: `AuthContext` calls `/api/auth/refresh` before rendering. `isLoading` flag is `true` while this is in progress — `App.tsx` renders a spinner until `isLoading === false`. Do NOT redirect to login until `isLoading === false`.
-- **Auth methods**: password login, demo login, Google OAuth (`@react-oauth/google`), PIN login (`/api/auth/pin-login`), WebAuthn passkeys (`@simplewebauthn/browser`)
+- **Auth methods**: password login, demo login, Google OAuth (`@react-oauth/google`), PIN login (`/api/auth/pin-login`). WebAuthn passkeys removed from app-lock (unreliable in PWA). `GET /api/auth/methods?email=` returns `{ pin, google, password }` to show correct login options.
 - Theme preference: save to backend (`PATCH /api/users/me`) + localStorage cache (`theme_preference`)
 - Rodinné financie toggle: save to backend + localStorage cache
 - Dashboard view (Moje/Rodinné): localStorage only, key: `finvu_dashboard_view`
@@ -92,9 +92,13 @@ Git remotes: `origin` = GitHub (triggers Actions for frontend), `gitea` = self-h
 
 When Profile saves a new avatar it calls `updateAvatar(avatarUrl)` → `PATCH /api/auth/avatar` → then `refreshUser()` to re-sync `AuthContext`. Any component that reads `user.avatarUrl` from `useAuth()` will re-render automatically.
 
-### PIN — two separate systems
-1. **App-lock PIN** (`usePinLock` hook, `components/PinLock.tsx`): stored in `localStorage` key `pin_hash` (SHA-256 hash). Locks the UI after 5 min idle. Entirely client-side.
-2. **Login PIN** (`/api/auth/pin-login`): bcrypt hash stored in `users.pin_hash` in DB. Used on the login page to authenticate without password. Set via `PATCH /api/auth/pin`.
+### PIN system
+- **App-lock PIN** (`usePinLock` hook / `PinLockContext`, `components/PinLock.tsx`): PIN hash stored server-side in `users.pin_hash` via `PATCH /api/auth/pin`. Lock method stored in localStorage key `lock_method` ('pin' | null) — not sensitive. Locks UI after 5 min idle OR after tab is hidden for 5+ min (grace period). PIN verification calls `/api/auth/pin-login` — never stores hash client-side.
+- **Login PIN** (`/api/auth/pin-login`): same bcrypt hash in `users.pin_hash`. Used on login page to authenticate without password.
+- **PinLockContext** (`context/PinLockContext.tsx`): singleton context wrapping `usePinLock` hook. Use `usePinLockContext()` everywhere — never call `usePinLock()` directly in components.
+- **PinSetupModal** (`components/PinSetupModal.tsx`): 2-step PIN setup (enter + confirm). All hooks must be declared BEFORE any conditional return — React error #310 otherwise.
+- **Cross-device sync**: on app load, PIN status is fetched from server via `GET /api/auth/methods?email=` — localStorage `lock_method` is only a UI hint.
+- **Biometrics**: removed — not reliable in PWA context. No WebAuthn for app-lock.
 
 ### Category budget limits
 `budgetLimit` is stored server-side in `categories.budget_limit` (numeric). The `useCategories` hook merges server value with a localStorage fallback (`category_budget_limits`) for backwards compatibility. Server value always takes precedence.
@@ -173,6 +177,7 @@ Three-column layout:
 - No sidebar — **BottomNav** with 4 tabs: Prehľad, Príjmy, Výdavky, Nastavenia
   - Full-width bar (`border-top`), no floating pill
   - Tab items: icon in 32×32 rounded box (active = violet bg) + label
+  - BottomNav Viac button: shown ONLY when BOTH savingsEnabled AND householdEnabled are true. If only one is enabled, it shows directly as a nav tab. If neither, no extra tab.
 - **Topbar** (two rows, fixed):
   - Row 1: `[Logo]` `[Greeting + date]` `[Avatar]`
   - Row 2: `[‹ Month ›]` `[Moje/Rodinné toggle if household enabled]`
@@ -188,12 +193,12 @@ Three-column layout:
 - **Fixné výdavky**: stat cards, upcoming payments list
 - **Kategórie**: 2-column grid on desktop — cards with icon + name + amount + limit + progress bar + percentage; mobile: list with FAB
 - **Domácnosť**: member cards (2-col grid) with per-member Príjmy/Výdavky, household summary card
-- **Nastavenia**: tabs — Všeobecné | Vzhľad & Téma | Bezpečnosť (PIN, Biometria/WebAuthn, Zmeniť heslo) | Notifikácie | Dáta | Rodinné financie (toggle only) | Nebezpečná zóna | Zmazať účet
-- **Profil modal**: Avatar + name + email + streak badge | 5 buttons: Upraviť profil, Zmeniť heslo, Nastaviť PIN, Exportovať dáta, Odhlásiť sa
+- **Nastavenia**: tabs — Všeobecné | Vzhľad & Téma | Bezpečnosť (PIN setup/change/remove with current PIN verification, Zmeniť heslo) — biometria removed | Notifikácie | Dáta | Rodinné financie (toggle only) | Nebezpečná zóna | Zmazať účet
+- **Profil modal**: Avatar + name + email + streak badge | 5 buttons: Upraviť profil, Zmeniť heslo, Nastaviť PIN (shows 'Zmeniť / Odstrániť PIN' when PIN active — requires current PIN verification before change/remove), Exportovať dáta, Odhlásiť sa
 
 ### Navigation from Profile modal
 - "Zmeniť heslo" → navigate to `#settings` + scroll to `#bezpecnost-section`
-- "Nastaviť PIN" → open PIN setup modal (4-digit, numpad, confirm step, stored as SHA-256 hash in `localStorage` key `pin_hash`)
+- "Nastaviť PIN" → open PinSetupModal (4-digit numpad, confirm step, saves to server via `PATCH /api/auth/pin`, sets localStorage `lock_method='pin'`). When PIN active: shows Zmeniť/Odstrániť choice after verifying current PIN.
 - "Exportovať dáta" → navigate to `#settings` + scroll to `#data-section`
 - "Odhlásiť sa" → logout + redirect to `#login`
 
@@ -239,6 +244,10 @@ Three-column layout:
 - No `setState` calls without proper `useEffect` dependency arrays
 - No `limit > 200` in API calls (backend max is 200)
 - No direct DOM manipulation — use React state
+- No WebAuthn / biometrics for app-lock — removed, not reliable in PWA
+- No localStorage for PIN hash — server is source of truth (`users.pin_hash`)
+- No `usePinLock()` called directly in components — always use `usePinLockContext()`
+- No hooks after conditional returns — React error #310
 
 ## Code Review — 2026-05-05
 
@@ -269,7 +278,27 @@ Full systematic code review completed. All 20 issues resolved.
 - DEP-01: xlsx@0.18.5 replaced with @e965/xlsx (CVE fix)
 
 ### Known remaining
-- COMP-10: Backend endpoint GET /api/auth/methods?email= not yet implemented — localStorage fallback active
+- None — GET /api/auth/methods?email= endpoint implemented in backend (returns `{ pin, google, password }`)
+
+## Security Fixes — 2026-05-11
+
+- **Biometrics removed**: WebAuthn app-lock removed from `usePinLock`, `PinLock`, `Settings`, `App`, `Login` — unreliable in PWA, replaced by PIN-only app-lock
+- **PIN server-side**: Login PIN hash stored in `users.pin_hash` (bcrypt) — `localStorage` is only a UI hint (`lock_method`), never the source of truth
+- **getAuthMethods endpoint**: `GET /api/auth/methods?email=` returns `{ pin, google, password }` — Login shows PIN button only when user has a server-side PIN; no more localStorage guessing
+- **PinSetupModal hooks order**: All `useEffect` hooks moved before `if (!open) return null` — fixes React error #310 (hooks after conditional return)
+- **PIN light mode**: All hardcoded dark hex colors replaced with CSS variables (`var(--bg2)`, `var(--bg3)`, `var(--border)`, `var(--border2)`, `var(--text)`, `var(--text3)`, `var(--violet)`) in PinLock, PinSetupModal, Login PIN modal
+- **PIN remove two-step flow**: Profile PIN remove requires current PIN verification (numpad) before offering Zmeniť/Odstrániť choice — prevents accidental removal
+- **Tab visibility grace period**: `visibilitychange` handler uses 5-min grace period (`hiddenAt` timestamp) — tab switches no longer trigger immediate lock
+
+## Performance Optimizations — 2026-05-11
+
+- **Category Map lookup**: `VariableExpenses` and `Dashboard` replaced `.find()` O(n) with `useMemo(new Map(...))` + `useCallback` getter — O(1) lookup
+- **AuthContext value memoized**: `useMemo` wraps context value object — prevents unnecessary re-renders on all consumers
+- **SettingsContext value memoized**: `useMemo` + `useCallback` for `updateSettings`, `refreshSettings`, `setProfile`
+- **Async streak update**: `updateStreakAndBadges()` in transactions controller is fire-and-forget (`.catch(console.error)`) — no longer blocks transaction create response
+- **Gzip compression**: `compression` middleware added to Express backend — all API responses compressed
+- **Dashboard chart filter**: `getLast6Months` filters out months before `user.tracking_start_date ?? user.createdAt` — no empty months in chart
+- **Dexie/IndexedDB removed**: `src/db/database.ts` deleted, `useSettings.ts` no-op stubs — eliminates dead code path
 
 ## Notifications — Architecture (2026-05-06)
 
