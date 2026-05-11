@@ -223,7 +223,7 @@ export function CategoriesPage() {
                   >
                     <div
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
+                        display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
                         borderRadius: 16, cursor: 'pointer',
                         background: 'var(--bg2)', border: `1px solid ${cat.color}30`,
                         minHeight: 64,
@@ -236,7 +236,34 @@ export function CategoriesPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{cat.name}</div>
                         {cat.budgetLimit != null ? (
-                          <span style={{ fontSize: 12, fontWeight: 600, color: cat.color }}>{formatAmount(cat.budgetLimit)}</span>
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: cat.color }}>Limit: {formatAmount(cat.budgetLimit)}</span>
+                              {(() => {
+                                const status = budgetStatuses.find(b => b.categoryId === cat.id)
+                                const pct = status ? Math.min(status.percentage, 100) : 0
+                                const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
+                                return (
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>{Math.round(pct)}%</span>
+                                )
+                              })()}
+                            </div>
+                            {(() => {
+                              const status = budgetStatuses.find(b => b.categoryId === cat.id)
+                              const pct = status ? Math.min(status.percentage, 100) : 0
+                              const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
+                              return (
+                                <>
+                                  <div style={{ height: 3, borderRadius: 99, background: 'var(--bg4)', marginTop: 4, overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+                                  </div>
+                                  {status && status.spent > 0 && (
+                                    <span style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, display: 'block' }}>Minuté: {formatAmount(status.spent)}</span>
+                                  )}
+                                </>
+                              )
+                            })()}
+                          </>
                         ) : (
                           <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.expenses.categories.noLimit}</span>
                         )}
