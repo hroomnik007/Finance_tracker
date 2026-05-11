@@ -1,26 +1,30 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { savePin, deletePin, pinLogin, webauthnAuthenticateOptions, webauthnAuthenticateVerify } from '../api/auth'
+import { startAuthentication } from '@simplewebauthn/browser'
 
-const PIN_HASH_KEY = 'pin_hash'
+const LOCK_METHOD_KEY = 'lock_method'
 const AUTO_LOCK_MS = 5 * 60 * 1000
 
-async function sha256(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
 export function usePinLock() {
-  const [hasPin, setHasPin] = useState(() => !!localStorage.getItem(PIN_HASH_KEY))
+  const { user } = useAuth()
+  const [lockMethod, setLockMethod] = useState<'pin' | 'biometric' | null>(
+    () => localStorage.getItem(LOCK_METHOD_KEY) as 'pin' | 'biometric' | null
+  )
   const [locked, setLocked] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const hasPin = lockMethod === 'pin'
+  const hasBiometric = lockMethod === 'biometric'
+
   const resetTimer = useCallback(() => {
-    if (!hasPin) return
+    if (!lockMethod) return
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => setLocked(true), AUTO_LOCK_MS)
-  }, [hasPin])
+  }, [lockMethod])
 
   useEffect(() => {
-    if (!hasPin || locked) return
+    if (!lockMethod || locked) return
     resetTimer()
     const onActivity = () => resetTimer()
     window.addEventListener('pointerdown', onActivity)
@@ -30,55 +34,84 @@ export function usePinLock() {
       window.removeEventListener('keydown', onActivity)
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [hasPin, locked, resetTimer])
+  }, [lockMethod, locked, resetTimer])
 
   useEffect(() => {
-    if (!hasPin) return
+    if (!lockMethod) return
     const handler = () => { if (document.hidden) setLocked(true) }
     document.addEventListener('visibilitychange', handler)
     return () => document.removeEventListener('visibilitychange', handler)
-  }, [hasPin])
-
-  const setupPin = useCallback(async (pin: string) => {
-    const hash = await sha256(pin)
-    localStorage.setItem(PIN_HASH_KEY, hash)
-    setHasPin(true)
-    setLocked(false)
-    resetTimer()
-  }, [resetTimer])
-
-  const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
-    const stored = localStorage.getItem(PIN_HASH_KEY)
-    if (!stored) return false
-    const hash = await sha256(pin)
-    if (hash === stored) {
-      setLocked(false)
-      resetTimer()
-      return true
-    }
-    return false
-  }, [resetTimer])
-
-  const removePin = useCallback(() => {
-    localStorage.removeItem(PIN_HASH_KEY)
-    setHasPin(false)
-    setLocked(false)
-    if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
+  }, [lockMethod])
 
   useEffect(() => {
     const handler = (e: StorageEvent) => {
-      if (e.key !== PIN_HASH_KEY) return
-      const nowHasPin = !!e.newValue
-      setHasPin(nowHasPin)
-      if (!nowHasPin) {
-        setLocked(false)
-        if (timerRef.current) clearTimeout(timerRef.current)
-      }
+      if (e.key !== LOCK_METHOD_KEY) return
+      const next = e.newValue as 'pin' | 'biometric' | null
+      setLockMethod(next)
+      if (!next) setLocked(false)
     }
     window.addEventListener('storage', handler)
     return () => window.removeEventListener('storage', handler)
   }, [])
 
-  return { hasPin, locked, setupPin, verifyPin, removePin }
+  const setupPin = useCallback(async (pin: string) => {
+    await savePin(pin)
+    localStorage.setItem(LOCK_METHOD_KEY, 'pin')
+    setLockMethod('pin')
+    setLocked(false)
+    resetTimer()
+  }, [resetTimer])
+
+  const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
+    if (!user?.email) return false
+    try {
+      await pinLogin(user.email, pin)
+      setLocked(false)
+      resetTimer()
+      return true
+    } catch {
+      return false
+    }
+  }, [user, resetTimer])
+
+  const removePin = useCallback(async () => {
+    await deletePin()
+    localStorage.removeItem(LOCK_METHOD_KEY)
+    setLockMethod(null)
+    setLocked(false)
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }, [])
+
+  const setupBiometric = useCallback(() => {
+    localStorage.setItem(LOCK_METHOD_KEY, 'biometric')
+    setLockMethod('biometric')
+    setLocked(false)
+    resetTimer()
+  }, [resetTimer])
+
+  const verifyBiometric = useCallback(async (): Promise<boolean> => {
+    try {
+      const options = await webauthnAuthenticateOptions(user?.email)
+      const credential = await startAuthentication({ optionsJSON: options as Parameters<typeof startAuthentication>[0]['optionsJSON'] })
+      await webauthnAuthenticateVerify(credential)
+      setLocked(false)
+      resetTimer()
+      return true
+    } catch {
+      return false
+    }
+  }, [user, resetTimer])
+
+  const removeBiometric = useCallback(() => {
+    localStorage.removeItem(LOCK_METHOD_KEY)
+    setLockMethod(null)
+    setLocked(false)
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }, [])
+
+  return {
+    hasPin, hasBiometric, lockMethod, locked,
+    setupPin, verifyPin, removePin,
+    setupBiometric, verifyBiometric, removeBiometric,
+  }
 }

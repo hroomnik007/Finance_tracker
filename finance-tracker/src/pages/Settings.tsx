@@ -195,7 +195,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail, refreshUser } = useAuth()
-  const { setupPin, hasPin, removePin } = usePinLockContext()
+  const { setupPin, hasPin, removePin, hasBiometric, setupBiometric, removeBiometric, verifyPin: verifyLockPin } = usePinLockContext()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
   const compactDefault = window.innerWidth < 768
@@ -266,6 +266,11 @@ export function SettingsPage() {
 
   // ── Security section ─────────────────────────────────────────────────────
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
+  const [pinRemoveOpen, setPinRemoveOpen] = useState(false)
+  const [pinRemoveInput, setPinRemoveInput] = useState('')
+  const [pinRemoveError, setPinRemoveError] = useState<string | null>(null)
+  const [pinRemoveLoading, setPinRemoveLoading] = useState(false)
+  const [pinRemoveShake, setPinRemoveShake] = useState(false)
   const [changePwOpen, setChangePwOpen] = useState(false)
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -296,7 +301,6 @@ export function SettingsPage() {
   // ── WebAuthn ─────────────────────────────────────────────────────────────
   const webauthnSupported = !!window.PublicKeyCredential
   const [biometricSaving, setBiometricSaving] = useState(false)
-  const [biometricRegistered, setBiometricRegistered] = useState(false)
   const [biometricError, setBiometricError] = useState<string | null>(null)
 
   async function handleBiometricSetup() {
@@ -306,7 +310,7 @@ export function SettingsPage() {
       const options = await webauthnRegisterOptions()
       const registrationResponse = await startRegistration({ optionsJSON: options as Parameters<typeof startRegistration>[0]['optionsJSON'] })
       const result = await webauthnRegisterVerify(registrationResponse)
-      if (result.success) setBiometricRegistered(true)
+      if (result.success) setupBiometric()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data?.error
         ?? (err as { message?: string })?.message
@@ -314,6 +318,29 @@ export function SettingsPage() {
       setBiometricError(msg)
     } finally {
       setBiometricSaving(false)
+    }
+  }
+
+  async function handlePinRemoveKey(k: string) {
+    if (pinRemoveLoading) return
+    if (k === '⌫') { setPinRemoveInput(p => p.slice(0, -1)); return }
+    if (pinRemoveInput.length >= 4) return
+    const next = pinRemoveInput + k
+    setPinRemoveInput(next)
+    if (next.length === 4) {
+      setPinRemoveLoading(true)
+      const ok = await verifyLockPin(next)
+      if (!ok) {
+        setPinRemoveShake(true)
+        setPinRemoveError('Nesprávny PIN')
+        setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
+      } else {
+        await removePin()
+        setPinRemoveOpen(false)
+        setPinRemoveInput('')
+        setPinRemoveError(null)
+        setPinRemoveLoading(false)
+      }
     }
   }
 
@@ -919,7 +946,7 @@ export function SettingsPage() {
               {/* PIN */}
               <SettingRow
                 label="PIN kód"
-                sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>PIN je aktívny</span> : 'Rýchle prihlásenie a zámok'}
+                sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>PIN je aktívny</span> : 'Rýchly zámok aplikácie'}
               >
                 {hasPin ? (
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -927,39 +954,49 @@ export function SettingsPage() {
                       onClick={() => setPinSetupOpen(true)}
                       className="btn-secondary py-1.5 text-xs"
                     >
-                      Zmeniť PIN
+                      Zmeniť
                     </button>
                     <button
-                      onClick={removePin}
+                      onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }}
                       className="btn-secondary py-1.5 text-xs"
                       style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                     >
                       Odstrániť
                     </button>
                   </div>
-                ) : (
+                ) : !hasBiometric ? (
                   <button
                     onClick={() => setPinSetupOpen(true)}
                     className="btn-secondary py-1.5 text-xs"
                   >
                     Nastaviť
                   </button>
-                )}
+                ) : null}
               </SettingRow>
 
               {/* Biometria / WebAuthn */}
               {webauthnSupported && (
                 <SettingRow
                   label="Biometria"
-                  sublabel={biometricRegistered ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>Zaregistrovaná</span> : biometricError ?? 'Prihlásenie odtlačkom prsta alebo Face ID'}
+                  sublabel={hasBiometric ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>Aktívna</span> : biometricError ?? 'Touch ID / Face ID / Windows Hello'}
                 >
-                  <button
-                    onClick={handleBiometricSetup}
-                    disabled={biometricSaving || biometricRegistered}
-                    className="btn-secondary py-1.5 text-xs"
-                  >
-                    {biometricSaving ? 'Registrujem...' : biometricRegistered ? 'Aktívna' : 'Nastaviť'}
-                  </button>
+                  {hasBiometric ? (
+                    <button
+                      onClick={() => removeBiometric()}
+                      className="btn-secondary py-1.5 text-xs"
+                      style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                    >
+                      Odstrániť
+                    </button>
+                  ) : !hasPin ? (
+                    <button
+                      onClick={handleBiometricSetup}
+                      disabled={biometricSaving}
+                      className="btn-secondary py-1.5 text-xs"
+                    >
+                      {biometricSaving ? 'Čakaj...' : 'Nastaviť'}
+                    </button>
+                  ) : null}
                 </SettingRow>
               )}
 
@@ -1228,6 +1265,58 @@ export function SettingsPage() {
           O aplikácii
         </button>
       </div>
+
+      {/* ── PIN REMOVE MODAL ── */}
+      {pinRemoveOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
+          <div
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
+            className="modal-in"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Odstrániť PIN</h2>
+              <button onClick={() => setPinRemoveOpen(false)} className="btn-icon"><X size={16} /></button>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>Zadaj aktuálny PIN pre potvrdenie</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+              <div style={{ display: 'flex', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
+                {[0,1,2,3].map(i => (
+                  <div key={i} style={{
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: pinRemoveInput.length > i ? '#7C3AED' : 'transparent',
+                    border: '2px solid ' + (pinRemoveInput.length > i ? '#7C3AED' : '#4C3A8A'),
+                    transition: 'all 0.15s',
+                  }} />
+                ))}
+              </div>
+              {pinRemoveError && (
+                <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{pinRemoveError}</p>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gap: 8 }}>
+                {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((k, i) => (
+                  k === '' ? <div key={i} /> : (
+                    <button
+                      key={i}
+                      onClick={() => handlePinRemoveKey(k)}
+                      style={{
+                        width: 60, height: 60, borderRadius: '50%',
+                        background: k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)',
+                        border: k === '⌫' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                        color: 'var(--text)', fontSize: k === '⌫' ? 16 : 20, fontWeight: 600,
+                        cursor: pinRemoveLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        opacity: pinRemoveLoading ? 0.5 : 1,
+                      }}
+                    >
+                      {k === '⌫' ? '⌫' : k}
+                    </button>
+                  )
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── IMPORT PREVIEW MODAL ── */}
       {importPreview && (
