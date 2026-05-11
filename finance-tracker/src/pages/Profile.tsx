@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, Check, Pencil, Delete } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
@@ -37,6 +37,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   const { setupPin, removePin, hasPin, verifyPin } = usePinLockContext()
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
+  const [pinVerified, setPinVerified] = useState(false)
   const [pinRemoveInput, setPinRemoveInput] = useState('')
   const [pinRemoveError, setPinRemoveError] = useState<string | null>(null)
   const [pinRemoveShake, setPinRemoveShake] = useState(false)
@@ -70,6 +71,38 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       setChangePwLoading(false)
     }
   }
+
+  const handlePinRemoveVerify = useCallback(async (next: string) => {
+    setPinRemoveLoading(true)
+    const ok = await verifyPin(next)
+    if (ok) {
+      setPinVerified(true)
+      setPinRemoveInput('')
+      setPinRemoveLoading(false)
+    } else {
+      setPinRemoveShake(true)
+      setPinRemoveError('Nesprávny PIN')
+      setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
+    }
+  }, [verifyPin])
+
+  useEffect(() => {
+    if (!pinRemoveConfirm || pinVerified) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        if (pinRemoveInput.length < 4) {
+          const next = pinRemoveInput + e.key
+          setPinRemoveInput(next)
+          if (next.length === 4) handlePinRemoveVerify(next)
+        }
+      } else if (e.key === 'Backspace') {
+        setPinRemoveInput(v => v.slice(0, -1))
+        setPinRemoveError(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pinRemoveConfirm, pinVerified, pinRemoveInput, handlePinRemoveVerify])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -303,77 +336,91 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         />
       </div>
 
-      {/* PIN remove — verify current PIN before removing */}
+      {/* PIN remove — verify then choose action */}
       {pinRemoveConfirm && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
-          onClick={() => setPinRemoveConfirm(false)}
+          onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
         >
           <div
             style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>🔢</div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>Zadaj aktuálny PIN</h3>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Overenie pred odstránením</p>
-            </div>
+            {!pinVerified ? (
+              <>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>🔢</div>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>Zadaj aktuálny PIN</h3>
+                  <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Overenie pred zmenou</p>
+                </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
-              {[0,1,2,3].map(i => (
-                <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: i < pinRemoveInput.length ? 'var(--violet)' : 'transparent', border: '2px solid ' + (i < pinRemoveInput.length ? 'var(--violet)' : 'var(--border2)'), transition: 'all 0.15s' }} />
-              ))}
-            </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
+                  {[0,1,2,3].map(i => (
+                    <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: i < pinRemoveInput.length ? 'var(--violet)' : 'transparent', border: '2px solid ' + (i < pinRemoveInput.length ? 'var(--violet)' : 'var(--border2)'), transition: 'all 0.15s' }} />
+                  ))}
+                </div>
 
-            {pinRemoveError && <p style={{ textAlign: 'center', fontSize: 13, color: '#f87171', margin: 0 }}>{pinRemoveError}</p>}
+                {pinRemoveError && <p style={{ textAlign: 'center', fontSize: 13, color: '#f87171', margin: 0 }}>{pinRemoveError}</p>}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
+                    <button
+                      key={idx}
+                      disabled={k === '' || pinRemoveLoading}
+                      onClick={() => {
+                        if (pinRemoveLoading) return
+                        if (k === '⌫') { setPinRemoveInput(v => v.slice(0, -1)); setPinRemoveError(null); return }
+                        if (k === '' || pinRemoveInput.length >= 4) return
+                        const next = pinRemoveInput + String(k)
+                        setPinRemoveInput(next)
+                        if (next.length === 4) handlePinRemoveVerify(next)
+                      }}
+                      style={{
+                        height: 52, borderRadius: 12,
+                        background: k === '' ? 'transparent' : 'var(--bg3)',
+                        color: 'var(--text)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
+                        border: k === '' ? 'none' : '1px solid var(--border2)',
+                        cursor: k === '' ? 'default' : 'pointer',
+                        opacity: k === '' ? 0 : pinRemoveLoading ? 0.5 : 1,
+                        fontFamily: 'inherit',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {k === '⌫' ? <Delete size={18} /> : k}
+                    </button>
+                  ))}
+                </div>
+
                 <button
-                  key={idx}
-                  disabled={k === '' || pinRemoveLoading}
-                  onClick={async () => {
-                    if (pinRemoveLoading) return
-                    if (k === '⌫') { setPinRemoveInput(v => v.slice(0, -1)); setPinRemoveError(null); return }
-                    if (k === '' || pinRemoveInput.length >= 4) return
-                    const next = pinRemoveInput + String(k)
-                    setPinRemoveInput(next)
-                    if (next.length === 4) {
-                      setPinRemoveLoading(true)
-                      const ok = await verifyPin(next)
-                      if (ok) {
-                        await removePin()
-                        setPinRemoveConfirm(false)
-                        setPinRemoveInput('')
-                      } else {
-                        setPinRemoveShake(true)
-                        setPinRemoveError('Nesprávny PIN')
-                        setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
-                      }
-                    }
-                  }}
-                  style={{
-                    height: 52, borderRadius: 12,
-                    background: k === '' ? 'transparent' : 'var(--bg3)',
-                    color: 'var(--text)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
-                    border: k === '' ? 'none' : '1px solid var(--border2)',
-                    cursor: k === '' ? 'default' : 'pointer',
-                    opacity: k === '' ? 0 : pinRemoveLoading ? 0.5 : 1,
-                    fontFamily: 'inherit',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
+                  onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
+                  style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
                 >
-                  {k === '⌫' ? <Delete size={18} /> : k}
+                  Zrušiť
                 </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setPinRemoveConfirm(false)}
-              style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
-            >
-              Zrušiť
-            </button>
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <h3 style={{ textAlign: 'center', fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Čo chceš urobiť?</h3>
+                <button
+                  onClick={() => { setPinRemoveConfirm(false); setPinVerified(false); setPinSetupOpen(true) }}
+                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                >
+                  Zmeniť PIN
+                </button>
+                <button
+                  onClick={async () => { await removePin(); setPinRemoveConfirm(false); setPinVerified(false) }}
+                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                >
+                  Odstrániť PIN
+                </button>
+                <button
+                  onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text3)', fontFamily: 'inherit', padding: '8px 0', textAlign: 'center', width: '100%' }}
+                >
+                  Zrušiť
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

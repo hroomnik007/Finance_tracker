@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Delete, Check } from 'lucide-react'
 
 interface PinSetupModalProps {
@@ -48,24 +48,32 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
     }
   }
 
+  useEffect(() => {
+    if (!open || step === 'success') return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') handleKey(e.key)
+      else if (e.key === 'Backspace') handleKey('⌫')
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step, pin, saving])
+
   if (step === 'success') {
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} />
         <div style={{
           position: 'relative', width: '100%', maxWidth: 340,
-          background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+          background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 24, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
           padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
         }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%', background: 'rgba(52,211,153,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Check size={28} color="#34d399" />
           </div>
-          <p style={{ fontSize: 18, fontWeight: 700, color: '#E2D9F3', textAlign: 'center' }}>PIN bol nastavený</p>
-          <p style={{ fontSize: 13, color: '#9D84D4', textAlign: 'center' }}>Môžeš sa teraz prihlasovať pomocou PIN kódu.</p>
+          <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>PIN bol nastavený</p>
+          <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>Môžeš sa teraz prihlasovať pomocou PIN kódu.</p>
         </div>
       </div>
     )
@@ -79,23 +87,23 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} onClick={handleClose} />
       <div style={{
         position: 'relative', width: '100%', maxWidth: 340,
-        background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+        background: 'var(--bg2)', border: '1px solid var(--border)',
         borderRadius: 24, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#E2D9F3' }}>{title}</h2>
-          <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9D84D4', padding: 4 }}><X size={18} /></button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{title}</h2>
+          <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4 }}><X size={18} /></button>
         </div>
 
         <div style={{ padding: '32px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
-          <p style={{ fontSize: 13, color: '#9D84D4', textAlign: 'center' }}>{sub}</p>
+          <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>{sub}</p>
 
           <div style={{ display: 'flex', gap: 16 }} className={shake ? 'pin-shake' : ''}>
             {[0,1,2,3].map(i => (
               <div key={i} style={{
                 width: 16, height: 16, borderRadius: '50%',
-                background: pin.length > i ? '#7C3AED' : 'transparent',
-                border: '2px solid ' + (pin.length > i ? '#7C3AED' : '#4C3A8A'),
+                background: pin.length > i ? 'var(--violet)' : 'transparent',
+                border: '2px solid ' + (pin.length > i ? 'var(--violet)' : 'var(--border2)'),
                 transition: 'all 0.15s',
               }} />
             ))}
@@ -109,15 +117,15 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
                   onClick={() => handleKey(k)}
                   style={{
                     width: 64, height: 64, borderRadius: '50%',
-                    background: k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)',
-                    border: k === '⌫' ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                    color: '#E2D9F3', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
+                    background: k === '⌫' ? 'transparent' : 'var(--bg3)',
+                    border: k === '⌫' ? 'none' : '1px solid var(--border2)',
+                    color: 'var(--text)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'inherit',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     opacity: saving ? 0.5 : 1,
                   }}
-                  onPointerDown={e => (e.currentTarget.style.background = k === '⌫' ? 'rgba(255,255,255,0.06)' : 'rgba(124,58,237,0.15)')}
-                  onPointerUp={e => (e.currentTarget.style.background = k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)')}
+                  onPointerDown={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.15)')}
+                  onPointerUp={e => (e.currentTarget.style.background = k === '⌫' ? 'transparent' : 'var(--bg3)')}
                 >
                   {k === '⌫' ? <Delete size={18} /> : k}
                 </button>
