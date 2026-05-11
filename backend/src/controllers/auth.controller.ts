@@ -539,3 +539,21 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
   await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
   res.json({ success: true });
 }
+
+export async function getAuthMethods(req: Request, res: Response): Promise<void> {
+  const { email } = req.query as { email?: string }
+  if (!email || typeof email !== 'string') {
+    res.status(400).json({ error: 'Email required' })
+    return
+  }
+  const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1)
+  if (!user) {
+    res.json({ pin: false, google: false, password: false })
+    return
+  }
+  res.json({
+    pin: !!user.pinHash,
+    google: !!user.googleId,
+    password: !!user.passwordHash,
+  })
+}

@@ -134,3 +134,8 @@ export async function webauthnAuthenticateVerify(body: object): Promise<{ user: 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await apiClient.patch('/api/auth/password', { currentPassword, newPassword })
 }
+
+export async function getAuthMethods(email: string): Promise<{ pin: boolean; google: boolean; password: boolean }> {
+  const { data } = await apiClient.get("/api/auth/methods", { params: { email } })
+  return data
+}

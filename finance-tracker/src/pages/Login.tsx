@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
+import { getAuthMethods } from '../api/auth'
 
 interface LoginPageProps {
   onNavigateRegister: () => void
@@ -29,21 +30,19 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [pinLoading, setPinLoading] = useState(false)
   const [pinError, setPinError] = useState<string | null>(null)
 
-  const [authMethods, setAuthMethods] = useState({ pin: false })
+  const [authMethods, setAuthMethods] = useState({ pin: false, google: false, password: false })
 
   useEffect(() => {
     if (!email.includes('@')) {
-      setAuthMethods({ pin: false })
+      setAuthMethods({ pin: false, google: false, password: false })
       return
     }
     const timer = setTimeout(async () => {
       try {
-        // TODO: replace with GET /api/auth/methods?email= when endpoint is available
-        throw new Error('endpoint not available')
+        const methods = await getAuthMethods(email)
+        setAuthMethods(methods)
       } catch {
-        setAuthMethods({
-          pin: !!localStorage.getItem(`pin_enabled_${email}`),
-        })
+        setAuthMethods({ pin: false, google: false, password: false })
       }
     }, 500)
     return () => clearTimeout(timer)

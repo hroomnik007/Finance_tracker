@@ -4,7 +4,7 @@ import {
   register, login, refresh, logout, me,
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
   updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth, updateUserSettings,
-  pinLogin, updatePin, removePin, changePassword,
+  pinLogin, updatePin, removePin, changePassword, getAuthMethods,
 } from "../controllers/auth.controller";
 import {
   webauthnRegisterOptions, webauthnRegisterVerify,
@@ -46,6 +46,7 @@ const refreshLimiter = rateLimit({
 
 const router = Router();
 
+router.get("/methods",          generalLimiter,  getAuthMethods);
 router.post("/register",        registerLimiter, register);
 router.post("/login",           loginLimiter,    login);
 router.post("/refresh",         refreshLimiter,  refresh);
