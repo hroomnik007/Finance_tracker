@@ -7,12 +7,14 @@ const LOCK_METHOD_KEY = 'lock_method'
 const AUTO_LOCK_MS = 5 * 60 * 1000
 
 export function usePinLock() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [lockMethod, setLockMethod] = useState<'pin' | 'biometric' | null>(
     () => localStorage.getItem(LOCK_METHOD_KEY) as 'pin' | 'biometric' | null
   )
   const [locked, setLocked] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lockMethodRef = useRef(lockMethod)
+  lockMethodRef.current = lockMethod
 
   const hasPin = lockMethod === 'pin'
   const hasBiometric = lockMethod === 'biometric'
@@ -54,6 +56,23 @@ export function usePinLock() {
     return () => window.removeEventListener('storage', handler)
   }, [])
 
+  // Sync lockMethod with server on user load — resolves cross-device desync
+  useEffect(() => {
+    if (!user) return
+    const serverHasPin = !!user.has_pin
+    const current = lockMethodRef.current
+    if (!serverHasPin && current === 'pin') {
+      localStorage.removeItem(LOCK_METHOD_KEY)
+      setLockMethod(null)
+      setLocked(false)
+      if (timerRef.current) clearTimeout(timerRef.current)
+    } else if (serverHasPin && current === null) {
+      localStorage.setItem(LOCK_METHOD_KEY, 'pin')
+      setLockMethod('pin')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   const setupPin = useCallback(async (pin: string) => {
     await savePin(pin)
     localStorage.setItem(LOCK_METHOD_KEY, 'pin')
@@ -80,7 +99,8 @@ export function usePinLock() {
     setLockMethod(null)
     setLocked(false)
     if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
+    refreshUser()
+  }, [refreshUser])
 
   const setupBiometric = useCallback(() => {
     localStorage.setItem(LOCK_METHOD_KEY, 'biometric')

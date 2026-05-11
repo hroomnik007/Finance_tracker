@@ -57,6 +57,7 @@ function userPublic(u: typeof users.$inferSelect) {
     onboardingComplete: u.onboardingComplete ?? false,
     currentStreak: u.currentStreak ?? 0, longestStreak: u.longestStreak ?? 0,
     badges: u.badges ?? [],
+    has_pin: !!u.pinHash,
   };
 }
 
@@ -79,8 +80,9 @@ export async function webauthnRegisterOptions(req: AuthRequest, res: Response): 
     userDisplayName: user.name,
     excludeCredentials: existingCreds.map(c => ({ id: c.credentialId, type: 'public-key' as const })),
     authenticatorSelection: {
+      authenticatorAttachment: 'platform',
+      userVerification: 'required',
       residentKey: 'preferred',
-      userVerification: 'preferred',
     },
   });
 
@@ -103,7 +105,7 @@ export async function webauthnRegisterVerify(req: AuthRequest, res: Response): P
       expectedChallenge,
       expectedOrigin: ORIGIN,
       expectedRPID: RP_ID,
-      requireUserVerification: false,
+      requireUserVerification: true,
     });
   } catch (e) {
     res.status(400).json({ error: (e as Error).message }); return;
@@ -149,7 +151,7 @@ export async function webauthnAuthenticateOptions(req: any, res: Response): Prom
   const options = await generateAuthenticationOptions({
     rpID: RP_ID,
     allowCredentials,
-    userVerification: 'preferred',
+    userVerification: 'required',
   });
 
   storeChallenge(challengeKey, options.challenge);
@@ -185,7 +187,7 @@ export async function webauthnAuthenticateVerify(req: any, res: Response): Promi
         publicKey: new Uint8Array(Buffer.from(storedCred.publicKey, 'base64')),
         counter: storedCred.counter,
       },
-      requireUserVerification: false,
+      requireUserVerification: true,
     });
   } catch (e) {
     res.status(400).json({ error: (e as Error).message }); return;

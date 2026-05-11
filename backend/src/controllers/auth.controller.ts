@@ -44,6 +44,7 @@ function userPublic(u: {
   theme?: string | null;
   trackingStartDate?: string | null;
   onboardingBannerDismissed?: boolean | null;
+  pinHash?: string | null;
 }) {
   return {
     id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null,
@@ -60,6 +61,7 @@ function userPublic(u: {
     theme: u.theme ?? null,
     tracking_start_date: u.trackingStartDate ?? null,
     onboarding_banner_dismissed: u.onboardingBannerDismissed ?? false,
+    has_pin: !!u.pinHash,
   };
 }
 
@@ -204,6 +206,7 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       theme: users.theme,
       trackingStartDate: users.trackingStartDate,
       onboardingBannerDismissed: users.onboardingBannerDismissed,
+      pinHash: users.pinHash,
     })
     .from(users)
     .where(eq(users.id, req.userId!))
