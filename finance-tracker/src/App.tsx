@@ -22,7 +22,7 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
 import { OnboardingTutorial, useOnboarding } from './components/OnboardingTutorial'
 import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTemplateModal'
 import { PinLock } from './components/PinLock'
-import { usePinLock } from './hooks/usePinLock'
+import { PinLockProvider, usePinLockContext } from './context/PinLockContext'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
 import { useSettingsContext } from './context/SettingsContext'
@@ -104,7 +104,7 @@ function App() {
     (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
   )
   const { toasts, showToast } = useToast()
-  const { locked, verifyPin } = usePinLock()
+  const { locked, verifyPin } = usePinLockContext()
   const { showOnboarding, completeOnboarding } = useOnboarding()
   const needsBudgetTemplate = useBudgetTemplate()
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
@@ -404,7 +404,7 @@ function Root() {
   if (routeKey.startsWith('#admin')) return <AdminPage />
   const reportToken = getReportToken()
   if (reportToken) return <SharedReportPage token={reportToken} />
-  return <App />
+  return <PinLockProvider><App /></PinLockProvider>
 }
 
 export default Root

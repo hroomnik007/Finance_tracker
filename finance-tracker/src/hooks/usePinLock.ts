@@ -10,7 +10,7 @@ async function sha256(text: string): Promise<string> {
 
 export function usePinLock() {
   const [hasPin, setHasPin] = useState(() => !!localStorage.getItem(PIN_HASH_KEY))
-  const [locked, setLocked] = useState(() => !!localStorage.getItem(PIN_HASH_KEY))
+  const [locked, setLocked] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const resetTimer = useCallback(() => {

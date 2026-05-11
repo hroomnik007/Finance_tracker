@@ -10,7 +10,7 @@ import { createHousehold, joinHousehold, toggleHousehold } from '../api/househol
 import { useSettingsContext } from '../context/SettingsContext'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
-import { usePinLock } from '../hooks/usePinLock'
+import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
 import type { ApiTransaction, ApiCategory } from '../types'
 
@@ -194,7 +194,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail, refreshUser } = useAuth()
-  const { setupPin } = usePinLock()
+  const { setupPin } = usePinLockContext()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
   const compactDefault = window.innerWidth < 768
@@ -265,7 +265,6 @@ export function SettingsPage() {
 
   // ── Security section ─────────────────────────────────────────────────────
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
-  const [biometriaEnabled, setBiometriaEnabled] = useState(() => loadLocalPref<boolean>('finvu_biometria', false))
   const [changePwOpen, setChangePwOpen] = useState(false)
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -902,17 +901,7 @@ export function SettingsPage() {
                 </button>
               </SettingRow>
 
-              {/* Biometria */}
-              <SettingRow label="Biometria" sublabel="Touch ID / Face ID">
-                <Toggle
-                  checked={biometriaEnabled}
-                  onChange={() => {
-                    const next = !biometriaEnabled
-                    setBiometriaEnabled(next)
-                    saveLocalPref('finvu_biometria', next)
-                  }}
-                />
-              </SettingRow>
+              {/* Biometria — TODO: not implemented yet */}
 
             </div>
           </SectionCard>
