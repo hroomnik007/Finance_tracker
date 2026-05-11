@@ -18,7 +18,9 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   const expensesActive = EXPENSE_PAGES.includes(current)
   const householdEnabled = user?.household_enabled ?? false
   const savingsEnabled = user?.savings_enabled ?? false
-  const showViac = savingsEnabled || householdEnabled
+  const showViac = savingsEnabled && householdEnabled
+  const showOnlySavings = savingsEnabled && !householdEnabled
+  const showOnlyHousehold = householdEnabled && !savingsEnabled
   const viacActive = VIAC_PAGES.includes(current)
 
   const [showExpenseMenu, setShowExpenseMenu] = useState(false)
@@ -216,6 +218,27 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             icon={<MoreHorizontal size={20} />}
             label={t.nav.more}
             onClick={() => { setShowExpenseMenu(false); setShowViacSheet(s => !s) }}
+          />
+        )}
+        {showOnlySavings && (
+          <NavTab
+            active={current === 'savings'}
+            icon={<PiggyBank size={20} />}
+            label={t.nav.savings}
+            onClick={() => { setShowExpenseMenu(false); onChange('savings') }}
+          />
+        )}
+        {showOnlyHousehold && (
+          <NavTab
+            active={current === 'household'}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            }
+            label={t.nav.household}
+            onClick={() => { setShowExpenseMenu(false); onChange('household') }}
           />
         )}
       </nav>
