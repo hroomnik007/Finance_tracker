@@ -16,6 +16,16 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
   async function handleKey(k: string) {
     if (checking) return
     if (k === '⌫') { setPin(p => p.slice(0, -1)); return }
+    if (k === 'Enter') {
+      if (pin.length !== 4) return
+      setChecking(true)
+      const ok = await onVerify(pin)
+      if (!ok) {
+        setShake(true)
+        setTimeout(() => { setShake(false); setPin(''); setChecking(false) }, 600)
+      }
+      return
+    }
     if (pin.length >= 4) return
     const next = pin + k
     setPin(next)
@@ -33,6 +43,7 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key >= '0' && e.key <= '9') handleKey(e.key)
       else if (e.key === 'Backspace') handleKey('⌫')
+      else if (e.key === 'Enter') handleKey('Enter')
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
