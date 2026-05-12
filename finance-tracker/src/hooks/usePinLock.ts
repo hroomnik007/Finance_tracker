@@ -69,6 +69,23 @@ export function usePinLock() {
     return () => window.removeEventListener('storage', handler)
   }, [])
 
+  // Mount-once check — runs before AuthContext sets user, so last_active_at
+  // has not yet been refreshed by /api/auth/me (mobile PWA cold open case)
+  useEffect(() => {
+    if (!lockMethodRef.current) return
+    async function check() {
+      if (lockedRef.current) return
+      try {
+        const result = await sessionCheck()
+        if (!result.valid && result.reason === 'timeout') {
+          setLocked(true)
+        }
+      } catch { /* network errors must not lock user out */ }
+    }
+    check()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Server-side session timeout check
   useEffect(() => {
     if (!lockMethod || !user) return
