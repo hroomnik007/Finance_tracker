@@ -44,6 +44,7 @@ export const users = pgTable("users", {
   theme: varchar("theme", { length: 20 }).default("dark"),
   trackingStartDate: date("tracking_start_date"),
   onboardingBannerDismissed: boolean("onboarding_banner_dismissed").default(false).notNull(),
+  lastActiveAt: timestamp("last_active_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { savePin, deletePin, pinLogin } from '../api/auth'
+import { savePin, deletePin, pinLogin, sessionCheck } from '../api/auth'
 
 const LOCK_METHOD_KEY = 'lock_method'
 const AUTO_LOCK_MS = 5 * 60 * 1000
@@ -19,6 +19,8 @@ export function usePinLock() {
   lockMethodRef.current = lockMethod
 
   const hasPin = lockMethod === 'pin'
+  const lockedRef = useRef(locked)
+  lockedRef.current = locked
 
   const resetTimer = useCallback(() => {
     if (!lockMethod) return
@@ -66,6 +68,41 @@ export function usePinLock() {
     window.addEventListener('storage', handler)
     return () => window.removeEventListener('storage', handler)
   }, [])
+
+  // Server-side session timeout check
+  useEffect(() => {
+    if (!lockMethod || !user) return
+
+    async function checkSession() {
+      if (lockedRef.current) return
+      try {
+        const result = await sessionCheck()
+        if (!result.valid && result.reason === 'timeout') {
+          setLocked(true)
+        }
+      } catch { /* network errors must not lock user out */ }
+    }
+
+    // Check on mount (app load / user change)
+    checkSession()
+
+    // Check when tab becomes visible — do NOT act on hidden
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') checkSession()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    // Poll every 60s, only when tab is visible
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') checkSession()
+    }, 60_000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      clearInterval(intervalId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockMethod, user])
 
   // Sync lockMethod with server on user load — resolves cross-device desync
   useEffect(() => {

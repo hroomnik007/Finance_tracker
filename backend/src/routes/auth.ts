@@ -4,13 +4,14 @@ import {
   register, login, refresh, logout, me,
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
   updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth, updateUserSettings,
-  pinLogin, updatePin, removePin, changePassword, getAuthMethods,
+  pinLogin, updatePin, removePin, changePassword, getAuthMethods, sessionCheck,
 } from "../controllers/auth.controller";
 import {
   webauthnRegisterOptions, webauthnRegisterVerify,
   webauthnAuthenticateOptions, webauthnAuthenticateVerify,
 } from "../controllers/webauthn.controller";
 import { authenticateToken } from "../middleware/authenticate";
+
 
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -44,9 +45,18 @@ const refreshLimiter = rateLimit({
   message: { error: 'Príliš veľa pokusov. Skúste neskôr.' },
 });
 
+const sessionCheckLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Príliš veľa pokusov. Skúste neskôr.' },
+});
+
 const router = Router();
 
-router.get("/methods",          generalLimiter,  getAuthMethods);
+router.get("/methods",          generalLimiter,       getAuthMethods);
+router.get("/session-check",    sessionCheckLimiter,  authenticateToken, sessionCheck);
 router.post("/register",        registerLimiter, register);
 router.post("/login",           loginLimiter,    login);
 router.post("/refresh",         refreshLimiter,  refresh);

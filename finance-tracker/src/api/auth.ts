@@ -139,3 +139,8 @@ export async function getAuthMethods(email: string): Promise<{ pin: boolean; goo
   const { data } = await apiClient.get("/api/auth/methods", { params: { email } })
   return data
 }
+
+export async function sessionCheck(): Promise<{ valid: boolean; reason?: string }> {
+  const { data } = await apiClient.get('/api/auth/session-check')
+  return data
+}

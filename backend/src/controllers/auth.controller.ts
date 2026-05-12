@@ -452,7 +452,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', trackingStartDate: null, onboardingBannerDismissed: false };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, lastActiveAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', trackingStartDate: null, onboardingBannerDismissed: false };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }
@@ -538,6 +538,23 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
   await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
   res.json({ success: true });
+}
+
+export async function sessionCheck(req: AuthRequest, res: Response): Promise<void> {
+  const [row] = await db
+    .select({ lastActiveAt: users.lastActiveAt })
+    .from(users)
+    .where(eq(users.id, req.userId!))
+    .limit(1);
+
+  if (!row) { res.status(404).json({ error: "User not found" }); return; }
+
+  const TIMEOUT_MS = 5 * 60 * 1000;
+  if (row.lastActiveAt && Date.now() - row.lastActiveAt.getTime() > TIMEOUT_MS) {
+    res.json({ valid: false, reason: "timeout" });
+  } else {
+    res.json({ valid: true });
+  }
 }
 
 export async function getAuthMethods(req: Request, res: Response): Promise<void> {
