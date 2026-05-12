@@ -60,3 +60,8 @@ export async function getTotalBalance(): Promise<{ totalIncome: number; totalExp
   const { data } = await apiClient.get('/api/reports/total-balance')
   return data
 }
+
+export async function getBalanceAtMonth(year: number, month: number): Promise<{ balance: number }> {
+  const { data } = await apiClient.get('/api/transactions/balance-at-month', { params: { year, month } })
+  return data
+}

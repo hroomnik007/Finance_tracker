@@ -14,7 +14,7 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
-import { getSummary, getTotalBalance } from '../api/transactions'
+import { getSummary, getBalanceAtMonth } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import { updateUserSettings } from '../api/auth'
 import { MemberAvatar } from '../components/MemberAvatar'
@@ -245,8 +245,8 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
-    getTotalBalance().then(d => setCumulativeBalance(d.balance)).catch(() => {})
-  }, [])
+    getBalanceAtMonth(year, month).then(d => setCumulativeBalance(d.balance)).catch(() => {})
+  }, [year, month])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderPieShape = (props: any) => {
