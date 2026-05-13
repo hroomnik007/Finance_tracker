@@ -28,7 +28,7 @@ export async function getUserList(_req: Request, res: Response): Promise<void> {
       createdAt: users.createdAt,
       lastLoginAt: users.lastLoginAt,
       emailVerified: users.emailVerified,
-      transactionCount: sql<number>`(select count(*)::int from transactions where transactions.user_id = ${users.id})`,
+      transactionCount: sql<number>`(select count(*)::int from transactions t where t.user_id = users.id)`,
     })
     .from(users)
     .orderBy(sql`${users.createdAt} desc`)
