@@ -1069,12 +1069,12 @@ export function SettingsPage() {
                       placeholder={t.settings.householdCreatePlaceholder}
                       value={createName}
                       onChange={e => setCreateName(e.target.value)}
-                      className="input-field text-sm"
+                      style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
                     />
                     <button
                       onClick={handleCreateHousehold}
                       disabled={createLoading || !createName.trim()}
-                      className="btn-primary py-2 text-sm justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (createLoading || !createName.trim()) ? 0.4 : 1 }}
                     >
                       {createLoading ? t.settings.householdCreating : t.settings.householdCreateBtn}
                     </button>
@@ -1088,13 +1088,13 @@ export function SettingsPage() {
                       placeholder={t.settings.householdJoinPlaceholder}
                       value={joinCode}
                       onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(null) }}
-                      className="input-field text-sm font-mono tracking-widest"
+                      style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
                     />
                     {joinError && <p className="text-xs text-red-400">{joinError}</p>}
                     <button
                       onClick={handleJoinHousehold}
                       disabled={joinLoading || !joinCode.trim()}
-                      className="btn-primary py-2 text-sm justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (joinLoading || !joinCode.trim()) ? 0.4 : 1 }}
                     >
                       {joinLoading ? t.settings.householdJoining : t.settings.householdJoinBtn}
                     </button>
