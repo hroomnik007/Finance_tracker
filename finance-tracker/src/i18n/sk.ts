@@ -53,7 +53,7 @@ export const sk = {
     setInCategories: 'Nastav ich v Kategóriách',
     vsLastMonth: 'oproti minulému mesiacu',
     dailyAvg: 'Ø / deň',
-    biggestExpense: 'Najväčší výdavok',
+    biggestExpense: 'Naj. výdavok',
     transactions: 'Transakcií',
     monthComparison: 'Porovnanie mesiacov',
     upcomingPayments: 'Nadchádzajúce platby',

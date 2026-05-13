@@ -848,7 +848,7 @@ const upcomingFixed = useMemo(() => {
           MOBILE LAYOUT
       ════════════════════════════════════════ */}
       <div className="flex flex-col gap-4 lg:hidden">
-        <div className="hidden md:block">{greetingRow}</div>
+        <div>{greetingRow}</div>
         {heroSection}
         {miniStatsRow}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
