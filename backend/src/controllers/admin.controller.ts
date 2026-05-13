@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
-import { users, transactions } from "../db/schema";
+import { users, transactions, categories } from "../db/schema";
 
 export async function getStats(_req: Request, res: Response): Promise<void> {
   const [totalUsers] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
@@ -33,4 +33,25 @@ export async function getUserList(_req: Request, res: Response): Promise<void> {
     .orderBy(sql`${users.createdAt} desc`)
     .limit(200);
   res.json({ users: userList });
+}
+
+export async function getUserTransactions(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+  const rows = await db
+    .select({
+      id: transactions.id,
+      type: transactions.type,
+      amount: transactions.amount,
+      description: transactions.description,
+      date: transactions.date,
+      isFixed: transactions.isFixed,
+      categoryName: categories.name,
+      categoryIcon: categories.icon,
+    })
+    .from(transactions)
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(eq(transactions.userId, id))
+    .orderBy(sql`${transactions.date} desc`)
+    .limit(100);
+  res.json({ transactions: rows });
 }

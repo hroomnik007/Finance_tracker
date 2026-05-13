@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { AdminLoginPage } from './AdminLogin'
 import {
   getAdminToken, clearAdminToken,
-  fetchAdminStats, fetchAdminUsers,
-  type AdminStats, type AdminUser,
+  fetchAdminStats, fetchAdminUsers, fetchAdminUserTransactions,
+  type AdminStats, type AdminUser, type AdminTransaction,
 } from '../api/admin'
 
 export function AdminPage() {
@@ -17,6 +17,9 @@ export function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
+  const [txMap, setTxMap] = useState<Record<string, AdminTransaction[]>>({})
+  const [txLoading, setTxLoading] = useState<string | null>(null)
 
   useEffect(() => {
     if (!hasToken) return
@@ -47,6 +50,24 @@ export function AdminPage() {
     setHasToken(false)
     setStats(null)
     setUsers([])
+    setExpandedUserId(null)
+    setTxMap({})
+  }
+
+  async function handleToggleTransactions(userId: string) {
+    if (expandedUserId === userId) {
+      setExpandedUserId(null)
+      return
+    }
+    setExpandedUserId(userId)
+    if (txMap[userId]) return
+    setTxLoading(userId)
+    try {
+      const { transactions } = await fetchAdminUserTransactions(userId)
+      setTxMap(prev => ({ ...prev, [userId]: transactions }))
+    } finally {
+      setTxLoading(null)
+    }
   }
 
   if (loading) {
@@ -141,26 +162,85 @@ export function AdminPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #4C3A8A' }}>
-                  {['Meno', 'Email', 'Email overený', 'Registrácia', 'Posledné prihlásenie'].map(h => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: '#9D84D4', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>
+                  {['Meno', 'Email', 'Email overený', 'Registrácia', 'Posledné prihlásenie', ''].map((h, i) => (
+                    <th key={i} style={{ padding: '12px 16px', textAlign: 'left', color: '#9D84D4', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {users.map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '12px 16px', color: '#E2D9F3', fontWeight: 500 }}>{u.name}</td>
-                    <td style={{ padding: '12px 16px', color: '#B8A3E8' }}>{u.email}</td>
-                    <td style={{ padding: '12px 16px', color: u.emailVerified ? '#34D399' : '#f87171' }}>
-                      {u.emailVerified ? '✓' : '✗'}
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#9D84D4' }}>
-                      {new Date(u.createdAt).toLocaleDateString('sk-SK')}
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#9D84D4' }}>
-                      {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString('sk-SK') : '—'}
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={u.id} style={{ borderBottom: expandedUserId === u.id ? 'none' : '1px solid rgba(255,255,255,0.04)' }}>
+                      <td style={{ padding: '12px 16px', color: '#E2D9F3', fontWeight: 500 }}>{u.name}</td>
+                      <td style={{ padding: '12px 16px', color: '#B8A3E8' }}>{u.email}</td>
+                      <td style={{ padding: '12px 16px', color: u.emailVerified ? '#34D399' : '#f87171' }}>
+                        {u.emailVerified ? '✓' : '✗'}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: '#9D84D4' }}>
+                        {new Date(u.createdAt).toLocaleDateString('sk-SK')}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: '#9D84D4' }}>
+                        {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString('sk-SK') : '—'}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button
+                          onClick={() => handleToggleTransactions(u.id)}
+                          style={{
+                            padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            cursor: 'pointer', fontFamily: 'inherit', border: '1px solid #4C3A8A',
+                            background: expandedUserId === u.id ? '#4C3A8A' : 'transparent',
+                            color: expandedUserId === u.id ? '#E2D9F3' : '#A78BFA',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {txLoading === u.id ? '...' : expandedUserId === u.id ? '▲ Skryť' : '▼ Transakcie'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedUserId === u.id && (
+                      <tr key={`${u.id}-tx`} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td colSpan={6} style={{ padding: '0 16px 16px' }}>
+                          {txLoading === u.id ? (
+                            <p style={{ color: '#9D84D4', fontSize: 13, padding: '12px 0' }}>Načítavam transakcie...</p>
+                          ) : !txMap[u.id] || txMap[u.id].length === 0 ? (
+                            <p style={{ color: '#6B5A9E', fontSize: 13, padding: '12px 0' }}>Žiadne transakcie.</p>
+                          ) : (
+                            <div style={{ background: '#1A1035', borderRadius: 12, border: '1px solid #4C3A8A', overflow: 'hidden', marginTop: 4 }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                <thead>
+                                  <tr style={{ borderBottom: '1px solid #4C3A8A' }}>
+                                    {['Dátum', 'Typ', 'Kategória', 'Popis', 'Suma'].map(h => (
+                                      <th key={h} style={{ padding: '8px 14px', textAlign: 'left', color: '#6B5A9E', fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {txMap[u.id].map(tx => (
+                                    <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                      <td style={{ padding: '7px 14px', color: '#9D84D4', fontFamily: 'monospace' }}>{tx.date}</td>
+                                      <td style={{ padding: '7px 14px' }}>
+                                        <span style={{ fontSize: 14 }}>{tx.type === 'income' ? '💰' : tx.isFixed ? '📌' : '💸'}</span>
+                                      </td>
+                                      <td style={{ padding: '7px 14px', color: '#B8A3E8' }}>
+                                        {tx.categoryIcon && <span style={{ marginRight: 4 }}>{tx.categoryIcon}</span>}
+                                        {tx.categoryName ?? '—'}
+                                      </td>
+                                      <td style={{ padding: '7px 14px', color: '#9D84D4', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {tx.description ?? '—'}
+                                      </td>
+                                      <td style={{ padding: '7px 14px', fontWeight: 600, fontFamily: 'monospace', color: tx.type === 'income' ? '#34D399' : '#F87171' }}>
+                                        {tx.type === 'income' ? '+' : '−'}{parseFloat(tx.amount).toFixed(2)} €
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>

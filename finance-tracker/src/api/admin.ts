@@ -40,10 +40,25 @@ export interface AdminUser {
   emailVerified: boolean
 }
 
+export interface AdminTransaction {
+  id: string
+  type: 'income' | 'expense'
+  amount: string
+  description: string | null
+  date: string
+  isFixed: boolean
+  categoryName: string | null
+  categoryIcon: string | null
+}
+
 export async function fetchAdminStats(): Promise<AdminStats> {
   return adminGet<AdminStats>('/api/admin/stats')
 }
 
 export async function fetchAdminUsers(): Promise<{ users: AdminUser[] }> {
   return adminGet<{ users: AdminUser[] }>('/api/admin/users')
+}
+
+export async function fetchAdminUserTransactions(userId: string): Promise<{ transactions: AdminTransaction[] }> {
+  return adminGet<{ transactions: AdminTransaction[] }>(`/api/admin/users/${userId}/transactions`)
 }
