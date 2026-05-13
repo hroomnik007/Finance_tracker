@@ -15,7 +15,7 @@ const LABEL_COLOR = '#6b6387'
 
 export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: LoginPageProps) {
   const { t } = useTranslation()
-  const { login, loginWithGoogle, loginWithPin } = useAuth()
+  const { login, loginDemo, loginWithGoogle, loginWithPin } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -87,7 +87,11 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     setError(null)
     setIsLoading(true)
     try {
-      await login(email, password)
+      if (email === 'demo@finvu.sk') {
+        await loginDemo()
+      } else {
+        await login(email, password)
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
       setError(msg ?? 'Prihlásenie zlyhalo')
