@@ -14,7 +14,6 @@ import { AdminPage } from './pages/Admin'
 import { SharedReportPage } from './pages/SharedReport'
 import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
-import { DemoLoginPage } from './pages/DemoLogin'
 import { ForgotPasswordPage } from './pages/ForgotPassword'
 import { ResetPasswordPage } from './pages/ResetPassword'
 import { VerifyEmailPage } from './pages/VerifyEmail'
@@ -85,13 +84,11 @@ function App() {
   useBudgetWarningNotifications(budgetStatuses, isAuthenticated)
   useMonthlyReminderNotification(isAuthenticated)
   const [page, setPage] = useState<Page>(getPageFromHash)
-  type AuthPage = 'login' | 'register' | 'demo-login' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
+  type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
 
   function getAuthPageFromHash(): AuthPage {
     const hash = window.location.hash
     if (hash === '#register') return 'register'
-    if (hash === '#login') return 'login'
-    if (hash === '#demo-login') return 'demo-login'
     if (hash.startsWith('#verify-email')) return 'verify-email'
     if (hash.startsWith('#reset-password')) return 'reset-password'
     return 'login'
@@ -259,14 +256,12 @@ function App() {
     setAuthPage(p)
     if (p === 'login') window.location.hash = 'login'
     else if (p === 'register') window.location.hash = 'register'
-    else if (p === 'demo-login') window.location.hash = 'demo-login'
   }
 
   if (!isAuthenticated) {
     return (
       <>
         <ToastContainer toasts={toasts} />
-        {authPage === 'demo-login' && <DemoLoginPage />}
         {authPage === 'register' && (
           <RegisterPage
             onNavigateLogin={() => goAuthPage('login')}

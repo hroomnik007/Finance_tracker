@@ -33,6 +33,26 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [authMethods, setAuthMethods] = useState({ pin: false, google: false, password: false })
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('demo') !== 'true') return
+    setEmail('demo@finvu.sk')
+    setPassword('demo123')
+    const timer = setTimeout(async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        await login('demo@finvu.sk', 'demo123')
+        window.location.hash = 'dashboard'
+      } catch {
+        setError('Demo účet nie je dostupný. Skúste neskôr.')
+      } finally {
+        setIsLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     if (!email.includes('@')) {
       setAuthMethods({ pin: false, google: false, password: false })
       return
