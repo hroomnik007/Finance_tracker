@@ -365,8 +365,8 @@ const upcomingFixed = useMemo(() => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {chartData.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 16 }}>
-          <ChartCard title="CASH FLOW TREND">
-            <ResponsiveContainer width="100%" height={160}>
+          <ChartCard title="VÝVOJ PRÍJMOV A VÝDAVKOV">
+            <ResponsiveContainer width="100%" height={160} style={{ overflow: 'visible' }}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
@@ -380,7 +380,7 @@ const upcomingFixed = useMemo(() => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} formatter={(val) => formatAmount(Number(val))} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 100 }} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} formatter={(val) => formatAmount(Number(val))} allowEscapeViewBox={{ x: false, y: false }} wrapperStyle={{ zIndex: 100 }} />
                 <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
                 <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
               </AreaChart>
