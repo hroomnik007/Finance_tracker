@@ -100,12 +100,16 @@ export function usePinLock() {
       } catch { /* network errors must not lock user out */ }
     }
 
-    // Check on mount (app load / user change)
-    checkSession()
+    let hiddenSince: number | null = null
 
-    // Check when tab becomes visible — do NOT act on hidden
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') checkSession()
+      if (document.visibilityState === 'hidden') {
+        hiddenSince = Date.now()
+      } else if (document.visibilityState === 'visible') {
+        const hiddenMs = hiddenSince !== null ? Date.now() - hiddenSince : 0
+        hiddenSince = null
+        if (hiddenMs > 4 * 60 * 1000) checkSession()
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
 
