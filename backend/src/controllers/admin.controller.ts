@@ -36,7 +36,7 @@ export async function getUserList(_req: Request, res: Response): Promise<void> {
 }
 
 export async function getUserTransactions(req: Request, res: Response): Promise<void> {
-  const { id } = req.params;
+  const userId = req.params.id as string;
   const rows = await db
     .select({
       id: transactions.id,
@@ -50,7 +50,7 @@ export async function getUserTransactions(req: Request, res: Response): Promise<
     })
     .from(transactions)
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(eq(transactions.userId, id))
+    .where(eq(transactions.userId, userId))
     .orderBy(sql`${transactions.date} desc`)
     .limit(100);
   res.json({ transactions: rows });
