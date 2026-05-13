@@ -68,11 +68,13 @@ async function main() {
     console.log("Demo categories created:", categoryIds.length);
   }
 
-  const existingTx = await db.select({ id: transactions.id }).from(transactions).where(eq(transactions.userId, demoUserId)).limit(1);
+  // Always reset onboardingComplete so each demo session shows onboarding
+  await db.update(users).set({ onboardingComplete: false }).where(eq(users.id, demoUserId));
 
-  if (existingTx.length > 0) {
-    console.log("Demo transactions already exist, skipping.");
-  } else {
+  await db.delete(transactions).where(eq(transactions.userId, demoUserId));
+  console.log("Demo transactions cleared, re-seeding...");
+
+  {
     const expenseCatIds = categoryIds.slice(0, 5);
     const incomeCatId = categoryIds[5];
 

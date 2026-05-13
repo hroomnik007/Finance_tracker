@@ -97,6 +97,7 @@ export interface AuthUser {
   tracking_start_date?: string | null
   onboarding_banner_dismissed?: boolean
   has_pin?: boolean
+  isDemo?: boolean
   household?: {
     id: number
     name: string

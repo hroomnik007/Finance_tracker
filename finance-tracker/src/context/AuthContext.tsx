@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginDemo = useCallback(async () => {
     const { user: me, accessToken } = await apiDemoLogin()
     setAccessToken(accessToken)
-    setUser(me)
+    setUser({ ...me, onboardingComplete: false, isDemo: true })
     setIsGuest(false)
     try {
       sessionStorage.removeItem('auth_guest')
