@@ -4,7 +4,6 @@ import {
   AreaChart, Area, XAxis, CartesianGrid,
   BarChart, Bar,
 } from 'recharts'
-import { ArrowUp, ArrowDown } from 'lucide-react'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -14,7 +13,7 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
-import { getSummary, getBalanceAtMonth } from '../api/transactions'
+import { getSummary, getSummaryCards } from '../api/transactions'
 import { getMyHousehold } from '../api/households'
 import { updateUserSettings } from '../api/auth'
 import { MemberAvatar } from '../components/MemberAvatar'
@@ -46,13 +45,6 @@ function getGreeting(name: string, t: Translations): { text: string; emoji: stri
   return { text: `${t.dashboard.greetingNight}${name ? `, ${name}` : ''}`, emoji: '😴' }
 }
 
-function getLast7Days(): string[] {
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - 6 + i)
-    return d.toISOString().split('T')[0]
-  })
-}
 
 // ── Local helper components ────────────────────────────────────────────────
 
@@ -87,30 +79,6 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   )
 }
 
-function ToggleBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        padding: '10px 16px',
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        fontFamily: 'inherit',
-        cursor: 'pointer',
-        border: 'none',
-        background: active ? 'var(--violet)' : 'transparent',
-        color: active ? 'white' : 'var(--text3)',
-        transition: 'all 0.15s',
-        boxShadow: active ? '0 4px 12px rgba(139,92,246,0.3)' : 'none',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface DashboardProps {
@@ -119,8 +87,6 @@ interface DashboardProps {
   onNavigate: (page: Page) => void
   dashView: 'personal' | 'family'
 }
-
-type Tab = 'income' | 'expenses'
 
 const TOOLTIP_STYLE = {
   background: 'var(--bg2)',
@@ -134,15 +100,13 @@ const TOOLTIP_STYLE = {
 
 
 export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('expenses')
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
-  const [sparklineData, setSparklineData] = useState<{ day: string; value: number }[]>([])
-  const [members, setMembers] = useState<HouseholdMember[]>([])
+const [members, setMembers] = useState<HouseholdMember[]>([])
   const [streakTapped, setStreakTapped] = useState(false)
-  const [cumulativeBalance, setCumulativeBalance] = useState<number | null>(null)
+  const [summaryCards, setSummaryCards] = useState<{ balance: number; income: number; expenses: number; savingsRate: number } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
   const [trackingSaving, setTrackingSaving] = useState(false)
@@ -183,11 +147,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
   , [variableExpenses])
 
-  const last5Income = useMemo(() =>
-    [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  , [incomes])
-
-  const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
   const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
 
   const pieData = useMemo(() =>
@@ -228,24 +188,14 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, year, user?.tracking_start_date, user?.createdAt])
 
-  useEffect(() => {
-    const days = getLast7Days()
-    setSparklineData(
-      days.map(day => ({
-        day,
-        value: variableExpenses.filter(e => e.date === day).reduce((s, e) => s + e.amount, 0),
-      }))
-    )
-  }, [variableExpenses])
-
-  useEffect(() => {
+useEffect(() => {
     if (householdEnabled && user?.household_id) {
       getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
     }
   }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
-    getBalanceAtMonth(year, month).then(d => setCumulativeBalance(d.balance)).catch(() => {})
+    getSummaryCards(year, month).then(d => setSummaryCards(d)).catch(() => {})
   }, [year, month])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -285,11 +235,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const monthChallengeTarget = prevMonthData?.expenses ?? 0
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
 
-  const prevMonthIncome = prevMonthData?.income ?? 0
-  const incomeChange: number | null = prevMonthIncome > 0 ? ((totalIncome - prevMonthIncome) / prevMonthIncome * 100) : null
-  const expensesChange: number | null = monthChallengeTarget > 0 ? ((totalExpenses - monthChallengeTarget) / monthChallengeTarget * 100) : null
-
-  const upcomingFixed = useMemo(() => {
+const upcomingFixed = useMemo(() => {
     const today = new Date().getDate()
     const daysInMo = new Date(year, month, 0).getDate()
     return fixedExpenses
@@ -362,65 +308,36 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     </div>
   )
 
-  // Mobile hero card — gradient balance card with income/expense rows
-  const mobileHeroCard = (
-    <div style={{
-      background: 'linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 50%, var(--bg3) 100%)',
-      border: '1px solid var(--border)',
-      borderRadius: 24,
-      padding: '24px 20px',
-      boxShadow: 'var(--card-shadow)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: isLight ? 'rgba(124,58,237,0.08)' : 'var(--violet-glow)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', textAlign: 'center', margin: '0 0 8px' }}>{t.dashboard.balance}</p>
-      <p style={{
-        fontFamily: "'DM Mono', monospace",
-        fontWeight: 700,
-        fontSize: 'clamp(32px, 8vw, 44px)',
-        color: (cumulativeBalance ?? balance) >= 0 ? '#34D399' : '#F87171',
-        textAlign: 'center',
-        lineHeight: 1,
-        margin: '0 0 20px',
-      }}>{formatAmount(cumulativeBalance ?? balance)}</p>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <div onClick={() => onNavigate('income')} style={{ flex: 1, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
+  // Hero section — 4-card layout
+  const heroSection = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ background: 'var(--bg2)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 20, padding: 24, textAlign: 'center' }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 8px' }}>ZOSTATOK</p>
+        <p style={{
+          fontFamily: "'DM Mono', monospace",
+          fontWeight: 700,
+          fontSize: 'clamp(32px, 8vw, 44px)',
+          color: (summaryCards?.balance ?? 0) >= 0 ? '#34D399' : '#F87171',
+          lineHeight: 1,
+          margin: 0,
+        }}>
+          {formatAmount(summaryCards?.balance ?? 0)}
+        </p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('income')}>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.income}</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#34D399', margin: 0 }}>+{formatAmount(totalIncome)}</p>
-          {incomeChange !== null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: incomeChange >= 0 ? '#34D399' : '#F87171', marginTop: 2 }}>
-              {incomeChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
-              {Math.abs(incomeChange).toFixed(1)}%
-            </div>
-          )}
+          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: '#34D399', margin: 0 }}>{formatAmount(Math.round(summaryCards?.income ?? totalIncome))}</p>
         </div>
-        <div onClick={() => onNavigate('variable-expenses')} style={{ flex: 1, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('variable-expenses')}>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.expenses}</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: '#F87171', margin: 0 }}>-{formatAmount(totalExpenses)}</p>
-          {expensesChange !== null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: expensesChange <= 0 ? '#34D399' : '#F87171', marginTop: 2 }}>
-              {expensesChange >= 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
-              {Math.abs(expensesChange).toFixed(1)}%
-            </div>
-          )}
+          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: '#F87171', margin: 0 }}>{formatAmount(Math.round(summaryCards?.expenses ?? totalExpenses))}</p>
+        </div>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>Úspory</p>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--violet)', margin: 0 }}>{summaryCards?.savingsRate ?? 0}%</p>
         </div>
       </div>
-      {sparklineData.some(d => d.value > 0) && (
-        <div style={{ height: 40, marginTop: 16 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparklineData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-              <defs>
-                <linearGradient id="sparkFillMobile" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area type="monotone" dataKey="value" stroke="#A78BFA" strokeWidth={2} fill="url(#sparkFillMobile)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
     </div>
   )
 
@@ -433,67 +350,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     </div>
   )
 
-  // Toggle row (income / expenses)
-  const toggleRow = (
-    <div style={{
-      display: 'flex',
-      background: 'var(--bg3)',
-      border: '1px solid var(--border)',
-      borderRadius: 14,
-      padding: 4,
-      gap: 4,
-    }}>
-      <ToggleBtn active={activeTab === 'income'} onClick={() => setActiveTab('income')}>{t.nav.income}</ToggleBtn>
-      <ToggleBtn active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')}>{t.nav.expenses}</ToggleBtn>
-    </div>
-  )
-
-  const incomeTabContent = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {chartData.length > 0 && (
-        <ChartCard title={t.dashboard.incomesLast6}>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#34D399" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#34D399' }} formatter={(val) => formatAmount(Number(val))} />
-              <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      )}
-      {incomes.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {incomes.slice(0, 8).map(income => (
-            <div key={income.id} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 12,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0, background: 'rgba(52,211,153,0.15)' }}>💰</span>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', margin: '0 0 2px' }}>{income.label}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{formatDate(income.date)}</p>
-                </div>
-              </div>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 600, color: '#34D399', flexShrink: 0, marginLeft: 12 }}>+{formatAmount(income.amount)}</span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: '40px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 36, marginBottom: 12 }}>💰</p>
-          <p style={{ fontSize: 14, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noIncomes}</p>
-        </div>
-      )}
-    </div>
-  )
 
   const expenseCharts = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -655,15 +511,14 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0, flex: 1 }}>{t.dashboard.recentTransactions}</p>
         <button
-          onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
+          onClick={() => onNavigate('variable-expenses')}
           className="hidden lg:block"
           style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', flexShrink: 0, fontFamily: 'inherit' }}
         >
           {t.dashboard.showAll} →
         </button>
       </div>
-      {activeTab === 'expenses' ? (
-        last5.length > 0 ? (
+      {last5.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {last5.map(expense => {
               const cat = getCategoryById(expense.categoryId)
@@ -685,31 +540,9 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
           </div>
         ) : (
           <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.noExpenses}</p>
-        )
-      ) : (
-        last5Income.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {last5Income.map(income => {
-              const member = householdEnabled && income.created_by ? members.find(m => m.id === income.created_by) : null
-              return (
-                <div key={income.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, background: 'rgba(52,211,153,0.15)' }}>💰</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{income.label}</p>
-                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(income.date)}</p>
-                  </div>
-                  {member && <MemberAvatar userId={member.id} userName={member.name} size={20} />}
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: '#34D399', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.noIncomes}</p>
-        )
-      )}
+        )}
       <button
-        onClick={() => onNavigate(activeTab === 'income' ? 'income' : 'variable-expenses')}
+        onClick={() => onNavigate('variable-expenses')}
         className="lg:hidden"
         style={{
           width: '100%', marginTop: 8, padding: '8px 12px',
@@ -991,21 +824,15 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       ════════════════════════════════════════ */}
       <div className="flex flex-col gap-4 lg:hidden">
         <div className="hidden md:block">{greetingRow}</div>
-        {mobileHeroCard}
+        {heroSection}
         {miniStatsRow}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {toggleRow}
-          {activeTab === 'income' && incomeTabContent}
-          {activeTab === 'expenses' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {expenseCharts}
-              {pieChartCard}
-              {heatmapCard}
-            </div>
-          )}
+          {expenseCharts}
+          {pieChartCard}
+          {heatmapCard}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {activeTab === 'expenses' ? rightPanelCards : rightPanelTransactions}
+          {rightPanelCards}
         </div>
       </div>
 
@@ -1016,20 +843,14 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
 
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
-          {mobileHeroCard}
+          {heroSection}
           {miniStatsRow}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {toggleRow}
-            {activeTab === 'income' && incomeTabContent}
-            {activeTab === 'expenses' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {expenseCharts}
-                <div className="grid grid-cols-2" style={{ gap: 16 }}>
-                  {heatmapCard}
-                  {pieChartCard}
-                </div>
-              </div>
-            )}
+            {expenseCharts}
+            <div className="grid grid-cols-2" style={{ gap: 16 }}>
+              {heatmapCard}
+              {pieChartCard}
+            </div>
           </div>
         </div>
 

@@ -65,3 +65,8 @@ export async function getBalanceAtMonth(year: number, month: number): Promise<{ 
   const { data } = await apiClient.get('/api/transactions/balance-at-month', { params: { year, month } })
   return data
 }
+
+export async function getSummaryCards(year: number, month: number): Promise<{ balance: number; income: number; expenses: number; savingsRate: number }> {
+  const { data } = await apiClient.get('/api/transactions/summary-cards', { params: { year, month } })
+  return data
+}
