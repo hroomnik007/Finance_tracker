@@ -1062,7 +1062,7 @@ export function SettingsPage() {
               <div className="p-5 flex flex-col gap-4 border-t border-white/[0.06]">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Vytvor domácnosť */}
-                  <div className="flex flex-col gap-2 bg-[#0f0a1e]/40 rounded-xl p-4 border border-white/[0.08]">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
                     <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdCreate}</p>
                     <input
                       type="text"
@@ -1081,7 +1081,7 @@ export function SettingsPage() {
                   </div>
 
                   {/* Pripoj sa */}
-                  <div className="flex flex-col gap-2 bg-[#0f0a1e]/40 rounded-xl p-4 border border-white/[0.08]">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
                     <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdJoin}</p>
                     <input
                       type="text"
