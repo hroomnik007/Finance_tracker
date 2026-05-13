@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { verifyAdminToken } from "../lib/tokens";
-import { getStats, getUserList, getUserTransactions } from "../controllers/admin.controller";
+import { getStats, getUserList } from "../controllers/admin.controller";
 
 function authenticateAdmin(req: Request, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
@@ -22,6 +22,5 @@ const router = Router();
 router.use(authenticateAdmin);
 router.get("/stats", getStats);
 router.get("/users", getUserList);
-router.get("/users/:id/transactions", getUserTransactions);
 
 export default router;
