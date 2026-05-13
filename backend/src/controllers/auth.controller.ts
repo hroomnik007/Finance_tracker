@@ -557,6 +557,10 @@ export async function sessionCheck(req: AuthRequest, res: Response): Promise<voi
   }
 }
 
+export async function pingSession(req: AuthRequest, res: Response): Promise<void> {
+  res.json({ ok: true });
+}
+
 export async function getAuthMethods(req: Request, res: Response): Promise<void> {
   const { email } = req.query as { email?: string }
   if (!email || typeof email !== 'string') {

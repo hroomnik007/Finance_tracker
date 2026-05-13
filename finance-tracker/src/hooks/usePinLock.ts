@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { savePin, deletePin, pinLogin, sessionCheck } from '../api/auth'
+import { savePin, deletePin, pinLogin, sessionCheck, pingSession } from '../api/auth'
 
 const LOCK_METHOD_KEY = 'lock_method'
 const AUTO_LOCK_MS = 5 * 60 * 1000
@@ -113,9 +113,9 @@ export function usePinLock() {
     }
     document.addEventListener('visibilitychange', onVisibility)
 
-    // Poll every 60s, only when tab is visible
+    // Poll every 60s — only keeps session alive, does not lock
     const intervalId = setInterval(() => {
-      if (document.visibilityState === 'visible') checkSession()
+      if (document.visibilityState === 'visible') pingSession().catch(() => {})
     }, 60_000)
 
     return () => {

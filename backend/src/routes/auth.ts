@@ -4,7 +4,7 @@ import {
   register, login, refresh, logout, me,
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
   updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth, updateUserSettings,
-  pinLogin, updatePin, removePin, changePassword, getAuthMethods, sessionCheck,
+  pinLogin, updatePin, removePin, changePassword, getAuthMethods, sessionCheck, pingSession,
 } from "../controllers/auth.controller";
 import {
   webauthnRegisterOptions, webauthnRegisterVerify,
@@ -57,6 +57,7 @@ const router = Router();
 
 router.get("/methods",          generalLimiter,       getAuthMethods);
 router.get("/session-check",    sessionCheckLimiter,  authenticateToken, sessionCheck);
+router.get("/ping",             loginLimiter,         authenticateToken, pingSession);
 router.post("/register",        registerLimiter, register);
 router.post("/login",           loginLimiter,    login);
 router.post("/refresh",         refreshLimiter,  refresh);

@@ -144,3 +144,7 @@ export async function sessionCheck(): Promise<{ valid: boolean; reason?: string 
   const { data } = await apiClient.get('/api/auth/session-check')
   return data
 }
+
+export async function pingSession(): Promise<void> {
+  await apiClient.get('/api/auth/ping')
+}
