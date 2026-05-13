@@ -344,7 +344,7 @@ const upcomingFixed = useMemo(() => {
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: '#F87171', margin: 0 }}>{formatAmount(Math.round(summaryCards?.expenses ?? totalExpenses))}</p>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>MIERA ÚSPOR</p>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>ÚSPORY %</p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--violet)', margin: 0 }}>{summaryCards?.savingsRate ?? 0}%</p>
         </div>
       </div>
