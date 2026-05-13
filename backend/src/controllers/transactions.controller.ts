@@ -339,6 +339,71 @@ export async function getBalanceAtMonth(req: AuthRequest, res: Response): Promis
   res.json({ balance: totalIncome - totalExpenses });
 }
 
+export async function getSummaryCards(req: AuthRequest, res: Response): Promise<void> {
+  const query = balanceAtMonthSchema.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: "Invalid query params", details: query.error.errors });
+    return;
+  }
+
+  const { year, month } = query.data;
+  const monthStr = `${year}-${String(month).padStart(2, "0")}`;
+  const { start: monthStart, end: monthEnd } = monthRange(monthStr);
+
+  const [userRow] = await db
+    .select({
+      householdId: users.householdId,
+      householdEnabled: users.householdEnabled,
+      trackingStartDate: users.trackingStartDate,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, req.userId!))
+    .limit(1);
+
+  if (!userRow) { res.status(404).json({ error: "User not found" }); return; }
+
+  const startDate = userRow.trackingStartDate ?? userRow.createdAt.toISOString().split("T")[0];
+
+  const baseFilter =
+    userRow.householdEnabled && userRow.householdId
+      ? or(
+          eq(transactions.householdId, userRow.householdId),
+          and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
+        )
+      : and(eq(transactions.userId, req.userId!), isNull(transactions.householdId));
+
+  // Balance: cumulative from tracking start to end of requested month
+  const balanceRows = await db
+    .select({
+      type: transactions.type,
+      total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`,
+    })
+    .from(transactions)
+    .where(and(baseFilter, gte(transactions.date, startDate), lt(transactions.date, monthEnd)))
+    .groupBy(transactions.type);
+
+  const balanceIncome = balanceRows.filter(r => r.type === "income").reduce((acc, r) => acc + parseFloat(r.total), 0);
+  const balanceExpenses = balanceRows.filter(r => r.type === "expense").reduce((acc, r) => acc + parseFloat(r.total), 0);
+  const balance = Math.round((balanceIncome - balanceExpenses) * 100) / 100;
+
+  // Month income & expenses
+  const monthRows = await db
+    .select({
+      type: transactions.type,
+      total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`,
+    })
+    .from(transactions)
+    .where(and(baseFilter, gte(transactions.date, monthStart), lt(transactions.date, monthEnd)))
+    .groupBy(transactions.type);
+
+  const income = Math.round(monthRows.filter(r => r.type === "income").reduce((acc, r) => acc + parseFloat(r.total), 0));
+  const expenses = Math.round(monthRows.filter(r => r.type === "expense").reduce((acc, r) => acc + parseFloat(r.total), 0));
+  const savingsRate = income > 0 ? Math.round((income - expenses) / income * 100) : 0;
+
+  res.json({ balance, income, expenses, savingsRate });
+}
+
 async function fetchWithCategory(id: string) {
   const [row] = await db
     .select({
