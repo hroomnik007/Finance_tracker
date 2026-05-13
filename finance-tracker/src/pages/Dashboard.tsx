@@ -234,6 +234,11 @@ useEffect(() => {
   const prevMonthData = chartData[chartData.length - 2]
   const monthChallengeTarget = prevMonthData?.expenses ?? 0
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
+  const prevMonthBalance = (prevMonthData?.income ?? 0) - (prevMonthData?.expenses ?? 0)
+  const currentBalance = summaryCards?.balance ?? balance
+  const balancePct = prevMonthData && prevMonthBalance !== 0
+    ? Math.round(((currentBalance - prevMonthBalance) / Math.abs(prevMonthBalance)) * 100)
+    : null
 
 const upcomingFixed = useMemo(() => {
     const today = new Date().getDate()
@@ -323,6 +328,11 @@ const upcomingFixed = useMemo(() => {
         }}>
           {formatAmount(summaryCards?.balance ?? 0)}
         </p>
+        {balancePct !== null && (
+          <p style={{ fontSize: 11, color: balancePct >= 0 ? '#34D399' : '#F87171', margin: '6px 0 0', fontFamily: "'DM Mono', monospace" }}>
+            {balancePct >= 0 ? '↑' : '↓'} {Math.abs(balancePct)}% vs. minulý mesiac
+          </p>
+        )}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('income')}>
@@ -334,7 +344,7 @@ const upcomingFixed = useMemo(() => {
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: '#F87171', margin: 0 }}>{formatAmount(Math.round(summaryCards?.expenses ?? totalExpenses))}</p>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>Úspory</p>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>MIERA ÚSPOR</p>
           <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--violet)', margin: 0 }}>{summaryCards?.savingsRate ?? 0}%</p>
         </div>
       </div>
@@ -355,10 +365,14 @@ const upcomingFixed = useMemo(() => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {chartData.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 16 }}>
-          <ChartCard title={t.dashboard.expensesLast6}>
+          <ChartCard title="CASH FLOW TREND">
             <ResponsiveContainer width="100%" height={160}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <defs>
+                  <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#34D399" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
+                  </linearGradient>
                   <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#F87171" stopOpacity={0.2} />
                     <stop offset="95%" stopColor="#F87171" stopOpacity={0} />
@@ -366,10 +380,21 @@ const upcomingFixed = useMemo(() => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#F87171' }} formatter={(val) => formatAmount(Number(val))} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 100 }} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} formatter={(val) => formatAmount(Number(val))} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ zIndex: 100 }} />
+                <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
                 <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text3)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34D399', flexShrink: 0 }} />
+                {t.nav.income}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text3)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F87171', flexShrink: 0 }} />
+                {t.nav.expenses}
+              </span>
+            </div>
           </ChartCard>
           <ChartCard title={t.dashboard.monthComparison}>
             <ResponsiveContainer width="100%" height={160}>
