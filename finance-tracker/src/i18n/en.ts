@@ -230,7 +230,7 @@ export const en: Translations = {
     householdCreate: 'Create household',
     householdJoin: 'Join',
     householdCreatePlaceholder: 'e.g. Smith Family',
-    householdJoinPlaceholder: 'e.g. BLIZ-4821',
+    householdJoinPlaceholder: 'e.g. NOVA-1234',
     householdCreating: 'Creating...',
     householdCreateBtn: '🏡 Create',
     householdJoining: 'Joining...',
