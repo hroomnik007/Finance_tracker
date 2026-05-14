@@ -75,4 +75,6 @@ jobs:
             DATABASE_URL=${{ secrets.DATABASE_URL }} npm run db:migrate
             cd /var/www/finance-tracker-repo
             docker compose build backend
+            docker compose down --remove-orphans || true
+            docker rm -f finance-tracker-repo-backend-1 2>/dev/null || true
             docker compose up -d --no-deps backend
