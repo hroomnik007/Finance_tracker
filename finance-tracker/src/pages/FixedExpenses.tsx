@@ -312,8 +312,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           </div>
 
           {/* Category filter pills */}
-          {usedCategoryIds.length > 1 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+          {usedCategoryIds.filter(id => id !== '').length >= 1 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 2 }}>
               <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
                 {t.expenses.fixed.allCategories}
               </button>

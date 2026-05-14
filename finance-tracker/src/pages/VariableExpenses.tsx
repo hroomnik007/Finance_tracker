@@ -246,7 +246,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
           {/* Category + member filter pills */}
           {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {categoriesWithExpenses.length > 0 && (
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
                   <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
