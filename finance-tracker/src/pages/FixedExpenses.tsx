@@ -287,25 +287,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
-      {/* Category filter pills — outside scroll area */}
-      {usedCategoryIds.length > 1 && (
-        <div style={{ padding: '8px 20px 4px', flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-          <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
-            {t.expenses.fixed.allCategories}
-          </button>
-          {usedCategoryIds.map(catId => {
-            const cat = getCat(catId)
-            const isActive = activeCat === catId
-            return (
-              <button key={catId || '__none__'} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
-                <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
-                <span>{cat?.name ?? '—'}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
       {/* FAB — mobile only */}
       {!sheetOpen && (
         <button
@@ -329,6 +310,25 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             {statCard(t.expenses.fixed.itemCount, String(fixedExpenses.length), 'var(--text)', <span>{t.expenses.fixed.itemsCount}</span>)}
             {statCard(t.expenses.fixed.avgPayment, fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—', 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
           </div>
+
+          {/* Category filter pills */}
+          {usedCategoryIds.length > 1 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+              <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
+                {t.expenses.fixed.allCategories}
+              </button>
+              {usedCategoryIds.map(catId => {
+                const cat = getCat(catId)
+                const isActive = activeCat === catId
+                return (
+                  <button key={catId || '__none__'} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                    <span>{cat?.name ?? '—'}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           {/* Mobile: vs variable card */}
           <div className="lg:hidden">

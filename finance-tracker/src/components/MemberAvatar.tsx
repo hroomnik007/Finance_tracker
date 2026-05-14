@@ -18,11 +18,28 @@ interface MemberAvatarProps {
   userId: string
   userName: string
   size?: number
+  avatarUrl?: string | null
 }
 
-export function MemberAvatar({ userId, userName, size = 24 }: MemberAvatarProps) {
+export function MemberAvatar({ userId, userName, size = 24, avatarUrl }: MemberAvatarProps) {
   const color = MEMBER_COLORS[hashUserId(userId) % MEMBER_COLORS.length]
   const initials = userName.charAt(0).toUpperCase()
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={userName}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          flexShrink: 0,
+        }}
+      />
+    )
+  }
 
   return (
     <div

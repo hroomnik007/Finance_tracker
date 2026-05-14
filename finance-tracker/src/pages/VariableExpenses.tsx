@@ -221,37 +221,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
-      {/* Category + member filter pills — outside scroll area */}
-      {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-          {categoriesWithExpenses.length > 0 && (
-            <div style={{ padding: '8px 20px 0', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-              <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
-                {t.expenses.variable.allCategories}
-              </button>
-              {categoriesWithExpenses.map(c => (
-                <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
-                  <span>{c.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {householdEnabled && members.length > 0 && (
-            <div style={{ padding: '4px 20px 0', display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-              <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
-                👥 Všetci
-              </button>
-              {members.map(m => (
-                <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
-                  <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Content row */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
 
@@ -274,6 +243,37 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             {statCard(t.expenses.variable.countTitle, String(count), 'var(--text)', <span>{t.expenses.variable.itemsThisMonth}</span>)}
             {statCard(t.expenses.variable.avgExpense, formatAmount(avgAmount), 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
           </div>
+
+          {/* Category + member filter pills */}
+          {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {categoriesWithExpenses.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                  <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
+                    {t.expenses.variable.allCategories}
+                  </button>
+                  {categoriesWithExpenses.map(c => (
+                    <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
+                      <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
+                      <span>{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {householdEnabled && members.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                  <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
+                    👥 Všetci
+                  </button>
+                  {members.map(m => (
+                    <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
+                      <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Desktop grouped-by-date list */}
           <div className="hidden lg:block">

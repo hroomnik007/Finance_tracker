@@ -133,7 +133,7 @@ export function HouseholdPage() {
                 <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, boxShadow: 'var(--card-shadow)' }}>
                   {/* Avatar + name + role */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={52} />
+                    <MemberAvatar userId={m.id} userName={m.name} size={52} avatarUrl={m.avatar_url} />
                     <div>
                       <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{m.name}</div>
                       {m.is_owner ? (
@@ -230,7 +230,7 @@ export function HouseholdPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {householdData.members.map(m => (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                  <MemberAvatar userId={m.id} userName={m.name} size={32} />
+                  <MemberAvatar userId={m.id} userName={m.name} size={32} avatarUrl={m.avatar_url} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
                     <div style={{ fontSize: 11, color: m.is_owner ? 'var(--violet)' : 'var(--text3)' }}>

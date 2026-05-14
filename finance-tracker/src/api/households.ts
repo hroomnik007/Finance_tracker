@@ -3,6 +3,7 @@ import { apiClient } from './client'
 export interface HouseholdMember {
   id: string
   name: string
+  avatar_url: string | null
   joined_at: string | null
   is_owner: boolean
 }

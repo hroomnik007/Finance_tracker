@@ -150,6 +150,7 @@ export async function getMyHousehold(req: AuthRequest, res: Response): Promise<v
     .select({
       id: users.id,
       name: users.name,
+      avatarUrl: users.avatarUrl,
       joinedAt: householdMembers.joinedAt,
     })
     .from(householdMembers)
@@ -165,6 +166,7 @@ export async function getMyHousehold(req: AuthRequest, res: Response): Promise<v
     members: members.map((m) => ({
       id: m.id,
       name: m.name,
+      avatar_url: m.avatarUrl ?? null,
       joined_at: m.joinedAt,
       is_owner: m.id === household.createdBy,
     })),
