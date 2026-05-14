@@ -313,20 +313,22 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
           {/* Category filter pills */}
           {usedCategoryIds.filter(id => id !== '').length >= 1 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 2 }}>
-              <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
-                {t.expenses.fixed.allCategories}
-              </button>
-              {usedCategoryIds.map(catId => {
-                const cat = getCat(catId)
-                const isActive = activeCat === catId
-                return (
-                  <button key={catId || '__none__'} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
-                    <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
-                    <span>{cat?.name ?? '—'}</span>
-                  </button>
-                )
-              })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
+                  {t.expenses.fixed.allCategories}
+                </button>
+                {usedCategoryIds.filter(id => id !== '').map(catId => {
+                  const cat = getCat(catId)
+                  const isActive = activeCat === catId
+                  return (
+                    <button key={catId} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
+                      <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                      <span>{cat?.name ?? '—'}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 
