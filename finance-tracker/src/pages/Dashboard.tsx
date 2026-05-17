@@ -49,21 +49,6 @@ function getGreeting(name: string, t: Translations): { text: string; emoji: stri
 // ── Local helper components ────────────────────────────────────────────────
 
 
-function MiniStatCard({ label, value, color = 'var(--text2)' }: { label: string; value: string; color?: string }) {
-  return (
-    <div style={{
-      background: 'var(--bg2)',
-      border: '1px solid var(--border)',
-      borderRadius: 14,
-      padding: '12px 16px',
-      textAlign: 'center',
-      flex: 1,
-    }}>
-      <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 6, margin: '0 0 6px' }}>{label}</p>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: 14, color, margin: 0 }}>{value}</p>
-    </div>
-  )
-}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -76,6 +61,32 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
       <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 16, margin: '0 0 16px' }}>{title}</h3>
       {children}
     </div>
+  )
+}
+
+function SparklineMini({ data, color = 'var(--violet)', id }: { data: number[]; color?: string; id: string }) {
+  if (!data || data.length < 2) return null
+  const width = 100, height = 24
+  const max = Math.max(...data), min = Math.min(...data), range = max - min || 1
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width
+    const y = height - ((v - min) / range) * (height - 3) - 1.5
+    return `${x},${y}`
+  })
+  const line = `M ${pts.join(' L ')}`
+  const area = `M ${pts[0]} L ${pts.join(' L ')} L ${width},${height} L 0,${height} Z`
+  const gid = `spm-${id}`
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#${gid})`} />
+      <path d={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
@@ -271,11 +282,6 @@ useEffect(() => {
   const dayOfMonth = (month === now.getMonth() + 1 && year === now.getFullYear()) ? now.getDate() : daysInMonth
   const dailyAvgExpense = dayOfMonth > 0 ? totalExpenses / dayOfMonth : 0
 
-  const biggestExpense = useMemo(() =>
-    variableExpenses.reduce<typeof variableExpenses[0] | null>((max, e) =>
-      (!max || e.amount > max.amount) ? e : max, null)
-  , [variableExpenses])
-
   const prevMonthData = chartData[chartData.length - 2]
   const monthChallengeTarget = prevMonthData?.expenses ?? 0
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
@@ -356,6 +362,7 @@ const upcomingFixed = useMemo(() => {
   const heroBalance = summaryCards?.balance ?? balance
   const heroIncome = summaryCards?.income ?? totalIncome
   const heroExpenses = summaryCards?.expenses ?? totalExpenses
+  const savRate = heroIncome > 0 ? Math.round((heroBalance / heroIncome) * 100) : 0
   const heroSection = (
     <div style={{
       background: 'linear-gradient(135deg,#1a0d2e 0%,#3d1f82 50%,#1a0d2e 100%)',
@@ -378,10 +385,15 @@ const upcomingFixed = useMemo(() => {
         </div>
 
         {/* Balance — editorial large typography */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20, flexWrap: 'wrap' as const }}>
           <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(heroBalance)).toLocaleString('sk-SK')}</span>
           <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(heroBalance) % 1) * 100)).padStart(2, '0')}</span>
           <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>€</span>
+          {heroIncome > 0 && (
+            <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: savRate >= 0 ? 'rgba(52,211,153,0.18)' : 'rgba(248,113,113,0.18)', color: savRate >= 0 ? '#86efac' : '#fca5a5', border: `1px solid ${savRate >= 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`, flexShrink: 0 }}>
+              {savRate >= 0 ? `+${savRate}% úspora` : '− v mínuse'}
+            </span>
+          )}
         </div>
 
         {/* Income/expense row */}
@@ -400,12 +412,43 @@ const upcomingFixed = useMemo(() => {
     </div>
   )
 
-  // Mini stats row
-  const miniStatsRow = (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <MiniStatCard label={t.dashboard.dailyAvg} value={formatAmount(dailyAvgExpense)} color="var(--violet)" />
-      <MiniStatCard label={t.dashboard.biggestExpense} value={biggestExpense ? formatAmount(biggestExpense.amount) : '—'} color="var(--red)" />
-      <MiniStatCard label={t.dashboard.transactions} value={String(variableExpenses.length)} color="var(--text)" />
+  // Bento stat cards
+  const savRingR = 22, savRingC = 2 * Math.PI * savRingR
+  const savRingProgress = Math.max(0, Math.min(savRate, 100)) / 100
+  const bentoStatCards = (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px 14px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
+          <svg width="56" height="56" viewBox="0 0 60 60" style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx="30" cy="30" r={savRingR} fill="none" stroke="var(--bg4)" strokeWidth="5" />
+            <circle cx="30" cy="30" r={savRingR} fill="none" stroke="var(--violet)" strokeWidth="5" strokeLinecap="round"
+              strokeDasharray={`${savRingC * savRingProgress} ${savRingC}`}
+              style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1)' }} />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{savRate}%</span>
+          </div>
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 3 }}>Úspora</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.15, marginBottom: 2 }}>{savRate >= 30 ? 'Výborne!' : savRate >= 15 ? 'Dobre' : savRate >= 0 ? 'Pokračujte' : 'Pozor!'}</p>
+          <p style={{ fontSize: 11, color: 'var(--text3)' }}>z mesačných príjmov</p>
+        </div>
+      </div>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Príjmy</p>
+        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(heroIncome)}</p>
+        <div style={{ marginTop: 'auto', height: 24 }}>
+          {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.income)} color="var(--green)" id="income" />}
+        </div>
+      </div>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Výdavky</p>
+        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(heroExpenses)}</p>
+        <div style={{ marginTop: 'auto', height: 24 }}>
+          {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.expenses)} color="var(--red)" id="expenses" />}
+        </div>
+      </div>
     </div>
   )
 
@@ -903,7 +946,7 @@ const upcomingFixed = useMemo(() => {
       <div className="flex flex-col gap-4 lg:hidden">
         <div>{greetingRow}</div>
         {heroSection}
-        {miniStatsRow}
+        {bentoStatCards}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {expenseCharts}
           {pieChartCard}
@@ -922,7 +965,7 @@ const upcomingFixed = useMemo(() => {
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
           {heroSection}
-          {miniStatsRow}
+          {bentoStatCards}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {expenseCharts}
             <div className="grid grid-cols-2" style={{ gap: 16 }}>

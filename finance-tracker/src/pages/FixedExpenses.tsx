@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Pencil, Trash2, Plus, FileUp } from 'lucide-react'
+import { Pencil, Trash2, Plus, FileUp, Lock } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
 import { CsvImportModal } from '../components/CsvImportModal'
@@ -95,6 +95,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       .sort((a, b) => a.daysUntil - b.daysUntil)
       .slice(0, 4)
   }, [fixedExpenses])
+
+  const daysInCurrentMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month])
+  const calendarToday = (() => {
+    const n = new Date()
+    return (n.getFullYear() === year && n.getMonth() + 1 === month) ? n.getDate() : -1
+  })()
 
   function countdownBadge(daysUntil: number) {
     if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' }
@@ -304,11 +310,88 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         {/* Main scroll area */}
         <div style={{ flex: 1, overflowY: 'auto', paddingTop: 20, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+          {/* Hero wallet card */}
+          <div style={{
+            background: 'linear-gradient(135deg,#2a1d05 0%,#5d3f10 45%,#2a1d05 100%)',
+            borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+            boxShadow: '0 18px 50px -16px rgba(93,63,16,0.4),0 0 0 1px rgba(251,191,36,0.22)',
+            flexShrink: 0,
+          }}>
+            <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(251,191,36,0.32),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(251,191,36,0.18)',border:'1px solid rgba(251,191,36,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <Lock size={18} color="#fde68a"/>
+            </div>
+            <div style={{position:'relative'}}>
+              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>FIXNÉ VÝDAVKY</span>
+                <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
+                <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>Opakujúce každý mesiac</span>
+              </div>
+              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
+                <span style={{fontSize:14,fontWeight:500,color:'#fde68a',marginRight:4}}>−</span>
+                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(total).toLocaleString('sk-SK')}</span>
+                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((total%1)*100)).padStart(2,'0')}</span>
+                <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€/mes.</span>
+              </div>
+              <div style={{display:'flex',gap:18,fontSize:11.5,color:'rgba(255,255,255,0.7)',paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
+                <div>Ročne: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(total * 12)}</span></div>
+                <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
+                <div>Splátok: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{fixedExpenses.length}</span></div>
+              </div>
+            </div>
+          </div>
+
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
             {statCard(t.expenses.fixed.monthly, formatAmount(total), 'var(--red)')}
             {statCard(t.expenses.fixed.itemCount, String(fixedExpenses.length), 'var(--text)', <span>{t.expenses.fixed.itemsCount}</span>)}
             {statCard(t.expenses.fixed.avgPayment, fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—', 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
+          </div>
+
+          {/* Calendar strip */}
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>Kalendár mesiaca</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(31, 1fr)', gap: 2, marginBottom: 8 }}>
+              {Array.from({ length: daysInCurrentMonth }, (_, i) => {
+                const day = i + 1
+                const dayFixed = fixedExpenses.filter(f => f.dayOfMonth === day)
+                const sum = dayFixed.reduce((s, f) => s + f.amount, 0)
+                const isToday = day === calendarToday
+                const isPast = calendarToday > 0 && day < calendarToday
+                const hasPayment = dayFixed.length > 0
+                return (
+                  <div
+                    key={day}
+                    title={hasPayment ? dayFixed.map(f => `${f.label} ${formatAmount(f.amount)}`).join(', ') : 'Žiadna platba'}
+                    style={{
+                      aspectRatio: '1',
+                      borderRadius: 6,
+                      background: hasPayment
+                        ? (sum >= 100 ? 'rgba(248,113,113,0.6)' : sum >= 20 ? 'rgba(251,191,36,0.55)' : 'rgba(124,58,237,0.5)')
+                        : 'var(--bg3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, fontWeight: 600,
+                      color: hasPayment ? 'white' : isToday ? 'var(--violet)' : 'var(--text3)',
+                      border: isToday ? '1.5px solid var(--violet)' : '1px solid transparent',
+                      opacity: isPast ? 0.55 : 1,
+                      cursor: hasPayment ? 'pointer' : 'default',
+                      transition: 'transform 0.12s',
+                    }}
+                    onMouseEnter={e => { if (hasPayment) (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.18)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)' }}
+                  >
+                    {day}
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, color: 'var(--text3)', marginTop: 6, flexWrap: 'wrap' as const }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(124,58,237,0.5)', display: 'inline-block' }} />malé</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(251,191,36,0.55)', display: 'inline-block' }} />stredné</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(248,113,113,0.6)', display: 'inline-block' }} />veľké (≥100€)</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'transparent', border: '1.5px solid var(--violet)', display: 'inline-block' }} />dnes</span>
+            </div>
           </div>
 
           {/* Category filter pills */}
