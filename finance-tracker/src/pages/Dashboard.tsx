@@ -79,6 +79,51 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   )
 }
 
+function ForecastCard({ totalIncome: fi, totalExpenses: fe }: { totalIncome: number; totalExpenses: number }) {
+  const now = new Date()
+  const dayOfMonth = now.getDate()
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const dailyAvg = dayOfMonth > 0 ? fe / dayOfMonth : 0
+  const prediction = dailyAvg * daysInMonth
+  const predictedBalance = fi - prediction
+  const progress = Math.min(dayOfMonth / daysInMonth, 1)
+  const ringR = 32, ringC = 2 * Math.PI * ringR
+  const isPositive = predictedBalance >= 0
+
+  return (
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, width: 80, height: 80, background: isPositive ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)', filter: 'blur(20px)', borderRadius: '50%' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, position: 'relative' }}>
+        <span style={{ fontSize: 14 }}>🔮</span>
+        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Predikcia ku koncu mesiaca</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+        <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
+          <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx="36" cy="36" r={ringR} fill="none" stroke="var(--bg4)" strokeWidth="6" />
+            <circle cx="36" cy="36" r={ringR} fill="none" stroke={isPositive ? 'var(--green)' : 'var(--red)'} strokeWidth="6"
+              strokeDasharray={`${ringC * progress} ${ringC}`} strokeLinecap="round"
+              style={{ transition: 'stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)' }} />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{Math.round(progress * 100)}%</span>
+            <span style={{ fontSize: 9, color: 'var(--text3)' }}>mesiaca</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 10.5, color: 'var(--text3)', fontWeight: 500, marginBottom: 3 }}>Predpokladaný zostatok</p>
+          <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: isPositive ? 'var(--green)' : 'var(--red)', lineHeight: 1.1, marginBottom: 4 }}>
+            {isPositive ? '+' : ''}{predictedBalance.toFixed(2).replace('.', ',')} €
+          </p>
+          <p style={{ fontSize: 10.5, color: 'var(--text3)', fontFamily: "'DM Mono',monospace" }}>
+            Tempo: {dailyAvg.toFixed(2).replace('.', ',')} €/deň
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface DashboardProps {
@@ -234,12 +279,6 @@ useEffect(() => {
   const prevMonthData = chartData[chartData.length - 2]
   const monthChallengeTarget = prevMonthData?.expenses ?? 0
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
-  const prevMonthBalance = (prevMonthData?.income ?? 0) - (prevMonthData?.expenses ?? 0)
-  const currentBalance = summaryCards?.balance ?? balance
-  const balancePct = prevMonthData && prevMonthBalance !== 0
-    ? Math.round(((currentBalance - prevMonthBalance) / Math.abs(prevMonthBalance)) * 100)
-    : null
-
 const upcomingFixed = useMemo(() => {
     const today = new Date().getDate()
     const daysInMo = new Date(year, month, 0).getDate()
@@ -313,39 +352,49 @@ const upcomingFixed = useMemo(() => {
     </div>
   )
 
-  // Hero section — 4-card layout
+  // Hero section — wallet card style
+  const heroBalance = summaryCards?.balance ?? balance
+  const heroIncome = summaryCards?.income ?? totalIncome
+  const heroExpenses = summaryCards?.expenses ?? totalExpenses
   const heroSection = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ background: 'var(--bg2)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 20, padding: 24, textAlign: 'center' }}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 8px' }}>ZOSTATOK</p>
-        <p style={{
-          fontFamily: "'DM Mono', monospace",
-          fontWeight: 700,
-          fontSize: 'clamp(32px, 8vw, 44px)',
-          color: (summaryCards?.balance ?? 0) >= 0 ? '#34D399' : '#F87171',
-          lineHeight: 1,
-          margin: 0,
-        }}>
-          {formatAmount(summaryCards?.balance ?? 0)}
-        </p>
-        {balancePct !== null && (
-          <p style={{ fontSize: 11, color: balancePct >= 0 ? '#34D399' : '#F87171', margin: '6px 0 0', fontFamily: "'DM Mono', monospace" }}>
-            {balancePct >= 0 ? '↑' : '↓'} {Math.abs(balancePct)}% vs. minulý mesiac
-          </p>
-        )}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('income')}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.income}</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: '#34D399', margin: 0 }}>{formatAmount(Math.round(summaryCards?.income ?? totalIncome))}</p>
+    <div style={{
+      background: 'linear-gradient(135deg,#1a0d2e 0%,#3d1f82 50%,#1a0d2e 100%)',
+      borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+      boxShadow: '0 18px 50px -16px rgba(80,40,180,0.35),0 0 0 1px rgba(139,92,246,0.18)',
+      flexShrink: 0,
+    }}>
+      {/* Atmospheric blobs */}
+      <div style={{ position: 'absolute', top: -90, right: -50, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,0.35),transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -60, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.25),transparent 65%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+      {/* Shimmer */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)', pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative' }}>
+        {/* Label row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 16 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.85)' }}>ZOSTATOK</span>
+          <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '0.05em', color: 'rgba(255,255,255,0.5)' }}>{t.months[month - 1].toUpperCase()} {year}</span>
         </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('variable-expenses')}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>{t.nav.expenses}</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: '#F87171', margin: 0 }}>{formatAmount(Math.round(summaryCards?.expenses ?? totalExpenses))}</p>
+
+        {/* Balance — editorial large typography */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20 }}>
+          <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(heroBalance)).toLocaleString('sk-SK')}</span>
+          <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(heroBalance) % 1) * 100)).padStart(2, '0')}</span>
+          <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>€</span>
         </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text3)', margin: '0 0 4px' }}>ÚSPORY %</p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--violet)', margin: 0 }}>{summaryCards?.savingsRate ?? 0}%</p>
+
+        {/* Income/expense row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+          <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onNavigate('income')}>
+            <p style={{ fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' as const }}>Príjmy</p>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#6ee7b7' }}>+{formatAmount(heroIncome)}</p>
+          </div>
+          <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
+          <div style={{ flex: 1, paddingLeft: 20, cursor: 'pointer' }} onClick={() => onNavigate('variable-expenses')}>
+            <p style={{ fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' as const }}>Výdavky</p>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#fca5a5' }}>-{formatAmount(heroExpenses)}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -635,6 +684,10 @@ const upcomingFixed = useMemo(() => {
           </div>
         )}
       </div>
+
+      {totalExpenses > 0 && (
+        <ForecastCard totalIncome={heroIncome} totalExpenses={heroExpenses} />
+      )}
 
       {motivationalMsg && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderLeft: `3px solid ${motivationalMsg.color}`, borderRadius: 16, padding: 16 }}>

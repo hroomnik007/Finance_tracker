@@ -36,6 +36,8 @@ import { HouseholdPage } from './pages/Household'
 import { SavingsPage } from './pages/Savings'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { TrackingDateOnboarding } from './components/TrackingDateOnboarding'
+import { CommandPalette } from './components/CommandPalette'
+import { updateUserSettings } from './api/auth'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -109,6 +111,7 @@ function App() {
   const [showTrackingOnboarding, setShowTrackingOnboarding] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024)
+  const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false)
 
   useEffect(() => {
     const handler = () => setIsDesktop(window.innerWidth >= 1024)
@@ -204,6 +207,17 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setCmdPaletteOpen(open => !open)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
+
   const handleMonthChange = (m: number, y: number) => {
     setMonth(m)
     setYear(y)
@@ -228,6 +242,14 @@ function App() {
   const handleDashViewChange = (v: 'personal' | 'family') => {
     setDashView(v)
     localStorage.setItem('finvu_dashboard_view', v)
+  }
+
+  const handleToggleTheme = () => {
+    const current = document.documentElement.getAttribute('data-theme') as 'dark' | 'light'
+    const next = current === 'dark' ? 'light' : 'dark'
+    localStorage.setItem('theme_preference', next)
+    document.documentElement.setAttribute('data-theme', next)
+    updateUserSettings({ theme: next }).catch(() => {})
   }
 
   const handleLogout = async () => {
@@ -310,6 +332,14 @@ function App() {
         />
       )}
       <ToastContainer toasts={toasts} />
+
+      <CommandPalette
+        open={cmdPaletteOpen}
+        onClose={() => setCmdPaletteOpen(false)}
+        onNavigate={(p) => { setPage(p); setCmdPaletteOpen(false) }}
+        onAdd={(type) => { setPage(type === 'income' ? 'income' : 'variable-expenses'); setCmdPaletteOpen(false) }}
+        onToggleTheme={() => { handleToggleTheme(); setCmdPaletteOpen(false) }}
+      />
 
       {/* Sidebar — desktop only */}
       {isDesktop && (

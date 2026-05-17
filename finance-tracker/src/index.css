@@ -82,21 +82,25 @@
 
 /* === LIGHT THEME === */
 [data-theme="light"] {
-  --bg:        #f4f3ff;
+  --bg:        #fafaf9;
   --bg2:       #ffffff;
-  --bg3:       #f0eeff;
-  --bg4:       #e8e4ff;
-  --border:    rgba(0,0,0,0.06);
-  --border2:   rgba(0,0,0,0.1);
-  --text:      #1a1535;
-  --text2:     #4a4270;
-  --text3:     #8b82b0;
+  --bg3:       #f4f4f3;
+  --bg4:       #e7e7e5;
+  --border:    rgba(24,24,27,0.06);
+  --border2:   rgba(24,24,27,0.10);
+  --text:      #18181b;
+  --text2:     #52525b;
+  --text3:     #a1a1aa;
   --violet:    #7C3AED;
   --violet2:   #6D28D9;
-  --violet-glow: rgba(124,58,237,0.12);
-  --green:     #059669;
+  --violet-glow: rgba(124,58,237,0.10);
+  --green:     #16a34a;
   --red:       #dc2626;
-  --card-shadow: 0 2px 16px rgba(124,58,237,0.08), 0 1px 4px rgba(0,0,0,0.06);
+  --warning:   #d97706;
+  --orange:    #ea580c;
+  --card-shadow:     0 1px 2px rgba(24,24,27,0.04),0 4px 16px rgba(24,24,27,0.04);
+  --shadow-elevated: 0 8px 32px rgba(24,24,27,0.10),0 2px 6px rgba(24,24,27,0.05);
+  --nav-active-bg: rgba(124,58,237,0.10);
   --sidebar-w: 200px;
   --sidebar-collapsed-w: 56px;
 
@@ -133,14 +137,12 @@
   --color-neutral: var(--text3);
   --color-warning: #D97706;
   --shadow-card: var(--card-shadow);
-  --shadow-elevated: 0 4px 20px rgba(0,0,0,0.12);
   --border-radius-card: 16px;
   --font-size-hero: clamp(24px, 4vw, 36px);
   --spacing-page: 24px;
   --spacing-section: 20px;
   --spacing-card: 16px;
   --sidebar-bg: var(--bg2);
-  --nav-active-bg: rgba(124,58,237,0.1);
   --bottom-nav-bg: var(--bg2);
   --bottom-nav-border: var(--border);
 }
@@ -474,6 +476,7 @@ input[type=number] { -moz-appearance: textfield; }
 
 /* === ANIMATIONS === */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes flame { 0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-1px) rotate(2deg)} }
 @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.4); } 50% { box-shadow: 0 0 16px 6px rgba(248,113,113,0.5); } }
 @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes modal-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -530,58 +533,13 @@ html.compact .card { padding: var(--card-padding); }
   }
 }
 
-/* === LIGHT THEME TAILWIND OVERRIDES === */
-[data-theme="light"] [class~="bg-[#1a1035]"] { background-color: var(--bg2) !important; }
-[data-theme="light"] [class~="bg-[#0f0a1e]"] { background-color: var(--bg) !important; }
-[data-theme="light"] [class~="bg-[#2A1F4A]"] { background-color: var(--bg3) !important; }
-[data-theme="light"] [class~="bg-[#231840]"] { background-color: var(--bg3) !important; }
-[data-theme="light"] [class~="bg-[#1A1230]"] { background-color: var(--bg3) !important; }
-[data-theme="light"] [class~="bg-[#2D1F5E]"] { background-color: var(--bg3) !important; }
-[data-theme="light"] [class~="bg-[#32265A]"] { background-color: var(--bg3) !important; }
-
-[data-theme="light"] [class~="text-[#E2D9F3]"] { color: var(--text) !important; }
-[data-theme="light"] [class~="text-[#B8A3E8]"] { color: var(--text2) !important; }
-[data-theme="light"] [class~="text-[#9D84D4]"] { color: var(--text2) !important; }
-[data-theme="light"] [class~="text-[#6B5A9E]"] { color: var(--text3) !important; }
-[data-theme="light"] [class~="text-[#A78BFA]"] { color: var(--violet) !important; }
-[data-theme="light"] [class~="text-[#a78bfa]"] { color: var(--violet) !important; }
-
-[data-theme="light"] [class~="text-[#34D399]"] { color: var(--green) !important; }
-[data-theme="light"] [class~="text-[#34d399]"] { color: var(--green) !important; }
-[data-theme="light"] [class~="text-[#F87171]"] { color: var(--red) !important; }
-[data-theme="light"] [class~="text-[#f87171]"] { color: var(--red) !important; }
-[data-theme="light"] [class~="text-[#60a5fa]"] { color: #2563eb !important; }
-[data-theme="light"] [class~="text-[#FB923C]"] { color: #ea580c !important; }
-
-[data-theme="light"] [class~="text-red-400"] { color: var(--red) !important; }
-[data-theme="light"] [class~="bg-red-500/5"]  { background-color: rgba(220,38,38,0.06) !important; }
-[data-theme="light"] [class~="bg-red-500/10"] { background-color: rgba(254,226,226,0.6) !important; }
-[data-theme="light"] [class~="bg-red-500/20"] { background-color: rgba(254,202,202,0.7) !important; }
-[data-theme="light"] [class~="border-red-500/20"] { border-color: rgba(220,38,38,0.25) !important; }
-[data-theme="light"] [class~="border-red-500/30"] { border-color: rgba(220,38,38,0.35) !important; }
-
-[data-theme="light"] [class~="border-white/10"] { border-color: rgba(0,0,0,0.08) !important; }
-[data-theme="light"] [class~="border-white/5"] { border-color: rgba(0,0,0,0.05) !important; }
-[data-theme="light"] [class~="border-\[#4C3A8A\]"] { border-color: rgba(0,0,0,0.12) !important; }
-[data-theme="light"] [class~="border-\[#4C3A8A\]\/50"] { border-color: rgba(0,0,0,0.08) !important; }
-
+/* === LIGHT THEME OVERRIDES === */
 [data-theme="light"] .input-field {
   background: var(--bg3) !important;
   border-color: var(--border2) !important;
   color: var(--text) !important;
 }
 [data-theme="light"] .input-field::placeholder { color: var(--text3) !important; }
-
-[data-theme="light"] [class~="text-white"] { color: var(--text) !important; }
-[data-theme="light"] [class~="text-slate-100"],
-[data-theme="light"] [class~="text-slate-200"],
-[data-theme="light"] [class~="text-slate-300"] { color: var(--text2) !important; }
-[data-theme="light"] [class~="text-slate-400"],
-[data-theme="light"] [class~="text-slate-500"] { color: var(--text3) !important; }
-
-[data-theme="light"] button[style*="linear-gradient"] [class~="text-white"],
-[data-theme="light"] button[style*="linear-gradient"].text-white,
-[data-theme="light"] [class~="text-white"][style*="background"] { color: white !important; }
 
 [data-theme="light"] .bottom-nav-bar {
   background: var(--bg2) !important;
@@ -591,10 +549,6 @@ html.compact .card { padding: var(--card-padding); }
 
 [data-theme="light"] aside nav button { color: var(--text2); }
 [data-theme="light"] .bottom-nav-bar button { color: var(--text3); }
-
-[data-theme="light"] [class~="text-[#9D84D4]"],
-[data-theme="light"] [class~="text-[#6B5A9E]"],
-[data-theme="light"] [class~="text-[#B8A3E8]"] { color: var(--text2) !important; }
 
 /* PinLock */
 .pin-lock-shake {

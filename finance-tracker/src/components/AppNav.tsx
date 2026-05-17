@@ -114,13 +114,10 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
         }}>
           <img src="/logo.svg" alt="Finvu" style={{ width: 34, height: 34, flexShrink: 0 }} />
           {isExpanded && (
-            <span style={{
-              fontSize: 17,
-              fontWeight: 700,
-              color: 'var(--text)',
-              letterSpacing: '-0.3px',
-              whiteSpace: 'nowrap',
-            }}>Finvu</span>
+            <div>
+              <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>Finvu</span>
+              <div style={{ fontSize: 9, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>Financie pod kontrolou</div>
+            </div>
           )}
         </div>
 

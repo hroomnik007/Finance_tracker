@@ -171,8 +171,9 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
       onMouseLeave={hideStreakTooltip}
       onClick={() => setStreakTooltipVisible(v => !v)}
     >
-      <span style={{ fontSize: size === 'lg' ? 12 : 11, fontWeight: 600, padding: size === 'lg' ? '2px 7px' : '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', cursor: 'default', userSelect: 'none' }}>
-        🔥 {streak}
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: size === 'lg' ? 12 : 11, fontWeight: 700, padding: size === 'lg' ? '4px 9px' : '2px 6px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', cursor: 'default', userSelect: 'none', fontFamily: "'DM Mono', monospace" }}>
+        <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
+        {streak}
       </span>
       {streakTooltipVisible && (
         <div style={{
