@@ -3,6 +3,8 @@ import { X, Check, Pencil, Delete } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
 import { updateAvatar, changePassword } from '../api/auth'
+import { getTransactions } from '../api/transactions'
+import { getSavingsGoals } from '../api/savings'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -39,6 +41,9 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [pinRemoveError, setPinRemoveError] = useState<string | null>(null)
   const [pinRemoveShake, setPinRemoveShake] = useState(false)
   const [pinRemoveLoading, setPinRemoveLoading] = useState(false)
+
+  const [txnCount, setTxnCount] = useState<number | null>(null)
+  const [savingsTotal, setSavingsTotal] = useState<number | null>(null)
 
   const [logoutConfirm, setLogoutConfirm] = useState(false)
   const [pinRemoveConfirm, setPinRemoveConfirm] = useState(false)
@@ -100,6 +105,16 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [pinRemoveConfirm, pinVerified, pinRemoveInput, handlePinRemoveVerify])
+
+  useEffect(() => {
+    getTransactions({ limit: 1 }).then(({ total }) => setTxnCount(total)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    getSavingsGoals().then(({ data }) => {
+      setSavingsTotal(data.reduce((s, g) => s + g.savedAmount, 0))
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -252,8 +267,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           {/* Stats strip */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.15)' }}>
             {[
-              { label: 'Transakcie', value: '—', color: 'rgba(255,255,255,0.9)' },
-              { label: 'Úspory', value: '—', color: '#34d399' },
+              { label: 'Transakcie', value: txnCount !== null ? String(txnCount) : '—', color: 'rgba(255,255,255,0.9)' },
+              { label: 'Úspory', value: savingsTotal !== null ? `${savingsTotal.toLocaleString('sk-SK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €` : '—', color: '#34d399' },
               { label: 'Séria', value: `${user?.currentStreak ?? 0} 🔥`, color: '#FB923C' },
               { label: 'Sledovanie', value: trackingDays !== null ? `${trackingDays} dní` : '—', color: '#8B5CF6' },
             ].map((stat, i) => (

@@ -27,11 +27,15 @@ function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
-function getGreeting(hour: number): string {
-  if (hour >= 5 && hour < 12) return 'Dobré ráno'
-  if (hour >= 12 && hour < 18) return 'Dobré popoludní'
-  if (hour >= 18 && hour < 23) return 'Dobrý večer'
-  return 'Dobrú noc'
+const PAGE_LABELS: Partial<Record<Page, string>> = {
+  dashboard: 'Prehľad',
+  income: 'Príjmy',
+  'variable-expenses': 'Variabilné výdavky',
+  'fixed-expenses': 'Fixné výdavky',
+  categories: 'Kategórie',
+  household: 'Domácnosť',
+  savings: 'Sporenie',
+  settings: 'Nastavenia',
 }
 
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd }: TopbarProps) {
@@ -62,8 +66,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   }
 
   const now = new Date()
-  const hour = now.getHours()
-  const greeting = getGreeting(hour)
   const householdEnabled = user?.household_enabled ?? false
   const streak = user?.currentStreak ?? 0
   const showMonth = MONTH_PAGES.includes(page)
@@ -218,13 +220,13 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         className="hidden md:flex items-center"
         style={{ height: 64, padding: '0 20px', gap: 14 }}
       >
-        {/* Left: greeting + date stacked */}
+        {/* Left: page title + date */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
             <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {greeting}, {user?.name ?? ''} 👋
+              {PAGE_LABELS[page] ?? 'Prehľad'}
             </span>
-            {streak > 0 && streakBadge('lg')}
+            {page === 'dashboard' && streak > 0 && streakBadge('lg')}
           </div>
           <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
             {dateStr}

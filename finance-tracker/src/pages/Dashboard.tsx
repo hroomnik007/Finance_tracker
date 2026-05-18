@@ -19,6 +19,7 @@ import { updateUserSettings } from '../api/auth'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useSavings } from '../hooks/useSavings'
+import { useCountUp } from '../hooks/useCountUp'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
@@ -372,6 +373,9 @@ const upcomingFixed = useMemo(() => {
   const heroIncome = summaryCards?.income ?? totalIncome
   const heroExpenses = summaryCards?.expenses ?? totalExpenses
   const savRate = heroIncome > 0 ? Math.round((heroBalance / heroIncome) * 100) : 0
+  const animatedBalance = useCountUp(heroBalance, 800)
+  const animatedIncome = useCountUp(heroIncome, 800)
+  const animatedExpenses = useCountUp(heroExpenses, 800)
   const heroSection = (
     <div style={{
       background: 'linear-gradient(135deg,#1a0d2e 0%,#3d1f82 50%,#1a0d2e 100%)',
@@ -402,8 +406,8 @@ const upcomingFixed = useMemo(() => {
 
         {/* Balance — editorial large typography */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20, flexWrap: 'wrap' as const }}>
-          <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(heroBalance)).toLocaleString('sk-SK')}</span>
-          <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(heroBalance) % 1) * 100)).padStart(2, '0')}</span>
+          <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}</span>
+          <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}</span>
           <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>€</span>
           {heroIncome > 0 && (
             <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: savRate >= 0 ? 'rgba(52,211,153,0.18)' : 'rgba(248,113,113,0.18)', color: savRate >= 0 ? '#86efac' : '#fca5a5', border: `1px solid ${savRate >= 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`, flexShrink: 0 }}>
@@ -416,12 +420,12 @@ const upcomingFixed = useMemo(() => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
           <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onNavigate('income')}>
             <p style={{ fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' as const }}>Príjmy</p>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#6ee7b7' }}>+{formatAmount(heroIncome)}</p>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#6ee7b7' }}>+{formatAmount(animatedIncome)}</p>
           </div>
           <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
           <div style={{ flex: 1, paddingLeft: 20, cursor: 'pointer' }} onClick={() => onNavigate('variable-expenses')}>
             <p style={{ fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' as const }}>Výdavky</p>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#fca5a5' }}>-{formatAmount(heroExpenses)}</p>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#fca5a5' }}>-{formatAmount(animatedExpenses)}</p>
           </div>
         </div>
       </div>
@@ -453,14 +457,14 @@ const upcomingFixed = useMemo(() => {
       </div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Príjmy</p>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(heroIncome)}</p>
+        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(animatedIncome)}</p>
         <div style={{ marginTop: 'auto', height: 24 }}>
           {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.income)} color="var(--green)" id="income" />}
         </div>
       </div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Výdavky</p>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(heroExpenses)}</p>
+        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
         <div style={{ marginTop: 'auto', height: 24 }}>
           {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.expenses)} color="var(--red)" id="expenses" />}
         </div>

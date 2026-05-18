@@ -738,7 +738,7 @@ export function SettingsPage() {
       </div>
 
       {/* 2-col grid: left nav + right content */}
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="grid gap-5 items-start lg:grid-cols-[200px_1fr]">
 
         {/* Left nav — desktop only */}
         <div className="hidden lg:block" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', position: 'sticky', top: 20 }}>
