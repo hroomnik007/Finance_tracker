@@ -199,8 +199,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
       {/* Header row */}
-      <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
-        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }} className="hidden lg:block">{t.nav.expenses}</span>
+      <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setCsvOpen(true)}
