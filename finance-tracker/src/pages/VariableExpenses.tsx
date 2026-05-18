@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Edit2, Trash2, Plus, FileUp, TrendingUp, TrendingDown } from 'lucide-react'
+import { Edit2, Trash2, Plus, FileUp, Receipt, Search, X } from 'lucide-react'
 
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -71,9 +71,11 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const [newCatName, setNewCatName] = useState('')
   const [csvOpen, setCsvOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
+  const [_prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
 
   useEffect(() => {
     if (householdEnabled && user?.household_id) {
@@ -146,11 +148,13 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     setSheetOpen(false)
   }
 
+  const MONTH_NAMES_VAR = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December']
+  const MONTH_NAME_VAR = MONTH_NAMES_VAR[month - 1] ?? ''
+
   const totalAmount = useMemo(() => variableExpenses.reduce((sum, e) => sum + e.amount, 0), [variableExpenses])
   const count = variableExpenses.length
   const avgAmount = count > 0 ? totalAmount / count : 0
-  const changeVsPrev = prevMonthTotal !== null && prevMonthTotal > 0
-    ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
+  const maxAmount = variableExpenses.length > 0 ? Math.max(...variableExpenses.map(e => e.amount)) : 0
 
   const categoriesWithExpenses = useMemo(
     () => categories.filter(c => variableExpenses.some(e => e.categoryId === c.id)),
@@ -166,18 +170,18 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       .sort((a, b) => b.date.localeCompare(a.date))
   , [variableExpenses, activeCategory, memberFilter, user?.id])
 
+  const searchFiltered = useMemo(() => {
+    if (!searchQuery.trim()) return filteredSorted
+    const q = searchQuery.toLowerCase()
+    return filteredSorted.filter(e => {
+      const cat = getCategoryById(e.categoryId)
+      return (e.note?.toLowerCase().includes(q)) || (cat?.name?.toLowerCase().includes(q))
+    })
+  }, [filteredSorted, searchQuery, getCategoryById])
+
   const hasAnyNote = useMemo(() =>
-    filteredSorted.some(e => e.note && e.note.trim() !== '')
-  , [filteredSorted])
-
-
-  const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 'clamp(16px, 4vw, 26px)', fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
-    </div>
-  )
+    searchFiltered.some(e => e.note && e.note.trim() !== '')
+  , [searchFiltered])
 
 
   const rpSection = (title: string, children: React.ReactNode) => (
@@ -227,21 +231,81 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         {/* Main scroll area */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
-            {statCard(
-              t.expenses.variable.totalTitle,
-              formatAmount(totalAmount),
-              'var(--red)',
-              changeVsPrev !== null && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: changeVsPrev >= 0 ? 'var(--red)' : 'var(--green)' }}>
-                  {changeVsPrev >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                  {Math.abs(changeVsPrev).toFixed(1)}% {t.expenses.variable.vsLastMonth}
-                </span>
-              )
+          {/* Hero wallet card */}
+          <div style={{
+            background: 'linear-gradient(135deg,#2a0d10 0%,#5e1a22 45%,#2a0d10 100%)',
+            borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+            boxShadow: '0 18px 50px -16px rgba(94,26,34,0.4),0 0 0 1px rgba(248,113,113,0.2)',
+            flexShrink: 0,
+          }}>
+            <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(248,113,113,0.32),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(248,113,113,0.18)',border:'1px solid rgba(248,113,113,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <Receipt size={18} color="#fca5a5"/>
+            </div>
+            <div style={{position:'relative'}}>
+              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>VARIABILNÉ VÝDAVKY</span>
+                <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{MONTH_NAME_VAR} {year}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
+                <span style={{fontSize:14,fontWeight:500,color:'#fca5a5',marginRight:4}}>−</span>
+                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalAmount).toLocaleString('sk-SK')}</span>
+                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalAmount%1)*100)).padStart(2,'0')}</span>
+                <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
+                <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 9px',borderRadius:99,background:'rgba(248,113,113,0.18)',color:'#fca5a5',border:'1px solid rgba(248,113,113,0.3)'}}>{count} transakcií</span>
+              </div>
+            </div>
+          </div>
+
+          {/* KPI bento tiles */}
+          <div className="stat-grid">
+            {([
+              { label: 'Počet výdavkov', value: String(count), hint: 'tento mesiac', icon: '📊', color: 'var(--violet)' },
+              { label: 'Priemerný výdavok', value: formatAmount(avgAmount), hint: 'na transakciu', icon: '📉', color: 'var(--red)' },
+              { label: 'Najväčší výdavok', value: formatAmount(maxAmount), hint: MONTH_NAME_VAR, icon: '💥', color: 'var(--warning)' },
+            ] as const).map(tile => (
+              <div key={tile.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", lineHeight: 1.4 }}>{tile.label}</span>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: tile.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{tile.icon}</div>
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 17, color: tile.color, lineHeight: 1 }}>{tile.value}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>{tile.hint}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Search bar */}
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: searchFocused ? 'var(--violet)' : 'var(--text3)', pointerEvents: 'none', transition: 'color 0.15s' }}>
+              <Search size={15} />
+            </div>
+            <input
+              type="text"
+              placeholder="Hľadať výdavok alebo kategóriu..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              style={{
+                width: '100%', height: 40, paddingLeft: 36, paddingRight: searchQuery ? 36 : 14,
+                borderRadius: 12, background: 'var(--bg3)', border: `1px solid ${searchFocused ? 'var(--violet)' : 'var(--border)'}`,
+                color: 'var(--text)', fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: 'none',
+                boxShadow: searchFocused ? '0 0 0 3px rgba(139,92,246,0.18)' : 'none',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
+                boxSizing: 'border-box',
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', padding: 2 }}
+              >
+                <X size={14} />
+              </button>
             )}
-            {statCard(t.expenses.variable.countTitle, String(count), 'var(--text)', <span>{t.expenses.variable.itemsThisMonth}</span>)}
-            {statCard(t.expenses.variable.avgExpense, formatAmount(avgAmount), 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
           </div>
 
           {/* Category + member filter pills */}
@@ -277,14 +341,14 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
           {/* Desktop grouped-by-date list */}
           <div className="hidden lg:block">
-            {filteredSorted.length === 0 ? (
+            {searchFiltered.length === 0 ? (
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
                 <span style={{ fontSize: 40 }}>💸</span>
-                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
-                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? `Skús iný výraz` : t.expenses.variable.noExpensesSubtitle}</p>
               </div>
             ) : (() => {
-              const groupedByDate = filteredSorted.reduce<Record<string, VariableExpense[]>>((acc, e) => {
+              const groupedByDate = searchFiltered.reduce<Record<string, VariableExpense[]>>((acc, e) => {
                 if (!acc[e.date]) acc[e.date] = []
                 acc[e.date].push(e)
                 return acc
@@ -372,14 +436,14 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
           {/* Mobile: flat rows */}
           <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }}>
-            {filteredSorted.length === 0 ? (
+            {searchFiltered.length === 0 ? (
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '48px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
                 <span style={{ fontSize: 40 }}>💸</span>
-                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
-                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
               </div>
             ) : (
-              filteredSorted.map((e: VariableExpense) => {
+              searchFiltered.map((e: VariableExpense) => {
                 const cat = getCategoryById(e.categoryId)
                 return (
                   <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)}>
