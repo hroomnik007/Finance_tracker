@@ -768,7 +768,7 @@ export function SettingsPage() {
         </div>
 
         {/* Mobile: horizontal scroll chips */}
-        <div className="lg:hidden" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, gridColumn: '1 / -1' }}>
+        <div className="flex lg:hidden" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4, gridColumn: '1 / -1' }}>
           {SECTIONS.map(s => {
             const isActive = activeSection === s.id
             return (

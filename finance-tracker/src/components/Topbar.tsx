@@ -229,7 +229,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {PAGE_LABELS[page] ?? 'Prehľad'}
             </span>
-            {page === 'dashboard' && streak > 0 && streakBadge('lg')}
           </div>
           <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
             {dateStr}

@@ -962,7 +962,7 @@ const upcomingFixed = useMemo(() => {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
-    <div style={{ padding: '20px', minHeight: '100%' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
+    <div style={{ padding: '20px' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
       {/* Tracking start date banner */}
       {showTrackingBanner && (
@@ -1108,9 +1108,14 @@ const upcomingFixed = useMemo(() => {
             borderRadius: 20,
             padding: '16px 12px',
             overflowX: 'hidden',
+            overflowY: 'auto',
+            maxHeight: 'calc(100vh - 120px)',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
+            position: 'sticky',
+            top: 20,
+            alignSelf: 'flex-start',
           }}
         >
           {rightPanelCards}
