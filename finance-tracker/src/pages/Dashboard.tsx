@@ -376,6 +376,12 @@ const upcomingFixed = useMemo(() => {
   const animatedBalance = useCountUp(heroBalance, 800)
   const animatedIncome = useCountUp(heroIncome, 800)
   const animatedExpenses = useCountUp(heroExpenses, 800)
+  const incomeChangePct = (prevMonthData?.income ?? 0) > 0
+    ? ((heroIncome - prevMonthData!.income) / prevMonthData!.income * 100)
+    : null
+  const expChangePct = (prevMonthData?.expenses ?? 0) > 0
+    ? ((heroExpenses - prevMonthData!.expenses) / prevMonthData!.expenses * 100)
+    : null
   const heroSection = (
     <div style={{
       background: 'linear-gradient(135deg,#1a0d2e 0%,#3d1f82 50%,#1a0d2e 100%)',
@@ -406,6 +412,7 @@ const upcomingFixed = useMemo(() => {
 
         {/* Balance — editorial large typography */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20, flexWrap: 'wrap' as const }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: heroBalance >= 0 ? '#86efac' : '#fca5a5', marginRight: 6, alignSelf: 'center' }}>{heroBalance >= 0 ? '+' : '−'}</span>
           <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}</span>
           <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}</span>
           <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>€</span>
@@ -456,14 +463,28 @@ const upcomingFixed = useMemo(() => {
         </div>
       </div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Príjmy</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', margin: 0 }}>Príjmy</p>
+          {incomeChangePct !== null && (
+            <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: incomeChangePct >= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.12)', color: incomeChangePct >= 0 ? 'var(--green)' : 'var(--red)' }}>
+              {incomeChangePct >= 0 ? '↑' : '↓'} {Math.abs(incomeChangePct).toFixed(1).replace('.', ',')}%
+            </span>
+          )}
+        </div>
         <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(animatedIncome)}</p>
         <div style={{ marginTop: 'auto', height: 24 }}>
           {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.income)} color="var(--green)" id="income" />}
         </div>
       </div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Výdavky</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', margin: 0 }}>Výdavky</p>
+          {expChangePct !== null && (
+            <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: expChangePct <= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(217,119,6,0.12)', color: expChangePct <= 0 ? 'var(--green)' : 'var(--warning)' }}>
+              {expChangePct >= 0 ? '↑' : '↓'} {Math.abs(expChangePct).toFixed(1).replace('.', ',')}%
+            </span>
+          )}
+        </div>
         <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
         <div style={{ marginTop: 'auto', height: 24 }}>
           {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.expenses)} color="var(--red)" id="expenses" />}

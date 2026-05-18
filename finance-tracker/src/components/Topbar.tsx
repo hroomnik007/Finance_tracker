@@ -9,8 +9,6 @@ import { NotificationCenter } from './NotificationCenter'
 
 // Pages where month navigation is relevant
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses']
-// Pages where the global "+ Pridať" button is shown in Topbar
-const ADD_PAGES: Page[] = ['income', 'variable-expenses', 'fixed-expenses', 'categories']
 
 interface TopbarProps {
   page: Page
@@ -70,7 +68,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const streak = user?.currentStreak ?? 0
   const showMonth = MONTH_PAGES.includes(page)
   const showToggle = householdEnabled && page === 'dashboard'
-  const showAdd = ADD_PAGES.includes(page)
+  const showAdd = true
 
   const dayName = new Intl.DateTimeFormat('sk-SK', { weekday: 'long' }).format(now)
   const dayNameLower = dayName.charAt(0).toLowerCase() + dayName.slice(1)
@@ -106,19 +104,24 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   )
 
   const monthNav = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 11, padding: 3, flexShrink: 0 }}>
       <button
         onClick={prevMonth}
         disabled={!canGoPrev}
-        style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: canGoPrev ? 'pointer' : 'default', color: canGoPrev ? 'var(--text3)' : 'var(--border2)', borderRadius: 8 }}
+        style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: canGoPrev ? 'pointer' : 'default', color: canGoPrev ? 'var(--text2)' : 'var(--border2)', borderRadius: 7 }}
+        onMouseEnter={e => { if (canGoPrev) (e.currentTarget as HTMLElement).style.background = 'var(--bg4)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
-        <ChevronLeft size={15} />
+        <ChevronLeft size={14} />
       </button>
-      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', padding: '0 4px' }}>
+      <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', padding: '0 8px', minWidth: 96, textAlign: 'center' }}>
         {t.months[month - 1]} {year}
       </span>
-      <button onClick={nextMonth} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', borderRadius: 8 }}>
-        <ChevronRight size={15} />
+      <button onClick={nextMonth} style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text2)', borderRadius: 7 }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg4)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+      >
+        <ChevronRight size={14} />
       </button>
     </div>
   )

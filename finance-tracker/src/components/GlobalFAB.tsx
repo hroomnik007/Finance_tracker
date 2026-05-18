@@ -47,8 +47,8 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
 
   useEffect(() => {
     if (!openTrigger) return
-    const modalType = PAGE_MODAL_MAP[currentPage]
-    if (modalType) setActiveModal(modalType)
+    const modalType = PAGE_MODAL_MAP[currentPage] ?? 'variable'
+    setActiveModal(modalType)
   }, [openTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Data hooks ────────────────────────────────────────────────────────────

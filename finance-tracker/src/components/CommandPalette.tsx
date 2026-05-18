@@ -161,7 +161,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
         >
           <span style={{ fontSize: 15, width: 22, display: 'flex', justifyContent: 'center' }}>{isIncome ? '💰' : '🧾'}</span>
           <span style={{ flex: 1, fontSize: 13.5, color: 'var(--text)', fontWeight: sel ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
-          <span style={{ fontSize: 12, fontFamily: "'DM Mono',monospace", color: isIncome ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>{amtStr}</span>
+          <span style={{ fontSize: 12, fontFamily: "'DM Mono',monospace", color: 'var(--text3)', flexShrink: 0 }}>{amtStr}</span>
           <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{dateStr}</span>
           {sel && <KbdKey label="↵" />}
         </div>
@@ -180,7 +180,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
           width: 'min(580px, 92vw)', background: 'var(--bg2)',
           border: '1px solid var(--border2)', borderRadius: 16,
           boxShadow: '0 24px 64px rgba(0,0,0,0.55)', overflow: 'hidden',
-          animation: 'modal-in 0.18s cubic-bezier(0.34,1.1,0.64,1)',
+          animation: 'paletteIn 0.18s cubic-bezier(0.34,1.1,0.64,1)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>

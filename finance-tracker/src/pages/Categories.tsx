@@ -234,7 +234,7 @@ export function CategoriesPage() {
 
           {categories.length === 0 ? (
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
-              <span style={{ fontSize: 40 }}>🏷️</span>
+              <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>🏷️</span>
               <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.categories.noCategories}</p>
               <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.categories.noCategoriesSubtitle}</p>
             </div>

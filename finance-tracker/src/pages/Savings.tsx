@@ -375,7 +375,7 @@ export function SavingsPage() {
             background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20,
             padding: '48px 24px', textAlign: 'center',
           }}>
-            <p style={{ fontSize: 40, marginBottom: 12 }}>🐷</p>
+            <p style={{ fontSize: 40, marginBottom: 12, animation: 'float 3s ease-in-out infinite' }}>🐷</p>
             <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: '0 0 6px' }}>{t.savings.noGoals}</p>
             <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.savings.noGoalsSubtitle}</p>
           </div>
