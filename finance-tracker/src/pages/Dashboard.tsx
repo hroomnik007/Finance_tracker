@@ -159,6 +159,8 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
+  const [donutFilter, setDonutFilter] = useState<string | null>(null)
+  const [recentTab, setRecentTab] = useState<'income' | 'expenses'>('expenses')
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
 const [members, setMembers] = useState<HouseholdMember[]>([])
   const [streakTapped, setStreakTapped] = useState(false)
@@ -199,12 +201,19 @@ const [members, setMembers] = useState<HouseholdMember[]>([])
   const totalExpenses = totalFixed + totalVariable
   const balance = totalIncome - totalExpenses
 
-  const last5 = useMemo(() =>
-    [...variableExpenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  , [variableExpenses])
-
 const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
   const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
+
+  const last5 = useMemo(() => {
+    const base = donutFilter
+      ? variableExpenses.filter(e => getCategoryById(e.categoryId)?.name === donutFilter)
+      : variableExpenses
+    return [...base].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  }, [variableExpenses, donutFilter, getCategoryById])
+
+  const last5Incomes = useMemo(() =>
+    [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  , [incomes])
 
   const pieData = useMemo(() =>
     categories
@@ -593,7 +602,10 @@ const upcomingFixed = useMemo(() => {
                   activeShape={renderPieShape}
                   onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
-                  onClick={(_: unknown, index: number) => setClickedIndex(prev => prev === index ? null : index)}
+                  onClick={(_: unknown, index: number) => {
+                    setClickedIndex(prev => prev === index ? null : index)
+                    setDonutFilter(prev => prev === pieData[index]?.name ? null : (pieData[index]?.name ?? null))
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
@@ -647,17 +659,59 @@ const upcomingFixed = useMemo(() => {
 
   const rightPanelTransactions = (
     <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0, flex: 1 }}>{t.dashboard.recentTransactions}</p>
+      {/* Header: label + "Všetky" link */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{t.dashboard.recentTransactions}</p>
         <button
-          onClick={() => onNavigate('variable-expenses')}
-          className="hidden lg:block"
-          style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', flexShrink: 0, fontFamily: 'inherit' }}
+          onClick={() => onNavigate(recentTab === 'income' ? 'income' : 'variable-expenses')}
+          style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.1s' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--violet)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text3)' }}
         >
           {t.dashboard.showAll} →
         </button>
       </div>
-      {last5.length > 0 ? (
+
+      {/* Tab toggle: Príjmy / Výdavky */}
+      <div style={{ display: 'inline-flex', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, padding: 3, gap: 2, marginBottom: 12 }}>
+        {([['income', 'Príjmy', 'var(--green)'], ['expenses', 'Výdavky', 'var(--red)']] as const).map(([tab, label, dotColor]) => {
+          const active = recentTab === tab
+          return (
+            <button key={tab} onClick={() => setRecentTab(tab)} style={{
+              padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
+              background: active ? 'var(--bg2)' : 'transparent',
+              color: active ? 'var(--text)' : 'var(--text3)',
+              transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* DonutFilter badge */}
+      {donutFilter && recentTab === 'expenses' && (
+        <button
+          onClick={() => { setDonutFilter(null); setClickedIndex(null) }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10,
+            fontSize: 11, color: 'var(--violet)', background: 'rgba(139,92,246,0.1)',
+            border: '1px solid rgba(139,92,246,0.2)', padding: '3px 9px', borderRadius: 8,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          <span>Filter: {donutFilter}</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      )}
+
+      {/* Transaction list */}
+      {recentTab === 'expenses' ? (
+        last5.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {last5.map(expense => {
               const cat = getCategoryById(expense.categoryId)
@@ -672,16 +726,37 @@ const upcomingFixed = useMemo(() => {
                     <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(expense.date)}</p>
                   </div>
                   {member && <MemberAvatar userId={member.id} userName={member.name} size={20} />}
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: '#F87171', flexShrink: 0 }}>-{formatAmount(expense.amount)}</span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(expense.amount)}</span>
                 </div>
               )
             })}
           </div>
         ) : (
           <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.noExpenses}</p>
-        )}
+        )
+      ) : (
+        last5Incomes.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {last5Incomes.map(income => (
+              <div key={income.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, background: 'rgba(52,211,153,0.15)' }}>
+                  💰
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{income.label}</p>
+                  <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(income.date)}</p>
+                </div>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: 'var(--green)', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: 12, color: 'var(--text3)' }}>Žiadne príjmy tento mesiac</p>
+        )
+      )}
+
       <button
-        onClick={() => onNavigate('variable-expenses')}
+        onClick={() => onNavigate(recentTab === 'income' ? 'income' : 'variable-expenses')}
         className="lg:hidden"
         style={{
           width: '100%', marginTop: 8, padding: '8px 12px',
