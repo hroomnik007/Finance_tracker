@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from './BottomSheet'
 import { useIncomes } from '../hooks/useIncomes'
@@ -38,10 +38,18 @@ interface GlobalFABProps {
   year: number
   showToast: (msg: string) => void
   currentPage: string
+  openTrigger?: number
 }
 
-export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProps) {
+export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: GlobalFABProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null)
+  const [isMobile] = useState(() => window.innerWidth < 1024)
+
+  useEffect(() => {
+    if (!openTrigger) return
+    const modalType = PAGE_MODAL_MAP[currentPage]
+    if (modalType) setActiveModal(modalType)
+  }, [openTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Data hooks ────────────────────────────────────────────────────────────
   const { addIncome } = useIncomes(month, year)
@@ -167,20 +175,22 @@ export function GlobalFAB({ month, year, showToast, currentPage }: GlobalFABProp
 
   return (
     <>
-      {/* ── Floating Action Button ────────────────────────────────────────── */}
-      <button
-        onClick={handleFABClick}
-        aria-label="Pridať záznam"
-        className="fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl cursor-pointer"
-        style={{
-          bottom: '5rem',
-          zIndex: 40,
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
-        }}
-      >
-        <Plus size={26} />
-      </button>
+      {/* ── Floating Action Button — mobile only ─────────────────────────── */}
+      {isMobile && (
+        <button
+          onClick={handleFABClick}
+          aria-label="Pridať záznam"
+          className="fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl cursor-pointer"
+          style={{
+            bottom: 'calc(72px + env(safe-area-inset-bottom, 16px))',
+            zIndex: 40,
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
+          }}
+        >
+          <Plus size={26} />
+        </button>
+      )}
 
       {/* ── ADD INCOME modal ─────────────────────────────────────────────── */}
       <BottomSheet open={activeModal === 'income'} onClose={closeModal} title={t.income.addTitle}>

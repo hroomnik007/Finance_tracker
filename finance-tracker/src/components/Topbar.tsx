@@ -9,6 +9,8 @@ import { NotificationCenter } from './NotificationCenter'
 
 // Pages where month navigation is relevant
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses']
+// Pages where the global "+ Pridať" button is shown in Topbar
+const ADD_PAGES: Page[] = ['income', 'variable-expenses', 'fixed-expenses', 'categories']
 
 interface TopbarProps {
   page: Page
@@ -18,6 +20,7 @@ interface TopbarProps {
   dashView: 'personal' | 'family'
   onDashViewChange: (v: 'personal' | 'family') => void
   onOpenProfile: () => void
+  onOpenAdd?: () => void
 }
 
 function isPhotoUrl(url: string | null | undefined): url is string {
@@ -31,7 +34,7 @@ function getGreeting(hour: number): string {
   return 'Dobrú noc'
 }
 
-export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile }: TopbarProps) {
+export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [streakTooltipVisible, setStreakTooltipVisible] = useState(false)
@@ -65,6 +68,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const streak = user?.currentStreak ?? 0
   const showMonth = MONTH_PAGES.includes(page)
   const showToggle = householdEnabled && page === 'dashboard'
+  const showAdd = ADD_PAGES.includes(page)
 
   const dayName = new Intl.DateTimeFormat('sk-SK', { weekday: 'long' }).format(now)
   const dayNameLower = dayName.charAt(0).toLowerCase() + dayName.slice(1)
@@ -226,11 +230,31 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           </span>
         </div>
 
-        {/* Right: toggle + month nav + theme + avatar */}
+        {/* Right: toggle + month nav + add + theme + avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {showToggle && familyToggle}
           {showMonth && monthNav}
           {divider}
+          {showAdd && onOpenAdd && (
+            <button
+              onClick={onOpenAdd}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 13px', borderRadius: 10,
+                background: 'var(--violet)', color: 'white',
+                border: 'none', fontSize: 13, fontWeight: 600,
+                boxShadow: '0 3px 12px rgba(139,92,246,0.35)',
+                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Pridať
+            </button>
+          )}
           {themeToggleBtn}
           <NotificationCenter />
           {avatarEl(34)}

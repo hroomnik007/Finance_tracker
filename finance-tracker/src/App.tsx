@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
 import { Topbar } from './components/Topbar'
+import { GlobalFAB } from './components/GlobalFAB'
 import { ToastContainer } from './components/ToastContainer'
 import { Dashboard } from './pages/Dashboard'
 import { IncomePage } from './pages/Income'
@@ -112,6 +113,7 @@ function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024)
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false)
+  const [fabTrigger, setFabTrigger] = useState(0)
 
   useEffect(() => {
     const handler = () => setIsDesktop(window.innerWidth >= 1024)
@@ -374,6 +376,7 @@ function App() {
           dashView={dashView}
           onDashViewChange={handleDashViewChange}
           onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenAdd={() => setFabTrigger(v => v + 1)}
         />
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {page === 'dashboard' && (
@@ -400,6 +403,15 @@ function App() {
           {page === 'savings' && <SavingsPage />}
         </div>
       </main>
+
+      {/* Global FAB — mobile circle button + shared add modal */}
+      <GlobalFAB
+        month={month}
+        year={year}
+        showToast={showToast}
+        currentPage={page}
+        openTrigger={fabTrigger}
+      />
 
       {/* Mobile bottom nav */}
       {!isDesktop && <BottomNav current={page} onChange={setPage} />}

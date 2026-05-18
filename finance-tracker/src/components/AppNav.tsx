@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import {
   LayoutDashboard, TrendingUp, CreditCard, Settings,
@@ -25,7 +25,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
   const { user } = useAuth()
   const isExpanded = !collapsed
   const expensesActive = EXPENSE_CHILDREN.includes(current)
-  const expensesOpen = expensesActive && isExpanded
+  const [expOpen, setExpOpen] = useState(expensesActive)
+
+  useEffect(() => {
+    if (expensesActive && isExpanded) setExpOpen(true)
+  }, [current]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [submenuVisible, setSubmenuVisible] = useState(false)
   const [submenuY, setSubmenuY] = useState(0)
@@ -154,7 +158,10 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             onMouseLeave={() => { if (!isExpanded) closeSubmenu() }}
           >
             <button
-              onClick={() => handleChange('variable-expenses')}
+              onClick={() => {
+                if (isExpanded) setExpOpen(v => !v)
+                else handleChange('variable-expenses')
+              }}
               style={{ ...navItemStyle(expensesActive), display: 'flex', alignItems: 'center', gap: 10 }}
               onMouseEnter={e => hoverOn(e, expensesActive)}
               onMouseLeave={e => hoverOff(e, expensesActive)}
@@ -163,7 +170,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               {isExpanded && (
                 <>
                   <span style={{ flex: 1 }}>{t.nav.expenses}</span>
-                  {expensesOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  {expOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                 </>
               )}
             </button>
@@ -172,7 +179,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             {isExpanded && (
               <div style={{
                 overflow: 'hidden',
-                maxHeight: expensesOpen ? '200px' : '0px',
+                maxHeight: expOpen ? '200px' : '0px',
                 transition: 'max-height 0.25s ease-in-out',
               }}>
                 <div style={{ paddingLeft: 20, marginTop: 2 }}>
