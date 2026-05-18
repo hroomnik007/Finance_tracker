@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Upload } from 'lucide-react'
+import { X, Upload, Settings as SettingsIcon, Palette, Bell, Shield, Database, Info, User } from 'lucide-react'
 import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
@@ -188,6 +188,17 @@ interface ImportPreview {
 
 type DangerAction = 'expenses' | 'incomes' | 'reset'
 
+type SettingsSection = 'appearance' | 'finance' | 'notifications' | 'security' | 'data' | 'about'
+
+const SECTIONS = [
+  { id: 'appearance' as SettingsSection, label: 'Vzhľad', icon: Palette },
+  { id: 'finance' as SettingsSection, label: 'Financie', icon: User },
+  { id: 'notifications' as SettingsSection, label: 'Notifikácie', icon: Bell },
+  { id: 'security' as SettingsSection, label: 'Bezpečnosť', icon: Shield },
+  { id: 'data' as SettingsSection, label: 'Dáta', icon: Database },
+  { id: 'about' as SettingsSection, label: 'O aplikácii', icon: Info },
+] as const
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function SettingsPage() {
@@ -202,7 +213,9 @@ export function SettingsPage() {
   const securityRef = useRef<HTMLDivElement>(null)
   const dataRef = useRef<HTMLDivElement>(null)
 
-  // Apply saved appearance preferences on mount + auto-scroll to section
+  const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
+
+  // Apply saved appearance preferences on mount + navigate to section
   useEffect(() => {
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
     const savedCompact = loadLocalPref<boolean>(compactStorageKey, compactDefault)
@@ -213,10 +226,8 @@ export function SettingsPage() {
     const section = localStorage.getItem('settings_open_section')
     if (section) {
       localStorage.removeItem('settings_open_section')
-      setTimeout(() => {
-        const el = section === 'security' ? securityRef.current : section === 'data' ? dataRef.current : null
-        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 200)
+      if (section === 'security') setActiveSection('security')
+      else if (section === 'data') setActiveSection('data')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -701,519 +712,686 @@ export function SettingsPage() {
   return (
     <div className="w-full" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 20px))' }}>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* ── LEFT COLUMN ── */}
-        <div className="flex flex-col gap-6">
-
-          {/* Section 1: Všeobecné — compact on mobile */}
-          <div className="settings-general-compact">
-          <SectionCard>
-            <SectionHeader emoji="👤" label={t.settings.generalSection} />
-            <div className="divide-y divide-white/[0.04]">
-              <SettingRow label={t.settings.currency}>
-                <select
-                  value={settings.currency}
-                  onChange={e => updateSettings({ currency: e.target.value })}
-                  className="select-field"
-                >
-                  {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </SettingRow>
-
-              <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
-                <select
-                  value={settings.language}
-                  onChange={e => updateSettings({ language: e.target.value })}
-                  className="select-field"
-                >
-                  {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                </select>
-              </SettingRow>
-
-              <SettingRow label={t.settings.dateFormat}>
-                <select
-                  value={settings.dateFormat}
-                  onChange={e => updateSettings({ dateFormat: e.target.value })}
-                  className="select-field"
-                >
-                  {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                </select>
-              </SettingRow>
-
-              <SettingRow label={t.settings.firstDayOfWeek}>
-                <select
-                  value={settings.firstDayOfWeek}
-                  onChange={e => updateSettings({ firstDayOfWeek: e.target.value })}
-                  className="select-field"
-                >
-                  {firstDayOfWeekOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                </select>
-              </SettingRow>
-
-            </div>
-          </SectionCard>
-          </div>
-
-          {/* Section: Sledovanie od dátumu */}
-          <SectionCard>
-            <SectionHeader emoji="📅" label="Sledovanie od dátumu" />
-            <div style={{ padding: '4px 20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, lineHeight: 1.5 }}>
-                Nastav dátum, od ktorého chceš sledovať financie. Príjmy a výdavky pred týmto dátumom sa nebudú zobrazovať v histórii.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Sledovanie od
-                </label>
-                <input
-                  type="date"
-                  value={trackingDate}
-                  onChange={e => setTrackingDate(e.target.value)}
-                  style={{
-                    background: 'var(--bg3)', border: '1px solid var(--border)',
-                    borderRadius: 10, padding: '11px 14px', fontSize: 14,
-                    color: 'var(--text)', width: '100%', outline: 'none',
-                    fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark',
-                  }}
-                />
-              </div>
-              {trackingOk && (
-                <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Dátum bol uložený</p>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={handleSaveTrackingDate}
-                  disabled={trackingSaving}
-                  className="btn-primary py-2 text-sm"
-                  style={{ flex: 1, opacity: trackingSaving ? 0.6 : 1 }}
-                >
-                  {trackingSaving ? 'Ukladám...' : 'Uložiť'}
-                </button>
-                {(user?.tracking_start_date) && (
-                  <button
-                    onClick={handleClearTrackingDate}
-                    disabled={trackingSaving}
-                    className="btn-secondary py-2 text-sm"
-                    style={{ opacity: trackingSaving ? 0.6 : 1 }}
-                  >
-                    Vymazať
-                  </button>
-                )}
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Section 2: Vzhľad & Téma */}
-          <SectionCard>
-            <SectionHeader emoji="🎨" label={t.settings.appearanceSection} />
-            <div className="divide-y divide-white/[0.04]">
-              <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {([
-                    { id: 'dark', icon: '🌙', label: 'Dark' },
-                    { id: 'light', icon: '☀️', label: 'Light' },
-                    { id: 'system', icon: '⚙️', label: 'System' },
-                  ] as const).map(({ id, icon, label }) => (
-                    <button
-                      key={id}
-                      onClick={() => handleThemeChange(id)}
-                      style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                        padding: '8px 12px', borderRadius: 12, cursor: 'pointer',
-                        border: theme === id ? '2px solid var(--violet)' : '1px solid var(--border)',
-                        background: theme === id ? 'rgba(124,58,237,0.12)' : 'var(--bg3)',
-                        color: theme === id ? 'var(--violet)' : 'var(--text2)',
-                        minWidth: 56, transition: 'all 0.15s',
-                      }}
-                    >
-                      <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
-                      <span style={{ fontSize: 11, fontWeight: theme === id ? 600 : 400 }}>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </SettingRow>
-
-              <SettingRow label={t.settings.accentColor}>
-                <div className="flex gap-2">
-                  {ACCENT_COLORS.map(c => (
-                    <button
-                      key={c.value}
-                      onClick={() => handleAccentChange(c.value)}
-                      title={c.name}
-                      className="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
-                      style={{
-                        backgroundColor: c.value,
-                        outline: accentColor === c.value ? `2px solid ${c.value}` : 'none',
-                        outlineOffset: 2,
-                      }}
-                    >
-                      {accentColor === c.value && (
-                        <div className="w-2 h-2 rounded-full bg-white/80" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </SettingRow>
-
-              <SettingRow label={t.settings.compactMode} sublabel={t.settings.compactModeSubtitle}>
-                <Toggle checked={compactMode} onChange={handleCompactToggle} />
-              </SettingRow>
-            </div>
-          </SectionCard>
-
-          {/* Section: Bezpečnosť */}
-          <div ref={securityRef} id="bezpecnost-section">
-          <SectionCard>
-            <SectionHeader emoji="🔐" label="Bezpečnosť" />
-            <div className="divide-y divide-white/[0.04]">
-
-              {/* Zmeniť heslo */}
-              <div>
-                <SettingRow label="Zmeniť heslo" sublabel="Aktualizovať prihlasovacie heslo">
-                  <button
-                    onClick={() => { setChangePwOpen(o => !o); setChangePwError(null) }}
-                    className="btn-secondary py-1.5 text-xs"
-                  >
-                    {changePwOpen ? 'Zavrieť' : 'Zmeniť'}
-                  </button>
-                </SettingRow>
-                {changePwOpen && (
-                  <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {changePwError && (
-                      <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{changePwError}</p>
-                    )}
-                    {changePwOk && (
-                      <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Heslo zmenené</p>
-                    )}
-                    <input
-                      type="password"
-                      placeholder="Aktuálne heslo"
-                      value={currentPw}
-                      onChange={e => setCurrentPw(e.target.value)}
-                      className="input-field text-sm"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Nové heslo (min. 8 znakov)"
-                      value={newPw}
-                      onChange={e => setNewPw(e.target.value)}
-                      className="input-field text-sm"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Potvrď nové heslo"
-                      value={confirmPw}
-                      onChange={e => setConfirmPw(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
-                      className="input-field text-sm"
-                    />
-                    <button
-                      onClick={handleChangePassword}
-                      disabled={changePwLoading}
-                      className="btn-primary py-2 text-sm justify-center disabled:opacity-40"
-                    >
-                      {changePwLoading ? 'Ukladám...' : 'Uložiť heslo'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* PIN */}
-              <SettingRow
-                label="PIN kód"
-                sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>PIN je aktívny</span> : 'Rýchly zámok aplikácie'}
-              >
-                {hasPin ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={() => setPinSetupOpen(true)}
-                      className="btn-secondary py-1.5 text-xs"
-                    >
-                      Zmeniť
-                    </button>
-                    <button
-                      onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }}
-                      className="btn-secondary py-1.5 text-xs"
-                      style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
-                    >
-                      Odstrániť
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setPinSetupOpen(true)}
-                    className="btn-secondary py-1.5 text-xs"
-                  >
-                    Nastaviť
-                  </button>
-                )}
-              </SettingRow>
-
-            </div>
-          </SectionCard>
-          </div>
-
-          {/* Section 3: Notifikácie */}
-          <SectionCard>
-            <SectionHeader emoji="🔔" label={t.settings.notificationsSection} />
-            <div className="divide-y divide-white/[0.04]">
-              <SettingRow label={t.settings.fixedReminders} sublabel={t.settings.fixedRemindersSubtitle}>
-                <Toggle checked={notificationsEnabled} onChange={handleNotificationsToggle} />
-              </SettingRow>
-
-              <SettingRow label={t.settings.budgetWarnings} sublabel={t.settings.budgetWarningsSubtitle}>
-                <Toggle
-                  checked={budgetWarnings}
-                  onChange={() => {
-                    const next = !budgetWarnings
-                    setBudgetWarningsState(next)
-                    saveLocalPref('budget_warnings_enabled', next)
-                  }}
-                />
-              </SettingRow>
-
-              <SettingRow label={t.settings.monthlyReminders} sublabel={t.settings.monthlyRemindersSubtitle}>
-                <Toggle
-                  checked={monthlySummary}
-                  onChange={() => {
-                    const next = !monthlySummary
-                    setMonthlySummaryState(next)
-                    saveLocalPref('monthly_summary_enabled', next)
-                  }}
-                />
-              </SettingRow>
-
-              <SettingRow label={t.settings.weeklyEmailLabel} sublabel={t.settings.weeklyEmailSubtitle}>
-                <Toggle checked={weeklyEmail} onChange={handleWeeklyEmailToggle} disabled={weeklyEmailSaving} />
-              </SettingRow>
-
-              <SettingRow label={t.settings.monthlyEmailLabel} sublabel={t.settings.monthlyEmailSubtitle}>
-                <Toggle checked={monthlyEmail} onChange={handleMonthlyEmailToggle} disabled={monthlyEmailSaving} />
-              </SettingRow>
-            </div>
-            <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
-              <p className="text-xs text-[#6B5A9E]">{t.settings.notificationsNote}</p>
-            </div>
-          </SectionCard>
-
+      {/* Settings hero */}
+      <div style={{
+        background: 'linear-gradient(135deg,#0d0b18 0%,#1a1535 45%,#0d0b18 100%)',
+        borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+        boxShadow: '0 18px 50px -16px rgba(30,20,80,0.5),0 0 0 1px rgba(139,92,246,0.15)',
+        flexShrink: 0, marginBottom: 20,
+      }}>
+        <div style={{position:'absolute',top:-80,right:-40,width:220,height:220,borderRadius:'50%',background:'radial-gradient(circle,rgba(139,92,246,0.3),transparent 65%)',filter:'blur(35px)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.04) 50%,transparent 70%)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(139,92,246,0.18)',border:'1px solid rgba(139,92,246,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <SettingsIcon size={18} color="#c4b5fd" />
         </div>
-
-        {/* ── RIGHT COLUMN ── */}
-        <div className="flex flex-col gap-6">
-
-          {/* Section 4: Dáta */}
-          <div ref={dataRef} id="data-section">
-          <SectionCard>
-            <SectionHeader emoji="💾" label={t.settings.data} />
-            <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
-
-              <div>
-                <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 8 }}>Export</p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button onClick={handleExportJSON} className="btn-secondary justify-center py-1.5 text-xs">
-                    📄 {t.settings.exportJson}
-                  </button>
-                  <button onClick={handleExportPDF} className="btn-secondary justify-center py-1.5 text-xs">
-                    🖨️ {t.settings.printPdf}
-                  </button>
-                  <button onClick={handleExportCSV} className="btn-secondary justify-center py-1.5 text-xs">
-                    📋 {t.settings.exportCsv}
-                  </button>
-                  <button onClick={handleExportXlsx} className="btn-secondary justify-center py-1.5 text-xs">
-                    📊 {t.settings.exportXlsx}
-                  </button>
-                </div>
-                {user && (
-                  <button onClick={handleShareReport} className="btn-primary w-full justify-center py-1.5 text-xs mt-1.5">
-                    🔗 {t.settings.shareOverview}
-                  </button>
-                )}
-                {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 6 }}>Import</p>
-                <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
-                  <Upload size={13} />
-                  {t.settings.importJson}
-                </button>
-                {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
-                {importOk && <p className="text-xs text-emerald-400 mt-2">{t.settings.importSuccess}</p>}
-              </div>
-
-              <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
-                {t.settings.dataNote}
-              </p>
-            </div>
-          </SectionCard>
+        <div style={{position:'relative'}}>
+          <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
+            <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>NASTAVENIA</span>
+            <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
+            <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>Prispôsobte si Finvu</span>
           </div>
-
-          {/* Section: Rodinné financie */}
-          <SectionCard>
-            <SectionHeader emoji="👨‍👩‍👧" label={t.settings.householdTitle} />
-            <div className="divide-y divide-white/[0.04]">
-              <SettingRow label={t.settings.householdTitle} sublabel={householdId ? t.settings.householdSubtitleJoined : t.settings.householdSubtitleNew}>
-                <Toggle checked={householdEnabled} onChange={householdId ? () => {} : handleHouseholdToggle} disabled={householdToggling || !!householdId} />
-              </SettingRow>
-            </div>
-
-            {householdEnabled && !householdId && (
-              <div className="p-5 flex flex-col gap-4 border-t border-white/[0.06]">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Vytvor domácnosť */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdCreate}</p>
-                    <input
-                      type="text"
-                      placeholder={t.settings.householdCreatePlaceholder}
-                      value={createName}
-                      onChange={e => setCreateName(e.target.value)}
-                      style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
-                    />
-                    <button
-                      onClick={handleCreateHousehold}
-                      disabled={createLoading || !createName.trim()}
-                      style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (createLoading || !createName.trim()) ? 0.4 : 1 }}
-                    >
-                      {createLoading ? t.settings.householdCreating : t.settings.householdCreateBtn}
-                    </button>
-                  </div>
-
-                  {/* Pripoj sa */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdJoin}</p>
-                    <input
-                      type="text"
-                      placeholder={t.settings.householdJoinPlaceholder}
-                      value={joinCode}
-                      onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(null) }}
-                      style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
-                    />
-                    {joinError && <p className="text-xs text-red-400">{joinError}</p>}
-                    <button
-                      onClick={handleJoinHousehold}
-                      disabled={joinLoading || !joinCode.trim()}
-                      style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (joinLoading || !joinCode.trim()) ? 0.4 : 1 }}
-                    >
-                      {joinLoading ? t.settings.householdJoining : t.settings.householdJoinBtn}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </SectionCard>
-
-          {/* Section: Sporenie */}
-          <SectionCard>
-            <SectionHeader emoji="🐷" label={t.settings.savingsTitle} />
-            <div className="divide-y divide-white/[0.04]">
-              <SettingRow label={t.settings.savingsTitle} sublabel={t.settings.savingsSubtitle}>
-                <Toggle checked={savingsEnabled} onChange={handleSavingsToggle} disabled={savingsToggling} />
-              </SettingRow>
-            </div>
-          </SectionCard>
-
-          {/* Section 5: Danger Zone */}
-          <SectionCard>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
-                ⚠️ {t.settings.dangerZone}
-              </p>
-            </div>
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {([
-                { key: 'expenses', label: `🗑️ ${t.settings.deleteExpenses}` },
-                { key: 'incomes', label: `🗑️ ${t.settings.deleteIncomes}` },
-                { key: 'reset', label: `💥 ${t.settings.resetApp}` },
-              ] as const).map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => { setDangerAction(key); setDangerConfirmText('') }}
-                  style={{
-                    width: '100%', padding: '12px 16px', borderRadius: 12,
-                    background: 'transparent',
-                    border: '1px solid rgba(239,68,68,0.25)',
-                    color: 'var(--red)', fontSize: 14, fontWeight: 500,
-                    cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                  }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.06)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </SectionCard>
-
-          {/* Delete account */}
-          <SectionCard>
-            <SectionHeader emoji="🗑️" label={t.settings.deleteAccount} />
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ fontSize: 14, color: 'var(--text3)', margin: 0, lineHeight: 1.6 }}>{t.settings.deleteAccountDesc}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
-                  {t.settings.deleteAccountConfirmLabel}
-                </label>
-                <input
-                  type="text"
-                  placeholder="ZMAZAŤ"
-                  value={deleteConfirm}
-                  onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
-                  className="input-field"
-                />
-              </div>
-              {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deleteError}</p>}
-              <button
-                disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
-                onClick={async () => {
-                  setIsDeleting(true)
-                  try {
-                    await deleteAccount()
-                  } catch (err: unknown) {
-                    const status = (err as { response?: { status?: number } })?.response?.status
-                    if (status === 502 || status === 501 || status === 404) {
-                      setDeleteError(t.settings.deleteAccountUnavailable)
-                    } else {
-                      setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
-                    }
-                    setIsDeleting(false)
-                  }
-                }}
-                style={{
-                  width: '100%', height: 48, borderRadius: 12,
-                  background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
-                  border: '1px solid #DC2626',
-                  color: deleteConfirm === 'ZMAZAŤ' ? 'white' : 'var(--red)',
-                  fontSize: 15, fontWeight: 600,
-                  cursor: deleteConfirm === 'ZMAZAŤ' && !isDeleting ? 'pointer' : 'not-allowed',
-                  opacity: isDeleting ? 0.6 : 1,
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
-              </button>
-            </div>
-          </SectionCard>
-
+          <div style={{fontSize:22,fontWeight:300,color:'white',letterSpacing:'-0.5px',marginBottom:4}}>
+            Vitajte späť{user?.name ? `, ${user.name}` : ''} 👋
+          </div>
+          <div style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>Spravujte vzhľad, bezpečnosť a nastavenia účtu</div>
         </div>
       </div>
 
-      {/* ── FOOTER BUTTONS ── */}
-      <div className="flex justify-end gap-3 mt-4 pb-2">
-        <button
-          onClick={() => setShowChangelog(true)}
-          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
-        >
-          Changelog
-        </button>
-        <button
-          onClick={() => setShowAbout(true)}
-          className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
-        >
-          O aplikácii
-        </button>
+      {/* 2-col grid: left nav + right content */}
+      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'start' }}>
+
+        {/* Left nav — desktop only */}
+        <div className="hidden lg:block" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', position: 'sticky', top: 20 }}>
+          {SECTIONS.map(s => {
+            const Icon = s.icon
+            const isActive = activeSection === s.id
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  width: '100%', padding: '13px 16px',
+                  background: isActive ? 'rgba(139,92,246,0.1)' : 'transparent',
+                  border: 'none', borderLeft: isActive ? '3px solid var(--violet)' : '3px solid transparent',
+                  color: isActive ? 'var(--violet)' : 'var(--text2)',
+                  fontSize: 14, fontWeight: isActive ? 600 : 500,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'all 0.15s', textAlign: 'left',
+                }}
+              >
+                <Icon size={16} strokeWidth={isActive ? 2 : 1.8} />
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Mobile: horizontal scroll chips */}
+        <div className="lg:hidden" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, gridColumn: '1 / -1' }}>
+          {SECTIONS.map(s => {
+            const isActive = activeSection === s.id
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 99, flexShrink: 0,
+                  background: isActive ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
+                  border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border)',
+                  color: isActive ? 'var(--violet)' : 'var(--text2)',
+                  fontSize: 13, fontWeight: isActive ? 600 : 500,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Right content */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* ── APPEARANCE SECTION ── */}
+          {activeSection === 'appearance' && (
+            <>
+              {/* Section 2: Vzhľad & Téma */}
+              <SectionCard>
+                <SectionHeader emoji="🎨" label={t.settings.appearanceSection} />
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {([
+                        { id: 'dark', icon: '🌙', label: 'Dark' },
+                        { id: 'light', icon: '☀️', label: 'Light' },
+                        { id: 'system', icon: '⚙️', label: 'System' },
+                      ] as const).map(({ id, icon, label }) => (
+                        <button
+                          key={id}
+                          onClick={() => handleThemeChange(id)}
+                          style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                            padding: '8px 12px', borderRadius: 12, cursor: 'pointer',
+                            border: theme === id ? '2px solid var(--violet)' : '1px solid var(--border)',
+                            background: theme === id ? 'rgba(124,58,237,0.12)' : 'var(--bg3)',
+                            color: theme === id ? 'var(--violet)' : 'var(--text2)',
+                            minWidth: 56, transition: 'all 0.15s',
+                          }}
+                        >
+                          <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+                          <span style={{ fontSize: 11, fontWeight: theme === id ? 600 : 400 }}>{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.accentColor}>
+                    <div className="flex gap-2">
+                      {ACCENT_COLORS.map(c => (
+                        <button
+                          key={c.value}
+                          onClick={() => handleAccentChange(c.value)}
+                          title={c.name}
+                          className="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
+                          style={{
+                            backgroundColor: c.value,
+                            outline: accentColor === c.value ? `2px solid ${c.value}` : 'none',
+                            outlineOffset: 2,
+                          }}
+                        >
+                          {accentColor === c.value && (
+                            <div className="w-2 h-2 rounded-full bg-white/80" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.compactMode} sublabel={t.settings.compactModeSubtitle}>
+                    <Toggle checked={compactMode} onChange={handleCompactToggle} />
+                  </SettingRow>
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {/* ── FINANCE SECTION ── */}
+          {activeSection === 'finance' && (
+            <>
+              {/* Section 1: Všeobecné */}
+              <div className="settings-general-compact">
+              <SectionCard>
+                <SectionHeader emoji="👤" label={t.settings.generalSection} />
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label={t.settings.currency}>
+                    <select
+                      value={settings.currency}
+                      onChange={e => updateSettings({ currency: e.target.value })}
+                      className="select-field"
+                    >
+                      {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
+                    <select
+                      value={settings.language}
+                      onChange={e => updateSettings({ language: e.target.value })}
+                      className="select-field"
+                    >
+                      {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                    </select>
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.dateFormat}>
+                    <select
+                      value={settings.dateFormat}
+                      onChange={e => updateSettings({ dateFormat: e.target.value })}
+                      className="select-field"
+                    >
+                      {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                    </select>
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.firstDayOfWeek}>
+                    <select
+                      value={settings.firstDayOfWeek}
+                      onChange={e => updateSettings({ firstDayOfWeek: e.target.value })}
+                      className="select-field"
+                    >
+                      {firstDayOfWeekOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                    </select>
+                  </SettingRow>
+
+                </div>
+              </SectionCard>
+              </div>
+
+              {/* Section: Sledovanie od dátumu */}
+              <SectionCard>
+                <SectionHeader emoji="📅" label="Sledovanie od dátumu" />
+                <div style={{ padding: '4px 20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, lineHeight: 1.5 }}>
+                    Nastav dátum, od ktorého chceš sledovať financie. Príjmy a výdavky pred týmto dátumom sa nebudú zobrazovať v histórii.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                      Sledovanie od
+                    </label>
+                    <input
+                      type="date"
+                      value={trackingDate}
+                      onChange={e => setTrackingDate(e.target.value)}
+                      style={{
+                        background: 'var(--bg3)', border: '1px solid var(--border)',
+                        borderRadius: 10, padding: '11px 14px', fontSize: 14,
+                        color: 'var(--text)', width: '100%', outline: 'none',
+                        fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark',
+                      }}
+                    />
+                  </div>
+                  {trackingOk && (
+                    <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Dátum bol uložený</p>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={handleSaveTrackingDate}
+                      disabled={trackingSaving}
+                      className="btn-primary py-2 text-sm"
+                      style={{ flex: 1, opacity: trackingSaving ? 0.6 : 1 }}
+                    >
+                      {trackingSaving ? 'Ukladám...' : 'Uložiť'}
+                    </button>
+                    {(user?.tracking_start_date) && (
+                      <button
+                        onClick={handleClearTrackingDate}
+                        disabled={trackingSaving}
+                        className="btn-secondary py-2 text-sm"
+                        style={{ opacity: trackingSaving ? 0.6 : 1 }}
+                      >
+                        Vymazať
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </SectionCard>
+
+              {/* Section: Rodinné financie */}
+              <SectionCard>
+                <SectionHeader emoji="👨‍👩‍👧" label={t.settings.householdTitle} />
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label={t.settings.householdTitle} sublabel={householdId ? t.settings.householdSubtitleJoined : t.settings.householdSubtitleNew}>
+                    <Toggle checked={householdEnabled} onChange={householdId ? () => {} : handleHouseholdToggle} disabled={householdToggling || !!householdId} />
+                  </SettingRow>
+                </div>
+
+                {householdEnabled && !householdId && (
+                  <div className="p-5 flex flex-col gap-4 border-t border-white/[0.06]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Vytvor domácnosť */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdCreate}</p>
+                        <input
+                          type="text"
+                          placeholder={t.settings.householdCreatePlaceholder}
+                          value={createName}
+                          onChange={e => setCreateName(e.target.value)}
+                          style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
+                        />
+                        <button
+                          onClick={handleCreateHousehold}
+                          disabled={createLoading || !createName.trim()}
+                          style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (createLoading || !createName.trim()) ? 0.4 : 1 }}
+                        >
+                          {createLoading ? t.settings.householdCreating : t.settings.householdCreateBtn}
+                        </button>
+                      </div>
+
+                      {/* Pripoj sa */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdJoin}</p>
+                        <input
+                          type="text"
+                          placeholder={t.settings.householdJoinPlaceholder}
+                          value={joinCode}
+                          onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(null) }}
+                          style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
+                        />
+                        {joinError && <p className="text-xs text-red-400">{joinError}</p>}
+                        <button
+                          onClick={handleJoinHousehold}
+                          disabled={joinLoading || !joinCode.trim()}
+                          style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (joinLoading || !joinCode.trim()) ? 0.4 : 1 }}
+                        >
+                          {joinLoading ? t.settings.householdJoining : t.settings.householdJoinBtn}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </SectionCard>
+
+              {/* Section: Sporenie */}
+              <SectionCard>
+                <SectionHeader emoji="🐷" label={t.settings.savingsTitle} />
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label={t.settings.savingsTitle} sublabel={t.settings.savingsSubtitle}>
+                    <Toggle checked={savingsEnabled} onChange={handleSavingsToggle} disabled={savingsToggling} />
+                  </SettingRow>
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {/* ── NOTIFICATIONS SECTION ── */}
+          {activeSection === 'notifications' && (
+            <>
+              {/* Section 3: Notifikácie */}
+              <SectionCard>
+                <SectionHeader emoji="🔔" label={t.settings.notificationsSection} />
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label={t.settings.fixedReminders} sublabel={t.settings.fixedRemindersSubtitle}>
+                    <Toggle checked={notificationsEnabled} onChange={handleNotificationsToggle} />
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.budgetWarnings} sublabel={t.settings.budgetWarningsSubtitle}>
+                    <Toggle
+                      checked={budgetWarnings}
+                      onChange={() => {
+                        const next = !budgetWarnings
+                        setBudgetWarningsState(next)
+                        saveLocalPref('budget_warnings_enabled', next)
+                      }}
+                    />
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.monthlyReminders} sublabel={t.settings.monthlyRemindersSubtitle}>
+                    <Toggle
+                      checked={monthlySummary}
+                      onChange={() => {
+                        const next = !monthlySummary
+                        setMonthlySummaryState(next)
+                        saveLocalPref('monthly_summary_enabled', next)
+                      }}
+                    />
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.weeklyEmailLabel} sublabel={t.settings.weeklyEmailSubtitle}>
+                    <Toggle checked={weeklyEmail} onChange={handleWeeklyEmailToggle} disabled={weeklyEmailSaving} />
+                  </SettingRow>
+
+                  <SettingRow label={t.settings.monthlyEmailLabel} sublabel={t.settings.monthlyEmailSubtitle}>
+                    <Toggle checked={monthlyEmail} onChange={handleMonthlyEmailToggle} disabled={monthlyEmailSaving} />
+                  </SettingRow>
+                </div>
+                <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
+                  <p className="text-xs text-[#6B5A9E]">{t.settings.notificationsNote}</p>
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {/* ── SECURITY SECTION ── */}
+          {activeSection === 'security' && (
+            <>
+              {/* Section: Bezpečnosť */}
+              <div ref={securityRef} id="bezpecnost-section">
+              <SectionCard>
+                <SectionHeader emoji="🔐" label="Bezpečnosť" />
+                <div className="divide-y divide-white/[0.04]">
+
+                  {/* Zmeniť heslo */}
+                  <div>
+                    <SettingRow label="Zmeniť heslo" sublabel="Aktualizovať prihlasovacie heslo">
+                      <button
+                        onClick={() => { setChangePwOpen(o => !o); setChangePwError(null) }}
+                        className="btn-secondary py-1.5 text-xs"
+                      >
+                        {changePwOpen ? 'Zavrieť' : 'Zmeniť'}
+                      </button>
+                    </SettingRow>
+                    {changePwOpen && (
+                      <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {changePwError && (
+                          <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{changePwError}</p>
+                        )}
+                        {changePwOk && (
+                          <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Heslo zmenené</p>
+                        )}
+                        <input
+                          type="password"
+                          placeholder="Aktuálne heslo"
+                          value={currentPw}
+                          onChange={e => setCurrentPw(e.target.value)}
+                          className="input-field text-sm"
+                        />
+                        <input
+                          type="password"
+                          placeholder="Nové heslo (min. 8 znakov)"
+                          value={newPw}
+                          onChange={e => setNewPw(e.target.value)}
+                          className="input-field text-sm"
+                        />
+                        <input
+                          type="password"
+                          placeholder="Potvrď nové heslo"
+                          value={confirmPw}
+                          onChange={e => setConfirmPw(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
+                          className="input-field text-sm"
+                        />
+                        <button
+                          onClick={handleChangePassword}
+                          disabled={changePwLoading}
+                          className="btn-primary py-2 text-sm justify-center disabled:opacity-40"
+                        >
+                          {changePwLoading ? 'Ukladám...' : 'Uložiť heslo'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PIN */}
+                  <SettingRow
+                    label="PIN kód"
+                    sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>PIN je aktívny</span> : 'Rýchly zámok aplikácie'}
+                  >
+                    {hasPin ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => setPinSetupOpen(true)}
+                          className="btn-secondary py-1.5 text-xs"
+                        >
+                          Zmeniť
+                        </button>
+                        <button
+                          onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }}
+                          className="btn-secondary py-1.5 text-xs"
+                          style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                        >
+                          Odstrániť
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setPinSetupOpen(true)}
+                        className="btn-secondary py-1.5 text-xs"
+                      >
+                        Nastaviť
+                      </button>
+                    )}
+                  </SettingRow>
+
+                </div>
+              </SectionCard>
+              </div>
+            </>
+          )}
+
+          {/* ── DATA SECTION ── */}
+          {activeSection === 'data' && (
+            <>
+              {/* Section 4: Dáta */}
+              <div ref={dataRef} id="data-section">
+              <SectionCard>
+                <SectionHeader emoji="💾" label={t.settings.data} />
+                <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
+
+                  <div>
+                    <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 8 }}>Export</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button onClick={handleExportJSON} className="btn-secondary justify-center py-1.5 text-xs">
+                        📄 {t.settings.exportJson}
+                      </button>
+                      <button onClick={handleExportPDF} className="btn-secondary justify-center py-1.5 text-xs">
+                        🖨️ {t.settings.printPdf}
+                      </button>
+                      <button onClick={handleExportCSV} className="btn-secondary justify-center py-1.5 text-xs">
+                        📋 {t.settings.exportCsv}
+                      </button>
+                      <button onClick={handleExportXlsx} className="btn-secondary justify-center py-1.5 text-xs">
+                        📊 {t.settings.exportXlsx}
+                      </button>
+                    </div>
+                    {user && (
+                      <button onClick={handleShareReport} className="btn-primary w-full justify-center py-1.5 text-xs mt-1.5">
+                        🔗 {t.settings.shareOverview}
+                      </button>
+                    )}
+                    {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                    <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 6 }}>Import</p>
+                    <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
+                      <Upload size={13} />
+                      {t.settings.importJson}
+                    </button>
+                    {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
+                    {importOk && <p className="text-xs text-emerald-400 mt-2">{t.settings.importSuccess}</p>}
+                  </div>
+
+                  <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
+                    {t.settings.dataNote}
+                  </p>
+                </div>
+              </SectionCard>
+              </div>
+
+              {/* Section 5: Danger Zone */}
+              <SectionCard>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
+                    ⚠️ {t.settings.dangerZone}
+                  </p>
+                </div>
+                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {([
+                    { key: 'expenses', label: `🗑️ ${t.settings.deleteExpenses}` },
+                    { key: 'incomes', label: `🗑️ ${t.settings.deleteIncomes}` },
+                    { key: 'reset', label: `💥 ${t.settings.resetApp}` },
+                  ] as const).map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => { setDangerAction(key); setDangerConfirmText('') }}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        background: 'transparent',
+                        border: '1px solid rgba(239,68,68,0.25)',
+                        color: 'var(--red)', fontSize: 14, fontWeight: 500,
+                        cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.06)'}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+
+              {/* Delete account */}
+              <SectionCard>
+                <SectionHeader emoji="🗑️" label={t.settings.deleteAccount} />
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <p style={{ fontSize: 14, color: 'var(--text3)', margin: 0, lineHeight: 1.6 }}>{t.settings.deleteAccountDesc}</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
+                      {t.settings.deleteAccountConfirmLabel}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ZMAZAŤ"
+                      value={deleteConfirm}
+                      onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
+                      className="input-field"
+                    />
+                  </div>
+                  {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deleteError}</p>}
+                  <button
+                    disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
+                    onClick={async () => {
+                      setIsDeleting(true)
+                      try {
+                        await deleteAccount()
+                      } catch (err: unknown) {
+                        const status = (err as { response?: { status?: number } })?.response?.status
+                        if (status === 502 || status === 501 || status === 404) {
+                          setDeleteError(t.settings.deleteAccountUnavailable)
+                        } else {
+                          setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                        }
+                        setIsDeleting(false)
+                      }
+                    }}
+                    style={{
+                      width: '100%', height: 48, borderRadius: 12,
+                      background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
+                      border: '1px solid #DC2626',
+                      color: deleteConfirm === 'ZMAZAŤ' ? 'white' : 'var(--red)',
+                      fontSize: 15, fontWeight: 600,
+                      cursor: deleteConfirm === 'ZMAZAŤ' && !isDeleting ? 'pointer' : 'not-allowed',
+                      opacity: isDeleting ? 0.6 : 1,
+                      fontFamily: 'inherit',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
+                  </button>
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {/* ── ABOUT SECTION ── */}
+          {activeSection === 'about' && (
+            <>
+              <SectionCard>
+                <SectionHeader emoji="ℹ️" label="O aplikácii" />
+                <div style={{ padding: 20 }}>
+                  <div className="flex flex-col items-center mb-5">
+                    <div
+                      className="w-[52px] h-[52px] rounded-xl flex items-center justify-center mb-3 shrink-0"
+                      style={{ background: 'var(--accent-color)' }}
+                    >
+                      <span className="text-white font-bold text-2xl leading-none">F</span>
+                    </div>
+                    <p className="text-base font-bold text-[#E2D9F3]">Finvu</p>
+                    <span className="text-xs mt-1.5 font-mono px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
+                      v1.1.0
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-3 mb-5">
+                    <div className="flex items-start gap-3">
+                      <span className="text-base leading-none mt-0.5">🔒</span>
+                      <p className="text-xs text-[#B8A3E8] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-base leading-none mt-0.5">🔧</span>
+                      <p className="text-xs text-[#B8A3E8] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-base leading-none mt-0.5">🌐</span>
+                      <p className="text-xs text-[#B8A3E8] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-center text-[#6B5A9E]">© 2024–2026 Finvu · pedani.eu</p>
+                </div>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionHeader emoji="📋" label="Changelog" />
+                <div style={{ padding: 20 }}>
+                  <div className="flex flex-col gap-5">
+                    {CHANGELOG.map((entry, i) => (
+                      <div key={entry.version}>
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span
+                            className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
+                              i === 0 ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-[#9D84D4]'
+                            }`}
+                          >
+                            {entry.version}
+                          </span>
+                          <span className="text-xs text-[#6B5A9E]">{entry.date}</span>
+                        </div>
+                        <ul className="flex flex-col gap-1.5">
+                          {entry.items.map(item => (
+                            <li key={item} className="flex items-start gap-2 text-xs text-[#B8A3E8]">
+                              <span className="text-[#6B5A9E] mt-px shrink-0">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {i < CHANGELOG.length - 1 && (
+                          <div className="mt-4 border-t border-white/[0.06]" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </SectionCard>
+
+              <div className="flex justify-end gap-3 pb-2">
+                <button
+                  onClick={() => setShowChangelog(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
+                >
+                  Changelog (modal)
+                </button>
+                <button
+                  onClick={() => setShowAbout(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
+                >
+                  O aplikácii (modal)
+                </button>
+              </div>
+            </>
+          )}
+
+        </div>
       </div>
 
       {/* ── PIN REMOVE MODAL ── */}

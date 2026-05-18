@@ -8,20 +8,18 @@ import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👤','👨','👩','🧔','👨‍💼','👩‍💼','🧑‍💻','🦸']
 
-function formatStreak(days: number): string {
-  if (days === 1) return '1 deň'
-  if (days >= 2 && days <= 4) return `${days} dni`
-  return `${days} dní`
-}
 
 function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
+type Tab = 'profile' | 'account' | 'achievements'
+
 export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLogout?: () => void }) {
   const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { user, refreshUser } = useAuth()
 
+  const [tab, setTab] = useState<Tab>('profile')
   const [editMode, setEditMode] = useState(false)
   const [profileNameDraft, setProfileNameDraft] = useState(user?.name || ctxName)
   const [profileAvatarDraft, setProfileAvatarDraft] = useState(() => {
@@ -32,7 +30,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     isPhotoUrl(user?.avatarUrl) ? user!.avatarUrl! : null
   )
   const [photoUploading, setPhotoUploading] = useState(false)
-  const [streakTapped, setStreakTapped] = useState(false)
   const [profileSaveOk, setProfileSaveOk] = useState(false)
 
   const { setupPin, removePin, hasPin, verifyPin } = usePinLockContext()
@@ -153,76 +150,300 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     input.click()
   }
 
+  const trackingDays = user?.tracking_start_date
+    ? Math.floor((Date.now() - new Date(user.tracking_start_date).getTime()) / 86400000)
+    : null
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <div
-        style={{ borderRadius: 16, overflow: 'hidden', background: 'var(--bg2)', border: '1px solid var(--border)', width: '100%', maxWidth: 480, position: 'relative' }}
+        style={{
+          borderRadius: 22,
+          overflow: 'hidden',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
+          width: '100%',
+          maxWidth: 520,
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
-        >
-          <X size={14} style={{ color: 'var(--text3)' }} />
-        </button>
+        {/* ── Hero header ── */}
+        <div style={{
+          background: 'linear-gradient(135deg,#1a1235 0%,#3d2a82 50%,#1a1235 100%)',
+          padding: '28px 24px 0',
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: '22px 22px 0 0',
+          flexShrink: 0,
+        }}>
+          {/* Atmosphere blobs */}
+          <div style={{ position: 'absolute', top: -80, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.4),transparent 65%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)', pointerEvents: 'none' }} />
 
-        <div style={{ overflowY: 'auto', maxHeight: '90vh' }}>
-          {!editMode ? (
-            /* VIEW MODE */
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}
+          >
+            <X size={16} />
+          </button>
+
+          {/* Avatar + name block */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'relative', paddingBottom: 20 }}>
+            {/* Avatar circle */}
+            <div style={{ position: 'relative' }}>
+              <div
+                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15)', cursor: 'pointer' }}
+                onClick={handlePhotoUpload}
+              >
+                {photoUrl ? (
+                  <img src={photoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                ) : user?.avatarUrl && !isPhotoUrl(user.avatarUrl) ? (
+                  <span style={{ fontSize: 32, lineHeight: 1 }}>{user.avatarUrl}</span>
+                ) : profileAvatarDraft && !isPhotoUrl(profileAvatarDraft) ? (
+                  <span style={{ fontSize: 32, lineHeight: 1 }}>{profileAvatarDraft}</span>
+                ) : (
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 26 }}>{(user?.name || ctxName)?.[0]?.toUpperCase() ?? '?'}</span>
+                )}
+              </div>
+              {/* Upload hint badge */}
+              <div style={{ position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: '50%', background: 'rgba(139,92,246,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                <Pencil size={10} style={{ color: 'white' }} />
+              </div>
+            </div>
+
+            {/* Name — inline edit */}
+            {editMode ? (
+              <input
+                value={profileNameDraft}
+                onChange={e => setProfileNameDraft(e.target.value)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 12px', color: 'white', fontSize: 18, fontWeight: 700, textAlign: 'center', outline: 'none', width: 220 }}
+              />
+            ) : (
+              <h2
+                style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, cursor: 'pointer' }}
+                onClick={() => setEditMode(true)}
+              >
+                {user?.name || ctxName || 'Používateľ'}
+              </h2>
+            )}
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{user?.email}</div>
+
+            {/* Badges row */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,215,100,0.18)', color: '#FFD89F', border: '1px solid rgba(255,215,100,0.3)', fontWeight: 600 }}>
+                👑 Pro
+              </span>
+              {user?.createdAt && (
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontFamily: "'DM Mono',monospace" }}>
+                  Člen od {new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Stats strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.15)' }}>
+            {[
+              { label: 'Transakcie', value: '—', color: 'rgba(255,255,255,0.9)' },
+              { label: 'Úspory', value: '—', color: '#34d399' },
+              { label: 'Séria', value: `${user?.currentStreak ?? 0} 🔥`, color: '#FB923C' },
+              { label: 'Sledovanie', value: trackingDays !== null ? `${trackingDays} dní` : '—', color: '#8B5CF6' },
+            ].map((stat, i) => (
+              <div key={i} style={{ padding: '12px 8px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: stat.color, fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>{stat.value}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tab bar */}
+          <div style={{ display: 'flex', gap: 0, marginTop: 4 }}>
+            {(['profile', 'account', 'achievements'] as const).map((t) => {
+              const labels: Record<Tab, string> = { profile: 'Profil', account: 'Účet', achievements: 'Úspechy' }
+              return (
+                <button
+                  key={t}
+                  onClick={() => { setTab(t); setEditMode(false) }}
+                  style={{
+                    flex: 1,
+                    padding: '12px 0',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: tab === t ? '2px solid var(--violet)' : '2px solid transparent',
+                    color: tab === t ? 'white' : 'rgba(255,255,255,0.45)',
+                    fontSize: 13,
+                    fontWeight: tab === t ? 600 : 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {labels[t]}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ── Scrollable body ── */}
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+
+          {/* ── Tab: Profil ── */}
+          {tab === 'profile' && (
             <>
-              {/* Avatar section */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40, paddingBottom: 32, paddingLeft: 24, paddingRight: 24 }}>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                    {isPhotoUrl(photoUrl || user?.avatarUrl) ? (
-                      <img src={photoUrl || user!.avatarUrl!} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : profileAvatarDraft ? (
-                      <span style={{ fontSize: 36, lineHeight: 1 }}>{profileAvatarDraft}</span>
+              {!editMode ? (
+                <>
+                  {/* Action buttons */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '20px 24px 24px' }}>
+                    <button
+                      onClick={() => setEditMode(true)}
+                      style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                    >
+                      Upraviť profil
+                    </button>
+                    <button
+                      onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
+                      style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                    >
+                      Zmeniť heslo
+                    </button>
+                    {!hasPin ? (
+                      <button
+                        onClick={() => setPinSetupOpen(true)}
+                        style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                      >
+                        Nastaviť PIN
+                      </button>
                     ) : (
-                      <span style={{ fontSize: 28, fontWeight: 700, color: 'white' }}>{user?.name?.[0]?.toUpperCase() ?? '?'}</span>
+                      <button
+                        onClick={() => { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }}
+                        style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                      >
+                        Zmeniť / Odstrániť PIN
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
+                      style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                    >
+                      Exportovať dáta
+                    </button>
+                    {onLogout && (
+                      <button
+                        onClick={() => setLogoutConfirm(true)}
+                        style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                      >
+                        Odhlásiť sa
+                      </button>
                     )}
                   </div>
+                </>
+              ) : (
+                /* EDIT MODE */
+                <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Upraviť profil</p>
+
+                  {/* Avatar emoji grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
+                    {AVATAR_OPTIONS.map(em => (
+                      <button
+                        key={em}
+                        onClick={() => { setProfileAvatarDraft(em); setPhotoUrl(null) }}
+                        style={{
+                          width: '100%', aspectRatio: '1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, cursor: 'pointer',
+                          border: profileAvatarDraft === em && !photoUrl ? '2px solid var(--violet)' : '1.5px solid transparent',
+                          background: profileAvatarDraft === em && !photoUrl ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
+                        }}
+                      >
+                        {em}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Photo upload */}
                   <button
                     onClick={handlePhotoUpload}
-                    style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: '2px solid var(--bg2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    disabled={photoUploading}
+                    style={{ alignSelf: 'flex-start', fontSize: 13, fontWeight: 500, color: 'var(--violet)', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
                   >
-                    <Pencil size={10} style={{ color: 'white' }} />
+                    {photoUploading ? 'Nahrávam...' : 'Nahrať foto'}
                   </button>
-                </div>
-                <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', textAlign: 'center', marginTop: 16, marginBottom: 0 }}>
-                  {user?.name || 'Váš profil'}
-                </p>
-                <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', marginTop: 4, marginBottom: 0 }}>{user?.email}</p>
-                {(user?.currentStreak ?? 0) > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                    <span
-                      title="Počet dní v rade, kedy si zaznamenal transakciu"
-                      onClick={() => { setStreakTapped(true); setTimeout(() => setStreakTapped(false), 3000) }}
-                      style={{ fontSize: 13, fontWeight: 600, padding: '4px 12px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', cursor: 'pointer' }}
-                    >
-                      🔥 {formatStreak(user!.currentStreak!)}
-                    </span>
-                    {streakTapped && (
-                      <span style={{ fontSize: 12, color: 'var(--text2)', textAlign: 'center', maxWidth: 220 }}>
-                        Streak — počet dní v rade, kedy si zaznamenal transakciu. Aktuálne: {formatStreak(user!.currentStreak!)} v rade. Pokračuj!
-                      </span>
+
+                  {/* Name input */}
+                  <div>
+                    <label className="form-label">Meno</label>
+                    <input
+                      type="text"
+                      placeholder="Zadaj svoje meno"
+                      value={profileNameDraft}
+                      onChange={e => setProfileNameDraft(e.target.value)}
+                      className="input-field"
+                      style={{ height: 44 }}
+                    />
+                  </div>
+
+                  {/* Save / Cancel */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                    {profileSaveOk ? (
+                      <div style={{ width: '100%', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                        <Check size={16} /> Uložené
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { handleSaveProfile(); setEditMode(false) }}
+                        style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 15, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        Uložiť
+                      </button>
                     )}
+                    <button
+                      onClick={() => setEditMode(false)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text3)', fontFamily: 'inherit', padding: '8px 0', textAlign: 'center' }}
+                    >
+                      Zrušiť
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Tab: Účet ── */}
+          {tab === 'account' && (
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Plan card */}
+              <div style={{ borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,215,100,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>👑</div>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Finvu Pro</div>
+                    <div style={{ fontSize: 12, color: 'var(--text3)' }}>Všetky funkcie odomknuté</div>
+                  </div>
+                </div>
+                {user?.createdAt && (
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, fontFamily: "'DM Mono',monospace" }}>
+                    Registrácia: {new Date(user.createdAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
                 )}
               </div>
 
-              {/* Action buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '0 24px 24px' }}>
-                <button
-                  onClick={() => setEditMode(true)}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                >
-                  Upraviť profil
-                </button>
+              {/* Email info */}
+              <div style={{ borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', padding: '14px 20px' }}>
+                <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Email</div>
+                <div style={{ fontSize: 14, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{user?.email ?? '—'}</div>
+              </div>
+
+              {/* Security section */}
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 8 }}>Bezpečnosť</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <button
                   onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
                   style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
@@ -244,89 +465,51 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     Zmeniť / Odstrániť PIN
                   </button>
                 )}
-                <button
-                  onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                >
-                  Exportovať dáta
-                </button>
-                {onLogout && (
-                  <button
-                    onClick={() => setLogoutConfirm(true)}
-                    style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                  >
-                    Odhlásiť sa
-                  </button>
-                )}
-              </div>
-            </>
-          ) : (
-            /* EDIT MODE */
-            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Upraviť profil</p>
-
-              {/* Avatar grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
-                {AVATAR_OPTIONS.map(em => (
-                  <button
-                    key={em}
-                    onClick={() => { setProfileAvatarDraft(em); setPhotoUrl(null) }}
-                    style={{
-                      width: '100%', aspectRatio: '1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, cursor: 'pointer',
-                      border: profileAvatarDraft === em && !photoUrl ? '2px solid var(--violet)' : '1.5px solid transparent',
-                      background: profileAvatarDraft === em && !photoUrl ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
-                    }}
-                  >
-                    {em}
-                  </button>
-                ))}
-              </div>
-
-              {/* Photo upload */}
-              <button
-                onClick={handlePhotoUpload}
-                disabled={photoUploading}
-                style={{ alignSelf: 'flex-start', fontSize: 13, fontWeight: 500, color: 'var(--violet)', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                {photoUploading ? 'Nahrávam...' : 'Nahrať foto'}
-              </button>
-
-              {/* Name input */}
-              <div>
-                <label className="form-label">Meno</label>
-                <input
-                  type="text"
-                  placeholder="Zadaj svoje meno"
-                  value={profileNameDraft}
-                  onChange={e => setProfileNameDraft(e.target.value)}
-                  className="input-field"
-                  style={{ height: 44 }}
-                />
-              </div>
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                {profileSaveOk ? (
-                  <div style={{ width: '100%', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                    <Check size={16} /> Uložené
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { handleSaveProfile(); setEditMode(false) }}
-                    style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 15, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-                  >
-                    Uložiť
-                  </button>
-                )}
-                <button
-                  onClick={() => setEditMode(false)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text3)', fontFamily: 'inherit', padding: '8px 0', textAlign: 'center' }}
-                >
-                  Zrušiť
-                </button>
               </div>
             </div>
           )}
+
+          {/* ── Tab: Úspechy ── */}
+          {tab === 'achievements' && (
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600 }}>Získané 3 z 8</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {[
+                  { emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', unlocked: true },
+                  { emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', unlocked: true },
+                  { emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', unlocked: true },
+                  { emoji: '📊', name: 'Analytik', desc: 'Prvý report', unlocked: false },
+                  { emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', unlocked: false },
+                  { emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', unlocked: false },
+                  { emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', unlocked: false },
+                  { emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', unlocked: false },
+                ].map((a, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: 'var(--bg3)',
+                      border: a.unlocked ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border)',
+                      borderRadius: 12,
+                      padding: 14,
+                      opacity: a.unlocked ? 1 : 0.5,
+                      filter: a.unlocked ? 'none' : 'grayscale(0.6)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? 'rgba(139,92,246,0.15)' : 'var(--bg4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                        {a.emoji}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{a.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text3)' }}>{a.desc}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
         <PinSetupModal
@@ -336,7 +519,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         />
       </div>
 
-      {/* PIN remove — verify then choose action */}
+      {/* ── PIN remove modal ── */}
       {pinRemoveConfirm && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
@@ -425,7 +608,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         </div>
       )}
 
-      {/* Change password modal */}
+      {/* ── Change password modal ── */}
       {changePasswordOpen && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
@@ -487,7 +670,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         </div>
       )}
 
-      {/* Logout confirm */}
+      {/* ── Logout confirm ── */}
       {logoutConfirm && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
@@ -524,4 +707,3 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     </div>
   )
 }
-
