@@ -7,6 +7,8 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { getMyHousehold, getMonthlyStats, leaveHousehold } from '../api/households'
 import type { HouseholdData, MonthlyStats } from '../api/households'
+import { getTransactions } from '../api/transactions'
+import type { ApiTransaction } from '../types'
 
 export function HouseholdPage() {
   const { user, refreshUser } = useAuth()
@@ -16,12 +18,12 @@ export function HouseholdPage() {
 
   const [householdData, setHouseholdData] = useState<HouseholdData | null>(null)
   const [stats, setStats] = useState<MonthlyStats | null>(null)
+  const [recentTx, setRecentTx] = useState<ApiTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [leavePending, setLeavePending] = useState(false)
   const [leaveLoading, setLeaveLoading] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [isMobile] = useState(() => window.innerWidth < 768)
 
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
@@ -45,12 +47,14 @@ export function HouseholdPage() {
     if (!householdEnabled || !householdId) { setLoading(false); return }
     setLoading(true)
     try {
-      const [hd, ms] = await Promise.all([
+      const [hd, ms, tx] = await Promise.all([
         getMyHousehold(),
         getMonthlyStats(householdId),
+        getTransactions({ limit: 10 }),
       ])
       setHouseholdData(hd)
       setStats(ms)
+      setRecentTx(tx.data)
     } catch { /* not authenticated or no household */ }
     setLoading(false)
   }, [householdEnabled, householdId])
@@ -64,13 +68,6 @@ export function HouseholdPage() {
       setTimeout(() => setCopied(false), 2000)
     })
   }
-
-  const statCard = (label: string, value: string, color: string) => (
-    <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
-      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
-    </div>
-  )
 
   if (!householdEnabled) {
     return (
@@ -103,25 +100,62 @@ export function HouseholdPage() {
       {/* Main content */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>
-              DOMÁCNOSŤ
+        {/* Hero card */}
+        <div style={{
+          background: 'linear-gradient(135deg,#1a1235 0%,#3d2a82 50%,#1a1235 100%)',
+          borderRadius: 24, padding: '24px 26px 22px', position: 'relative', overflow: 'hidden', color: 'white',
+          boxShadow: '0 18px 50px -16px rgba(58,42,130,0.45),0 0 0 1px rgba(139,92,246,0.2)',
+        }}>
+          <div style={{ position: 'absolute', top: -80, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,0.4),transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.04) 50%,transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative' }}>
+            {/* Avatar stack + invite button row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {(householdData?.members ?? []).slice(0, 5).map((m, i) => (
+                  <div key={m.id} style={{ marginLeft: i > 0 ? -12 : 0, zIndex: 10 - i, borderRadius: '50%', border: '2px solid rgba(26,18,53,0.8)' }}>
+                    <MemberAvatar userId={m.id} userName={m.name} size={38} avatarUrl={m.avatar_url} />
+                  </div>
+                ))}
+                {(householdData?.members.length ?? 0) > 5 && (
+                  <div style={{ marginLeft: -12, width: 38, height: 38, borderRadius: '50%', background: 'rgba(139,92,246,0.25)', border: '2px solid rgba(26,18,53,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white' }}>
+                    +{(householdData?.members.length ?? 0) - 5}
+                  </div>
+                )}
+                <span style={{ marginLeft: 12, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                  {householdData?.members.length ?? 0} {(householdData?.members.length ?? 0) === 1 ? 'člen' : (householdData?.members.length ?? 0) < 5 ? 'členovia' : 'členov'}
+                </span>
+              </div>
+              {householdData?.invite_code && (
+                <button
+                  onClick={() => setInviteOpen(true)}
+                  style={{ height: 34, padding: '0 16px', borderRadius: 10, background: 'rgba(255,255,255,0.12)', color: 'white', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', fontFamily: 'inherit', backdropFilter: 'blur(4px)' }}
+                >
+                  + Pozvať
+                </button>
+              )}
             </div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px', margin: 0 }}>
+            {/* Name */}
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>DOMÁCNOSŤ</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.5px', marginBottom: 18 }}>
               Rodina {householdData?.name ?? ht.title}
-            </h1>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4, marginBottom: 0 }}>{ht.subtitle}</p>
+            </div>
+            {/* Summary stats row */}
+            {stats && (
+              <div style={{ display: 'flex', gap: 0, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                {[
+                  { label: 'Príjmy', value: '+' + formatAmount(stats.total_income), color: '#34D399' },
+                  { label: 'Výdavky', value: '-' + formatAmount(stats.total_expenses), color: '#F87171' },
+                  { label: 'Zostatok', value: formatAmount(balance), color: balance >= 0 ? '#34D399' : '#F87171' },
+                ].map((s, i) => (
+                  <div key={s.label} style={{ flex: 1, paddingLeft: i > 0 ? 18 : 0, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.12)' : 'none' }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: s.color }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {householdData?.invite_code && (
-            <button
-              onClick={() => setInviteOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.3)', flexShrink: 0 }}
-            >
-              Pozvať člena
-            </button>
-          )}
         </div>
 
         {/* Member cards grid */}
@@ -129,54 +163,89 @@ export function HouseholdPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 16 }}>
             {householdData.members.map(m => {
               const memberStats = stats?.per_member.find(p => p.user_id === m.id)
+              const inc = memberStats?.income ?? 0
+              const exp = memberStats?.expenses ?? 0
+              const total = inc + exp
+              const incPct = total > 0 ? (inc / total) * 100 : 50
+              const expPct = total > 0 ? (exp / total) * 100 : 50
               return (
-                <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, boxShadow: 'var(--card-shadow)' }}>
+                <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)' }}>
                   {/* Avatar + name + role */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={52} avatarUrl={m.avatar_url} />
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{m.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                    <MemberAvatar userId={m.id} userName={m.name} size={48} avatarUrl={m.avatar_url} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
                       {m.is_owner ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '2px 8px', fontWeight: 600, marginTop: 3 }}>
-                          <Crown size={10} />Správca
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, background: 'rgba(139,92,246,0.12)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '2px 7px', fontWeight: 600, marginTop: 3 }}>
+                          <Crown size={9} />Správca
                         </span>
                       ) : (
-                        <span style={{ display: 'inline-flex', fontSize: 11, background: 'rgba(148,163,184,0.1)', color: 'var(--text3)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 8px', fontWeight: 500, marginTop: 3 }}>
+                        <span style={{ display: 'inline-flex', fontSize: 10, background: 'rgba(148,163,184,0.08)', color: 'var(--text3)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontWeight: 500, marginTop: 3 }}>
                           Člen
                         </span>
                       )}
                     </div>
                   </div>
-                  {/* Income + Expenses sub-cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 12, padding: '12px 14px' }}>
-                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>Príjmy</div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#34D399', fontFamily: "'DM Mono', monospace" }}>
-                        +{formatAmount(memberStats?.income ?? 0)}
-                      </div>
+                  {/* Income + Expenses values */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                    <div style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.18)', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>Príjmy</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#34D399', fontFamily: "'DM Mono', monospace" }}>+{formatAmount(inc)}</div>
                     </div>
-                    <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 12, padding: '12px 14px' }}>
-                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>Výdavky</div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#F87171', fontFamily: "'DM Mono', monospace" }}>
-                        -{formatAmount(memberStats?.expenses ?? 0)}
-                      </div>
+                    <div style={{ background: 'rgba(248,113,113,0.07)', border: '1px solid rgba(248,113,113,0.18)', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>Výdavky</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#F87171', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(exp)}</div>
                     </div>
                   </div>
+                  {/* Stacked income/expense bar */}
+                  {total > 0 && (
+                    <div>
+                      <div style={{ height: 6, borderRadius: 99, overflow: 'hidden', display: 'flex', background: 'var(--bg4)' }}>
+                        <div style={{ width: `${incPct}%`, background: 'var(--green)', transition: 'width 0.5s ease', borderRadius: expPct < 1 ? 99 : '99px 0 0 99px' }} />
+                        <div style={{ width: `${expPct}%`, background: 'var(--red)', transition: 'width 0.5s ease', borderRadius: incPct < 1 ? 99 : '0 99px 99px 0' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 10, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
+                        <span style={{ color: '#34D399' }}>{Math.round(incPct)}% príjmy</span>
+                        <span style={{ color: '#F87171' }}>{Math.round(expPct)}% výdavky</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
         )}
 
-        {/* Household summary card */}
-        {stats && (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20 }}>
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 16 }}>SÚHRN DOMÁCNOSTI</div>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 12 }}>
-              {statCard(ht.totalIncome, formatAmount(stats.total_income), 'var(--green)')}
-              {statCard(ht.totalExpenses, formatAmount(stats.total_expenses), 'var(--red)')}
-              {statCard(ht.balance, formatAmount(balance), balance >= 0 ? 'var(--green)' : 'var(--red)')}
+        {/* Activity feed */}
+        {recentTx.length > 0 && (
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>Nedávna aktivita</span>
+              <span style={{ fontSize: 11, color: 'var(--text3)' }}>{recentTx.length} transakcií</span>
             </div>
+            {recentTx.map(tx => {
+              const isIncome = tx.type === 'income'
+              const member = householdData?.members.find(m => m.id === tx.created_by)
+              return (
+                <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                  {tx.created_by && (
+                    <MemberAvatar userId={tx.created_by} userName={member?.name ?? '?'} size={28} avatarUrl={member?.avatar_url} />
+                  )}
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: (tx.categoryColor ?? '#9D84D4') + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                    {tx.categoryIcon ?? (isIncome ? '💰' : '📦')}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {tx.description || tx.categoryName || '—'}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>{tx.date}</div>
+                  </div>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: isIncome ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>
+                    {isIncome ? '+' : '-'}{formatAmount(tx.amount)}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         )}
 
