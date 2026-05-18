@@ -375,6 +375,13 @@ const upcomingFixed = useMemo(() => {
       <div style={{ position: 'absolute', bottom: -60, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.25),transparent 65%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
       {/* Shimmer */}
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)', pointerEvents: 'none' }} />
+      {/* Gold EMV chip ornament */}
+      <div style={{ position: 'absolute', top: 24, right: 24, width: 38, height: 28, borderRadius: 6, background: 'linear-gradient(135deg,#FFD89F 0%,#C9A35F 100%)', boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.2)', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', inset: '30% 22%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 2, opacity: 0.55 }}>
+          <div style={{ background: '#705425' }} /><div style={{ background: '#705425' }} />
+          <div style={{ background: '#705425' }} /><div style={{ background: '#705425' }} />
+        </div>
+      </div>
 
       <div style={{ position: 'relative' }}>
         {/* Label row */}
@@ -452,6 +459,21 @@ const upcomingFixed = useMemo(() => {
     </div>
   )
 
+
+  const txStripCard = (
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(167,139,250,0.13)', color: 'var(--violet)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 2 }}>Transakcií tento mesiac</p>
+        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: 'var(--text)', letterSpacing: '-0.2px' }}>{variableExpenses.length}</p>
+      </div>
+    </div>
+  )
 
   const expenseCharts = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -947,6 +969,7 @@ const upcomingFixed = useMemo(() => {
         <div>{greetingRow}</div>
         {heroSection}
         {bentoStatCards}
+        {txStripCard}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {expenseCharts}
           {pieChartCard}
@@ -966,6 +989,7 @@ const upcomingFixed = useMemo(() => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
           {heroSection}
           {bentoStatCards}
+          {txStripCard}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {expenseCharts}
             <div className="grid grid-cols-2" style={{ gap: 16 }}>

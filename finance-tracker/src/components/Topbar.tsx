@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { updateUserSettings } from '../api/auth'
+import { NotificationCenter } from './NotificationCenter'
 
 // Pages where month navigation is relevant
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses']
@@ -231,6 +232,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           {showMonth && monthNav}
           {divider}
           {themeToggleBtn}
+          <NotificationCenter />
           {avatarEl(34)}
         </div>
       </div>
@@ -257,6 +259,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             </div>
           </div>
           {themeToggleBtn}
+          <NotificationCenter />
           {avatarEl(32)}
         </div>
 
