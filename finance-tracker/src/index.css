@@ -227,6 +227,8 @@ body {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
 .btn-primary:hover { opacity: 0.92; }
 .btn-primary:active { transform: scale(0.98); }
@@ -548,6 +550,20 @@ input[type=number] { -moz-appearance: textfield; }
   transform: scale(0);
   animation: ripple 0.6s linear;
   pointer-events: none;
+}
+
+/* === FOCUS RINGS (keyboard nav) === */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--violet) !important;
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+.input-field:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
 }
 
 /* === COMPACT MODE === */

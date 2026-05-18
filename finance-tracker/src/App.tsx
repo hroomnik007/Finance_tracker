@@ -130,6 +130,23 @@ function App() {
     }
   }, [])
 
+  // Global ripple effect for .btn-primary and .ripple-btn
+  useEffect(() => {
+    const handler = (e: PointerEvent) => {
+      const btn = (e.target as Element).closest('.btn-primary, .ripple-btn')
+      if (!btn) return
+      const rect = btn.getBoundingClientRect()
+      const ripple = document.createElement('span')
+      ripple.className = 'ripple'
+      const size = Math.max(rect.width, rect.height) * 2
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px;`
+      btn.appendChild(ripple)
+      ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
+    }
+    document.addEventListener('pointerdown', handler)
+    return () => document.removeEventListener('pointerdown', handler)
+  }, [])
+
   const hasNavigated = useRef(false)
 
   useEffect(() => {

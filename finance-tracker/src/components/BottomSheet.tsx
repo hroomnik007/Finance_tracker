@@ -150,6 +150,7 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
             <button
               type="button"
               onClick={onClose}
+              aria-label="Zavrieť"
               style={{
                 width: 30, height: 30, borderRadius: '50%',
                 background: 'var(--bg3)', border: 'none',

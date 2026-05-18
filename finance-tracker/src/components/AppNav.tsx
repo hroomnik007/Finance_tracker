@@ -134,6 +134,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             style={navItemStyle(current === 'dashboard')}
             onMouseEnter={e => hoverOn(e, current === 'dashboard')}
             onMouseLeave={e => hoverOff(e, current === 'dashboard')}
+            aria-label={t.nav.overview}
+            aria-current={current === 'dashboard' ? 'page' : undefined}
           >
             <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
             {isExpanded && t.nav.overview}
@@ -145,6 +147,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             style={navItemStyle(current === 'income')}
             onMouseEnter={e => hoverOn(e, current === 'income')}
             onMouseLeave={e => hoverOff(e, current === 'income')}
+            aria-label={t.nav.income}
+            aria-current={current === 'income' ? 'page' : undefined}
           >
             <TrendingUp size={18} style={{ flexShrink: 0 }} />
             {isExpanded && t.nav.income}
@@ -165,6 +169,9 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               style={{ ...navItemStyle(expensesActive), display: 'flex', alignItems: 'center', gap: 10 }}
               onMouseEnter={e => hoverOn(e, expensesActive)}
               onMouseLeave={e => hoverOff(e, expensesActive)}
+              aria-label={t.nav.expenses}
+              aria-current={expensesActive ? 'page' : undefined}
+              aria-expanded={isExpanded ? expOpen : undefined}
             >
               <CreditCard size={18} style={{ flexShrink: 0 }} />
               {isExpanded && (
@@ -265,6 +272,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               style={navItemStyle(current === 'savings')}
               onMouseEnter={e => hoverOn(e, current === 'savings')}
               onMouseLeave={e => hoverOff(e, current === 'savings')}
+              aria-label={t.nav.savings}
+              aria-current={current === 'savings' ? 'page' : undefined}
             >
               <PiggyBank size={18} style={{ flexShrink: 0 }} />
               {isExpanded && t.nav.savings}
@@ -278,6 +287,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               style={navItemStyle(current === 'household')}
               onMouseEnter={e => hoverOn(e, current === 'household')}
               onMouseLeave={e => hoverOff(e, current === 'household')}
+              aria-label={t.nav.household}
+              aria-current={current === 'household' ? 'page' : undefined}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -296,6 +307,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             style={navItemStyle(current === 'settings')}
             onMouseEnter={e => hoverOn(e, current === 'settings')}
             onMouseLeave={e => hoverOff(e, current === 'settings')}
+            aria-label={t.nav.settings}
+            aria-current={current === 'settings' ? 'page' : undefined}
           >
             <Settings size={18} style={{ flexShrink: 0 }} />
             {isExpanded && t.nav.settings}
@@ -306,6 +319,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
         {/* Expand/collapse toggle */}
         <button
           onClick={onToggle}
+          aria-label={isExpanded ? 'Zbaliť sidebar' : 'Rozbaliť sidebar'}
           style={{
             position: 'absolute',
             right: -12,

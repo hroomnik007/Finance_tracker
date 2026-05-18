@@ -164,6 +164,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         fontSize: 14, flexShrink: 0,
       }}
       title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
+      aria-label={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
     >
       {theme === 'dark' ? '☀️' : '🌙'}
     </button>
