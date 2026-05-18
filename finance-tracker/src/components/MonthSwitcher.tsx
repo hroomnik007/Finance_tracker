@@ -5,12 +5,14 @@ interface MonthSwitcherProps {
   month: number
   year: number
   onChange: (month: number, year: number) => void
+  canGoPrev?: boolean
 }
 
-export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
+export function MonthSwitcher({ month, year, onChange, canGoPrev = true }: MonthSwitcherProps) {
   const { t } = useTranslation()
 
   const prev = () => {
+    if (!canGoPrev) return
     if (month === 1) onChange(12, year - 1)
     else onChange(month - 1, year)
   }
@@ -21,27 +23,48 @@ export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
   }
 
   return (
-    <div
-      className="flex items-center gap-1 rounded-[14px] px-2 py-1.5"
-      style={{
-        backgroundColor: 'var(--bg-elevated)',
-        border: '1px solid var(--border-subtle)',
-      }}
-    >
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 2,
+      background: 'var(--bg3)', border: '1px solid var(--border2)',
+      borderRadius: 11, padding: 3, flexShrink: 0,
+    }}>
       <button
         onClick={prev}
-        className="btn-icon w-7 h-7 text-[#B8A3E8] hover:text-[#E2D9F3]"
+        disabled={!canGoPrev}
+        aria-label="Predchádzajúci mesiac"
+        style={{
+          width: 26, height: 26, borderRadius: 7, border: 'none',
+          background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: canGoPrev ? 'var(--text2)' : 'var(--border2)',
+          cursor: canGoPrev ? 'pointer' : 'default',
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => { if (canGoPrev) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
       >
-        <ChevronLeft size={15} />
+        <ChevronLeft size={13} />
       </button>
-      <span className="text-sm font-semibold text-white px-2 text-center whitespace-nowrap">
+
+      <span style={{
+        fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 500,
+        color: 'var(--text)', padding: '0 8px', minWidth: 100, textAlign: 'center',
+        whiteSpace: 'nowrap',
+      }}>
         {t.months[month - 1]} {year}
       </span>
+
       <button
         onClick={next}
-        className="btn-icon w-7 h-7 text-[#B8A3E8] hover:text-[#E2D9F3]"
+        aria-label="Nasledujúci mesiac"
+        style={{
+          width: 26, height: 26, borderRadius: 7, border: 'none',
+          background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--text2)', cursor: 'pointer', transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
       >
-        <ChevronRight size={15} />
+        <ChevronRight size={13} />
       </button>
     </div>
   )
