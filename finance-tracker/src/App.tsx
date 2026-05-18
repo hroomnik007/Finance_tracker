@@ -30,6 +30,7 @@ import { useSettingsContext } from './context/SettingsContext'
 import { useFixedExpenses } from './hooks/useFixedExpenses'
 import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
 import { useVariableExpenses } from './hooks/useVariableExpenses'
+import { useIncomes } from './hooks/useIncomes'
 import { useCategories } from './hooks/useCategories'
 import { useBudgetStatus } from './hooks/useBudgetStatus'
 import { useBudgetWarningNotifications } from './hooks/useBudgetWarningNotifications'
@@ -82,6 +83,7 @@ function App() {
   const now = new Date()
   const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
+  const { incomes: allIncomes } = useIncomes(now.getMonth() + 1, now.getFullYear())
   const { categories } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses })
   useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
@@ -359,6 +361,11 @@ function App() {
         onNavigate={(p) => { setPage(p); setCmdPaletteOpen(false) }}
         onAdd={(type) => { setPage(type === 'income' ? 'income' : 'variable-expenses'); setCmdPaletteOpen(false) }}
         onToggleTheme={() => { handleToggleTheme(); setCmdPaletteOpen(false) }}
+        transactions={[
+          ...allVariableExpenses.map(t => ({ id: t.id ?? '', label: t.note || '—', amount: -t.amount, date: t.date, type: 'expense' as const })),
+          ...allIncomes.map(i => ({ id: i.id ?? '', label: i.label, amount: i.amount, date: i.date, type: 'income' as const })),
+        ]}
+        onTransactionNavigate={(type) => { setPage(type === 'income' ? 'income' : 'variable-expenses'); setCmdPaletteOpen(false) }}
       />
 
       {/* Sidebar — desktop only */}

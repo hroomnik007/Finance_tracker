@@ -1,12 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Page } from '../App'
 
+interface TxnSearchItem {
+  id: string
+  label: string
+  amount: number
+  date: string
+  type: 'income' | 'expense'
+}
+
 interface CommandPaletteProps {
   open: boolean
   onClose: () => void
   onNavigate: (page: Page) => void
   onAdd: (type: string) => void
   onToggleTheme: () => void
+  transactions?: TxnSearchItem[]
+  onTransactionNavigate?: (type: 'income' | 'expense') => void
 }
 
 interface PaletteAction {
@@ -22,7 +32,13 @@ interface PaletteItem extends PaletteAction {
   _i: number
 }
 
-export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme }: CommandPaletteProps) {
+function formatAmt(amount: number): string {
+  const abs = Math.abs(amount)
+  const sign = amount >= 0 ? '+' : '-'
+  return `${sign}${abs.toLocaleString('sk-SK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+}
+
+export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme, transactions = [], onTransactionNavigate }: CommandPaletteProps) {
   const [query, setQuery] = useState('')
   const [selIdx, setSelIdx] = useState(0)
   const inpRef = useRef<HTMLInputElement>(null)
@@ -54,10 +70,20 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
     ? actions.filter(a => a.label.toLowerCase().includes(q) || a.hint.toLowerCase().includes(q))
     : actions
 
+  const txnMatches: TxnSearchItem[] = q.length >= 2
+    ? transactions.filter(t => t.label.toLowerCase().includes(q)).slice(0, 5)
+    : []
+
   const allItems: PaletteItem[] = filteredActions.map((a, i) => ({ ...a, _i: i }))
+  const totalItems = allItems.length + txnMatches.length
 
   const trigger = (item: PaletteItem) => {
     item.action()
+    onClose()
+  }
+
+  const triggerTxn = (t: TxnSearchItem) => {
+    onTransactionNavigate?.(t.type)
     onClose()
   }
 
@@ -65,14 +91,18 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
     if (!open) return
     const h = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
-      else if (e.key === 'ArrowDown') { e.preventDefault(); setSelIdx(i => Math.min(i + 1, allItems.length - 1)) }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); setSelIdx(i => Math.min(i + 1, totalItems - 1)) }
       else if (e.key === 'ArrowUp') { e.preventDefault(); setSelIdx(i => Math.max(i - 1, 0)) }
-      else if (e.key === 'Enter') { e.preventDefault(); if (allItems[selIdx]) trigger(allItems[selIdx]) }
+      else if (e.key === 'Enter') {
+        e.preventDefault()
+        if (selIdx < allItems.length) { if (allItems[selIdx]) trigger(allItems[selIdx]) }
+        else { const t = txnMatches[selIdx - allItems.length]; if (t) triggerTxn(t) }
+      }
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, allItems, selIdx])
+  }, [open, allItems, txnMatches, selIdx])
 
   if (!open) return null
 
@@ -108,6 +138,36 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
       </div>
     )
   })
+
+  if (txnMatches.length > 0) {
+    rows.push(<div key="s-txn">{sectionTitle('Transakcie')}</div>)
+    txnMatches.forEach((t, ti) => {
+      const globalIdx = allItems.length + ti
+      const sel = selIdx === globalIdx
+      const isIncome = t.type === 'income'
+      const amtStr = formatAmt(t.amount)
+      const dateStr = t.date ? t.date.slice(0, 10).split('-').reverse().join('.') : ''
+      rows.push(
+        <div
+          key={'txn-' + t.id}
+          onClick={() => triggerTxn(t)}
+          onMouseEnter={() => setSelIdx(globalIdx)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 11, padding: '9px 16px', cursor: 'pointer',
+            background: sel ? 'rgba(139,92,246,0.13)' : 'transparent',
+            borderLeft: sel ? '2px solid var(--violet)' : '2px solid transparent',
+            transition: 'background 0.08s',
+          }}
+        >
+          <span style={{ fontSize: 15, width: 22, display: 'flex', justifyContent: 'center' }}>{isIncome ? '💰' : '🧾'}</span>
+          <span style={{ flex: 1, fontSize: 13.5, color: 'var(--text)', fontWeight: sel ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
+          <span style={{ fontSize: 12, fontFamily: "'DM Mono',monospace", color: isIncome ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>{amtStr}</span>
+          <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{dateStr}</span>
+          {sel && <KbdKey label="↵" />}
+        </div>
+      )
+    })
+  }
 
   return (
     <div
