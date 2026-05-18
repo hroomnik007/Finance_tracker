@@ -578,34 +578,54 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           <div>
             <label className="form-label">{t.expenses.variable.category}</label>
             {!newCatMode ? (
-              <select
-                value={form.categoryId}
-                onChange={e => {
-                  if (e.target.value === '__new__') { setNewCatMode(true); setForm(f => ({ ...f, categoryId: '' })) }
-                  else setForm(f => ({ ...f, categoryId: e.target.value }))
-                }}
-                className="input-field cursor-pointer"
-                style={{ backgroundColor: 'var(--bg-elevated)', color: '#E2D9F3' }}
-              >
-                <option value="">{t.expenses.variable.selectCategory}</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-                <option value="__new__">{t.expenses.variable.newCategory}</option>
-              </select>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                {categories.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, categoryId: c.id ?? '' }))}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '5px 11px', borderRadius: 99, border: 'none',
+                      fontSize: 12.5, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+                      background: form.categoryId === c.id ? `${c.color}22` : 'var(--bg3)',
+                      color: form.categoryId === c.id ? c.color : 'var(--text2)',
+                      outline: form.categoryId === c.id ? `1.5px solid ${c.color}55` : 'none',
+                      transition: 'all 0.12s',
+                    }}
+                  >{c.icon} {c.name}</button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setNewCatMode(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '5px 11px', borderRadius: 99,
+                    border: '1px dashed var(--border2)',
+                    background: 'transparent', color: 'var(--text3)',
+                    fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
+                    transition: 'all 0.12s',
+                  }}
+                >+ {t.expenses.variable.newCategory}</button>
+              </div>
             ) : (
-              <div className="flex gap-2">
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
                   placeholder={t.expenses.variable.newCategoryName}
                   value={newCatName}
                   onChange={e => setNewCatName(e.target.value)}
-                  className="input-field flex-1"
+                  className="input-field"
+                  style={{ flex: 1 }}
                 />
                 <button
+                  type="button"
                   onClick={() => { setNewCatMode(false); setNewCatName('') }}
-                  className="btn-secondary px-3 rounded-xl shrink-0"
-                >
-                  ✕
-                </button>
+                  style={{
+                    padding: '0 14px', borderRadius: 10, border: '1px solid var(--border2)',
+                    background: 'var(--bg3)', color: 'var(--text2)', cursor: 'pointer', flexShrink: 0,
+                  }}
+                >✕</button>
               </div>
             )}
           </div>

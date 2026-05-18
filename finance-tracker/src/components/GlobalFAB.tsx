@@ -196,29 +196,26 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
       <BottomSheet open={activeModal === 'income'} onClose={closeModal} title={t.income.addTitle}>
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.income.amount}
-            </label>
-            <input
-              type="text" inputMode="decimal" placeholder="0,00"
-              value={incAmt}
-              onChange={e => {
-                const raw = e.target.value.replace(/[^0-9,]/g, '')
-                if ((raw.match(/,/g) || []).length > 1) return
-                setIncAmt(raw)
-              }}
-              onKeyDown={e => {
-                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                if (!allowed.includes(e.key)) e.preventDefault()
-              }}
-              className="input-field font-mono font-bold"
-              style={{ height: '60px', fontSize: '1.5rem' }}
-            />
+            <label className="form-label">{t.income.amount}</label>
+            <div className="amount-input-wrap">
+              <input
+                type="text" inputMode="decimal" placeholder="0,00"
+                value={incAmt}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9,]/g, '')
+                  if ((raw.match(/,/g) || []).length > 1) return
+                  setIncAmt(raw)
+                }}
+                onKeyDown={e => {
+                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                  if (!allowed.includes(e.key)) e.preventDefault()
+                }}
+              />
+              <span className="currency">€</span>
+            </div>
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.income.description}
-            </label>
+            <label className="form-label">{t.income.description}</label>
             <input
               type="text" placeholder={t.income.descriptionPlaceholder}
               value={incLabel}
@@ -227,46 +224,59 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.income.date}
-            </label>
+            <label className="form-label">{t.income.date}</label>
             <input
               type="date"
               value={incDate}
               onChange={e => setIncDate(e.target.value)}
-              style={{
-                background: 'transparent',
-                color: 'white',
-                border: '1px solid #475569',
-                borderRadius: '12px',
-                padding: '12px 16px',
-                width: '100%',
-                colorScheme: 'dark',
-              }}
+              className="input-field"
+              style={{ colorScheme: 'dark' }}
             />
           </div>
-          <div
-            className="flex items-center justify-between px-4 py-3.5 rounded-2xl"
-            style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', minHeight: '56px' }}
-          >
-            <span className="text-sm font-medium text-[#f1f5f9]">{t.income.recurringToggle}</span>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px', borderRadius: 14,
+            background: 'var(--bg3)', border: '1px solid var(--border)',
+          }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{t.income.recurringToggle}</span>
             <button
               type="button"
               onClick={() => setIncRecurring(r => !r)}
-              className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative flex-shrink-0 ${incRecurring ? 'bg-[#6366f1]' : 'bg-[#212840]'}`}
-              style={{ border: incRecurring ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.08)' }}
+              style={{
+                width: 44, height: 24, borderRadius: 99, cursor: 'pointer', flexShrink: 0, position: 'relative',
+                background: incRecurring ? 'var(--violet)' : 'var(--bg4)',
+                border: 'none', transition: 'background 0.2s',
+              }}
             >
-              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${incRecurring ? 'translate-x-5' : 'translate-x-0'}`} />
+              <div style={{
+                position: 'absolute', top: 2, left: incRecurring ? 22 : 2,
+                width: 20, height: 20, borderRadius: '50%', background: 'white',
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              }} />
             </button>
           </div>
-          <button
-            onClick={saveIncome}
-            disabled={!incLabel.trim() || !incAmt}
-            className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ height: '48px', marginTop: '4px' }}
-          >
-            {t.income.add}
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              onClick={closeModal}
+              style={{
+                flex: 1, height: 48, borderRadius: 12, border: '1px solid var(--border2)',
+                background: 'transparent', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}
+            >{t.common.cancel}</button>
+            <button
+              onClick={saveIncome}
+              disabled={!incLabel.trim() || !incAmt}
+              style={{
+                flex: 2, height: 48, borderRadius: 12, border: 'none',
+                background: (incLabel.trim() && incAmt) ? 'linear-gradient(135deg,#8B5CF6,#6D28D9)' : 'var(--bg3)',
+                color: (incLabel.trim() && incAmt) ? 'white' : 'var(--text3)',
+                fontSize: 14, fontWeight: 700, cursor: (incLabel.trim() && incAmt) ? 'pointer' : 'not-allowed',
+                boxShadow: (incLabel.trim() && incAmt) ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >Uložiť príjem →</button>
+          </div>
         </div>
       </BottomSheet>
 
@@ -274,78 +284,93 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
       <BottomSheet open={activeModal === 'variable'} onClose={closeModal} title={t.expenses.variable.addTitle}>
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.variable.amount}
-            </label>
-            <input
-              type="text" inputMode="decimal" placeholder="0,00"
-              value={varAmt}
-              onChange={e => {
-                const raw = e.target.value.replace(/[^0-9,]/g, '')
-                if ((raw.match(/,/g) || []).length > 1) return
-                setVarAmt(raw)
-              }}
-              onKeyDown={e => {
-                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                if (!allowed.includes(e.key)) e.preventDefault()
-              }}
-              className="input-field font-mono font-bold"
-              style={{ height: '60px', fontSize: '1.5rem' }}
-            />
+            <label className="form-label">{t.expenses.variable.amount}</label>
+            <div className="amount-input-wrap">
+              <input
+                type="text" inputMode="decimal" placeholder="0,00"
+                value={varAmt}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9,]/g, '')
+                  if ((raw.match(/,/g) || []).length > 1) return
+                  setVarAmt(raw)
+                }}
+                onKeyDown={e => {
+                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                  if (!allowed.includes(e.key)) e.preventDefault()
+                }}
+              />
+              <span className="currency">€</span>
+            </div>
           </div>
 
           {livePct !== null && liveLimit != null && (
-            <div className="rounded-2xl p-3.5"
-              style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-[#94a3b8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
-                <span className="font-mono text-[#94a3b8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+            <div style={{ borderRadius: 14, padding: '12px 14px', background: 'var(--bg3)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8, color: 'var(--text2)' }}>
+                <span>{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace" }}>{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                <div className="h-full rounded-full"
-                  style={{ width: `${livePct}%`, backgroundColor: livePctColor, boxShadow: `0 0 8px ${livePctColor}` }} />
+              <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 2, width: `${livePct}%`, background: livePctColor }} />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.variable.category}
-            </label>
+            <label className="form-label">{t.expenses.variable.category}</label>
             {!varNewCatMode ? (
-              <select
-                value={varCatId}
-                onChange={e => {
-                  if (e.target.value === '__new__') { setVarNewCatMode(true); setVarCatId('') }
-                  else setVarCatId(e.target.value)
-                }}
-                className="input-field cursor-pointer"
-              >
-                <option value="">{t.expenses.variable.selectCategory}</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-                <option value="__new__">{t.expenses.variable.newCategory}</option>
-              </select>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                {categories.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setVarCatId(c.id ?? '')}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '5px 11px', borderRadius: 99, border: 'none',
+                      fontSize: 12.5, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+                      background: varCatId === c.id ? `${c.color}22` : 'var(--bg3)',
+                      color: varCatId === c.id ? c.color : 'var(--text2)',
+                      outline: varCatId === c.id ? `1.5px solid ${c.color}55` : 'none',
+                      transition: 'all 0.12s',
+                    }}
+                  >{c.icon} {c.name}</button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setVarNewCatMode(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '5px 11px', borderRadius: 99,
+                    border: '1px dashed var(--border2)',
+                    background: 'transparent', color: 'var(--text3)',
+                    fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
+                    transition: 'all 0.12s',
+                  }}
+                >+ {t.expenses.variable.newCategory}</button>
+              </div>
             ) : (
-              <div className="flex gap-2">
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text" placeholder={t.expenses.variable.newCategoryName}
                   value={varNewCatName}
                   onChange={e => setVarNewCatName(e.target.value)}
-                  className="input-field flex-1"
+                  className="input-field"
+                  style={{ flex: 1 }}
                 />
                 <button
                   type="button"
                   onClick={() => { setVarNewCatMode(false); setVarNewCatName('') }}
-                  className="btn-secondary px-3 rounded-xl shrink-0"
+                  style={{
+                    padding: '0 14px', borderRadius: 10, border: '1px solid var(--border2)',
+                    background: 'var(--bg3)', color: 'var(--text2)', cursor: 'pointer', flexShrink: 0,
+                  }}
                 >✕</button>
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.variable.note}
-            </label>
+            <label className="form-label">{t.expenses.variable.note}</label>
             <input
               type="text" placeholder={t.expenses.variable.notePlaceholder}
               value={varNote}
@@ -355,33 +380,39 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.variable.date}
-            </label>
+            <label className="form-label">{t.expenses.variable.date}</label>
             <input
               type="date"
               value={varDate}
               onChange={e => setVarDate(e.target.value)}
-              style={{
-                background: 'transparent',
-                color: 'white',
-                border: '1px solid #475569',
-                borderRadius: '12px',
-                padding: '12px 16px',
-                width: '100%',
-                colorScheme: 'dark',
-              }}
+              className="input-field"
+              style={{ colorScheme: 'dark' }}
             />
           </div>
 
-          <button
-            onClick={saveVariable}
-            disabled={varNewCatMode ? !varNewCatName.trim() || !varAmt : !varCatId || !varAmt}
-            className="btn-primary w-full justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ height: '48px', marginTop: '4px' }}
-          >
-            {t.expenses.variable.add}
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              onClick={closeModal}
+              style={{
+                flex: 1, height: 48, borderRadius: 12, border: '1px solid var(--border2)',
+                background: 'transparent', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}
+            >{t.common.cancel}</button>
+            <button
+              onClick={saveVariable}
+              disabled={varNewCatMode ? !varNewCatName.trim() || !varAmt : !varCatId || !varAmt}
+              style={{
+                flex: 2, height: 48, borderRadius: 12, border: 'none',
+                background: (varNewCatMode ? varNewCatName.trim() && varAmt : varCatId && varAmt) ? 'linear-gradient(135deg,#8B5CF6,#6D28D9)' : 'var(--bg3)',
+                color: (varNewCatMode ? varNewCatName.trim() && varAmt : varCatId && varAmt) ? 'white' : 'var(--text3)',
+                fontSize: 14, fontWeight: 700,
+                cursor: (varNewCatMode ? varNewCatName.trim() && varAmt : varCatId && varAmt) ? 'pointer' : 'not-allowed',
+                boxShadow: (varNewCatMode ? varNewCatName.trim() && varAmt : varCatId && varAmt) ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >Uložiť výdavok →</button>
+          </div>
         </div>
       </BottomSheet>
 
@@ -389,9 +420,26 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
       <BottomSheet open={activeModal === 'fixed'} onClose={closeModal} title={t.expenses.fixed.newTitle}>
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.fixed.nameLabel}
-            </label>
+            <label className="form-label">{t.expenses.fixed.amountLabel}</label>
+            <div className="amount-input-wrap">
+              <input
+                type="text" inputMode="decimal" placeholder="0,00"
+                value={fixAmt}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9,]/g, '')
+                  if ((raw.match(/,/g) || []).length > 1) return
+                  setFixAmt(raw)
+                }}
+                onKeyDown={e => {
+                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                  if (!allowed.includes(e.key)) e.preventDefault()
+                }}
+              />
+              <span className="currency">€</span>
+            </div>
+          </div>
+          <div>
+            <label className="form-label">{t.expenses.fixed.nameLabel}</label>
             <input
               className="input-field" placeholder={t.expenses.fixed.namePlaceholder}
               value={fixLabel}
@@ -399,29 +447,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.fixed.amountLabel}
-            </label>
-            <input
-              className="input-field font-mono font-semibold"
-              type="text" inputMode="decimal" placeholder="0,00"
-              value={fixAmt}
-              onChange={e => {
-                const raw = e.target.value.replace(/[^0-9,]/g, '')
-                if ((raw.match(/,/g) || []).length > 1) return
-                setFixAmt(raw)
-              }}
-              onKeyDown={e => {
-                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                if (!allowed.includes(e.key)) e.preventDefault()
-              }}
-              style={{ fontSize: '1.1rem' }}
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2 leading-relaxed">
-              {t.expenses.fixed.dayLabel}
-            </label>
+            <label className="form-label">{t.expenses.fixed.dayLabel}</label>
             <input
               className="input-field"
               type="number" inputMode="numeric" placeholder="1" min="1" max="31"
@@ -429,22 +455,28 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
               onChange={e => setFixDay(e.target.value)}
             />
           </div>
-          <div className="flex gap-3 pt-1">
+          <div style={{ display: 'flex', gap: 10 }}>
             <button
+              type="button"
               onClick={closeModal}
-              className="btn-secondary flex-1 justify-center rounded-2xl"
-              style={{ height: '48px' }}
-            >
-              {t.common.cancel}
-            </button>
+              style={{
+                flex: 1, height: 48, borderRadius: 12, border: '1px solid var(--border2)',
+                background: 'transparent', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}
+            >{t.common.cancel}</button>
             <button
               onClick={saveFixed}
               disabled={!fixLabel.trim() || !fixAmt}
-              className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ height: '48px' }}
-            >
-              {t.common.add}
-            </button>
+              style={{
+                flex: 2, height: 48, borderRadius: 12, border: 'none',
+                background: (fixLabel.trim() && fixAmt) ? 'linear-gradient(135deg,#8B5CF6,#6D28D9)' : 'var(--bg3)',
+                color: (fixLabel.trim() && fixAmt) ? 'white' : 'var(--text3)',
+                fontSize: 14, fontWeight: 700,
+                cursor: (fixLabel.trim() && fixAmt) ? 'pointer' : 'not-allowed',
+                boxShadow: (fixLabel.trim() && fixAmt) ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >Uložiť fixný výdavok →</button>
           </div>
         </div>
       </BottomSheet>
@@ -453,9 +485,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
       <BottomSheet open={activeModal === 'category'} onClose={closeModal} title={t.expenses.categories.newTitle}>
         <div className="flex flex-col gap-5">
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
-              {t.expenses.categories.nameLabel}
-            </label>
+            <label className="form-label">{t.expenses.categories.nameLabel}</label>
             <input
               className="input-field"
               placeholder={t.expenses.categories.namePlaceholder}
@@ -465,50 +495,55 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
-              {t.expenses.categories.iconLabel} <span className="text-[#f1f5f9] ml-2 text-sm not-uppercase">{catIcon}</span>
+            <label className="form-label">
+              {t.expenses.categories.iconLabel} <span style={{ color: 'var(--text)', marginLeft: 6, fontSize: 14, textTransform: 'none', letterSpacing: 0 }}>{catIcon}</span>
             </label>
             <div className="grid grid-cols-8 gap-1.5">
               {PRESET_ICONS.map(em => (
                 <button
                   key={em}
+                  type="button"
                   onClick={() => setCatIcon(em)}
-                  className="h-10 w-full rounded-xl text-lg flex items-center justify-center transition-all duration-150"
                   style={{
-                    backgroundColor: catIcon === em ? catColor + '30' : 'var(--bg-elevated)',
-                    border: catIcon === em ? `1px solid ${catColor}60` : '1px solid var(--border-subtle)',
+                    height: 40, width: '100%', borderRadius: 10, fontSize: 18,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.12s', cursor: 'pointer',
+                    background: catIcon === em ? catColor + '26' : 'var(--bg3)',
+                    border: catIcon === em ? `1px solid ${catColor}55` : '1px solid var(--border)',
                   }}
-                >
-                  {em}
-                </button>
+                >{em}</button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
-              {t.expenses.categories.colorLabel}
-            </label>
-            <div className="flex flex-wrap gap-2.5">
+            <label className="form-label">{t.expenses.categories.colorLabel}</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {PRESET_COLORS.map(c => (
                 <button
                   key={c}
+                  type="button"
                   onClick={() => setCatColor(c)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-110"
                   style={{
-                    backgroundColor: c,
-                    boxShadow: catColor === c ? `0 0 0 3px var(--bg-elevated), 0 0 0 5px ${c}` : 'none',
+                    width: 32, height: 32, borderRadius: '50%', background: c,
+                    border: 'none', cursor: 'pointer',
+                    transition: 'transform 0.15s',
+                    transform: catColor === c ? 'scale(1.12)' : 'scale(1)',
+                    boxShadow: catColor === c ? `0 0 0 3px var(--bg2), 0 0 0 5px ${c}` : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative',
                   }}
                 >
-                  {catColor === c && <span className="text-white text-xs font-bold">✓</span>}
+                  {catColor === c && <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>✓</span>}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#475569] mb-2">
-              {t.expenses.categories.limitLabel} <span className="text-[#475569]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
+            <label className="form-label">
+              {t.expenses.categories.limitLabel}{' '}
+              <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{t.expenses.categories.limitOptional}</span>
             </label>
             <input
               className="input-field"
@@ -527,22 +562,28 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
             />
           </div>
 
-          <div className="flex gap-3 pt-1">
+          <div style={{ display: 'flex', gap: 10 }}>
             <button
+              type="button"
               onClick={closeModal}
-              className="btn-secondary flex-1 justify-center rounded-2xl"
-              style={{ height: '48px' }}
-            >
-              {t.common.cancel}
-            </button>
+              style={{
+                flex: 1, height: 48, borderRadius: 12, border: '1px solid var(--border2)',
+                background: 'transparent', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              }}
+            >{t.common.cancel}</button>
             <button
               onClick={saveCategory}
               disabled={!catName.trim()}
-              className="btn-primary flex-1 justify-center rounded-2xl font-semibold text-[15px] disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ height: '48px' }}
-            >
-              {t.common.add}
-            </button>
+              style={{
+                flex: 2, height: 48, borderRadius: 12, border: 'none',
+                background: catName.trim() ? 'linear-gradient(135deg,#8B5CF6,#6D28D9)' : 'var(--bg3)',
+                color: catName.trim() ? 'white' : 'var(--text3)',
+                fontSize: 14, fontWeight: 700,
+                cursor: catName.trim() ? 'pointer' : 'not-allowed',
+                boxShadow: catName.trim() ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >Vytvoriť kategóriu →</button>
           </div>
         </div>
       </BottomSheet>
