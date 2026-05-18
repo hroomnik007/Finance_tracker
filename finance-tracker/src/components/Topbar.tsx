@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext'
 import { updateUserSettings } from '../api/auth'
 import { NotificationCenter } from './NotificationCenter'
 
-// Pages where month navigation is relevant
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses']
 
 interface TopbarProps {
@@ -19,24 +18,14 @@ interface TopbarProps {
   onDashViewChange: (v: 'personal' | 'family') => void
   onOpenProfile: () => void
   onOpenAdd?: () => void
+  onNavigate?: (page: Page) => void
 }
 
 function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
-const PAGE_LABELS: Partial<Record<Page, string>> = {
-  dashboard: 'Prehľad',
-  income: 'Príjmy',
-  'variable-expenses': 'Variabilné výdavky',
-  'fixed-expenses': 'Fixné výdavky',
-  categories: 'Kategórie',
-  household: 'Domácnosť',
-  savings: 'Sporenie',
-  settings: 'Nastavenia',
-}
-
-export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd }: TopbarProps) {
+export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd, onNavigate }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [streakTooltipVisible, setStreakTooltipVisible] = useState(false)
@@ -218,24 +207,15 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
 
   return (
     <div style={barStyle}>
-      {/* ── Desktop: left greeting | right controls ── */}
+      {/* ── Desktop: streak (dashboard) | spacer | right controls ── */}
       <div
         className="hidden md:flex items-center"
         style={{ height: 64, padding: '0 20px', gap: 14 }}
       >
-        {/* Left: page title + date */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-            <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {PAGE_LABELS[page] ?? 'Prehľad'}
-            </span>
-          </div>
-          <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>
-            {dateStr}
-          </span>
-        </div>
+        {page === 'dashboard' && streak > 0 && streakBadge('lg')}
+        <div style={{ flex: 1 }} />
 
-        {/* Right: toggle + month nav + add + theme + avatar */}
+        {/* Right: toggle + month nav + divider + add + theme + notifications + avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {showToggle && familyToggle}
           {showMonth && monthNav}
@@ -261,7 +241,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
             </button>
           )}
           {themeToggleBtn}
-          <NotificationCenter />
+          <NotificationCenter onNavigate={onNavigate} />
           {avatarEl(34)}
         </div>
       </div>

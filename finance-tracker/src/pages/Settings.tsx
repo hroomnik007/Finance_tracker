@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Upload, Settings as SettingsIcon, Palette, Bell, Shield, Database, Info, User } from 'lucide-react'
+import { X, Upload, Palette, Bell, Shield, Database, Info, User } from 'lucide-react'
 import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
@@ -712,29 +712,10 @@ export function SettingsPage() {
   return (
     <div className="w-full" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 20px))' }}>
 
-      {/* Settings hero */}
-      <div style={{
-        background: 'linear-gradient(135deg,#0d0b18 0%,#1a1535 45%,#0d0b18 100%)',
-        borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
-        boxShadow: '0 18px 50px -16px rgba(30,20,80,0.5),0 0 0 1px rgba(139,92,246,0.15)',
-        flexShrink: 0, marginBottom: 20,
-      }}>
-        <div style={{position:'absolute',top:-80,right:-40,width:220,height:220,borderRadius:'50%',background:'radial-gradient(circle,rgba(139,92,246,0.3),transparent 65%)',filter:'blur(35px)',pointerEvents:'none'}}/>
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.04) 50%,transparent 70%)',pointerEvents:'none'}}/>
-        <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(139,92,246,0.18)',border:'1px solid rgba(139,92,246,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <SettingsIcon size={18} color="#c4b5fd" />
-        </div>
-        <div style={{position:'relative'}}>
-          <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
-            <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>NASTAVENIA</span>
-            <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
-            <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>Prispôsobte si Finvu</span>
-          </div>
-          <div style={{fontSize:22,fontWeight:300,color:'white',letterSpacing:'-0.5px',marginBottom:4}}>
-            Vitajte späť{user?.name ? `, ${user.name}` : ''} 👋
-          </div>
-          <div style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>Spravujte vzhľad, bezpečnosť a nastavenia účtu</div>
-        </div>
+      {/* Settings page header */}
+      <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+        <p className="t-label" style={{ marginBottom: 6 }}>Nastavenia</p>
+        <p style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0 }}>Prispôsobte si Finvu</p>
       </div>
 
       {/* 2-col grid: left nav + right content */}

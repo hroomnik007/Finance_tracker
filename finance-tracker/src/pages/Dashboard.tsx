@@ -341,6 +341,29 @@ const upcomingFixed = useMemo(() => {
 
   // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
+  const firstName = user?.name?.split(' ')[0] ?? ''
+  const greetingBase = greeting.text.split(', ')[0] + ','
+
+  const greetingDesktop = (
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+          {greeting.emoji}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p className="t-label" style={{ marginBottom: 4 }}>{greetingBase}</p>
+          <p style={{ fontSize: 26, fontWeight: 300, color: 'var(--text)', letterSpacing: '-0.6px', lineHeight: 1.1, margin: 0 }}>
+            {firstName} <span style={{ fontWeight: 500 }}>{greeting.emoji}</span>
+          </p>
+        </div>
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <p className="t-label" style={{ marginBottom: 4 }}>Dnes</p>
+        <p style={{ fontSize: 13, color: 'var(--text2)', fontFamily: "'DM Mono', monospace", letterSpacing: '-0.2px', margin: 0 }}>{todayStr}</p>
+      </div>
+    </div>
+  )
+
   const greetingRow = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -423,6 +446,26 @@ const upcomingFixed = useMemo(() => {
           )}
         </div>
 
+        {/* Transaction count pill */}
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={() => onNavigate('variable-expenses')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 12px 7px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'inherit' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+          >
+            <span style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            </span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12.5, color: 'white', letterSpacing: '-0.2px' }}>{variableExpenses.length}</span>
+            <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>transakcií tento mesiac</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
         {/* Income/expense row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
           <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onNavigate('income')}>
@@ -494,20 +537,6 @@ const upcomingFixed = useMemo(() => {
   )
 
 
-  const txStripCard = (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(167,139,250,0.13)', color: 'var(--violet)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-        </svg>
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 2 }}>Transakcií tento mesiac</p>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: 'var(--text)', letterSpacing: '-0.2px' }}>{variableExpenses.length}</p>
-      </div>
-    </div>
-  )
 
   const expenseCharts = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1069,7 +1098,6 @@ const upcomingFixed = useMemo(() => {
         <div>{greetingRow}</div>
         {heroSection}
         {bentoStatCards}
-        {txStripCard}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {expenseCharts}
           {pieChartCard}
@@ -1087,10 +1115,9 @@ const upcomingFixed = useMemo(() => {
 
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
-          {greetingRow}
+          {greetingDesktop}
           {heroSection}
           {bentoStatCards}
-          {txStripCard}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {expenseCharts}
             <div className="grid grid-cols-2" style={{ gap: 16 }}>

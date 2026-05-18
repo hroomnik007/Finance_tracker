@@ -325,27 +325,7 @@ export function SavingsPage() {
           </div>
         </div>
 
-        {/* Desktop header */}
-        <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t.savings.title}</h1>
-            <p style={{ fontSize: 13, color: 'var(--text3)', margin: '4px 0 0' }}>{t.savings.subtitle}</p>
-          </div>
-          <button
-            onClick={openAdd}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              height: 40, padding: '0 20px', borderRadius: 12,
-              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-              color: 'white', fontSize: 14, fontWeight: 600, border: 'none',
-              cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 4px 12px rgba(124,58,237,0.4)',
-            }}
-          >
-            <Plus size={16} />
-            {t.savings.add}
-          </button>
-        </div>
+
 
         {/* Stat cards */}
         <div className="stat-grid" style={{ marginBottom: 20 }}>
