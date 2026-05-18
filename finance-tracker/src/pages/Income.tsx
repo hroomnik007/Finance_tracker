@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, FileUp, ArrowUp, ArrowDown } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, FileUp, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 import { BottomSheet } from '../components/BottomSheet'
@@ -155,7 +155,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
   const [yearlyData, setYearlyData] = useState<{ label: string; total: number }[]>([])
-  const [prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
+  const [_prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
   const [allIncomeData, setAllIncomeData] = useState<{ date: string; amount: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
@@ -211,21 +211,17 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const avgAmount = incomes.length > 0 ? totalAmount / incomes.length : 0
   const recurringIncomes = incomes.filter(i => i.recurring)
 
-  const incomeChange = prevMonthTotal != null && prevMonthTotal > 0
-    ? ((totalAmount - prevMonthTotal) / prevMonthTotal) * 100 : null
 
 
   const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const yearlyProjection = recurringMonthlyTotal * 12
   const yearlyIncome = allIncomeData.filter(r => r.date.startsWith(String(year))).reduce((s, r) => s + r.amount, 0)
 
-  const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 'clamp(16px, 4vw, 26px)', fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
-    </div>
-  )
+  const recurringTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
+  const oneTimeTotal = totalAmount - recurringTotal
+  const maxAmount = incomes.length > 0 ? Math.max(...incomes.map(i => i.amount)) : 0
+  const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December']
+  const MONTH_NAME = MONTH_NAMES[month - 1] ?? ''
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -261,19 +257,79 @@ export function IncomePage({ month, year }: IncomePageProps) {
         {/* Main content */}
         <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
-            {statCard(t.income.totalLabel, formatAmount(totalAmount), 'var(--green)',
-              incomeChange !== null && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: incomeChange >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                  {incomeChange >= 0 ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
-                  {Math.abs(incomeChange).toFixed(1)}%
-                </span>
-              )
-            )}
-            {statCard(t.income.records, String(incomes.length), 'var(--violet)')}
-            {statCard(t.income.avgLabel, formatAmount(avgAmount), '#60a5fa', t.income.perItem)}
+          {/* Hero wallet card */}
+          <div style={{
+            background: 'linear-gradient(135deg,#0a2920 0%,#0f4d2f 45%,#0a2920 100%)',
+            borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+            boxShadow: '0 18px 50px -16px rgba(15,77,47,0.4),0 0 0 1px rgba(52,211,153,0.18)',
+            flexShrink: 0, marginBottom: 0,
+          }}>
+            <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.35),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(52,211,153,0.18)',border:'1px solid rgba(52,211,153,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <TrendingUp size={18} color="#86efac"/>
+            </div>
+            <div style={{position:'relative'}}>
+              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>PRÍJMY</span>
+                <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{MONTH_NAME} {year}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
+                <span style={{fontSize:14,fontWeight:500,color:'#86efac',marginRight:4}}>+</span>
+                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalAmount).toLocaleString('sk-SK')}</span>
+                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalAmount%1)*100)).padStart(2,'0')}</span>
+                <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
+              </div>
+              <div style={{display:'flex',gap:14,fontSize:11.5,color:'rgba(255,255,255,0.7)',paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
+                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>↻</span>Opakujúce: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(recurringTotal)}</span></div>
+                <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
+                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>1×</span>Jednorazové: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(oneTimeTotal)}</span></div>
+              </div>
+            </div>
           </div>
+
+          {/* KPI bento tiles */}
+          <div className="stat-grid">
+            {([
+              { label: 'Počet príjmov', value: String(incomes.length), hint: 'tento mesiac', icon: '📋', color: 'var(--violet)' },
+              { label: 'Priemerný príjem', value: formatAmount(avgAmount), hint: 'na transakciu', icon: '⚖️', color: 'var(--green)' },
+              { label: 'Najväčší príjem', value: formatAmount(maxAmount), hint: MONTH_NAME, icon: '🏆', color: 'var(--warning)' },
+            ] as const).map(tile => (
+              <div key={tile.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", lineHeight: 1.4 }}>{tile.label}</span>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: tile.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{tile.icon}</div>
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 17, color: tile.color, lineHeight: 1 }}>{tile.value}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>{tile.hint}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recurring vs. one-time breakdown */}
+          {totalAmount > 0 && (
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>Rozloženie príjmov</div>
+              {([
+                { label: 'Opakujúce', amount: recurringTotal, color: '#60a5fa' },
+                { label: 'Jednorazové', amount: oneTimeTotal, color: 'var(--green)' },
+              ] as const).map(bar => (
+                <div key={bar.label} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text2)' }}>{bar.label}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", fontWeight: 600, color: 'var(--text)' }}>{formatAmount(bar.amount)}</span>
+                      <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", minWidth: 28, textAlign: 'right' }}>{Math.round((bar.amount / totalAmount) * 100)}%</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 99, background: 'var(--bg3)' }}>
+                    <div style={{ height: '100%', borderRadius: 99, background: bar.color, width: `${(bar.amount / totalAmount) * 100}%`, transition: 'width 0.5s ease' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
