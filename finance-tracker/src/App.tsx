@@ -23,6 +23,7 @@ import { OnboardingTutorial, useOnboarding } from './components/OnboardingTutori
 import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTemplateModal'
 import { PinLock } from './components/PinLock'
 import { PinLockProvider, usePinLockContext } from './context/PinLockContext'
+import { TweaksPanel } from './components/TweaksPanel'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
 import { useSettingsContext } from './context/SettingsContext'
@@ -431,6 +432,14 @@ function App() {
       {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} onLogout={handleLogout} />}
       {showTrackingOnboarding && (
         <TrackingDateOnboarding onDone={() => setShowTrackingOnboarding(false)} />
+      )}
+
+      {/* Tweaks panel — desktop only, fixed overlay */}
+      {isDesktop && (
+        <TweaksPanel
+          sidebarCollapsed={sidebarCollapsed}
+          onSidebarToggle={toggleSidebar}
+        />
       )}
     </div>
   )
