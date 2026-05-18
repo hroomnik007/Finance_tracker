@@ -66,6 +66,16 @@ export function SavingsPage() {
 
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
+  const goalCount = goals.length
+  const overallPct = totalTarget > 0 ? Math.round(totalSaved / totalTarget * 100) : 0
+  const monthlyAmount = goals.reduce((s, g) => {
+    if (!g.deadline) return s
+    const today = new Date()
+    const deadline = new Date(g.deadline)
+    const monthsLeft = Math.max(1, (deadline.getFullYear() - today.getFullYear()) * 12 + (deadline.getMonth() - today.getMonth()))
+    const remaining = Math.max(0, g.targetAmount - g.savedAmount)
+    return s + remaining / monthsLeft
+  }, 0)
 
   function openAdd() {
     setEditGoal(null)
@@ -267,6 +277,54 @@ export function SavingsPage() {
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
       <div style={{ padding: 20, minHeight: '100%' }}>
 
+        {/* Hero wallet card */}
+        <div style={{
+          background: 'linear-gradient(135deg,#082626 0%,#0d4d4d 45%,#082626 100%)',
+          borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+          boxShadow: '0 18px 50px -16px rgba(13,77,77,0.42),0 0 0 1px rgba(20,184,166,0.22)',
+          flexShrink: 0, marginBottom: 20,
+        }}>
+          <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(20,184,166,0.35),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
+          <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
+          <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(20,184,166,0.18)',border:'1px solid rgba(20,184,166,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <PiggyBank size={18} color="#5eead4"/>
+          </div>
+          <div style={{position:'relative'}}>
+            <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
+              <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>SPORENIE</span>
+              <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
+              <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{goalCount} aktívnych cieľov</span>
+            </div>
+            <p style={{fontSize:10.5,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:6,letterSpacing:'0.12em',textTransform:'uppercase' as const}}>Celkové úspory</p>
+            <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:14,flexWrap:'wrap'}}>
+              <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalSaved).toLocaleString('sk-SK')}</span>
+              <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalSaved%1)*100)).padStart(2,'0')}</span>
+              <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
+              {totalTarget > 0 && (
+                <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 9px',borderRadius:99,background:'rgba(20,184,166,0.18)',color:'#5eead4',border:'1px solid rgba(20,184,166,0.3)'}}>
+                  {overallPct}% z {Math.round(totalTarget)} €
+                </span>
+              )}
+            </div>
+            {totalTarget > 0 && (
+              <div style={{height:8,borderRadius:99,background:'rgba(255,255,255,0.1)',overflow:'hidden',marginBottom:12}}>
+                <div style={{height:'100%',width:`${Math.min(overallPct,100)}%`,background:'linear-gradient(90deg,#5eead4,#34d399)',borderRadius:99,transition:'width 1s cubic-bezier(0.4,0,0.2,1)',boxShadow:'0 0 12px rgba(94,234,212,0.5)'}}/>
+              </div>
+            )}
+            <div style={{display:'flex',gap:0,paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
+              <div style={{flex:1}}>
+                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Mesačne</p>
+                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'#5eead4'}}>+{formatAmount(monthlyAmount)}</p>
+              </div>
+              <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
+              <div style={{flex:1,paddingLeft:18}}>
+                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Zostáva spolu</p>
+                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'white'}}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Desktop header */}
         <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
@@ -290,7 +348,7 @@ export function SavingsPage() {
         </div>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12, marginBottom: 20 }}>
+        <div className="stat-grid" style={{ marginBottom: 20 }}>
           <StatCard
             icon={<PiggyBank size={18} color="var(--green)" />}
             label={t.savings.totalSaved}
@@ -303,14 +361,12 @@ export function SavingsPage() {
             value={formatAmount(totalTarget)}
             accent="var(--violet)"
           />
-          <div className="col-span-2 lg:col-span-1">
-            <StatCard
-              icon={<span style={{ fontSize: 18 }}>🎯</span>}
-              label={t.savings.goalsCount}
-              value={String(goals.length)}
-              accent="var(--text2)"
-            />
-          </div>
+          <StatCard
+            icon={<span style={{ fontSize: 18 }}>🎯</span>}
+            label={t.savings.goalsCount}
+            value={String(goals.length)}
+            accent="var(--text2)"
+          />
         </div>
 
         {/* Goals grid */}
@@ -412,7 +468,7 @@ function GoalCard({
 }) {
   const pct = goal.targetAmount > 0 ? Math.min(100, (goal.savedAmount / goal.targetAmount) * 100) : 0
   const isCompleted = pct >= 100
-  const barColor = isCompleted ? '#34D399' : goal.color ?? '#7C3AED'
+  const barColor = isCompleted ? 'var(--green)' : goal.color ?? '#7C3AED'
 
   let deadlineBadge: React.ReactNode = null
   if (goal.deadline) {
@@ -421,7 +477,7 @@ function GoalCard({
       deadlineBadge = null
     } else if (days < 0) {
       deadlineBadge = (
-        <span style={{ fontSize: 10, fontWeight: 600, color: '#F87171', background: 'rgba(248,113,113,0.12)', padding: '2px 7px', borderRadius: 20 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--red)', background: 'color-mix(in srgb, var(--red) 12%, transparent)', padding: '2px 7px', borderRadius: 20 }}>
           {t.overdue}
         </span>
       )
@@ -458,7 +514,7 @@ function GoalCard({
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
           {isCompleted ? (
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#34D399' }}>{t.completed}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
           ) : deadlineBadge}
         </div>
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -470,7 +526,7 @@ function GoalCard({
           </button>
           <button
             onClick={e => { e.stopPropagation(); onDelete() }}
-            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}
+            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}
           >
             <Trash2 size={13} />
           </button>
