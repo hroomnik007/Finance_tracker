@@ -1087,6 +1087,7 @@ const upcomingFixed = useMemo(() => {
 
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
+          {greetingRow}
           {heroSection}
           {bentoStatCards}
           {txStripCard}

@@ -137,7 +137,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             aria-label={t.nav.overview}
             aria-current={current === 'dashboard' ? 'page' : undefined}
           >
-            <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
+            <LayoutDashboard size={18} strokeWidth={1.5} style={{ flexShrink: 0 }} />
             {isExpanded && t.nav.overview}
           </button>
 
@@ -150,7 +150,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             aria-label={t.nav.income}
             aria-current={current === 'income' ? 'page' : undefined}
           >
-            <TrendingUp size={18} style={{ flexShrink: 0 }} />
+            <TrendingUp size={18} strokeWidth={1.5} style={{ flexShrink: 0 }} />
             {isExpanded && t.nav.income}
           </button>
 
@@ -173,11 +173,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               aria-current={expensesActive ? 'page' : undefined}
               aria-expanded={isExpanded ? expOpen : undefined}
             >
-              <CreditCard size={18} style={{ flexShrink: 0 }} />
+              <CreditCard size={18} strokeWidth={1.5} style={{ flexShrink: 0 }} />
               {isExpanded && (
                 <>
                   <span style={{ flex: 1 }}>{t.nav.expenses}</span>
-                  {expOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  {expOpen ? <ChevronDown size={13} strokeWidth={1.5} /> : <ChevronRight size={13} strokeWidth={1.5} />}
                 </>
               )}
             </button>
@@ -193,19 +193,19 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
                   <SubNavItem
                     active={current === 'variable-expenses'}
                     onClick={() => handleChange('variable-expenses')}
-                    icon={<Receipt size={15} />}
+                    icon={<Receipt size={15} strokeWidth={1.5} />}
                     label={t.nav.variable}
                   />
                   <SubNavItem
                     active={current === 'fixed-expenses'}
                     onClick={() => handleChange('fixed-expenses')}
-                    icon={<Lock size={15} />}
+                    icon={<Lock size={15} strokeWidth={1.5} />}
                     label={t.nav.fixed}
                   />
                   <SubNavItem
                     active={current === 'categories'}
                     onClick={() => handleChange('categories')}
-                    icon={<Tag size={15} />}
+                    icon={<Tag size={15} strokeWidth={1.5} />}
                     label={t.nav.categories}
                   />
                 </div>
@@ -235,9 +235,9 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
                 {t.nav.expenses}
               </div>
               {([
-                { page: 'variable-expenses' as Page, icon: <Receipt size={13} />, label: t.nav.variable },
-                { page: 'fixed-expenses' as Page, icon: <Lock size={13} />, label: t.nav.fixed },
-                { page: 'categories' as Page, icon: <Tag size={13} />, label: t.nav.categories },
+                { page: 'variable-expenses' as Page, icon: <Receipt size={13} strokeWidth={1.5} />, label: t.nav.variable },
+                { page: 'fixed-expenses' as Page, icon: <Lock size={13} strokeWidth={1.5} />, label: t.nav.fixed },
+                { page: 'categories' as Page, icon: <Tag size={13} strokeWidth={1.5} />, label: t.nav.categories },
               ]).map(item => (
                 <button
                   key={item.page}
@@ -275,7 +275,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               aria-label={t.nav.savings}
               aria-current={current === 'savings' ? 'page' : undefined}
             >
-              <PiggyBank size={18} style={{ flexShrink: 0 }} />
+              <PiggyBank size={18} strokeWidth={1.5} style={{ flexShrink: 0 }} />
               {isExpanded && t.nav.savings}
             </button>
           )}
@@ -310,7 +310,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             aria-label={t.nav.settings}
             aria-current={current === 'settings' ? 'page' : undefined}
           >
-            <Settings size={18} style={{ flexShrink: 0 }} />
+            <Settings size={18} strokeWidth={1.5} style={{ flexShrink: 0 }} />
             {isExpanded && t.nav.settings}
           </button>
 
@@ -336,7 +336,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             boxShadow: 'var(--card-shadow)',
           }}
         >
-          {isExpanded ? <ChevronLeft size={11} /> : <ChevronRight size={11} />}
+          {isExpanded ? <ChevronLeft size={11} strokeWidth={1.5} /> : <ChevronRight size={11} strokeWidth={1.5} />}
         </button>
       </aside>
     </>

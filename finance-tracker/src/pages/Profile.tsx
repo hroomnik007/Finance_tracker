@@ -8,7 +8,7 @@ import { getSavingsGoals } from '../api/savings'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
-const AVATAR_OPTIONS = ['👤','👨','👩','🧔','👨‍💼','👩‍💼','🧑‍💻','🦸']
+const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
 
 
 function isPhotoUrl(url: string | null | undefined): url is string {
@@ -210,12 +210,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             <X size={16} />
           </button>
 
-          {/* Avatar + name block */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'relative', paddingBottom: 20 }}>
-            {/* Avatar circle */}
-            <div style={{ position: 'relative' }}>
+          {/* Avatar + name block — horizontal */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Avatar — LEFT */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <div
-                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15)', cursor: 'pointer' }}
+                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer' }}
                 onClick={handlePhotoUpload}
               >
                 {photoUrl ? (
@@ -228,40 +228,73 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   <span style={{ color: 'white', fontWeight: 700, fontSize: 26 }}>{(user?.name || ctxName)?.[0]?.toUpperCase() ?? '?'}</span>
                 )}
               </div>
-              {/* Upload hint badge */}
-              <div style={{ position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: '50%', background: 'rgba(139,92,246,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                <Pencil size={10} style={{ color: 'white' }} />
+              <div
+                style={{ position: 'absolute', bottom: -2, right: -2, width: 26, height: 26, borderRadius: '50%', background: 'var(--bg2)', border: '2px solid #3d2a82', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', cursor: 'pointer' }}
+                onClick={handlePhotoUpload}
+              >
+                <Pencil size={10} style={{ color: 'var(--text)' }} />
               </div>
             </div>
 
-            {/* Name — inline edit */}
-            {editMode ? (
-              <input
-                value={profileNameDraft}
-                onChange={e => setProfileNameDraft(e.target.value)}
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 12px', color: 'white', fontSize: 18, fontWeight: 700, textAlign: 'center', outline: 'none', width: 220 }}
-              />
-            ) : (
-              <h2
-                style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, cursor: 'pointer' }}
-                onClick={() => setEditMode(true)}
-              >
-                {user?.name || ctxName || 'Používateľ'}
-              </h2>
-            )}
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{user?.email}</div>
-
-            {/* Badges row */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,215,100,0.18)', color: '#FFD89F', border: '1px solid rgba(255,215,100,0.3)', fontWeight: 600 }}>
-                👑 Pro
-              </span>
-              {user?.createdAt && (
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontFamily: "'DM Mono',monospace" }}>
-                  Člen od {new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}
-                </span>
-              )}
+            {/* Name + email + badges — RIGHT */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                {editMode ? (
+                  <input
+                    value={profileNameDraft}
+                    autoFocus
+                    onChange={e => setProfileNameDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { handleSaveProfile(); setEditMode(false) } }}
+                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 10px', color: 'white', fontSize: 18, fontWeight: 700, outline: 'none', width: '100%' }}
+                  />
+                ) : (
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user?.name || ctxName || 'Používateľ'}
+                  </h2>
+                )}
+                <button
+                  onClick={() => { if (editMode) { handleSaveProfile(); setEditMode(false) } else setEditMode(true) }}
+                  style={{ padding: 4, borderRadius: 6, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                >
+                  {editMode ? <Check size={13} style={{ color: '#34d399' }} /> : <Pencil size={13} />}
+                </button>
+              </div>
+              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.65)', margin: 0 }}>{user?.email}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,191,36,0.18)', color: '#fde68a', border: '1px solid rgba(251,191,36,0.3)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 3 }}>👑 Pro</span>
+                {user?.createdAt && (
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>Člen od {new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}</span>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Horizontal emoji picker strip */}
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)', display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto' }}>
+            {AVATAR_OPTIONS.map(em => (
+              <button
+                key={em}
+                onClick={async () => {
+                  setProfileAvatarDraft(em)
+                  setPhotoUrl(null)
+                  try { await updateAvatar(em); await refreshUser() } catch { /* non-critical */ }
+                }}
+                style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: (profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)', border: `1px solid ${(profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.10)'}`, fontSize: 17, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                {em}
+              </button>
+            ))}
+            <button
+              onClick={async () => {
+                setProfileAvatarDraft('')
+                setPhotoUrl(null)
+                try { await updateAvatar(''); await refreshUser() } catch { /* non-critical */ }
+              }}
+              title="Bez emoji — iniciálka"
+              style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.20)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {(user?.name || ctxName)?.[0]?.toUpperCase()}
+            </button>
           </div>
 
           {/* Stats strip */}
@@ -365,23 +398,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 /* EDIT MODE */
                 <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Upraviť profil</p>
-
-                  {/* Avatar emoji grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
-                    {AVATAR_OPTIONS.map(em => (
-                      <button
-                        key={em}
-                        onClick={() => { setProfileAvatarDraft(em); setPhotoUrl(null) }}
-                        style={{
-                          width: '100%', aspectRatio: '1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, cursor: 'pointer',
-                          border: profileAvatarDraft === em && !photoUrl ? '2px solid var(--violet)' : '1.5px solid transparent',
-                          background: profileAvatarDraft === em && !photoUrl ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
-                        }}
-                      >
-                        {em}
-                      </button>
-                    ))}
-                  </div>
 
                   {/* Photo upload */}
                   <button
