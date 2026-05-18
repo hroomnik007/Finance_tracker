@@ -145,13 +145,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   }
 
 
-  const statCard = (label: string, value: string, color: string, sub?: React.ReactNode) => (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 'clamp(16px, 4vw, 26px)', fontWeight: 700, color, fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
-    </div>
-  )
+  const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -342,11 +336,22 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             </div>
           </div>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 12 }}>
-            {statCard(t.expenses.fixed.monthly, formatAmount(total), 'var(--red)')}
-            {statCard(t.expenses.fixed.itemCount, String(fixedExpenses.length), 'var(--text)', <span>{t.expenses.fixed.itemsCount}</span>)}
-            {statCard(t.expenses.fixed.avgPayment, fixedExpenses.length > 0 ? formatAmount(total / fixedExpenses.length) : '—', 'var(--violet)', <span>{t.expenses.variable.perItem}</span>)}
+          {/* KPI bento tiles */}
+          <div className="stat-grid">
+            {([
+              { label: 'Počet splátok', value: String(fixedExpenses.length), hint: 'mesačne', icon: '📅', color: 'var(--violet)' },
+              { label: 'Mesačne', value: formatAmount(total), hint: 'spolu', icon: '💸', color: 'var(--red)' },
+              { label: 'Ročne', value: formatAmount(total * 12), hint: 'projekcia', icon: '📆', color: 'var(--warning)' },
+            ] as const).map(tile => (
+              <div key={tile.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", lineHeight: 1.4 }}>{tile.label}</span>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: tile.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{tile.icon}</div>
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 17, color: tile.color, lineHeight: 1 }}>{tile.value}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>{tile.hint}</div>
+              </div>
+            ))}
           </div>
 
           {/* Calendar strip */}
@@ -425,7 +430,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             )}
           </div>
 
-          {/* Expense list */}
+          {/* Expense list — upcoming/past split */}
           {fixedExpenses.length === 0 ? (
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
               <span style={{ fontSize: 40 }}>🔒</span>
@@ -436,46 +441,80 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--card-shadow)' }}>
               <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.fixed.filteredEmpty}</p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filtered.map(expense => {
-                const cat = getCat(expense.categoryId)
-                const icon = cat?.icon ?? FALLBACK_ICON
-                const color = cat?.color ?? FALLBACK_COLOR
-                const today = new Date().getDate()
-                const daysUntil = ((expense.dayOfMonth - today + 31) % 31)
-                const badge = countdownBadge(daysUntil)
-                return (
-                  <SwipeableRow key={expense.id} onDelete={() => handleDelete(expense.id!)}>
+          ) : (() => {
+            const upcomingList = filtered.filter(e => calendarToday === -1 || e.dayOfMonth >= calendarToday).sort((a, b) => a.dayOfMonth - b.dayOfMonth)
+            const pastList = calendarToday === -1 ? [] : filtered.filter(e => e.dayOfMonth < calendarToday).sort((a, b) => b.dayOfMonth - a.dayOfMonth)
+
+            const renderCard = (expense: typeof filtered[0], isPast = false) => {
+              const cat = getCat(expense.categoryId)
+              const icon = cat?.icon ?? FALLBACK_ICON
+              const color = cat?.color ?? FALLBACK_COLOR
+              const daysUntil = ((expense.dayOfMonth - (calendarToday > 0 ? calendarToday : new Date().getDate()) + 31) % 31)
+              const badge = countdownBadge(daysUntil)
+              const monthAbbr = MONTHS_SK[month - 1] ?? ''
+              return (
+                <SwipeableRow key={expense.id} onDelete={() => handleDelete(expense.id!)}>
                   <div
-                    style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 0.15s' }}
+                    style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'border-color 0.15s', opacity: isPast ? 0.65 : 1 }}
                     onClick={() => openEdit(expense)}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
                   >
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                    {/* Date tile */}
+                    <div style={{
+                      width: 46, height: 46, borderRadius: 12, flexShrink: 0,
+                      background: isPast ? 'var(--bg3)' : daysUntil === 0 ? 'rgba(139,92,246,0.14)' : daysUntil <= 3 ? 'rgba(249,115,22,0.12)' : 'var(--bg3)',
+                      border: `1px solid ${isPast ? 'var(--border)' : daysUntil === 0 ? 'rgba(139,92,246,0.28)' : daysUntil <= 3 ? 'rgba(249,115,22,0.25)' : 'var(--border)'}`,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                    }}>
+                      <span style={{ fontSize: 17, fontWeight: 700, color: isPast ? 'var(--text3)' : daysUntil <= 3 ? badge.color : 'var(--text)', fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{expense.dayOfMonth}</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em', textTransform: 'uppercase' }}>{monthAbbr}</span>
+                    </div>
+                    {/* Category icon */}
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
                       {icon}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.label}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
-                        {cat?.name ?? '—'} · {t.expenses.fixed.dueDay}: {expense.dayOfMonth}.
-                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: isPast ? 'var(--text2)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>{cat?.name ?? '—'}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)' }}>{formatAmount(expense.amount)}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 8px', borderRadius: 20 }}>{badge.text}</span>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: isPast ? 'var(--text3)' : 'var(--red)' }}>{formatAmount(expense.amount)}</span>
+                      {!isPast && <span style={{ fontSize: 10, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 7px', borderRadius: 20 }}>{badge.text}</span>}
+                      {isPast && <span style={{ fontSize: 10, color: 'var(--text3)', padding: '2px 7px' }}>zaplatené</span>}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
-                      <button onClick={() => openEdit(expense)} style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={14} /></button>
-                      <button onClick={() => setDeleteId(expense.id!)} style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
+                      <button onClick={() => openEdit(expense)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={13} /></button>
+                      <button onClick={() => setDeleteId(expense.id!)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
                     </div>
                   </div>
-                  </SwipeableRow>
-                )
-              })}
-            </div>
-          )}
+                </SwipeableRow>
+              )
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {upcomingList.length > 0 && (
+                  <>
+                    {calendarToday > 0 && (
+                      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 2, marginTop: 4 }}>
+                        Nadchádzajúce
+                      </div>
+                    )}
+                    {upcomingList.map(e => renderCard(e, false))}
+                  </>
+                )}
+                {pastList.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 2, marginTop: 8 }}>
+                      Zaplatené tento mesiac
+                    </div>
+                    {pastList.map(e => renderCard(e, true))}
+                  </>
+                )}
+              </div>
+            )
+          })()}
 
 
         </div>
