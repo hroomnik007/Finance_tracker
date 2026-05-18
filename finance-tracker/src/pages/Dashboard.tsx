@@ -59,7 +59,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
       borderRadius: 20,
       padding: '20px',
     }}>
-      <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', marginBottom: 16, margin: '0 0 16px' }}>{title}</h3>
+      <h3 className="t-label" style={{ margin: '0 0 16px' }}>{title}</h3>
       {children}
     </div>
   )
@@ -457,35 +457,35 @@ const upcomingFixed = useMemo(() => {
           </div>
         </div>
         <div style={{ minWidth: 0 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 3 }}>Úspora</p>
+          <p className="t-label" style={{ marginBottom: 3 }}>Úspora</p>
           <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.15, marginBottom: 2 }}>{savRate >= 30 ? 'Výborne!' : savRate >= 15 ? 'Dobre' : savRate >= 0 ? 'Pokračujte' : 'Pozor!'}</p>
           <p style={{ fontSize: 11, color: 'var(--text3)' }}>z mesačných príjmov</p>
         </div>
       </div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', margin: 0 }}>Príjmy</p>
+          <p className="t-label" style={{ margin: 0 }}>Príjmy</p>
           {incomeChangePct !== null && (
             <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: incomeChangePct >= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.12)', color: incomeChangePct >= 0 ? 'var(--green)' : 'var(--red)' }}>
               {incomeChangePct >= 0 ? '↑' : '↓'} {Math.abs(incomeChangePct).toFixed(1).replace('.', ',')}%
             </span>
           )}
         </div>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(animatedIncome)}</p>
+        <p className="t-amount" style={{ fontSize: 18, lineHeight: 1.1 }}>{formatAmount(animatedIncome)}</p>
         <div style={{ marginTop: 'auto', height: 24 }}>
           {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.income)} color="var(--green)" id="income" />}
         </div>
       </div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', margin: 0 }}>Výdavky</p>
+          <p className="t-label" style={{ margin: 0 }}>Výdavky</p>
           {expChangePct !== null && (
             <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: expChangePct <= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(217,119,6,0.12)', color: expChangePct <= 0 ? 'var(--green)' : 'var(--warning)' }}>
               {expChangePct >= 0 ? '↑' : '↓'} {Math.abs(expChangePct).toFixed(1).replace('.', ',')}%
             </span>
           )}
         </div>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
+        <p className="t-amount" style={{ fontSize: 18, lineHeight: 1.1 }}>{formatAmount(animatedExpenses)}</p>
         <div style={{ marginTop: 'auto', height: 24 }}>
           {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.expenses)} color="var(--red)" id="expenses" />}
         </div>

@@ -59,7 +59,6 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
     padding: isExpanded ? '9px 10px' : '9px',
     justifyContent: isExpanded ? 'flex-start' : 'center',
     borderRadius: 10,
-    fontSize: 13,
     fontWeight: isActive ? 600 : 500,
     color: isActive ? 'var(--violet)' : 'var(--text2)',
     background: isActive ? 'rgba(139,92,246,0.12)' : 'transparent',
@@ -70,7 +69,6 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
     overflow: 'hidden',
     width: '100%',
     border: 'none',
-    fontFamily: "'DM Sans', sans-serif",
     textAlign: 'left' as const,
   })
 
@@ -131,6 +129,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           {/* Prehľad */}
           <button
             onClick={() => handleChange('dashboard')}
+            className="t-nav"
             style={navItemStyle(current === 'dashboard')}
             onMouseEnter={e => hoverOn(e, current === 'dashboard')}
             onMouseLeave={e => hoverOff(e, current === 'dashboard')}
@@ -144,6 +143,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           {/* Príjmy */}
           <button
             onClick={() => handleChange('income')}
+            className="t-nav"
             style={navItemStyle(current === 'income')}
             onMouseEnter={e => hoverOn(e, current === 'income')}
             onMouseLeave={e => hoverOff(e, current === 'income')}
@@ -166,6 +166,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
                 if (isExpanded) setExpOpen(v => !v)
                 else handleChange('variable-expenses')
               }}
+              className="t-nav"
               style={{ ...navItemStyle(expensesActive), display: 'flex', alignItems: 'center', gap: 10 }}
               onMouseEnter={e => hoverOn(e, expensesActive)}
               onMouseLeave={e => hoverOff(e, expensesActive)}
@@ -269,6 +270,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           {user?.savings_enabled && (
             <button
               onClick={() => handleChange('savings')}
+              className="t-nav"
               style={navItemStyle(current === 'savings')}
               onMouseEnter={e => hoverOn(e, current === 'savings')}
               onMouseLeave={e => hoverOff(e, current === 'savings')}
@@ -284,6 +286,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           {user?.household_enabled && (
             <button
               onClick={() => handleChange('household')}
+              className="t-nav"
               style={navItemStyle(current === 'household')}
               onMouseEnter={e => hoverOn(e, current === 'household')}
               onMouseLeave={e => hoverOff(e, current === 'household')}
@@ -304,6 +307,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           {/* Nastavenia */}
           <button
             onClick={() => handleChange('settings')}
+            className="t-nav"
             style={navItemStyle(current === 'settings')}
             onMouseEnter={e => hoverOn(e, current === 'settings')}
             onMouseLeave={e => hoverOff(e, current === 'settings')}
