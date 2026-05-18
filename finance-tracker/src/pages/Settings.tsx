@@ -972,7 +972,7 @@ export function SettingsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Vytvor domácnosť */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdCreate}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--text3)]">{t.settings.householdCreate}</p>
                         <input
                           type="text"
                           placeholder={t.settings.householdCreatePlaceholder}
@@ -991,7 +991,7 @@ export function SettingsPage() {
 
                       {/* Pripoj sa */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[#9D84D4]">{t.settings.householdJoin}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--text3)]">{t.settings.householdJoin}</p>
                         <input
                           type="text"
                           placeholder={t.settings.householdJoinPlaceholder}
@@ -1067,7 +1067,7 @@ export function SettingsPage() {
                   </SettingRow>
                 </div>
                 <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
-                  <p className="text-xs text-[#6B5A9E]">{t.settings.notificationsNote}</p>
+                  <p className="text-xs text-[color:var(--text3)]">{t.settings.notificationsNote}</p>
                 </div>
               </SectionCard>
             </>
@@ -1318,26 +1318,26 @@ export function SettingsPage() {
                     >
                       <span className="text-white font-bold text-2xl leading-none">F</span>
                     </div>
-                    <p className="text-base font-bold text-[#E2D9F3]">Finvu</p>
-                    <span className="text-xs mt-1.5 font-mono px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
+                    <p className="text-base font-bold text-[color:var(--text)]">Finvu</p>
+                    <span style={{ fontSize: 11, marginTop: 6, fontFamily: "'DM Mono',monospace", padding: '2px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', display: 'inline-block' }}>
                       v1.1.0
                     </span>
                   </div>
                   <div className="flex flex-col gap-3 mb-5">
                     <div className="flex items-start gap-3">
                       <span className="text-base leading-none mt-0.5">🔒</span>
-                      <p className="text-xs text-[#B8A3E8] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
+                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
                     </div>
                     <div className="flex items-start gap-3">
                       <span className="text-base leading-none mt-0.5">🔧</span>
-                      <p className="text-xs text-[#B8A3E8] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
+                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
                     </div>
                     <div className="flex items-start gap-3">
                       <span className="text-base leading-none mt-0.5">🌐</span>
-                      <p className="text-xs text-[#B8A3E8] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
+                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
                     </div>
                   </div>
-                  <p className="text-xs text-center text-[#6B5A9E]">© 2024–2026 Finvu · pedani.eu</p>
+                  <p className="text-xs text-center text-[color:var(--text3)]">© 2024–2026 Finvu · pedani.eu</p>
                 </div>
               </SectionCard>
 
@@ -1348,19 +1348,21 @@ export function SettingsPage() {
                     {CHANGELOG.map((entry, i) => (
                       <div key={entry.version}>
                         <div className="flex items-center gap-2 mb-2.5">
-                          <span
-                            className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
-                              i === 0 ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-[#9D84D4]'
-                            }`}
-                          >
+                          <span style={{
+                            fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 600,
+                            padding: '2px 8px', borderRadius: 99,
+                            background: i === 0 ? 'rgba(139,92,246,0.18)' : 'var(--bg4)',
+                            color: i === 0 ? 'var(--violet)' : 'var(--text3)',
+                            display: 'inline-block',
+                          }}>
                             {entry.version}
                           </span>
-                          <span className="text-xs text-[#6B5A9E]">{entry.date}</span>
+                          <span className="text-xs text-[color:var(--text3)]">{entry.date}</span>
                         </div>
                         <ul className="flex flex-col gap-1.5">
                           {entry.items.map(item => (
-                            <li key={item} className="flex items-start gap-2 text-xs text-[#B8A3E8]">
-                              <span className="text-[#6B5A9E] mt-px shrink-0">•</span>
+                            <li key={item} className="flex items-start gap-2 text-xs text-[color:var(--text2)]">
+                              <span className="text-[color:var(--text3)] mt-px shrink-0">•</span>
                               <span>{item}</span>
                             </li>
                           ))}
@@ -1377,13 +1379,13 @@ export function SettingsPage() {
               <div className="flex justify-end gap-3 pb-2">
                 <button
                   onClick={() => setShowChangelog(true)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer" style={{ background: 'var(--bg3)', borderColor: 'var(--border)', color: 'var(--text2)' }}
                 >
                   Changelog (modal)
                 </button>
                 <button
                   onClick={() => setShowAbout(true)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[#1a1035] border border-white/10 text-[#9D84D4] hover:text-[#E2D9F3] hover:border-white/20 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer" style={{ background: 'var(--bg3)', borderColor: 'var(--border)', color: 'var(--text2)' }}
                 >
                   O aplikácii (modal)
                 </button>
@@ -1458,20 +1460,20 @@ export function SettingsPage() {
             </div>
             <div className="flex flex-col divide-y divide-white/[0.06] mb-5">
               <div className="flex justify-between py-2.5">
-                <span className="text-sm text-[#9D84D4]">Príjmy</span>
-                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.incomeCount}</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Príjmy</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.incomeCount}</span>
               </div>
               <div className="flex justify-between py-2.5">
-                <span className="text-sm text-[#9D84D4]">Výdavky (variabilné)</span>
-                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.expenseCount}</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Výdavky (variabilné)</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.expenseCount}</span>
               </div>
               <div className="flex justify-between py-2.5">
-                <span className="text-sm text-[#9D84D4]">Fixné výdavky</span>
-                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.fixedCount}</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Fixné výdavky</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.fixedCount}</span>
               </div>
               <div className="flex justify-between py-2.5">
-                <span className="text-sm text-[#9D84D4]">Kategórie</span>
-                <span className="text-sm font-semibold text-[#E2D9F3]">{importPreview.categoryCount}</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Kategórie</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.categoryCount}</span>
               </div>
             </div>
             <div className="flex gap-3">
@@ -1509,7 +1511,7 @@ export function SettingsPage() {
                 <X size={16} />
               </button>
             </div>
-            <p className="text-sm text-[#9D84D4] mb-5">
+            <p className="text-sm text-[color:var(--text3)] mb-5">
               {dangerAction === 'reset'
                 ? 'Táto akcia vymaže VŠETKY transakcie a nastavenia. Akcia je nevratná.'
                 : 'Táto akcia je nevratná. Všetky záznamy budú trvalo vymazané.'}
@@ -1531,7 +1533,7 @@ export function SettingsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDangerAction(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[#9D84D4] hover:bg-white/10 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer"
               >
                 Zrušiť
               </button>
@@ -1569,7 +1571,7 @@ export function SettingsPage() {
               >
                 <span className="text-white font-bold text-2xl leading-none">F</span>
               </div>
-              <p className="text-base font-bold text-[#E2D9F3]">Finvu</p>
+              <p className="text-base font-bold text-[color:var(--text)]">Finvu</p>
               <span className="text-xs mt-1.5 font-mono px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
                 v1.1.0
               </span>
@@ -1577,18 +1579,18 @@ export function SettingsPage() {
             <div className="flex flex-col gap-3 mb-5">
               <div className="flex items-start gap-3">
                 <span className="text-base leading-none mt-0.5">🔒</span>
-                <p className="text-xs text-[#B8A3E8] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
+                <p className="text-xs text-[color:var(--text2)] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-base leading-none mt-0.5">🔧</span>
-                <p className="text-xs text-[#B8A3E8] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
+                <p className="text-xs text-[color:var(--text2)] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-base leading-none mt-0.5">🌐</span>
-                <p className="text-xs text-[#B8A3E8] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
+                <p className="text-xs text-[color:var(--text2)] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
               </div>
             </div>
-            <p className="text-xs text-center text-[#6B5A9E]">© 2024–2026 Finvu · pedani.eu</p>
+            <p className="text-xs text-center text-[color:var(--text3)]">© 2024–2026 Finvu · pedani.eu</p>
           </div>
         </div>
       )}
@@ -1614,17 +1616,17 @@ export function SettingsPage() {
                   <div className="flex items-center gap-2 mb-2.5">
                     <span
                       className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
-                        i === 0 ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-[#9D84D4]'
+                        i === 0 ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-[color:var(--text3)]'
                       }`}
                     >
                       {entry.version}
                     </span>
-                    <span className="text-xs text-[#6B5A9E]">{entry.date}</span>
+                    <span className="text-xs text-[color:var(--text3)]">{entry.date}</span>
                   </div>
                   <ul className="flex flex-col gap-1.5">
                     {entry.items.map(item => (
-                      <li key={item} className="flex items-start gap-2 text-xs text-[#B8A3E8]">
-                        <span className="text-[#6B5A9E] mt-px shrink-0">•</span>
+                      <li key={item} className="flex items-start gap-2 text-xs text-[color:var(--text2)]">
+                        <span className="text-[color:var(--text3)] mt-px shrink-0">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
