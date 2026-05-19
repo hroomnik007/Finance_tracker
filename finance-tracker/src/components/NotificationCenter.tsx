@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Page } from '../App'
+import { getCategories } from '../api/categories'
+import { getTransactions } from '../api/transactions'
+import { getSavingsGoals } from '../api/savings'
+import { useFormatters } from '../hooks/useFormatters'
+import { useAuth } from '../context/AuthContext'
 
 interface Notification {
   id: string
@@ -13,72 +18,25 @@ interface Notification {
   target?: Page
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    icon: '⚠️',
-    title: 'Limit Zábava 95%',
-    body: '76 € zo 80 € mesačného limitu. Opatrne!',
-    time: 'pred 2 hod.',
-    read: false,
-    color: '#FB923C',
-    amount: '76 / 80 €',
-    target: 'variable-expenses',
-  },
-  {
-    id: '2',
-    icon: '🏠',
-    title: 'Nájomné zajtra',
-    body: 'Splatnosť 650 € — 1. deň v mesiaci',
-    time: 'dnes',
-    read: false,
-    color: '#f87171',
-    amount: '650 €',
-    target: 'fixed-expenses',
-  },
-  {
-    id: '3',
-    icon: '💰',
-    title: 'Výplata pripísaná',
-    body: '+1 250,00 € od Zamestnávateľa',
-    time: 'včera',
-    read: true,
-    color: '#34d399',
-    amount: '+1 250 €',
-    target: 'income',
-  },
-  {
-    id: '4',
-    icon: '🎯',
-    title: 'Cieľ úspor splnený!',
-    body: 'Dosiahli ste cieľ sporenia Dovolenka 2026.',
-    time: '2 dni',
-    read: true,
-    color: '#8B5CF6',
-    amount: '1 500 €',
-    target: 'savings',
-  },
-  {
-    id: '5',
-    icon: '📈',
-    title: 'Tempo výdavkov',
-    body: 'Ak budete takto pokračovať, presiahne v priebehu 8 dní mesačný limit.',
-    time: '3 dni',
-    read: true,
-    color: '#FBBF24',
-    target: 'variable-expenses',
-  },
-]
-
 interface NotificationCenterProps {
   onNavigate?: (page: Page) => void
 }
 
 export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(false)
+  const generated = useRef(false)
   const ref = useRef<HTMLDivElement>(null)
+  const { isAuthenticated } = useAuth()
+  const { formatAmount } = useFormatters()
   const unreadCount = notifications.filter(n => !n.read).length
+
+  useEffect(() => {
+    if (!isAuthenticated || generated.current) return
+    generated.current = true
+    generateNotifications()
+  }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!open) return
@@ -88,6 +46,122 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
+
+  async function generateNotifications() {
+    setLoading(true)
+    try {
+      const now = new Date()
+      const todayDay = now.getDate()
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+      const [catsRes, varRes, fixedRes, incomeRes, savingsRes] = await Promise.all([
+        getCategories(),
+        getTransactions({ type: 'expense', isFixed: false, month: monthStr, limit: 200 }),
+        getTransactions({ type: 'expense', isFixed: true, limit: 200 }),
+        getTransactions({ type: 'income', limit: 3 }),
+        getSavingsGoals(),
+      ])
+
+      const ns: Notification[] = []
+
+      // Budget warnings (≥ 90%)
+      const spentByCategory: Record<string, number> = {}
+      for (const tx of varRes.data) {
+        if (tx.categoryId) spentByCategory[tx.categoryId] = (spentByCategory[tx.categoryId] ?? 0) + tx.amount
+      }
+      for (const cat of catsRes.data) {
+        const limit = cat.budgetLimit
+        if (!limit || limit <= 0) continue
+        const spent = spentByCategory[cat.id] ?? 0
+        const pct = (spent / limit) * 100
+        if (pct < 90) continue
+        ns.push({
+          id: `budget-${cat.id}`,
+          icon: pct >= 100 ? '🚨' : '⚠️',
+          title: `Limit ${cat.name} ${Math.round(pct)}%`,
+          body: `${formatAmount(spent)} zo ${formatAmount(limit)} mesačného limitu`,
+          time: 'dnes',
+          read: false,
+          color: pct >= 100 ? '#f87171' : '#FB923C',
+          amount: `${Math.round(spent)} / ${Math.round(limit)} €`,
+          target: 'variable-expenses',
+        })
+      }
+
+      // Upcoming fixed expenses (next 7 days, max 2)
+      let fixedAdded = 0
+      for (const tx of fixedRes.data) {
+        if (fixedAdded >= 2) break
+        let dayOfMonth = tx.date ? new Date(tx.date + 'T12:00:00').getDate() : 1
+        let label = tx.description ?? ''
+        try {
+          const obj = JSON.parse(tx.description ?? '')
+          if (obj && typeof obj.d === 'number') {
+            dayOfMonth = obj.d
+            label = String(obj.l ?? label)
+          }
+        } catch { /* plain text description */ }
+        const diff = dayOfMonth >= todayDay ? dayOfMonth - todayDay : daysInMonth - todayDay + dayOfMonth
+        if (diff > 7) continue
+        const timeStr = diff === 0 ? 'dnes' : diff === 1 ? 'zajtra' : `o ${diff} dní`
+        ns.push({
+          id: `fixed-${tx.id}`,
+          icon: '📅',
+          title: `${label} ${timeStr}`,
+          body: `Splatnosť ${dayOfMonth}. dňa v mesiaci`,
+          time: timeStr,
+          read: false,
+          color: '#f87171',
+          amount: formatAmount(tx.amount),
+          target: 'fixed-expenses',
+        })
+        fixedAdded++
+      }
+
+      // Latest income
+      if (incomeRes.data.length > 0) {
+        const latest = incomeRes.data[0]
+        const dayDiff = Math.max(0, Math.floor(
+          (now.getTime() - new Date(latest.date + 'T12:00:00').getTime()) / 86400000
+        ))
+        const timeStr = dayDiff === 0 ? 'dnes' : dayDiff === 1 ? 'včera' : `pred ${dayDiff} dňami`
+        ns.push({
+          id: `income-${latest.id}`,
+          icon: '💰',
+          title: 'Príjem pripísaný',
+          body: `${latest.description ?? 'Príjem'} — ${formatAmount(latest.amount)}`,
+          time: timeStr,
+          read: dayDiff > 0,
+          color: '#34d399',
+          amount: `+${formatAmount(latest.amount)}`,
+          target: 'income',
+        })
+      }
+
+      // Savings goal near completion (80–99%)
+      for (const goal of savingsRes.data) {
+        if (!goal.targetAmount) continue
+        const pct = (goal.savedAmount / goal.targetAmount) * 100
+        if (pct < 80 || pct >= 100) continue
+        ns.push({
+          id: `savings-${goal.id}`,
+          icon: goal.icon ?? '🎯',
+          title: `${goal.name} ${Math.round(pct)}%`,
+          body: `Zostáva ${formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))} do cieľa`,
+          time: 'aktuálne',
+          read: true,
+          color: '#8B5CF6',
+          amount: `${formatAmount(goal.savedAmount)} / ${formatAmount(goal.targetAmount)}`,
+          target: 'savings',
+        })
+        break
+      }
+
+      setNotifications(ns)
+    } catch { /* silently ignore fetch errors */ }
+    setLoading(false)
+  }
 
   function markAllRead() {
     setNotifications(ns => ns.map(n => ({ ...n, read: true })))
@@ -166,7 +240,12 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           </div>
 
           {/* List */}
-          {notifications.length === 0 ? (
+          {loading ? (
+            <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--violet)', animation: 'spin 0.8s linear infinite', margin: '0 auto 8px' }} />
+              <div style={{ fontSize: 12, color: 'var(--text3)' }}>Načítavam...</div>
+            </div>
+          ) : notifications.length === 0 ? (
             <div style={{ padding: '40px 16px', textAlign: 'center' }}>
               <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.7 }}>🔕</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>Všetko stíhate</div>

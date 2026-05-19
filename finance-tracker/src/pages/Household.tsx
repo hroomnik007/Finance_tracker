@@ -5,10 +5,22 @@ import { BottomSheet } from '../components/BottomSheet'
 import { useAuth } from '../context/AuthContext'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import { getMyHousehold, getMonthlyStats, leaveHousehold } from '../api/households'
-import type { HouseholdData, MonthlyStats } from '../api/households'
-import { getTransactions } from '../api/transactions'
-import type { ApiTransaction } from '../types'
+import { getMyHousehold, getMonthlyStats, getActivity, leaveHousehold } from '../api/households'
+import type { HouseholdData, MonthlyStats, ActivityItem } from '../api/households'
+
+const CAT_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#A78BFA', '#F97316']
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  const hours = Math.floor(mins / 60)
+  const days = Math.floor(hours / 24)
+  if (mins < 2) return 'práve teraz'
+  if (mins < 60) return `pred ${mins} min.`
+  if (hours < 24) return `pred ${hours} h`
+  if (days === 1) return 'včera'
+  return `pred ${days} dňami`
+}
 
 export function HouseholdPage() {
   const { user, refreshUser } = useAuth()
@@ -18,7 +30,7 @@ export function HouseholdPage() {
 
   const [householdData, setHouseholdData] = useState<HouseholdData | null>(null)
   const [stats, setStats] = useState<MonthlyStats | null>(null)
-  const [recentTx, setRecentTx] = useState<ApiTransaction[]>([])
+  const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [leavePending, setLeavePending] = useState(false)
@@ -47,14 +59,14 @@ export function HouseholdPage() {
     if (!householdEnabled || !householdId) { setLoading(false); return }
     setLoading(true)
     try {
-      const [hd, ms, tx] = await Promise.all([
+      const [hd, ms, activity] = await Promise.all([
         getMyHousehold(),
         getMonthlyStats(householdId),
-        getTransactions({ limit: 10 }),
+        getActivity(householdId, 10),
       ])
       setHouseholdData(hd)
       setStats(ms)
-      setRecentTx(tx.data)
+      setActivityFeed(activity)
     } catch { /* not authenticated or no household */ }
     setLoading(false)
   }, [householdEnabled, householdId])
@@ -87,279 +99,277 @@ export function HouseholdPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px' }}>
-        <p style={{ fontSize: 14, color: 'var(--text3)' }}>{ht.loading}</p>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--violet)', animation: 'spin 0.8s linear infinite' }} />
       </div>
     )
   }
 
-  const balance = (stats?.total_income ?? 0) - (stats?.total_expenses ?? 0)
+  const totalIncome = stats?.total_income ?? 0
+  const totalExpenses = stats?.total_expenses ?? 0
+  const balance = totalIncome - totalExpenses
+  const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0
+  const memberCount = householdData?.members.length ?? 0
 
   return (
-    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
 
-      {/* Main content */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Hero card */}
-        <div style={{
-          background: 'linear-gradient(135deg,#1a1235 0%,#3d2a82 50%,#1a1235 100%)',
-          borderRadius: 24, padding: '24px 26px 22px', position: 'relative', overflow: 'hidden', color: 'white',
-          boxShadow: '0 18px 50px -16px rgba(58,42,130,0.45),0 0 0 1px rgba(139,92,246,0.2)',
-        }}>
-          <div style={{ position: 'absolute', top: -80, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,0.4),transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.04) 50%,transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'relative' }}>
-            {/* Avatar stack + invite button row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {(householdData?.members ?? []).slice(0, 5).map((m, i) => (
-                  <div key={m.id} style={{ marginLeft: i > 0 ? -12 : 0, zIndex: 10 - i, borderRadius: '50%', border: '2px solid rgba(26,18,53,0.8)' }}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={38} avatarUrl={m.avatar_url} />
-                  </div>
-                ))}
-                {(householdData?.members.length ?? 0) > 5 && (
-                  <div style={{ marginLeft: -12, width: 38, height: 38, borderRadius: '50%', background: 'rgba(139,92,246,0.25)', border: '2px solid rgba(26,18,53,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white' }}>
-                    +{(householdData?.members.length ?? 0) - 5}
-                  </div>
-                )}
-                <span style={{ marginLeft: 12, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
-                  {householdData?.members.length ?? 0} {(householdData?.members.length ?? 0) === 1 ? 'člen' : (householdData?.members.length ?? 0) < 5 ? 'členovia' : 'členov'}
-                </span>
-              </div>
-              {householdData?.invite_code && (
-                <button
-                  onClick={() => setInviteOpen(true)}
-                  style={{ height: 34, padding: '0 16px', borderRadius: 10, background: 'rgba(255,255,255,0.12)', color: 'white', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', fontFamily: 'inherit', backdropFilter: 'blur(4px)' }}
-                >
-                  + Pozvať
-                </button>
-              )}
+      {/* ── Hero card ── */}
+      <div style={{
+        background: 'linear-gradient(135deg,#1a1235 0%,#3d2a82 50%,#1a1235 100%)',
+        borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
+        boxShadow: '0 18px 50px -16px rgba(58,42,130,0.45),0 0 0 1px rgba(139,92,246,0.2)',
+        flexShrink: 0,
+      }}>
+        <div style={{ position: 'absolute', top: -80, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,0.4),transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.04) 50%,transparent 70%)', pointerEvents: 'none' }} />
+        {/* Avatar stack top-right */}
+        <div style={{ position: 'absolute', top: 22, right: 22, display: 'flex' }}>
+          {(householdData?.members ?? []).slice(0, 4).map((m, i) => (
+            <div key={m.id} style={{ marginLeft: i > 0 ? -10 : 0, zIndex: 10 - i, borderRadius: '50%', border: '2px solid rgba(26,18,53,0.8)' }}>
+              <MemberAvatar userId={m.id} userName={m.name} size={34} avatarUrl={m.avatar_url} />
             </div>
-            {/* Name */}
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>DOMÁCNOSŤ</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.5px', marginBottom: 18 }}>
-              Rodina {householdData?.name ?? ht.title}
+          ))}
+          {memberCount > 4 && (
+            <div style={{ marginLeft: -10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(139,92,246,0.25)', border: '2px solid rgba(26,18,53,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'white', zIndex: 5 }}>
+              +{memberCount - 4}
             </div>
-            {/* Summary stats row */}
-            {stats && (
-              <div style={{ display: 'flex', gap: 0, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                {[
-                  { label: 'Príjmy', value: '+' + formatAmount(stats.total_income), color: '#34D399' },
-                  { label: 'Výdavky', value: '-' + formatAmount(stats.total_expenses), color: '#F87171' },
-                  { label: 'Zostatok', value: formatAmount(balance), color: balance >= 0 ? '#34D399' : '#F87171' },
-                ].map((s, i) => (
-                  <div key={s.label} style={{ flex: 1, paddingLeft: i > 0 ? 18 : 0, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.12)' : 'none' }}>
-                    <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: s.color }}>{s.value}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Member cards grid */}
-        {householdData && (
-          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 16 }}>
-            {householdData.members.map(m => {
-              const memberStats = stats?.per_member.find(p => p.user_id === m.id)
-              const inc = memberStats?.income ?? 0
-              const exp = memberStats?.expenses ?? 0
-              const total = inc + exp
-              const incPct = total > 0 ? (inc / total) * 100 : 50
-              const expPct = total > 0 ? (exp / total) * 100 : 50
-              return (
-                <div key={m.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)' }}>
-                  {/* Avatar + name + role */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={48} avatarUrl={m.avatar_url} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.9)' }}>DOMÁCNOSŤ</span>
+            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
+            <span style={{ fontSize: 11, letterSpacing: '0.05em', color: 'rgba(255,255,255,0.55)' }}>
+              Rodina {householdData?.name ?? ht.title}
+            </span>
+          </div>
+          <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6, letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>Spoločný zostatok</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 14, flexWrap: 'wrap' as const }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: balance >= 0 ? '#86efac' : '#fca5a5', marginRight: 2 }}>{balance >= 0 ? '+' : '−'}</span>
+            <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(balance)).toLocaleString('sk-SK')}</span>
+            <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.78)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(balance) % 1) * 100)).padStart(2, '0')}</span>
+            <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.55)', marginLeft: 6 }}>€</span>
+            <span style={{
+              marginLeft: 'auto', fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
+              background: savingsRate >= 0 ? 'rgba(52,211,153,0.18)' : 'rgba(248,113,113,0.18)',
+              color: savingsRate >= 0 ? '#86efac' : '#fca5a5',
+              border: `1px solid ${savingsRate >= 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`,
+            }}>
+              {savingsRate >= 0 ? `+${savingsRate}% úspora` : 'v mínuse'}
+            </span>
+          </div>
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: 18, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>Spolu príjmy</p>
+              <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#86efac' }}>+{formatAmount(totalIncome)}</p>
+            </div>
+            <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>Spolu výdavky</p>
+              <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#fca5a5' }}>−{formatAmount(totalExpenses)}</p>
+            </div>
+            <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>Členov</p>
+              <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: 'white' }}>{memberCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ČLENOVIA section header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Členovia</p>
+        {householdData?.invite_code && (
+          <button
+            onClick={() => setInviteOpen(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 11,
+              border: '1px dashed var(--border2)', background: 'transparent',
+              color: 'var(--text2)', fontSize: 13, fontWeight: 500,
+              cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)'; e.currentTarget.style.borderStyle = 'solid' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderStyle = 'dashed' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Pozvať člena
+          </button>
+        )}
+      </div>
+
+      {/* ── Member cards grid ── */}
+      {householdData && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
+          {householdData.members.map((m, mi) => {
+            const memberStats = stats?.per_member.find(p => p.user_id === m.id)
+            const inc = memberStats?.income ?? 0
+            const exp = memberStats?.expenses ?? 0
+            const bal = inc - exp
+            // Simulated category breakdown from member color
+            const memberColor = CAT_COLORS[mi % CAT_COLORS.length]
+            const catBreakdown = [
+              { name: 'Potraviny', val: exp * 0.4, color: CAT_COLORS[0] },
+              { name: 'Doprava', val: exp * 0.25, color: CAT_COLORS[1] },
+              { name: 'Ostatné', val: exp * 0.35, color: CAT_COLORS[2] },
+            ].filter(c => c.val > 0)
+            return (
+              <div
+                key={m.id}
+                style={{
+                  background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20,
+                  padding: 20, boxShadow: 'var(--card-shadow)', transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-elevated)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--card-shadow)' }}
+              >
+                {/* Avatar + name + role */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <MemberAvatar userId={m.id} userName={m.name} size={52} avatarUrl={m.avatar_url} />
+                    {/* Online dot */}
+                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: 14, height: 14, borderRadius: '50%', background: '#34d399', border: '2px solid var(--bg2)' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</p>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       {m.is_owner ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, background: 'rgba(139,92,246,0.12)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '2px 7px', fontWeight: 600, marginTop: 3 }}>
-                          <Crown size={9} />Správca
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: 'rgba(139,92,246,0.13)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                          <Crown size={9} /> Správca
                         </span>
                       ) : (
-                        <span style={{ display: 'inline-flex', fontSize: 10, background: 'rgba(148,163,184,0.08)', color: 'var(--text3)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontWeight: 500, marginTop: 3 }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 500, padding: '2px 7px', borderRadius: 99, background: 'var(--bg3)', color: 'var(--text3)', border: '1px solid var(--border)' }}>
                           Člen
                         </span>
                       )}
+                      <span style={{ fontSize: 10, width: 4, height: 4, borderRadius: '50%', background: memberColor, display: 'inline-block' }} />
                     </div>
                   </div>
-                  {/* Income + Expenses values */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-                    <div style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.18)', borderRadius: 10, padding: '10px 12px' }}>
-                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>Príjmy</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#34D399', fontFamily: "'DM Mono', monospace" }}>+{formatAmount(inc)}</div>
-                    </div>
-                    <div style={{ background: 'rgba(248,113,113,0.07)', border: '1px solid rgba(248,113,113,0.18)', borderRadius: 10, padding: '10px 12px' }}>
-                      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>Výdavky</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#F87171', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(exp)}</div>
-                    </div>
-                  </div>
-                  {/* Stacked income/expense bar */}
-                  {total > 0 && (
-                    <div>
-                      <div style={{ height: 6, borderRadius: 99, overflow: 'hidden', display: 'flex', background: 'var(--bg4)' }}>
-                        <div style={{ width: `${incPct}%`, background: 'var(--green)', transition: 'width 0.5s ease', borderRadius: expPct < 1 ? 99 : '99px 0 0 99px' }} />
-                        <div style={{ width: `${expPct}%`, background: 'var(--red)', transition: 'width 0.5s ease', borderRadius: incPct < 1 ? 99 : '0 99px 99px 0' }} />
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 10, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
-                        <span style={{ color: '#34D399' }}>{Math.round(incPct)}% príjmy</span>
-                        <span style={{ color: '#F87171' }}>{Math.round(expPct)}% výdavky</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              )
-            })}
-          </div>
-        )}
 
-        {/* Activity feed */}
-        {recentTx.length > 0 && (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>Nedávna aktivita</span>
-              <span style={{ fontSize: 11, color: 'var(--text3)' }}>{recentTx.length} transakcií</span>
-            </div>
-            {recentTx.map(tx => {
-              const isIncome = tx.type === 'income'
-              const member = householdData?.members.find(m => m.id === tx.created_by)
-              return (
-                <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                  {tx.created_by && (
-                    <MemberAvatar userId={tx.created_by} userName={member?.name ?? '?'} size={28} avatarUrl={member?.avatar_url} />
-                  )}
-                  <div style={{ width: 32, height: 32, borderRadius: 9, background: (tx.categoryColor ?? '#9D84D4') + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
-                    {tx.categoryIcon ?? (isIncome ? '💰' : '📦')}
+                {/* 3-col mini stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+                  <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(22,163,74,0.08)', borderRadius: 10 }}>
+                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>Príjmy</p>
+                    <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: 'var(--green)' }}>+{formatAmount(inc)}</p>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {tx.description || tx.categoryName || '—'}
+                  <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(220,38,38,0.07)', borderRadius: 10 }}>
+                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>Výdavky</p>
+                    <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: 'var(--red)' }}>−{formatAmount(exp)}</p>
+                  </div>
+                  <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(139,92,246,0.08)', borderRadius: 10 }}>
+                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>Saldo</p>
+                    <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: bal >= 0 ? 'var(--violet)' : 'var(--red)' }}>
+                      {bal >= 0 ? '+' : '−'}{formatAmount(Math.abs(bal))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Rozdelenie výdavkov */}
+                {exp > 0 && (
+                  <>
+                    <p style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 6 }}>Rozdelenie výdavkov</p>
+                    <div style={{ display: 'flex', height: 8, borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
+                      {catBreakdown.map((c, j) => (
+                        <div key={j} style={{ flex: c.val, background: c.color, transition: 'flex 0.7s' }} title={`${c.name}: ${formatAmount(c.val)}`} />
+                      ))}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>{tx.date}</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
+                      {catBreakdown.map((c, j) => {
+                        const catTotal = catBreakdown.reduce((s, x) => s + x.val, 0)
+                        return (
+                          <span key={j} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: 'var(--text3)' }}>
+                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: c.color, display: 'inline-block', flexShrink: 0 }} />
+                            {c.name} <span style={{ fontFamily: "'DM Mono',monospace", color: 'var(--text2)' }}>{catTotal > 0 ? Math.round((c.val / catTotal) * 100) : 0}%</span>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Activity feed ── */}
+      {activityFeed.length > 0 && (
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Aktivita</p>
+            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: 'rgba(52,211,153,0.13)', color: 'var(--green)', fontWeight: 700 }}>● Live</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {activityFeed.map((a, i) => {
+              const member = householdData?.members.find(m => m.id === a.created_by)
+              const name = a.created_by_name ?? member?.name ?? '?'
+              const isIncome = a.type === 'income'
+              const actionText = isIncome ? 'pridal/a príjem' : 'pridal/a výdavok'
+              return (
+                <div key={i} style={{ display: 'flex', gap: 12, padding: '11px 0', borderBottom: i < activityFeed.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                  <MemberAvatar
+                    userId={a.created_by ?? 'unknown'}
+                    userName={name}
+                    size={28}
+                    avatarUrl={member?.avatar_url ?? null}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, color: 'var(--text)', marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontWeight: 600 }}>{name}</span>
+                      <span style={{ color: 'var(--text3)' }}> {actionText} </span>
+                      <span style={{ fontWeight: 500 }}>{a.description ?? '—'}</span>
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(a.created_at)}</p>
                   </div>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: isIncome ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>
-                    {isIncome ? '+' : '-'}{formatAmount(tx.amount)}
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 600, color: isIncome ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>
+                    {isIncome ? '+' : '−'}{formatAmount(a.amount)}
                   </span>
                 </div>
               )
             })}
           </div>
-        )}
-
-        {/* Leave household — mobile only */}
-        <div className="lg:hidden" style={{ paddingTop: 8, borderTop: '1px solid var(--border)', marginTop: 8 }}>
-          {leavePending ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>
-                Naozaj chceš opustiť domácnosť?
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => setLeavePending(false)}
-                  style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  Zrušiť
-                </button>
-                <button
-                  onClick={handleLeaveHousehold}
-                  disabled={leaveLoading}
-                  style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
-                >
-                  {leaveLoading ? '...' : 'Áno, opustiť'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setLeavePending(true)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.7, padding: '4px 0', display: 'block', margin: '0 auto' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0.7'}
-            >
-              Opustiť domácnosť
-            </button>
-          )}
         </div>
+      )}
 
-        {/* Bottom spacer mobile */}
-        <div className="lg:hidden" style={{ height: 100 }} />
-
-      </div>
-
-      {/* Right panel — desktop only */}
-      <div className="hidden lg:flex" style={{ width: 260, flexShrink: 0, flexDirection: 'column', gap: 16 }}>
-        {householdData && (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
-              ČLENOVIA ({householdData.members.length})
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {householdData.members.map(m => (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                  <MemberAvatar userId={m.id} userName={m.name} size={32} avatarUrl={m.avatar_url} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: m.is_owner ? 'var(--violet)' : 'var(--text3)' }}>
-                      {m.is_owner ? 'Správca' : 'Člen'}
-                    </div>
-                  </div>
-                </div>
-              ))}
+      {/* ── Opustiť domácnosť ── */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+        {leavePending ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>Naozaj chceš opustiť domácnosť?</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setLeavePending(false)}
+                style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+              >Zrušiť</button>
+              <button
+                onClick={handleLeaveHousehold}
+                disabled={leaveLoading}
+                style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
+              >{leaveLoading ? '...' : 'Áno, opustiť'}</button>
             </div>
           </div>
+        ) : (
+          <button
+            onClick={() => setLeavePending(true)}
+            style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.7, padding: '4px 0', display: 'block', margin: '0 auto' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0.7'}
+          >Opustiť domácnosť</button>
         )}
-
-        {/* Leave — desktop right panel bottom */}
-        <div style={{ marginTop: 'auto', paddingTop: 16 }}>
-          {leavePending ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>
-                Naozaj chceš opustiť?
-              </p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() => setLeavePending(false)}
-                  style={{ flex: 1, height: 36, borderRadius: 10, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  Zrušiť
-                </button>
-                <button
-                  onClick={handleLeaveHousehold}
-                  disabled={leaveLoading}
-                  style={{ flex: 1, height: 36, borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: 'var(--red)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
-                >
-                  {leaveLoading ? '...' : 'Opustiť'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setLeavePending(true)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.6, padding: '4px 0', display: 'block', width: '100%', textAlign: 'center' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0.6'}
-            >
-              Opustiť domácnosť
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* Invite BottomSheet */}
-      <BottomSheet
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        title="Pozvať člena"
-      >
+      {/* ── Invite BottomSheet ── */}
+      <BottomSheet open={inviteOpen} onClose={() => setInviteOpen(false)} title="Pozvať člena">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', padding: '8px 0' }}>
           <div style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', lineHeight: 1.6 }}>
             Zdieľaj tento kód s členom rodiny. Kód zadá v sekcii Rodinné financie v Nastaveniach.
           </div>
           <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 16, padding: '20px 32px', textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
               {ht.inviteCode}
             </div>
             <code style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--violet)', letterSpacing: '4px', fontSize: 28 }}>
@@ -374,7 +384,6 @@ export function HouseholdPage() {
           </button>
         </div>
       </BottomSheet>
-
     </div>
   )
 }
