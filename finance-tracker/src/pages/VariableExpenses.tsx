@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Edit2, Trash2, Plus, FileUp, Receipt, Search, X } from 'lucide-react'
+import { Edit2, Trash2, Plus, Receipt, Search, X } from 'lucide-react'
 
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -152,6 +152,11 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const MONTH_NAME_VAR = MONTH_NAMES_VAR[month - 1] ?? ''
 
   const totalAmount = useMemo(() => variableExpenses.reduce((sum, e) => sum + e.amount, 0), [variableExpenses])
+  const filteredTotal = useMemo(() =>
+    activeCategory
+      ? variableExpenses.filter(e => e.categoryId === activeCategory).reduce((sum, e) => sum + e.amount, 0)
+      : totalAmount
+  , [variableExpenses, activeCategory, totalAmount])
   const count = variableExpenses.length
   const avgAmount = count > 0 ? totalAmount / count : 0
   const maxAmount = variableExpenses.length > 0 ? Math.max(...variableExpenses.map(e => e.amount)) : 0
@@ -198,30 +203,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
-      {/* Header row */}
-      <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button
-            onClick={() => setCsvOpen(true)}
-            className="hidden lg:flex"
-            style={{ alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'transparent', border: '1.5px solid var(--violet)', color: 'var(--violet)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(124,58,237,0.08)'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
-          >
-            <FileUp size={15} />
-            Import CSV
-          </button>
-          <button
-            onClick={openAdd}
-            className="hidden lg:flex"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
-          >
-            <Plus size={16} />
-            {t.expenses.variable.add}
-          </button>
-        </div>
-      </div>
-
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="expense" />
 
       {/* Content row */}
@@ -250,10 +231,12 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               </div>
               <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
                 <span style={{fontSize:14,fontWeight:500,color:'#fca5a5',marginRight:4}}>−</span>
-                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalAmount).toLocaleString('sk-SK')}</span>
-                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalAmount%1)*100)).padStart(2,'0')}</span>
+                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(filteredTotal).toLocaleString('sk-SK')}</span>
+                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((filteredTotal%1)*100)).padStart(2,'0')}</span>
                 <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
-                <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 9px',borderRadius:99,background:'rgba(248,113,113,0.18)',color:'#fca5a5',border:'1px solid rgba(248,113,113,0.3)'}}>{count} transakcií</span>
+                <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 9px',borderRadius:99,background:'rgba(248,113,113,0.18)',color:'#fca5a5',border:'1px solid rgba(248,113,113,0.3)'}}>
+                  {activeCategory ? filteredSorted.length : count} transakcií{activeCategory ? ' vo filtri' : ''}
+                </span>
               </div>
             </div>
           </div>

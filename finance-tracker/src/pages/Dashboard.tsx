@@ -447,37 +447,22 @@ const upcomingFixed = useMemo(() => {
         </div>
 
         {/* Transaction count pill */}
-        <div style={{ marginBottom: 16 }}>
-          <button
-            onClick={() => onNavigate('variable-expenses')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 12px 7px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'inherit' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-          >
-            <span style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2.4" strokeLinecap="round">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-            </span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12.5, color: 'white', letterSpacing: '-0.2px' }}>{variableExpenses.length}</span>
-            <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>transakcií tento mesiac</span>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-
-        {/* Income/expense row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-          <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onNavigate('income')}>
-            <p style={{ fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' as const }}>Príjmy</p>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#6ee7b7' }}>+{formatAmount(animatedIncome)}</p>
-          </div>
-          <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
-          <div style={{ flex: 1, paddingLeft: 20, cursor: 'pointer' }} onClick={() => onNavigate('variable-expenses')}>
-            <p style={{ fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' as const }}>Výdavky</p>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#fca5a5' }}>-{formatAmount(animatedExpenses)}</p>
-          </div>
-        </div>
+        <button
+          onClick={() => onNavigate('variable-expenses')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 12px 7px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'inherit' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+        >
+          <span style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2.4" strokeLinecap="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12.5, color: 'white', letterSpacing: '-0.2px' }}>{variableExpenses.length}</span>
+          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>transakcií tento mesiac</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
     </div>
   )

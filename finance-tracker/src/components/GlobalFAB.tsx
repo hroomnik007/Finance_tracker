@@ -13,6 +13,7 @@ import { todayISO } from '../utils/format'
 type ModalType = 'income' | 'variable' | 'fixed' | 'category' | null
 
 const FAB_VISIBLE_PAGES = ['income', 'variable-expenses', 'fixed-expenses', 'categories']
+const ALL_ACTIVE_PAGES = [...FAB_VISIBLE_PAGES, 'dashboard']
 
 const PAGE_MODAL_MAP: Record<string, ModalType> = {
   'income': 'income',
@@ -43,12 +44,17 @@ interface GlobalFABProps {
 
 export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: GlobalFABProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null)
+  const [showTypeSelector, setShowTypeSelector] = useState(false)
   const [isMobile] = useState(() => window.innerWidth < 1024)
 
   useEffect(() => {
     if (!openTrigger) return
-    const modalType = PAGE_MODAL_MAP[currentPage] ?? 'variable'
-    setActiveModal(modalType)
+    if (currentPage === 'dashboard') {
+      setShowTypeSelector(true)
+    } else {
+      const modalType = PAGE_MODAL_MAP[currentPage] ?? 'variable'
+      setActiveModal(modalType)
+    }
   }, [openTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Data hooks ────────────────────────────────────────────────────────────
@@ -166,7 +172,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
     : '#34d399'
 
   // ── Only render on allowed pages ──────────────────────────────────────────
-  if (!FAB_VISIBLE_PAGES.includes(currentPage)) return null
+  if (!ALL_ACTIVE_PAGES.includes(currentPage)) return null
 
   const handleFABClick = () => {
     const modalType = PAGE_MODAL_MAP[currentPage]
@@ -191,6 +197,41 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
           <Plus size={26} />
         </button>
       )}
+
+      {/* ── TYPE SELECTOR (dashboard) ────────────────────────────────────── */}
+      <BottomSheet open={showTypeSelector} onClose={() => setShowTypeSelector(false)} title="Pridať záznam">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {([
+            { type: 'income' as ModalType, label: 'Príjem', icon: '💰', desc: 'Mzda, bonus, iný príjem', color: '#34d399' },
+            { type: 'variable' as ModalType, label: 'Výdavok', icon: '💸', desc: 'Nákup, jedlo, zábava...', color: '#f87171' },
+            { type: 'fixed' as ModalType, label: 'Fixný výdavok', icon: '🔒', desc: 'Nájom, predplatné, splátka', color: '#fbbf24' },
+            { type: 'category' as ModalType, label: 'Kategória', icon: '🏷️', desc: 'Nová kategória výdavkov', color: '#a78bfa' },
+          ]).map(item => (
+            <button
+              key={item.type}
+              onClick={() => { setShowTypeSelector(false); openModal(item.type) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 16px', borderRadius: 14,
+                background: 'var(--bg3)', border: '1px solid var(--border)',
+                cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg3)' }}
+            >
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: item.color + '1a', border: '1px solid ' + item.color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                {item.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>{item.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)' }}>{item.desc}</div>
+              </div>
+              <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
 
       {/* ── ADD INCOME modal ─────────────────────────────────────────────── */}
       <BottomSheet open={activeModal === 'income'} onClose={closeModal} title={t.income.addTitle}>

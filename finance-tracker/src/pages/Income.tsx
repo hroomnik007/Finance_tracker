@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, FileUp, TrendingUp } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 import { BottomSheet } from '../components/BottomSheet'
@@ -225,30 +225,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-
-      {/* Header row */}
-      <div className="hidden lg:flex" style={{ alignItems: 'center', justifyContent: 'flex-end', padding: '12px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', position: 'sticky', top: 0, zIndex: 20 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => setCsvOpen(true)}
-            className="hidden lg:flex"
-            style={{ alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'transparent', border: '1.5px solid var(--violet)', color: 'var(--violet)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(124,58,237,0.08)'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
-          >
-            <FileUp size={15} />
-            Import CSV
-          </button>
-          <button
-            onClick={openAdd}
-            className="hidden lg:flex"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
-          >
-            <Plus size={15} />
-            {t.income.add}
-          </button>
-        </div>
-      </div>
 
       {/* Content row */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
