@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Check, Pencil, Delete } from 'lucide-react'
+import { X, Check, Pencil, Delete, ChevronRight } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
-import { updateAvatar, changePassword } from '../api/auth'
+import { updateAvatar, changePassword, updateUserSettings } from '../api/auth'
 import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
 import { useSettingsContext } from '../context/SettingsContext'
@@ -32,7 +32,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     isPhotoUrl(user?.avatarUrl) ? user!.avatarUrl! : null
   )
   const [photoUploading, setPhotoUploading] = useState(false)
-  const [profileSaveOk, setProfileSaveOk] = useState(false)
 
   const { setupPin, removePin, hasPin, verifyPin } = usePinLockContext()
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
@@ -54,6 +53,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [changePwLoading, setChangePwLoading] = useState(false)
   const [changePwError, setChangePwError] = useState<string | null>(null)
   const [changePwOk, setChangePwOk] = useState(false)
+  const [defaultPageDraft, setDefaultPageDraft] = useState<string>(user?.defaultPage ?? 'dashboard')
+  const [defaultPageSaveOk, setDefaultPageSaveOk] = useState(false)
 
   async function handleChangePassword() {
     setChangePwError(null)
@@ -130,8 +131,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         await refreshUser()
       } catch { /* non-critical */ }
     }
-    setProfileSaveOk(true)
-    setTimeout(() => setProfileSaveOk(false), 2000)
   }
 
   function handlePhotoUpload() {
@@ -215,7 +214,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Avatar — LEFT */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div
-                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer' }}
+                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
                 onClick={handlePhotoUpload}
               >
                 {photoUrl ? (
@@ -346,193 +345,209 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
           {/* ── Tab: Profil ── */}
           {tab === 'profile' && (
-            <>
-              {!editMode ? (
-                <>
-                  {/* Action buttons */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '20px 24px 24px' }}>
-                    <button
-                      onClick={() => setEditMode(true)}
-                      style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                    >
-                      Upraviť profil
-                    </button>
-                    <button
-                      onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
-                      style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                    >
-                      Zmeniť heslo
-                    </button>
-                    {!hasPin ? (
-                      <button
-                        onClick={() => setPinSetupOpen(true)}
-                        style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                      >
-                        Nastaviť PIN
-                      </button>
+            <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* OSOBNÉ ÚDAJE section */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>OSOBNÉ ÚDAJE</div>
+                <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+                  {/* Meno row */}
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Meno</span>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={profileNameDraft}
+                        onChange={e => setProfileNameDraft(e.target.value)}
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') { handleSaveProfile(); setEditMode(false) } }}
+                        style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: 'inherit', padding: 0 }}
+                      />
                     ) : (
-                      <button
-                        onClick={() => { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }}
-                        style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                      >
-                        Zmeniť / Odstrániť PIN
-                      </button>
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{user?.name || ctxName || '—'}</span>
                     )}
                     <button
-                      onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
-                      style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                      onClick={() => { if (editMode) { handleSaveProfile(); setEditMode(false) } else setEditMode(true) }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: editMode ? '#34d399' : 'var(--text3)', padding: 4, display: 'flex', alignItems: 'center' }}
                     >
-                      Exportovať dáta
+                      {editMode ? <Check size={14} /> : <Pencil size={13} />}
                     </button>
-                    {onLogout && (
-                      <button
-                        onClick={() => setLogoutConfirm(true)}
-                        style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                      >
-                        Odhlásiť sa
-                      </button>
-                    )}
                   </div>
-                </>
-              ) : (
-                /* EDIT MODE */
-                <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Upraviť profil</p>
-
-                  {/* Photo upload */}
-                  <button
-                    onClick={handlePhotoUpload}
-                    disabled={photoUploading}
-                    style={{ alignSelf: 'flex-start', fontSize: 13, fontWeight: 500, color: 'var(--violet)', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
-                  >
-                    {photoUploading ? 'Nahrávam...' : 'Nahrať foto'}
-                  </button>
-
-                  {/* Name input */}
-                  <div>
-                    <label className="form-label">Meno</label>
-                    <input
-                      type="text"
-                      placeholder="Zadaj svoje meno"
-                      value={profileNameDraft}
-                      onChange={e => setProfileNameDraft(e.target.value)}
-                      className="input-field"
-                      style={{ height: 44 }}
-                    />
+                  {/* Email row */}
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Email</span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email ?? '—'}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)', letterSpacing: '0.06em', flexShrink: 0, marginLeft: 6 }}>VERIF.</span>
                   </div>
-
-                  {/* Save / Cancel */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                    {profileSaveOk ? (
-                      <div style={{ width: '100%', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                        <Check size={16} /> Uložené
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => { handleSaveProfile(); setEditMode(false) }}
-                        style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 15, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-                      >
-                        Uložiť
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setEditMode(false)}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text3)', fontFamily: 'inherit', padding: '8px 0', textAlign: 'center' }}
-                    >
-                      Zrušiť
-                    </button>
+                  {/* Telefón row */}
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Telefón</span>
+                    <span style={{ flex: 1, fontSize: 13, color: 'var(--text3)' }}>—</span>
+                  </div>
+                  {/* Krajina row */}
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Krajina</span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>🇸🇰 Slovensko</span>
                   </div>
                 </div>
-              )}
-            </>
-          )}
-
-          {/* ── Tab: Účet ── */}
-          {tab === 'account' && (
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Plan card */}
-              <div style={{ borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,215,100,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>👑</div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Finvu Pro</div>
-                    <div style={{ fontSize: 12, color: 'var(--text3)' }}>Všetky funkcie odomknuté</div>
-                  </div>
-                </div>
-                {user?.createdAt && (
-                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, fontFamily: "'DM Mono',monospace" }}>
-                    Registrácia: {new Date(user.createdAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </div>
-                )}
               </div>
 
-              {/* Email info */}
-              <div style={{ borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', padding: '14px 20px' }}>
-                <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Email</div>
-                <div style={{ fontSize: 14, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{user?.email ?? '—'}</div>
-              </div>
-
-              {/* Security section */}
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 8 }}>Bezpečnosť</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button
-                  onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+              {/* PREDVOLENÁ STRÁNKA */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>PREDVOLENÁ STRÁNKA</div>
+                <select
+                  value={defaultPageDraft}
+                  onChange={e => setDefaultPageDraft(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', fontSize: 13, fontFamily: "'DM Sans',sans-serif", outline: 'none', cursor: 'pointer' }}
                 >
-                  Zmeniť heslo
-                </button>
-                {!hasPin ? (
-                  <button
-                    onClick={() => setPinSetupOpen(true)}
-                    style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
-                  >
-                    Nastaviť PIN
-                  </button>
+                  <option value="dashboard">Prehľad</option>
+                  <option value="income">Príjmy</option>
+                  <option value="variable-expenses">Variabilné výdavky</option>
+                  <option value="fixed-expenses">Fixné výdavky</option>
+                  <option value="categories">Kategórie</option>
+                  <option value="savings">Sporenie</option>
+                </select>
+              </div>
+
+              {/* Footer buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {defaultPageSaveOk ? (
+                  <div style={{ width: '100%', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                    <Check size={15} /> Uložené
+                  </div>
                 ) : (
                   <button
-                    onClick={() => { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }}
-                    style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                    onClick={async () => {
+                      try {
+                        await updateUserSettings({ defaultPage: defaultPageDraft })
+                        setDefaultPageSaveOk(true)
+                        setTimeout(() => setDefaultPageSaveOk(false), 2000)
+                      } catch { /* non-critical */ }
+                    }}
+                    style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
                   >
-                    Zmeniť / Odstrániť PIN
+                    Uložiť zmeny
+                  </button>
+                )}
+                {onLogout && (
+                  <button
+                    onClick={() => setLogoutConfirm(true)}
+                    style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 14, background: 'transparent', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                  >
+                    Odhlásiť sa
                   </button>
                 )}
               </div>
             </div>
           )}
 
+          {/* ── Tab: Účet ── */}
+          {tab === 'account' && (
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Plan card */}
+              <div style={{ borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,215,100,0.15)', border: '1px solid rgba(255,215,100,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>👑</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Finvu Pro</div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>
+                    {user?.createdAt ? `Člen od ${new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}` : 'Všetky funkcie odomknuté'}
+                  </div>
+                </div>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,215,100,0.15)', color: '#fde68a', border: '1px solid rgba(255,215,100,0.3)', letterSpacing: '0.06em', flexShrink: 0 }}>AKTÍVNY</span>
+              </div>
+
+              {/* BEZPEČNOSŤ */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>BEZPEČNOSŤ</div>
+                <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+                  {/* Row 1: Zmeniť heslo */}
+                  <button
+                    onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔐</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Zmeniť heslo</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Ochrana hesla účtu</div>
+                    </div>
+                    <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                  </button>
+
+                  {/* Row 2: PIN */}
+                  <button
+                    onClick={() => {
+                      if (!hasPin) { setPinSetupOpen(true) }
+                      else { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }
+                    }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: hasPin ? 'rgba(16,185,129,0.12)' : 'rgba(100,116,139,0.12)', border: `1px solid ${hasPin ? 'rgba(16,185,129,0.2)' : 'rgba(100,116,139,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔢</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Prístupový PIN</div>
+                      <div style={{ fontSize: 11, marginTop: 1, color: hasPin ? '#34d399' : 'var(--text3)' }}>{hasPin ? 'Aktívny — zmeniť alebo odstrániť' : 'Neaktívny — nastaviť PIN zámok'}</div>
+                    </div>
+                    <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                  </button>
+
+                  {/* Row 3: 2FA (disabled / coming soon) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', opacity: 0.5 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(100,116,139,0.12)', border: '1px solid rgba(100,116,139,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🛡️</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Dvojfaktorové overenie</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Čoskoro dostupné</div>
+                    </div>
+                    <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Export data */}
+              <button
+                onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
+                style={{ width: '100%', height: 44, borderRadius: 12, fontSize: 13, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+              >
+                Exportovať dáta
+              </button>
+            </div>
+          )}
+
           {/* ── Tab: Úspechy ── */}
           {tab === 'achievements' && (
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600 }}>Získané 3 z 8</div>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>ZÍSKANÉ (3 z 8)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[
-                  { emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', unlocked: true },
-                  { emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', unlocked: true },
-                  { emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', unlocked: true },
-                  { emoji: '📊', name: 'Analytik', desc: 'Prvý report', unlocked: false },
-                  { emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', unlocked: false },
-                  { emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', unlocked: false },
-                  { emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', unlocked: false },
-                  { emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', unlocked: false },
+                  { emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', unlocked: true, color: '#7C3AED' },
+                  { emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', unlocked: true, color: '#FB923C' },
+                  { emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', unlocked: true, color: '#34D399' },
+                  { emoji: '📊', name: 'Analytik', desc: 'Prvý report', unlocked: false, color: '#60a5fa' },
+                  { emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', unlocked: false, color: '#FBBF24' },
+                  { emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', unlocked: false, color: '#F59E0B' },
+                  { emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', unlocked: false, color: '#A78BFA' },
+                  { emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', unlocked: false, color: '#67E8F9' },
                 ].map((a, i) => (
                   <div
                     key={i}
                     style={{
                       background: 'var(--bg3)',
-                      border: a.unlocked ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border)',
+                      border: a.unlocked ? `1px solid ${a.color}40` : '1px solid var(--border)',
                       borderRadius: 12,
-                      padding: 14,
-                      opacity: a.unlocked ? 1 : 0.5,
-                      filter: a.unlocked ? 'none' : 'grayscale(0.6)',
+                      padding: '12px 14px',
+                      opacity: a.unlocked ? 1 : 0.45,
+                      filter: a.unlocked ? 'none' : 'grayscale(0.7)',
+                      transition: 'opacity 0.2s',
                     }}
                   >
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? 'rgba(139,92,246,0.15)' : 'var(--bg4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'var(--bg4)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                         {a.emoji}
                       </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{a.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text3)' }}>{a.desc}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{a.desc}</div>
                       </div>
                     </div>
                   </div>

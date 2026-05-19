@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Plus, Pencil, Trash2, PiggyBank, Target, CalendarDays } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
@@ -46,7 +46,7 @@ function daysUntil(deadline: string): number {
   return Math.round((target.getTime() - today.getTime()) / 86400000)
 }
 
-export function SavingsPage() {
+export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   const { goals, addGoal, updateGoal, deleteGoal } = useSavings()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
@@ -63,6 +63,10 @@ export function SavingsPage() {
   const [formColor, setFormColor] = useState('#7C3AED')
   const [formNote, setFormNote] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (openAddTrigger) openAdd()
+  }, [openAddTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)

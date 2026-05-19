@@ -116,6 +116,7 @@ function App() {
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024)
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false)
   const [fabTrigger, setFabTrigger] = useState(0)
+  const [savingsFabTrigger, setSavingsFabTrigger] = useState(0)
 
   useEffect(() => {
     const handler = () => setIsDesktop(window.innerWidth >= 1024)
@@ -400,7 +401,7 @@ function App() {
           dashView={dashView}
           onDashViewChange={handleDashViewChange}
           onOpenProfile={() => setIsProfileOpen(true)}
-          onOpenAdd={() => setFabTrigger(v => v + 1)}
+          onOpenAdd={() => { if (page === 'savings') setSavingsFabTrigger(v => v + 1); else setFabTrigger(v => v + 1) }}
           onNavigate={setPage}
         />
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -425,7 +426,7 @@ function App() {
               </div>
             </div>
           )}
-          {page === 'savings' && <SavingsPage />}
+          {page === 'savings' && <SavingsPage openAddTrigger={savingsFabTrigger} />}
         </div>
       </main>
 

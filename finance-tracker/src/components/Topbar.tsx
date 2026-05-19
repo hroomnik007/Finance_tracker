@@ -57,7 +57,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   const streak = user?.currentStreak ?? 0
   const showMonth = MONTH_PAGES.includes(page)
   const showToggle = householdEnabled && page === 'dashboard'
-  const showAdd = true
+  const showAdd = !(['household', 'settings'] as string[]).includes(page)
 
   const dayName = new Intl.DateTimeFormat('sk-SK', { weekday: 'long' }).format(now)
   const dayNameLower = dayName.charAt(0).toLowerCase() + dayName.slice(1)
