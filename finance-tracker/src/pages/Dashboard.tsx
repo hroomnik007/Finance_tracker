@@ -1,8 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
-  PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
-  AreaChart, Area, XAxis, CartesianGrid,
-  BarChart, Bar,
+  PieChart, Pie, Cell, Sector, ResponsiveContainer,
 } from 'recharts'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { useIncomes } from '../hooks/useIncomes'
@@ -14,16 +12,13 @@ import { useTranslation } from '../i18n'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { getSummary, getSummaryCards } from '../api/transactions'
-import { getMyHousehold } from '../api/households'
 import { updateUserSettings } from '../api/auth'
-import { MemberAvatar } from '../components/MemberAvatar'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useSavings } from '../hooks/useSavings'
 import { useCountUp } from '../hooks/useCountUp'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
-import type { HouseholdMember } from '../api/households'
 
 function getLast6Months(monthsShort: string[]) {
   const now = new Date()
@@ -47,95 +42,6 @@ function getGreeting(name: string, t: Translations): { text: string; emoji: stri
 }
 
 
-// ── Local helper components ────────────────────────────────────────────────
-
-
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{
-      background: 'var(--bg2)',
-      border: '1px solid var(--border)',
-      borderRadius: 20,
-      padding: '20px',
-    }}>
-      <h3 className="t-label" style={{ margin: '0 0 16px' }}>{title}</h3>
-      {children}
-    </div>
-  )
-}
-
-function SparklineMini({ data, color = 'var(--violet)', id }: { data: number[]; color?: string; id: string }) {
-  if (!data || data.length < 2) return null
-  const width = 100, height = 24
-  const max = Math.max(...data), min = Math.min(...data), range = max - min || 1
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * width
-    const y = height - ((v - min) / range) * (height - 3) - 1.5
-    return `${x},${y}`
-  })
-  const line = `M ${pts.join(' L ')}`
-  const area = `M ${pts[0]} L ${pts.join(' L ')} L ${width},${height} L 0,${height} Z`
-  const gid = `spm-${id}`
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none" style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#${gid})`} />
-      <path d={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function ForecastCard({ totalIncome: fi, totalExpenses: fe }: { totalIncome: number; totalExpenses: number }) {
-  const now = new Date()
-  const dayOfMonth = now.getDate()
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const dailyAvg = dayOfMonth > 0 ? fe / dayOfMonth : 0
-  const prediction = dailyAvg * daysInMonth
-  const predictedBalance = fi - prediction
-  const progress = Math.min(dayOfMonth / daysInMonth, 1)
-  const ringR = 32, ringC = 2 * Math.PI * ringR
-  const isPositive = predictedBalance >= 0
-
-  return (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, right: 0, width: 80, height: 80, background: isPositive ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)', filter: 'blur(20px)', borderRadius: '50%' }} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, position: 'relative' }}>
-        <span style={{ fontSize: 14 }}>🔮</span>
-        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Predikcia ku koncu mesiaca</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
-        <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
-          <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="36" cy="36" r={ringR} fill="none" stroke="var(--bg4)" strokeWidth="6" />
-            <circle cx="36" cy="36" r={ringR} fill="none" stroke={isPositive ? 'var(--green)' : 'var(--red)'} strokeWidth="6"
-              strokeDasharray={`${ringC * progress} ${ringC}`} strokeLinecap="round"
-              style={{ transition: 'stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)' }} />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{Math.round(progress * 100)}%</span>
-            <span style={{ fontSize: 9, color: 'var(--text3)' }}>mesiaca</span>
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 10.5, color: 'var(--text3)', fontWeight: 500, marginBottom: 3 }}>Predpokladaný zostatok</p>
-          <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 18, color: isPositive ? 'var(--green)' : 'var(--red)', lineHeight: 1.1, marginBottom: 4 }}>
-            {isPositive ? '+' : ''}{predictedBalance.toFixed(2).replace('.', ',')} €
-          </p>
-          <p style={{ fontSize: 10.5, color: 'var(--text3)', fontFamily: "'DM Mono',monospace" }}>
-            Tempo: {dailyAvg.toFixed(2).replace('.', ',')} €/deň
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface DashboardProps {
@@ -145,25 +51,11 @@ interface DashboardProps {
   dashView: 'personal' | 'family'
 }
 
-const TOOLTIP_STYLE = {
-  background: 'var(--bg2)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  padding: '8px 12px',
-  color: 'var(--text)',
-  fontFamily: "'DM Sans', sans-serif",
-  fontSize: 13,
-}
-
-
 export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
-  const [donutFilter, setDonutFilter] = useState<string | null>(null)
-  const [recentTab, setRecentTab] = useState<'income' | 'expenses'>('expenses')
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
-const [members, setMembers] = useState<HouseholdMember[]>([])
   const [streakTapped, setStreakTapped] = useState(false)
   const [summaryCards, setSummaryCards] = useState<{ balance: number; income: number; expenses: number; savingsRate: number } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
@@ -176,7 +68,7 @@ const [members, setMembers] = useState<HouseholdMember[]>([])
   const { categories } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses })
   const { goals: savingsGoals } = useSavings()
-  const { formatAmount, formatDate } = useFormatters()
+  const { formatAmount } = useFormatters()
   const { t } = useTranslation()
   const { profileName } = useSettingsContext()
   const { user, refreshUser } = useAuth()
@@ -201,20 +93,6 @@ const [members, setMembers] = useState<HouseholdMember[]>([])
   const totalVariable = useMemo(() => variableExpenses.reduce((s, v) => s + v.amount, 0), [variableExpenses])
   const totalExpenses = totalFixed + totalVariable
   const balance = totalIncome - totalExpenses
-
-const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
-  const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
-
-  const last5 = useMemo(() => {
-    const base = donutFilter
-      ? variableExpenses.filter(e => getCategoryById(e.categoryId)?.name === donutFilter)
-      : variableExpenses
-    return [...base].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  }, [variableExpenses, donutFilter, getCategoryById])
-
-  const last5Incomes = useMemo(() =>
-    [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  , [incomes])
 
   const pieData = useMemo(() =>
     categories
@@ -254,12 +132,6 @@ const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [ca
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, year, user?.tracking_start_date, user?.createdAt])
 
-useEffect(() => {
-    if (householdEnabled && user?.household_id) {
-      getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
-    }
-  }, [householdEnabled, user?.household_id])
-
   useEffect(() => {
     getSummaryCards(year, month).then(d => setSummaryCards(d)).catch(() => {})
   }, [year, month])
@@ -283,8 +155,6 @@ useEffect(() => {
     )
   }
 
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light'
-  const axisTickColor = isLight ? '#6B7280' : '#9D84D4'
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const now = new Date()
@@ -446,6 +316,32 @@ const upcomingFixed = useMemo(() => {
           )}
         </div>
 
+        {/* PRÍJMY / VÝDAVKY 2-col grid inside hero */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', margin: 0 }}>PRÍJMY</p>
+              {incomeChangePct !== null && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 99, background: incomeChangePct >= 0 ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)', color: incomeChangePct >= 0 ? '#6ee7b7' : '#fca5a5' }}>
+                  {incomeChangePct >= 0 ? '↑' : '↓'} {Math.abs(incomeChangePct).toFixed(1).replace('.', ',')}%
+                </span>
+              )}
+            </div>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#86efac', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedIncome)}</p>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', margin: 0 }}>VÝDAVKY</p>
+              {expChangePct !== null && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 99, background: expChangePct <= 0 ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)', color: expChangePct <= 0 ? '#6ee7b7' : '#fca5a5' }}>
+                  {expChangePct >= 0 ? '↑' : '↓'} {Math.abs(expChangePct).toFixed(1).replace('.', ',')}%
+                </span>
+              )}
+            </div>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#fca5a5', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
+          </div>
+        </div>
+
         {/* Transaction count pill */}
         <button
           onClick={() => onNavigate('variable-expenses')}
@@ -464,113 +360,6 @@ const upcomingFixed = useMemo(() => {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
-    </div>
-  )
-
-  // Bento stat cards
-  const savRingR = 22, savRingC = 2 * Math.PI * savRingR
-  const savRingProgress = Math.max(0, Math.min(savRate, 100)) / 100
-  const bentoStatCards = (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px 14px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
-          <svg width="56" height="56" viewBox="0 0 60 60" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="30" cy="30" r={savRingR} fill="none" stroke="var(--bg4)" strokeWidth="5" />
-            <circle cx="30" cy="30" r={savRingR} fill="none" stroke="var(--violet)" strokeWidth="5" strokeLinecap="round"
-              strokeDasharray={`${savRingC * savRingProgress} ${savRingC}`}
-              style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1)' }} />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{savRate}%</span>
-          </div>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <p className="t-label" style={{ marginBottom: 3 }}>Úspora</p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.15, marginBottom: 2 }}>{savRate >= 30 ? 'Výborne!' : savRate >= 15 ? 'Dobre' : savRate >= 0 ? 'Pokračujte' : 'Pozor!'}</p>
-          <p style={{ fontSize: 11, color: 'var(--text3)' }}>z mesačných príjmov</p>
-        </div>
-      </div>
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p className="t-label" style={{ margin: 0 }}>Príjmy</p>
-          {incomeChangePct !== null && (
-            <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: incomeChangePct >= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.12)', color: incomeChangePct >= 0 ? 'var(--green)' : 'var(--red)' }}>
-              {incomeChangePct >= 0 ? '↑' : '↓'} {Math.abs(incomeChangePct).toFixed(1).replace('.', ',')}%
-            </span>
-          )}
-        </div>
-        <p className="t-amount" style={{ fontSize: 18, lineHeight: 1.1 }}>{formatAmount(animatedIncome)}</p>
-        <div style={{ marginTop: 'auto', height: 24 }}>
-          {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.income)} color="var(--green)" id="income" />}
-        </div>
-      </div>
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p className="t-label" style={{ margin: 0 }}>Výdavky</p>
-          {expChangePct !== null && (
-            <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: expChangePct <= 0 ? 'rgba(22,163,74,0.12)' : 'rgba(217,119,6,0.12)', color: expChangePct <= 0 ? 'var(--green)' : 'var(--warning)' }}>
-              {expChangePct >= 0 ? '↑' : '↓'} {Math.abs(expChangePct).toFixed(1).replace('.', ',')}%
-            </span>
-          )}
-        </div>
-        <p className="t-amount" style={{ fontSize: 18, lineHeight: 1.1 }}>{formatAmount(animatedExpenses)}</p>
-        <div style={{ marginTop: 'auto', height: 24 }}>
-          {chartData.length >= 2 && <SparklineMini data={chartData.map(d => d.expenses)} color="var(--red)" id="expenses" />}
-        </div>
-      </div>
-    </div>
-  )
-
-
-
-  const expenseCharts = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {chartData.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 16 }}>
-          <ChartCard title="VÝVOJ PRÍJMOV A VÝDAVKOV">
-            <ResponsiveContainer width="100%" height={160} style={{ overflow: 'visible' }}>
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#34D399" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F87171" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#F87171" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} formatter={(val) => formatAmount(Number(val))} allowEscapeViewBox={{ x: false, y: false }} wrapperStyle={{ zIndex: 100 }} />
-                <Area type="monotone" dataKey="income" name={t.nav.income} stroke="#34D399" strokeWidth={2} fill="url(#fillIncome)" dot={false} />
-                <Area type="monotone" dataKey="expenses" name={t.nav.expenses} stroke="#F87171" strokeWidth={2} fill="url(#fillExpenses)" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text3)' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34D399', flexShrink: 0 }} />
-                {t.nav.income}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text3)' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F87171', flexShrink: 0 }} />
-                {t.nav.expenses}
-              </span>
-            </div>
-          </ChartCard>
-          <ChartCard title={t.dashboard.monthComparison}>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0,0,0,0.06)' : '#4C3A8A4D'} vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: axisTickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#A78BFA' }} formatter={(val) => formatAmount(Number(val))} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                <Bar dataKey="income" name={t.nav.income} fill="#34D399" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" name={t.nav.expenses} fill="#F87171" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-      )}
     </div>
   )
 
@@ -608,13 +397,30 @@ const upcomingFixed = useMemo(() => {
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
-            {legendItems.map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
-                <span style={{ fontSize: 12, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
-              </div>
-            ))}
+            {legendItems.map((item, i) => {
+              const isClicked = clickedIndex !== null && pieData[clickedIndex]?.name === item.name
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, cursor: 'pointer',
+                    padding: '3px 6px', borderRadius: 6, margin: '0 -6px',
+                    background: isClicked ? 'rgba(139,92,246,0.12)' : 'transparent',
+                    border: isClicked ? '1px solid rgba(139,92,246,0.2)' : '1px solid transparent',
+                    transition: 'all 0.15s',
+                  }}
+                  onClick={e => {
+                    e.stopPropagation()
+                    const idx = pieData.findIndex(d => d.name === item.name)
+                    if (idx !== -1) setClickedIndex(prev => prev === idx ? null : idx)
+                  }}
+                >
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
+                  <span style={{ fontSize: 12, color: isClicked ? 'var(--text)' : 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isClicked ? 700 : 400 }}>{item.name}</span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
+                </div>
+              )
+            })}
             {remainingPieCount > 0 && (
               <button
                 onClick={() => setShowAllPie(p => !p)}
@@ -643,7 +449,6 @@ const upcomingFixed = useMemo(() => {
                   onMouseLeave={() => setActiveIndex(null)}
                   onClick={(_: unknown, index: number) => {
                     setClickedIndex(prev => prev === index ? null : index)
-                    setDonutFilter(prev => prev === pieData[index]?.name ? null : (pieData[index]?.name ?? null))
                   }}
                   style={{ cursor: 'pointer' }}
                 >
@@ -694,118 +499,6 @@ const upcomingFixed = useMemo(() => {
       categories={categories}
       onNavigate={onNavigate}
     />
-  )
-
-  const rightPanelTransactions = (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-      {/* Header: label + "Všetky" link */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{t.dashboard.recentTransactions}</p>
-        <button
-          onClick={() => onNavigate(recentTab === 'income' ? 'income' : 'variable-expenses')}
-          style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.1s' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--violet)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text3)' }}
-        >
-          {t.dashboard.showAll} →
-        </button>
-      </div>
-
-      {/* Tab toggle: Príjmy / Výdavky */}
-      <div style={{ display: 'inline-flex', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, padding: 3, gap: 2, marginBottom: 12 }}>
-        {([['income', 'Príjmy', 'var(--green)'], ['expenses', 'Výdavky', 'var(--red)']] as const).map(([tab, label, dotColor]) => {
-          const active = recentTab === tab
-          return (
-            <button key={tab} onClick={() => setRecentTab(tab)} style={{
-              padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
-              background: active ? 'var(--bg2)' : 'transparent',
-              color: active ? 'var(--text)' : 'var(--text3)',
-              transition: 'all 0.15s',
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* DonutFilter badge */}
-      {donutFilter && recentTab === 'expenses' && (
-        <button
-          onClick={() => { setDonutFilter(null); setClickedIndex(null) }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10,
-            fontSize: 11, color: 'var(--violet)', background: 'rgba(139,92,246,0.1)',
-            border: '1px solid rgba(139,92,246,0.2)', padding: '3px 9px', borderRadius: 8,
-            cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          <span>Filter: {donutFilter}</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      )}
-
-      {/* Transaction list */}
-      {recentTab === 'expenses' ? (
-        last5.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {last5.map(expense => {
-              const cat = getCategoryById(expense.categoryId)
-              const member = householdEnabled && expense.created_by ? members.find(m => m.id === expense.created_by) : null
-              return (
-                <div key={expense.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, background: (cat?.color ?? '#9D84D4') + '33' }}>
-                    {cat?.icon ?? '📦'}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{expense.note || cat?.name}</p>
-                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(expense.date)}</p>
-                  </div>
-                  {member && <MemberAvatar userId={member.id} userName={member.name} size={20} />}
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(expense.amount)}</span>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.noExpenses}</p>
-        )
-      ) : (
-        last5Incomes.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {last5Incomes.map(income => (
-              <div key={income.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0, background: 'rgba(52,211,153,0.15)' }}>
-                  💰
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{income.label}</p>
-                  <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{formatDate(income.date)}</p>
-                </div>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: 'var(--green)', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p style={{ fontSize: 12, color: 'var(--text3)' }}>Žiadne príjmy tento mesiac</p>
-        )
-      )}
-
-      <button
-        onClick={() => onNavigate(recentTab === 'income' ? 'income' : 'variable-expenses')}
-        className="lg:hidden"
-        style={{
-          width: '100%', marginTop: 8, padding: '8px 12px',
-          background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10,
-          color: 'var(--text3)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
-        }}
-      >
-        {t.dashboard.showAll} →
-      </button>
-    </div>
   )
 
   const rightPanelCards = (
@@ -864,35 +557,11 @@ const upcomingFixed = useMemo(() => {
         )}
       </div>
 
-      {totalExpenses > 0 && (
-        <ForecastCard totalIncome={heroIncome} totalExpenses={heroExpenses} />
-      )}
-
       {motivationalMsg && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderLeft: `3px solid ${motivationalMsg.color}`, borderRadius: 16, padding: 16 }}>
           <p style={{ fontSize: 14, color: motivationalMsg.color, margin: 0 }}>{motivationalMsg.msg}</p>
         </div>
       )}
-
-      {totalExpenses > 0 && (() => {
-        const prediction = dailyAvgExpense * daysInMonth
-        const prevTotal = prevMonthData?.expenses ?? 0
-        const diff = prediction - prevTotal
-        return (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 8px' }}>{t.dashboard.expensePrediction}</p>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 24, color: '#F87171', margin: '0 0 4px' }}>{formatAmount(prediction)}</p>
-            <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
-              {dailyAvgExpense.toFixed(2)} €/deň × {daysInMonth} dní
-            </p>
-            {prevTotal > 0 && (
-              <p style={{ fontSize: 12, color: diff > 0 ? '#F87171' : '#34D399', margin: '4px 0 0' }}>
-                {diff > 0 ? '▲' : '▼'} {formatAmount(Math.abs(diff))} {t.dashboard.vsLastMonth}
-              </p>
-            )}
-          </div>
-        )
-      })()}
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.monthComparison}</p>
@@ -970,7 +639,6 @@ const upcomingFixed = useMemo(() => {
         </div>
       )}
 
-      {rightPanelTransactions}
     </>
   )
 
@@ -1082,9 +750,7 @@ const upcomingFixed = useMemo(() => {
       <div className="flex flex-col gap-4 lg:hidden">
         <div>{greetingRow}</div>
         {heroSection}
-        {bentoStatCards}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {expenseCharts}
           {pieChartCard}
           {heatmapCard}
         </div>
@@ -1102,13 +768,9 @@ const upcomingFixed = useMemo(() => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
           {greetingDesktop}
           {heroSection}
-          {bentoStatCards}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {expenseCharts}
-            <div className="grid grid-cols-2" style={{ gap: 16 }}>
-              {heatmapCard}
-              {pieChartCard}
-            </div>
+          <div className="grid grid-cols-2" style={{ gap: 16 }}>
+            {heatmapCard}
+            {pieChartCard}
           </div>
         </div>
 

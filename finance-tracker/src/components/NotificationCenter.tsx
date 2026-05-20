@@ -18,6 +18,16 @@ interface Notification {
   target?: Page
 }
 
+const NOTIF_READ_KEY = 'finvu_read_notifications'
+
+function getReadIds(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(NOTIF_READ_KEY) ?? '[]')) } catch { return new Set() }
+}
+
+function saveReadIds(ids: Set<string>) {
+  try { localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...ids])) } catch { /* ignore */ }
+}
+
 interface NotificationCenterProps {
   onNavigate?: (page: Page) => void
 }
@@ -158,13 +168,18 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         break
       }
 
-      setNotifications(ns)
+      const readIds = getReadIds()
+      setNotifications(ns.map(n => readIds.has(n.id) ? { ...n, read: true } : n))
     } catch { /* silently ignore fetch errors */ }
     setLoading(false)
   }
 
   function markAllRead() {
-    setNotifications(ns => ns.map(n => ({ ...n, read: true })))
+    setNotifications(ns => {
+      const updated = ns.map(n => ({ ...n, read: true }))
+      saveReadIds(new Set(updated.map(n => n.id)))
+      return updated
+    })
   }
 
   function clearAll() {
@@ -172,7 +187,11 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   }
 
   function handleItemClick(n: Notification) {
-    setNotifications(ns => ns.map(x => x.id === n.id ? { ...x, read: true } : x))
+    setNotifications(ns => {
+      const updated = ns.map(x => x.id === n.id ? { ...x, read: true } : x)
+      saveReadIds(new Set(updated.filter(x => x.read).map(x => x.id)))
+      return updated
+    })
     if (n.target && onNavigate) {
       onNavigate(n.target)
       setOpen(false)
