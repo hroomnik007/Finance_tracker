@@ -137,7 +137,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
       onClick={() => { if (revealed) { setOffset(0); setRevealed(false) } }}
     >
       {/* Delete background */}
-      <div style={{
+      <div className="swipe-actions" style={{
         position: 'absolute', right: 0, top: 0, bottom: 0, width: REVEAL_PX,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: pastHalf ? '#DC2626' : '#ef4444',

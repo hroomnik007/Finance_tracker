@@ -127,7 +127,7 @@ const TOOLTIP_STYLE = {
 
 const pillStyle = (active: boolean): React.CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '6px 14px', borderRadius: 50, fontSize: 13,
+  padding: '5px 14px', borderRadius: 50, fontSize: 13,
   fontWeight: active ? 600 : 500, cursor: 'pointer',
   border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
   background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
@@ -208,7 +208,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
     .filter(i => memberFilter === 'all' || i.created_by === memberFilter || (memberFilter === user?.id && !i.created_by))
     .sort((a, b) => b.date.localeCompare(a.date))
   const totalAmount = incomes.reduce((s, i) => s + i.amount, 0)
-  const avgAmount = incomes.length > 0 ? totalAmount / incomes.length : 0
   const recurringIncomes = incomes.filter(i => i.recurring)
 
 
@@ -219,7 +218,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
   const recurringTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const oneTimeTotal = totalAmount - recurringTotal
-  const maxAmount = incomes.length > 0 ? Math.max(...incomes.map(i => i.amount)) : 0
   const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December']
   const MONTH_NAME = MONTH_NAMES[month - 1] ?? ''
 
@@ -262,24 +260,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
                 <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>1×</span>Jednorazové: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(oneTimeTotal)}</span></div>
               </div>
             </div>
-          </div>
-
-          {/* KPI bento tiles */}
-          <div className="stat-grid">
-            {([
-              { label: 'Počet príjmov', value: String(incomes.length), hint: 'tento mesiac', icon: '📋', color: 'var(--violet)' },
-              { label: 'Priemerný príjem', value: formatAmount(avgAmount), hint: 'na transakciu', icon: '⚖️', color: 'var(--green)' },
-              { label: 'Najväčší príjem', value: formatAmount(maxAmount), hint: MONTH_NAME, icon: '🏆', color: 'var(--warning)' },
-            ] as const).map(tile => (
-              <div key={tile.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", lineHeight: 1.4 }}>{tile.label}</span>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: tile.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{tile.icon}</div>
-                </div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 17, color: tile.color, lineHeight: 1 }}>{tile.value}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>{tile.hint}</div>
-              </div>
-            ))}
           </div>
 
           {/* Recurring vs. one-time breakdown */}

@@ -712,6 +712,9 @@ html.compact .card { padding: var(--card-padding); }
 .mb-only { display: block; }
 @media (min-width: 1024px) { .mb-only { display: none !important; } }
 
+/* Swipe-to-delete: hidden on desktop */
+@media (min-width: 1024px) { .swipe-actions { display: none !important; } }
+
 /* Desktop layout: flex row with sidebar gap */
 .dt-layout {
   display: flex;

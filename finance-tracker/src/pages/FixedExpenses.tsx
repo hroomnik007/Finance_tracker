@@ -314,25 +314,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             </div>
           </div>
 
-          {/* KPI bento tiles */}
-          <div className="stat-grid">
-            {([
-              { label: 'Počet splátok', value: String(fixedExpenses.length), hint: 'mesačne', icon: '📅', color: 'var(--violet)' },
-              { label: 'Mesačne', value: formatAmount(total), hint: 'spolu', icon: '💸', color: 'var(--red)' },
-              { label: 'Ročne', value: formatAmount(total * 12), hint: 'projekcia', icon: '📆', color: 'var(--warning)' },
-            ] as const).map(tile => (
-              <div key={tile.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", lineHeight: 1.4 }}>{tile.label}</span>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: tile.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{tile.icon}</div>
-                </div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 17, color: tile.color, lineHeight: 1 }}>{tile.value}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>{tile.hint}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar strip */}
+          {/* Calendar strip — desktop only */}
+          <div className="hidden lg:block">
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>Kalendár mesiaca</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(31, 1fr)', gap: 2, marginBottom: 8 }}>
@@ -375,6 +358,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(248,113,113,0.6)', display: 'inline-block' }} />veľké (≥100€)</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'transparent', border: '1.5px solid var(--violet)', display: 'inline-block' }} />dnes</span>
             </div>
+          </div>
           </div>
 
           {/* Category filter pills */}

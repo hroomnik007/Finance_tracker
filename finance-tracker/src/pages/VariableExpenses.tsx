@@ -158,8 +158,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       : totalAmount
   , [variableExpenses, activeCategory, totalAmount])
   const count = variableExpenses.length
-  const avgAmount = count > 0 ? totalAmount / count : 0
-  const maxAmount = variableExpenses.length > 0 ? Math.max(...variableExpenses.map(e => e.amount)) : 0
 
   const categoriesWithExpenses = useMemo(
     () => categories.filter(c => variableExpenses.some(e => e.categoryId === c.id)),
@@ -234,29 +232,18 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(filteredTotal).toLocaleString('sk-SK')}</span>
                 <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((filteredTotal%1)*100)).padStart(2,'0')}</span>
                 <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
-                <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 9px',borderRadius:99,background:'rgba(248,113,113,0.18)',color:'#fca5a5',border:'1px solid rgba(248,113,113,0.3)'}}>
-                  {activeCategory ? filteredSorted.length : count} transakcií{activeCategory ? ' vo filtri' : ''}
+                <span style={{
+                  marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#a89ec9',
+                  fontFamily: "'DM Mono',monospace", flexShrink: 0,
+                }}>
+                  <span style={{fontSize:13}}>≡</span>
+                  <span>{activeCategory ? filteredSorted.length : count}</span>
+                  <span style={{opacity:0.5,fontSize:10}}>›</span>
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* KPI bento tiles */}
-          <div className="stat-grid">
-            {([
-              { label: 'Počet výdavkov', value: String(count), hint: 'tento mesiac', icon: '📊', color: 'var(--violet)' },
-              { label: 'Priemerný výdavok', value: formatAmount(avgAmount), hint: 'na transakciu', icon: '📉', color: 'var(--red)' },
-              { label: 'Najväčší výdavok', value: formatAmount(maxAmount), hint: MONTH_NAME_VAR, icon: '💥', color: 'var(--warning)' },
-            ] as const).map(tile => (
-              <div key={tile.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", lineHeight: 1.4 }}>{tile.label}</span>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: tile.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{tile.icon}</div>
-                </div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 17, color: tile.color, lineHeight: 1 }}>{tile.value}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--text3)' }}>{tile.hint}</div>
-              </div>
-            ))}
           </div>
 
           {/* Search bar */}
