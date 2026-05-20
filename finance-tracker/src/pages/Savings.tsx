@@ -51,9 +51,8 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
 
-  const [showSheet, setShowSheet] = useState(false)
-  const [editGoal, setEditGoal] = useState<SavingsGoal | null>(null)
-  const [detailGoal, setDetailGoal] = useState<SavingsGoal | null>(null)
+  const [view, setView] = useState<'list' | 'detail' | 'edit'>('list')
+  const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null)
 
   const [formName, setFormName] = useState('')
   const [formTarget, setFormTarget] = useState('')
@@ -82,7 +81,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   }, 0)
 
   function openAdd() {
-    setEditGoal(null)
+    setSelectedGoal(null)
     setFormName('')
     setFormTarget('')
     setFormSaved('0')
@@ -90,22 +89,23 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     setFormIcon('🎯')
     setFormColor('#7C3AED')
     setFormNote('')
-    setShowSheet(true)
+    setView('edit')
   }
 
   function openDetail(goal: SavingsGoal) {
-    setDetailGoal(goal)
+    setSelectedGoal(goal)
+    setView('detail')
   }
 
   async function handleDeposit(amount: number) {
-    if (!detailGoal?.id) return
-    const newSaved = detailGoal.savedAmount + amount
-    await updateGoal(detailGoal.id, { savedAmount: newSaved })
-    setDetailGoal(prev => prev ? { ...prev, savedAmount: newSaved } : null)
+    if (!selectedGoal?.id) return
+    const newSaved = selectedGoal.savedAmount + amount
+    await updateGoal(selectedGoal.id, { savedAmount: newSaved })
+    setSelectedGoal(prev => prev ? { ...prev, savedAmount: newSaved } : null)
   }
 
   function openEdit(goal: SavingsGoal) {
-    setEditGoal(goal)
+    setSelectedGoal(goal)
     setFormName(goal.name)
     setFormTarget(String(goal.targetAmount))
     setFormSaved(String(goal.savedAmount))
@@ -113,12 +113,20 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     setFormIcon(goal.icon ?? '🎯')
     setFormColor(goal.color ?? '#7C3AED')
     setFormNote(goal.note ?? '')
-    setShowSheet(true)
+    setView('edit')
   }
 
-  function closeSheet() {
-    setShowSheet(false)
-    setEditGoal(null)
+  function closeEdit() {
+    if (selectedGoal) {
+      setView('detail')
+    } else {
+      setView('list')
+    }
+  }
+
+  function closeDetail() {
+    setSelectedGoal(null)
+    setView('list')
   }
 
   const handleSave = useCallback(async () => {
@@ -136,16 +144,18 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
         color: formColor,
         note: formNote.trim() || undefined,
       }
-      if (editGoal?.id) {
-        await updateGoal(editGoal.id, payload)
+      if (selectedGoal?.id) {
+        await updateGoal(selectedGoal.id, payload)
+        setSelectedGoal({ ...selectedGoal, ...payload })
+        setView('detail')
       } else {
         await addGoal(payload)
+        setView('list')
       }
-      closeSheet()
     } finally {
       setSaving(false)
     }
-  }, [formName, formTarget, formSaved, formDeadline, formIcon, formColor, formNote, editGoal, addGoal, updateGoal])
+  }, [formName, formTarget, formSaved, formDeadline, formIcon, formColor, formNote, selectedGoal, addGoal, updateGoal])
 
   const handleDelete = useCallback(async (goal: SavingsGoal) => {
     if (!goal.id) return
@@ -272,7 +282,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      {editGoal ? t.savings.saveChanges : t.savings.add}
+      {selectedGoal ? t.savings.saveChanges : t.savings.add}
     </button>
   )
 
@@ -383,7 +393,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       </div>
 
       {/* FAB — mobile only */}
-      {!showSheet && (
+      {view !== 'edit' && (
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
@@ -394,17 +404,17 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       )}
 
       <SavingsDetailModal
-        goal={detailGoal}
-        onClose={() => setDetailGoal(null)}
-        onEdit={() => { setDetailGoal(null); openEdit(detailGoal!) }}
+        goal={view === 'detail' ? selectedGoal : null}
+        onClose={closeDetail}
+        onEdit={() => { if (selectedGoal) openEdit(selectedGoal) }}
         onDeposit={handleDeposit}
         formatAmount={formatAmount}
       />
 
       <BottomSheet
-        open={showSheet}
-        onClose={closeSheet}
-        title={editGoal ? t.savings.editTitle : t.savings.addTitle}
+        open={view === 'edit'}
+        onClose={closeEdit}
+        title={selectedGoal ? t.savings.editTitle : t.savings.addTitle}
         footer={footer}
       >
         {form}
