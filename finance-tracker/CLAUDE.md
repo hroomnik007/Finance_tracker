@@ -1,8 +1,9 @@
-# Rodinné financie — CLAUDE.md
+# Finvu 2026 v3 — CLAUDE.md
 
 ## O projekte
 PWA aplikácia na sledovanie rodinných financií. Mobile-first, privacy-first.
 Inšpirovaná Monarch Money. Hostovaná na `pedani.eu` (Hetzner CX23).
+Aktuálna verzia: **Finvu 2026 v3** — design system z `colors_and_type.css` tokenov (DM Sans + DM Mono, CSS variables).
 
 ## Tech Stack
 
@@ -110,6 +111,9 @@ npm run preview   # preview buildu
 - Frontend volá REST API cez axios klienta, nie Dexie
 - Auth: WebAuthn + Google OAuth + PIN + JWT/httpOnly cookies
 - database.ts je deprecated
+- Žiadny TweaksPanel — bol odstránený
+- Notifikácie (NotificationCenter.tsx): generované z API, read stav sa persistuje do `localStorage` kľúča `finvu_read_notifications`
+- Topbar má `NotificationCenter` ako self-contained komponent (vlastný state, vlastné API volania)
 
 ## Serverové poznámky (pedani.eu)
 - NIKDY nespúšťať build/deploy príkazy ako root (sudo) — spôsobuje permission problémy
@@ -170,10 +174,35 @@ docker compose up --build -d
 - Sticky greeting row: `background: #0f0a1e`, `position: sticky`, `top: 0`, `zIndex: 20`
 - Greeting margin kompenzácia: `margin: -24px -24px 0 -24px`, `padding: 16px 24px 12px`
 
-### Dashboard pravý panel — povinné karty
-1. **Rozpočet** — category progress bars (green <70%, yellow 70–90%, red >90%)
-2. **Predikcia výdavkov** — (spent / days elapsed) × days in month
-3. **Porovnanie mesiacov** — current vs previous month, % difference
+### Dashboard — sekcie (v3)
+**Hero karta** (gradient wallet card):
+- Poradie: ZOSTATOK label → veľké číslo + úspora badge (top-right) → tx pill → divider → PRÍJMY/VÝDAVKY 2-col grid
+- Úspora badge: `↑ X % úspora`, padding 8px 16px, fontWeight 700, fontSize 13, `#34d399`, `rgba(52,211,153,0.2)` bg
+- PRÍJMY/VÝDAVKY: % zmena vs predchádzajúci mesiac (↑/↓ badge), animované sumy cez `useCountUp`
+
+**Ľavý stĺpec** (desktop grid): hero karta → heatmap + donut (grid-cols-2)
+**Mobilný layout**: hero → donut → heatmap → pravý panel
+
+**Donut graf** (`pieChartCard`):
+- Hover segment alebo legend → segment sa vysunie + legenda stučnie (priority: click > legendHover > pieHover)
+- Klik → uzamkne výber; klik znovu → odznačí
+- Center: pri výbere → ikona + názov + suma + %; bez výberu → celková suma + "celkom"
+- State: `activeIndex` (pie hover), `legendHoverIndex` (legend hover), `clickedIndex` (locked)
+
+**Pravý panel** — karty:
+1. **Nadchádzajúce platby** — fixné výdavky zoradené podľa dní do splatnosti
+2. **Rozpočet** — category progress bars (green <70%, yellow 70–90%, red >90%)
+3. Motivačná správa (ak relevantná)
+4. Porovnanie mesiacov — aktuálny vs predchádzajúci
+5. Mesačná výzva — progress bar voči minulému mesiacu
+6. Sporenie — ciele (ak `savings_enabled`)
+
+**Odstránené sekcie** (v3):
+- Vývoj príjmov a výdavkov (AreaChart + BarChart)
+- Predikcia výdavkov (ForecastCard + expensePrediction block)
+- Posledné transakcie v pravom paneli
+- Standalone Úspora karta (donut ring "51% Výborne!")
+- Bento stat cards pod hero kartou
 
 ### Responsive pravidlo
 - Desktop (lg+): sidebar + 2-stĺpcový grid
@@ -209,7 +238,7 @@ docker compose up --build -d
 - **Import CSV button — mobile**: removed from header row entirely. Accessible via BottomSheet header icon when user taps FAB.
 - **Header row — mobile**: Income, VariableExpenses, FixedExpenses pages use `className="hidden lg:flex"` on the header row — completely hidden on mobile. FAB handles add action, BottomSheet header handles Import CSV.
 - **dashView default**: initializes from `localStorage || 'family'`. Force-reset to `'personal'` only fires after `!isLoading && user && !householdEnabled` — never before user data is loaded. Complementary effect sets `'family'` when household becomes enabled and no saved preference exists.
-- **Pie chart reset**: outer `pieChartCard` div has `onClick={() => setClickedIndex(null)}`. PieChart `ResponsiveContainer` wrapper stops propagation with `onClick={e => e.stopPropagation()}`. Clicking anywhere outside the pie ring resets center display to total.
+- **Pie chart interaction**: outer `pieChartCard` div has `onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}`. Pie wrapper stops propagation. Three states: `activeIndex` (pie hover), `legendHoverIndex` (legend hover), `clickedIndex` (locked click). Effective display index = `clickedIndex ?? legendHoverIndex ?? activeIndex`. Legend items highlight on hover AND click. Segment expands for all three states via `activeShape={renderPieShape}`.
 - **Settings useEffect**: NEVER call `html.setAttribute('data-theme', ...)` in Settings mount useEffect. Theme is managed by App.tsx IIFE on load and Topbar/Login `toggleTheme`. Settings only applies accent color and compact mode on mount.
 - **Theme toggle buttons in Settings**: column layout (icon 18px above label 11px), `minWidth: 56px`, `padding: 8px 12px`, `borderRadius: 12px`, violet border+bg when active, `var(--bg3)` when inactive.
 - **MutationObserver for theme reactivity**: ExpenseHeatmap, Settings theme state, and Topbar theme state all use `MutationObserver` on `document.documentElement` watching `data-theme` attribute to stay in sync when theme changes from another component.

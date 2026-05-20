@@ -311,8 +311,14 @@ const upcomingFixed = useMemo(() => {
           <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}</span>
           <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>€</span>
           {heroIncome > 0 && (
-            <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: savRate >= 0 ? 'rgba(52,211,153,0.18)' : 'rgba(248,113,113,0.18)', color: savRate >= 0 ? '#86efac' : '#fca5a5', border: `1px solid ${savRate >= 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`, flexShrink: 0 }}>
-              {savRate >= 0 ? `+${savRate}% úspora` : '− v mínuse'}
+            <span style={{
+              marginLeft: 'auto', alignSelf: 'center',
+              fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 99, flexShrink: 0,
+              background: savRate >= 0 ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)',
+              color: savRate >= 0 ? '#34d399' : '#fca5a5',
+              border: `1px solid ${savRate >= 0 ? 'rgba(52,211,153,0.4)' : 'rgba(248,113,113,0.4)'}`,
+            }}>
+              {savRate >= 0 ? `↑ ${savRate} % úspora` : '↓ v mínuse'}
             </span>
           )}
         </div>
