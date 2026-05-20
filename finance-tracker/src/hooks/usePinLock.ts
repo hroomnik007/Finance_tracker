@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { savePin, deletePin, pinLogin, sessionCheck, pingSession } from '../api/auth'
 
 const LOCK_METHOD_KEY = 'lock_method'
+const PIN_SESSION_KEY = 'pin_verified_session'
 const AUTO_LOCK_MS = 5 * 60 * 1000
 
 export function usePinLock() {
@@ -13,7 +14,13 @@ export function usePinLock() {
       return v === 'pin' ? 'pin' : null
     }
   )
-  const [locked, setLocked] = useState(false)
+  // Start locked if PIN is set AND this browser session hasn't verified yet.
+  // sessionStorage persists across hard refresh but clears on tab close / logout.
+  const [locked, setLocked] = useState(() => {
+    const v = localStorage.getItem(LOCK_METHOD_KEY)
+    if (v !== 'pin') return false
+    return sessionStorage.getItem(PIN_SESSION_KEY) !== 'true'
+  })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lockMethodRef = useRef(lockMethod)
   lockMethodRef.current = lockMethod
@@ -22,11 +29,17 @@ export function usePinLock() {
   const lockedRef = useRef(locked)
   lockedRef.current = locked
 
+  // Always clear the session flag when locking so hard-refresh also shows PIN.
+  const lockAndClearSession = useCallback(() => {
+    sessionStorage.removeItem(PIN_SESSION_KEY)
+    setLocked(true)
+  }, [])
+
   const resetTimer = useCallback(() => {
     if (!lockMethod) return
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => setLocked(true), AUTO_LOCK_MS)
-  }, [lockMethod])
+    timerRef.current = setTimeout(lockAndClearSession, AUTO_LOCK_MS)
+  }, [lockMethod, lockAndClearSession])
 
   useEffect(() => {
     if (!lockMethod || locked) return
@@ -49,14 +62,14 @@ export function usePinLock() {
         hiddenAt = Date.now()
       } else {
         if (hiddenAt !== null && Date.now() - hiddenAt > AUTO_LOCK_MS) {
-          setLocked(true)
+          lockAndClearSession()
         }
         hiddenAt = null
       }
     }
     document.addEventListener('visibilitychange', handler)
     return () => document.removeEventListener('visibilitychange', handler)
-  }, [lockMethod])
+  }, [lockMethod, lockAndClearSession])
 
   useEffect(() => {
     const handler = (e: StorageEvent) => {
@@ -69,8 +82,7 @@ export function usePinLock() {
     return () => window.removeEventListener('storage', handler)
   }, [])
 
-  // Mount-once check — runs before AuthContext sets user, so last_active_at
-  // has not yet been refreshed by /api/auth/me (mobile PWA cold open case)
+  // Mount-once check — runs before AuthContext sets user (mobile PWA cold open)
   useEffect(() => {
     if (!lockMethodRef.current) return
     async function check() {
@@ -78,7 +90,7 @@ export function usePinLock() {
       try {
         const result = await sessionCheck()
         if (!result.valid && result.reason === 'timeout') {
-          setLocked(true)
+          lockAndClearSession()
         }
       } catch { /* network errors must not lock user out */ }
     }
@@ -95,7 +107,7 @@ export function usePinLock() {
       try {
         const result = await sessionCheck()
         if (!result.valid && result.reason === 'timeout') {
-          setLocked(true)
+          lockAndClearSession()
         }
       } catch { /* network errors must not lock user out */ }
     }
@@ -113,7 +125,6 @@ export function usePinLock() {
     }
     document.addEventListener('visibilitychange', onVisibility)
 
-    // Poll every 60s — only keeps session alive, does not lock
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') pingSession().catch(() => {})
     }, 60_000)
@@ -142,9 +153,20 @@ export function usePinLock() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // Clear session verification on logout so re-login requires PIN again
+  const prevUserRef = useRef(user)
+  useEffect(() => {
+    const prev = prevUserRef.current
+    prevUserRef.current = user
+    if (prev !== null && user === null) {
+      sessionStorage.removeItem(PIN_SESSION_KEY)
+    }
+  }, [user])
+
   const setupPin = useCallback(async (pin: string) => {
     await savePin(pin)
     localStorage.setItem(LOCK_METHOD_KEY, 'pin')
+    sessionStorage.setItem(PIN_SESSION_KEY, 'true')
     setLockMethod('pin')
     setLocked(false)
     resetTimer()
@@ -154,6 +176,7 @@ export function usePinLock() {
     if (!user?.email) return false
     try {
       await pinLogin(user.email, pin)
+      sessionStorage.setItem(PIN_SESSION_KEY, 'true')
       setLocked(false)
       resetTimer()
       return true
@@ -165,6 +188,7 @@ export function usePinLock() {
   const removePin = useCallback(async () => {
     await deletePin()
     localStorage.removeItem(LOCK_METHOD_KEY)
+    sessionStorage.removeItem(PIN_SESSION_KEY)
     setLockMethod(null)
     setLocked(false)
     if (timerRef.current) clearTimeout(timerRef.current)
