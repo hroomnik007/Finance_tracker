@@ -53,6 +53,7 @@ interface DashboardProps {
 
 export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [legendHoverIndex, setLegendHoverIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
@@ -304,7 +305,7 @@ const upcomingFixed = useMemo(() => {
         </div>
 
         {/* Balance — editorial large typography */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20, flexWrap: 'wrap' as const }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 14, flexWrap: 'wrap' as const }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: heroBalance >= 0 ? '#86efac' : '#fca5a5', marginRight: 6, alignSelf: 'center' }}>{heroBalance >= 0 ? '+' : '−'}</span>
           <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}</span>
           <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}</span>
@@ -316,8 +317,29 @@ const upcomingFixed = useMemo(() => {
           )}
         </div>
 
+        {/* Transaction count pill */}
+        <button
+          onClick={() => onNavigate('variable-expenses')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 12px 7px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'inherit', marginBottom: 16 }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+        >
+          <span style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2.4" strokeLinecap="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12.5, color: 'white', letterSpacing: '-0.2px' }}>{variableExpenses.length}</span>
+          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>transakcií tento mesiac</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', marginBottom: 14 }} />
+
         {/* PRÍJMY / VÝDAVKY 2-col grid inside hero */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
               <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', margin: 0 }}>PRÍJMY</p>
@@ -341,32 +363,17 @@ const upcomingFixed = useMemo(() => {
             <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#fca5a5', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
           </div>
         </div>
-
-        {/* Transaction count pill */}
-        <button
-          onClick={() => onNavigate('variable-expenses')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 12px 7px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'inherit' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-        >
-          <span style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2.4" strokeLinecap="round">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-          </span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12.5, color: 'white', letterSpacing: '-0.2px' }}>{variableExpenses.length}</span>
-          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>transakcií tento mesiac</span>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
       </div>
     </div>
   )
 
+  // Effective active index: clicked (locked) > legend hover > pie hover
+  const pieDisplayIndex = clickedIndex ?? legendHoverIndex ?? activeIndex
+
   const pieChartCard = (
     <div
       style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
-      onClick={() => setClickedIndex(null)}
+      onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
     >
       <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
       {pieData.length === 0 ? (
@@ -396,27 +403,37 @@ const upcomingFixed = useMemo(() => {
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Legend */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
             {legendItems.map((item, i) => {
-              const isClicked = clickedIndex !== null && pieData[clickedIndex]?.name === item.name
+              const itemPieIdx = pieData.findIndex(d => d.name === item.name)
+              const isSelected = clickedIndex !== null && clickedIndex === itemPieIdx
+              const isHighlighted = pieDisplayIndex !== null && pieDisplayIndex === itemPieIdx
               return (
                 <div
                   key={i}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, cursor: 'pointer',
                     padding: '3px 6px', borderRadius: 6, margin: '0 -6px',
-                    background: isClicked ? 'rgba(139,92,246,0.12)' : 'transparent',
-                    border: isClicked ? '1px solid rgba(139,92,246,0.2)' : '1px solid transparent',
+                    background: isSelected ? 'rgba(139,92,246,0.12)' : 'transparent',
+                    border: isSelected ? '1px solid rgba(139,92,246,0.2)' : '1px solid transparent',
                     transition: 'all 0.15s',
                   }}
+                  onMouseEnter={() => { if (itemPieIdx !== -1) setLegendHoverIndex(itemPieIdx) }}
+                  onMouseLeave={() => setLegendHoverIndex(null)}
                   onClick={e => {
                     e.stopPropagation()
-                    const idx = pieData.findIndex(d => d.name === item.name)
-                    if (idx !== -1) setClickedIndex(prev => prev === idx ? null : idx)
+                    if (itemPieIdx !== -1) setClickedIndex(prev => prev === itemPieIdx ? null : itemPieIdx)
                   }}
                 >
                   <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
-                  <span style={{ fontSize: 12, color: isClicked ? 'var(--text)' : 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isClicked ? 700 : 400 }}>{item.name}</span>
+                  <span style={{
+                    fontSize: 12,
+                    color: isHighlighted ? 'var(--text)' : 'var(--text2)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    fontWeight: isHighlighted ? 700 : 400,
+                    transition: 'font-weight 0.1s, color 0.1s',
+                  }}>{item.name}</span>
                   <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
                 </div>
               )
@@ -430,7 +447,11 @@ const upcomingFixed = useMemo(() => {
               </button>
             )}
           </div>
-          <div style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }} onClick={e => e.stopPropagation()}>
+          {/* Donut */}
+          <div
+            style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }}
+            onClick={e => e.stopPropagation()}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -443,7 +464,7 @@ const upcomingFixed = useMemo(() => {
                   dataKey="value"
                   startAngle={90}
                   endAngle={-270}
-                  {...(activeIndex !== null ? { activeIndex } : {})}
+                  {...(pieDisplayIndex !== null ? { activeIndex: pieDisplayIndex } : {})}
                   activeShape={renderPieShape}
                   onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
@@ -456,35 +477,32 @@ const upcomingFixed = useMemo(() => {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            {(() => {
-              const displayIndex = clickedIndex ?? activeIndex
-              const slice = displayIndex !== null ? pieData[displayIndex] : null
-              return (
+            {/* Center label */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              {pieDisplayIndex !== null && pieData[pieDisplayIndex] ? (() => {
+                const slice = pieData[pieDisplayIndex]
+                return (
+                  <>
+                    <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalVariable) * 100)}%</p>
+                  </>
+                )
+              })() : (
                 <>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                    {slice ? (
-                      <>
-                        <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
-                        <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                        <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalVariable) * 100)}%</p>
-                      </>
-                    ) : (
-                      <>
-                        <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalVariable)}</p>
-                        <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
-                      </>
-                    )}
-                  </div>
-                  {clickedIndex !== null && (
-                    <div
-                      style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 80, height: 80, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
-                      onClick={() => setClickedIndex(null)}
-                    />
-                  )}
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalVariable)}</p>
+                  <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
                 </>
-              )
-            })()}
+              )}
+            </div>
+            {/* Invisible click target to deselect */}
+            {clickedIndex !== null && (
+              <div
+                style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 80, height: 80, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
+                onClick={() => setClickedIndex(null)}
+              />
+            )}
           </div>
         </div>
       )}
@@ -801,7 +819,7 @@ const upcomingFixed = useMemo(() => {
     {clickedIndex !== null && (
       <div
         style={{ position: 'fixed', inset: 0, zIndex: 10 }}
-        onClick={() => setClickedIndex(null)}
+        onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
       />
     )}
     </div>
