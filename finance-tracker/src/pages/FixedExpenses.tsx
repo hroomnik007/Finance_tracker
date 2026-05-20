@@ -417,7 +417,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               return (
                 <SwipeableRow key={expense.id} onDelete={() => handleDelete(expense.id!)}>
                   <div
-                    style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'border-color 0.15s', opacity: isPast ? 0.65 : 1 }}
+                    className="expense-row"
+                    style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 0, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'border-color 0.15s', opacity: isPast ? 0.65 : 1 }}
                     onClick={() => openEdit(expense)}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
@@ -445,7 +446,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                       {!isPast && <span style={{ fontSize: 10, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 7px', borderRadius: 20 }}>{badge.text}</span>}
                       {isPast && <span style={{ fontSize: 10, color: 'var(--text3)', padding: '2px 7px' }}>zaplatené</span>}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
+                    <div className="expense-actions hidden lg:flex" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
                       <button onClick={() => openEdit(expense)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={13} /></button>
                       <button onClick={() => setDeleteId(expense.id!)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
                     </div>

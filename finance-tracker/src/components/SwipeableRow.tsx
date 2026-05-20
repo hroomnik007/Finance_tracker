@@ -130,6 +130,8 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
         position: 'relative',
         overflow: 'hidden',
         borderRadius: 16,
+        WebkitTransform: 'translateZ(0)',
+        transform: 'translateZ(0)',
         height: isCollapsing ? 0 : collapseH,
         transition: isCollapsing ? 'height 0.2s ease, margin-bottom 0.2s ease' : undefined,
         marginBottom: isCollapsing ? 0 : undefined,
