@@ -140,6 +140,10 @@ export async function getAuthMethods(email: string): Promise<{ pin: boolean; goo
   return data
 }
 
+export async function updateProfile(fields: { phone?: string; country?: string }): Promise<void> {
+  await apiClient.patch('/api/auth/profile', fields)
+}
+
 export async function sessionCheck(): Promise<{ valid: boolean; reason?: string }> {
   const { data } = await apiClient.get('/api/auth/session-check')
   return data

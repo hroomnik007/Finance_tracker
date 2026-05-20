@@ -715,6 +715,12 @@ html.compact .card { padding: var(--card-padding); }
 /* Swipe-to-delete: hidden on desktop */
 @media (min-width: 1024px) { .swipe-actions { display: none !important; } }
 
+@keyframes sparkle {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-20deg); }
+  60%  { opacity: 1; transform: scale(1.2) rotate(10deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
 /* Desktop layout: flex row with sidebar gap */
 .dt-layout {
   display: flex;

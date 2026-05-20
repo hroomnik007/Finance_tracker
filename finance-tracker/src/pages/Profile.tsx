@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, Check, Pencil, Delete, ChevronRight } from 'lucide-react'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
-import { updateAvatar, changePassword, updateUserSettings } from '../api/auth'
+import { updateAvatar, changePassword, updateUserSettings, updateProfile } from '../api/auth'
 import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
 import { useSettingsContext } from '../context/SettingsContext'
@@ -47,7 +47,7 @@ function AchievementsTab() {
             }}
           >
             {hovered === i && a.unlocked && (
-              <span style={{ position: 'absolute', top: 7, right: 9, fontSize: 12, userSelect: 'none', lineHeight: 1 }}>✨</span>
+              <span style={{ position: 'absolute', top: 7, right: 9, fontSize: 12, userSelect: 'none', lineHeight: 1, animation: 'sparkle 0.3s ease' }}>✨</span>
             )}
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'var(--bg4)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
@@ -110,6 +110,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [changePwOk, setChangePwOk] = useState(false)
   const [defaultPageDraft, setDefaultPageDraft] = useState<string>(user?.defaultPage ?? 'dashboard')
   const [defaultPageSaveOk, setDefaultPageSaveOk] = useState(false)
+  const [phone, setPhone] = useState(user?.phone ?? '')
+  const [country, setCountry] = useState(user?.country ?? 'SK')
 
   async function handleChangePassword() {
     setChangePwError(null)
@@ -436,12 +438,36 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   {/* Telefón row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
                     <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Telefón</span>
-                    <span style={{ flex: 1, fontSize: 13, color: 'var(--text3)' }}>—</span>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      onBlur={async () => {
+                        try { await updateProfile({ phone }); await refreshUser() } catch { /* non-critical */ }
+                      }}
+                      placeholder="—"
+                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: phone ? 'var(--text)' : 'var(--text3)', fontFamily: 'inherit', padding: 0 }}
+                    />
                   </div>
                   {/* Krajina row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px' }}>
                     <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Krajina</span>
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>🇸🇰 Slovensko</span>
+                    <select
+                      value={country}
+                      onChange={async e => {
+                        const val = e.target.value
+                        setCountry(val)
+                        try { await updateProfile({ country: val }); await refreshUser() } catch { /* non-critical */ }
+                      }}
+                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: 'inherit', padding: 0, cursor: 'pointer', appearance: 'none' as const }}
+                    >
+                      <option value="SK">🇸🇰 Slovensko</option>
+                      <option value="CZ">🇨🇿 Česko</option>
+                      <option value="AT">🇦🇹 Rakúsko</option>
+                      <option value="DE">🇩🇪 Nemecko</option>
+                      <option value="HU">🇭🇺 Maďarsko</option>
+                      <option value="PL">🇵🇱 Poľsko</option>
+                    </select>
                   </div>
                 </div>
               </div>

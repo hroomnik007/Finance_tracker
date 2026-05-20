@@ -98,6 +98,8 @@ export interface AuthUser {
   onboarding_banner_dismissed?: boolean
   has_pin?: boolean
   isDemo?: boolean
+  phone?: string | null
+  country?: string | null
   household?: {
     id: number
     name: string

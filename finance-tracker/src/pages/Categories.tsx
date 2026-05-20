@@ -207,31 +207,6 @@ export function CategoriesPage() {
             </div>
           </div>
 
-          {withLimit.length > 0 && (() => {
-            const totalLimit = budgetStatuses.reduce((s, b) => s + b.limit, 0)
-            const totalSpent = budgetStatuses.reduce((s, b) => s + b.spent, 0)
-            const totalPct = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0
-            const barColor = totalPct >= 90 ? 'var(--red)' : totalPct >= 70 ? '#FBBF24' : 'var(--violet)'
-            return (
-              <div style={{
-                background: 'var(--bg2)', border: '1px solid var(--border)',
-                borderRadius: 16, padding: '16px 20px', marginBottom: 4,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Celkové využitie rozpočtu</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: barColor, fontFamily: "'DM Mono', monospace" }}>{Math.round(totalPct)}%</span>
-                </div>
-                <div style={{ height: 8, borderRadius: 4, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 8 }}>
-                  <div style={{ height: '100%', borderRadius: 4, width: `${totalPct}%`, background: barColor, transition: 'width 0.3s' }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
-                  <span>Minuté: {formatAmount(totalSpent)}</span>
-                  <span>Limit: {formatAmount(totalLimit)}</span>
-                </div>
-              </div>
-            )
-          })()}
-
           {categories.length === 0 ? (
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
               <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>🏷️</span>
