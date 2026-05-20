@@ -180,25 +180,8 @@ export function HouseholdPage() {
       </div>
 
       {/* ── ČLENOVIA section header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Členovia</p>
-        {householdData?.invite_code && (
-          <button
-            onClick={() => setInviteOpen(true)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '7px 14px', borderRadius: 11,
-              border: '1px dashed var(--border2)', background: 'transparent',
-              color: 'var(--text2)', fontSize: 13, fontWeight: 500,
-              cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)'; e.currentTarget.style.borderStyle = 'solid' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderStyle = 'dashed' }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Pozvať člena
-          </button>
-        )}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Členovia ({memberCount})</p>
       </div>
 
       {/* ── Member cards grid ── */}
@@ -296,6 +279,42 @@ export function HouseholdPage() {
         </div>
       )}
 
+      {/* ── Action buttons below member list ── */}
+      {householdData && (
+        leavePending ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>Naozaj chceš opustiť domácnosť?</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setLeavePending(false)}
+                style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+              >Zrušiť</button>
+              <button
+                onClick={handleLeaveHousehold}
+                disabled={leaveLoading}
+                style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
+              >{leaveLoading ? '...' : 'Áno, opustiť'}</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 10 }}>
+            {householdData.invite_code && (
+              <button
+                onClick={() => setInviteOpen(true)}
+                style={{ flex: 1, height: 40, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Pozvať člena
+              </button>
+            )}
+            <button
+              onClick={() => setLeavePending(true)}
+              style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid rgba(248,113,113,0.3)', background: 'transparent', color: '#f87171', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+            >Opustiť domácnosť</button>
+          </div>
+        )
+      )}
+
       {/* ── Activity feed ── */}
       {activityFeed.length > 0 && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
@@ -334,33 +353,6 @@ export function HouseholdPage() {
           </div>
         </div>
       )}
-
-      {/* ── Opustiť domácnosť ── */}
-      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-        {leavePending ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>Naozaj chceš opustiť domácnosť?</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setLeavePending(false)}
-                style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-              >Zrušiť</button>
-              <button
-                onClick={handleLeaveHousehold}
-                disabled={leaveLoading}
-                style={{ flex: 1, height: 40, borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
-              >{leaveLoading ? '...' : 'Áno, opustiť'}</button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setLeavePending(true)}
-            style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.7, padding: '4px 0', display: 'block', margin: '0 auto' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '0.7'}
-          >Opustiť domácnosť</button>
-        )}
-      </div>
 
       {/* ── Invite BottomSheet ── */}
       <BottomSheet open={inviteOpen} onClose={() => setInviteOpen(false)} title="Pozvať člena">

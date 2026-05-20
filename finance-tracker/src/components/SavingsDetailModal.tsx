@@ -248,8 +248,9 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
         {/* Recent deposits */}
         <div style={{ padding: '14px 20px 24px' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>POSLEDNÉ VKLADY</div>
-          <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>História vkladov čoskoro dostupná</p>
+          <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 28, opacity: 0.5 }}>🐷</span>
+            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text3)', margin: 0 }}>Zatiaľ žiadne vklady</p>
           </div>
         </div>
       </div>

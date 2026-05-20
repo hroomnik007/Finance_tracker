@@ -10,6 +10,61 @@ import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
 
+const ACHIEVEMENTS = [
+  { emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', unlocked: true, color: '#7C3AED' },
+  { emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', unlocked: true, color: '#FB923C' },
+  { emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', unlocked: true, color: '#34D399' },
+  { emoji: '📊', name: 'Analytik', desc: 'Prvý report', unlocked: false, color: '#60a5fa' },
+  { emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', unlocked: false, color: '#FBBF24' },
+  { emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', unlocked: false, color: '#F59E0B' },
+  { emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', unlocked: false, color: '#A78BFA' },
+  { emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', unlocked: false, color: '#67E8F9' },
+] as const
+
+function AchievementsTab() {
+  const [hovered, setHovered] = useState<number | null>(null)
+  return (
+    <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>ZÍSKANÉ (3 z 8)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {ACHIEVEMENTS.map((a, i) => (
+          <div
+            key={i}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            style={{
+              background: 'var(--bg3)',
+              border: a.unlocked ? `1px solid ${a.color}40` : '1px solid var(--border)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              opacity: a.unlocked ? 1 : 0.45,
+              filter: a.unlocked ? 'none' : 'grayscale(0.7)',
+              cursor: a.unlocked ? 'pointer' : 'not-allowed',
+              position: 'relative',
+              transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.2s',
+              transform: hovered === i ? (a.unlocked ? 'scale(1.02)' : 'scale(1.01)') : 'scale(1)',
+              boxShadow: hovered === i && a.unlocked ? '0 0 0 1px rgba(139,92,246,0.4), 0 4px 16px rgba(139,92,246,0.15)' : 'none',
+            }}
+          >
+            {hovered === i && a.unlocked && (
+              <span style={{ position: 'absolute', top: 7, right: 9, fontSize: 12, userSelect: 'none', lineHeight: 1 }}>✨</span>
+            )}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'var(--bg4)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                {a.emoji}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{a.desc}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 
 function isPhotoUrl(url: string | null | undefined): url is string {
   return !!(url && (url.startsWith('data:') || url.startsWith('http')))
@@ -480,7 +535,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       if (!hasPin) { setPinSetupOpen(true) }
                       else { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }
                     }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                   >
@@ -491,16 +546,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     </div>
                     <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
                   </button>
-
-                  {/* Row 3: 2FA (disabled / coming soon) */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', opacity: 0.5 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(100,116,139,0.12)', border: '1px solid rgba(100,116,139,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🛡️</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Dvojfaktorové overenie</div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Čoskoro dostupné</div>
-                    </div>
-                    <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
-                  </div>
                 </div>
               </div>
 
@@ -516,44 +561,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
           {/* ── Tab: Úspechy ── */}
           {tab === 'achievements' && (
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>ZÍSKANÉ (3 z 8)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {[
-                  { emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', unlocked: true, color: '#7C3AED' },
-                  { emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', unlocked: true, color: '#FB923C' },
-                  { emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', unlocked: true, color: '#34D399' },
-                  { emoji: '📊', name: 'Analytik', desc: 'Prvý report', unlocked: false, color: '#60a5fa' },
-                  { emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', unlocked: false, color: '#FBBF24' },
-                  { emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', unlocked: false, color: '#F59E0B' },
-                  { emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', unlocked: false, color: '#A78BFA' },
-                  { emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', unlocked: false, color: '#67E8F9' },
-                ].map((a, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background: 'var(--bg3)',
-                      border: a.unlocked ? `1px solid ${a.color}40` : '1px solid var(--border)',
-                      borderRadius: 12,
-                      padding: '12px 14px',
-                      opacity: a.unlocked ? 1 : 0.45,
-                      filter: a.unlocked ? 'none' : 'grayscale(0.7)',
-                      transition: 'opacity 0.2s',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'var(--bg4)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                        {a.emoji}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{a.desc}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <AchievementsTab />
           )}
 
         </div>
