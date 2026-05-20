@@ -227,22 +227,22 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
                 <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{MONTH_NAME_VAR} {year}</span>
               </div>
-              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
+              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:12,flexWrap:'wrap'}}>
                 <span style={{fontSize:14,fontWeight:500,color:'#fca5a5',marginRight:4}}>−</span>
                 <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(filteredTotal).toLocaleString('sk-SK')}</span>
                 <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((filteredTotal%1)*100)).padStart(2,'0')}</span>
                 <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
-                <span style={{
-                  marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#a89ec9',
-                  fontFamily: "'DM Mono',monospace", flexShrink: 0,
-                }}>
-                  <span style={{fontSize:13}}>≡</span>
-                  <span>{activeCategory ? filteredSorted.length : count}</span>
-                  <span style={{opacity:0.5,fontSize:10}}>›</span>
-                </span>
               </div>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 20, padding: '5px 14px', fontSize: 12,
+                color: 'rgba(168,158,201,0.9)', cursor: 'default',
+                fontFamily: "'DM Mono',monospace",
+              }}>
+                <span>≡</span>
+                <span>{activeCategory ? filteredSorted.length : count} transakcií tento mesiac</span>
+              </span>
             </div>
           </div>
 
