@@ -24,7 +24,7 @@ export const sk = {
     heatmapMore: 'Viac',
     greeting: 'Dobrý deň!',
     greetingMorning: 'Dobré ráno',
-    greetingDay: 'Dobrý deň',
+    greetingDay: 'Dobré popoludnie',
     greetingEvening: 'Dobrý večer',
     greetingNight: 'Dobrú noc',
     balance: 'Zostatok',

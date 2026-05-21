@@ -211,18 +211,14 @@ const upcomingFixed = useMemo(() => {
 
   // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
-  const firstName = user?.name?.split(' ')[0] ?? ''
-  const greetingBase = greeting.text.split(', ')[0] + ','
-
   const greetingDesktop = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
         <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
           {greeting.emoji}
         </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'nowrap', minWidth: 0 }}>
-          <span style={{ fontSize: 15, color: 'var(--text3)', fontWeight: 400, flexShrink: 0 }}>{greetingBase}</span>
-          <span style={{ fontSize: 26, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1 }}>{firstName}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <span style={{ fontSize: 26, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
           {(user?.currentStreak ?? 0) > 0 && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
               <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
@@ -244,9 +240,8 @@ const upcomingFixed = useMemo(() => {
         <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
           {greeting.emoji}
         </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
-          <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 400, flexShrink: 0 }}>{greetingBase}</span>
-          <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{firstName}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
           {(user?.currentStreak ?? 0) > 0 && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
               <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
