@@ -132,22 +132,6 @@ export function CategoriesPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
-      {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0, background: 'var(--bg2)', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{t.expenses.categories.title}</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.subtitle}</div>
-        </div>
-        <button
-          onClick={openAdd}
-          className="hidden lg:flex items-center gap-2"
-          style={{ height: 40, padding: '0 20px', borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', flexShrink: 0 }}
-        >
-          <Plus size={16} />
-          Pridať kategóriu
-        </button>
-      </div>
-
       {/* Content row */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
