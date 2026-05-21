@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Plus, Pencil, Trash2, PiggyBank, Target, CalendarDays } from 'lucide-react'
+import { Plus, Pencil, Trash2, PiggyBank, CalendarDays } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
 import { SwipeableRow } from '../components/SwipeableRow'
@@ -341,28 +341,6 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 
 
 
-        {/* Stat cards */}
-        <div className="stat-grid" style={{ marginBottom: 20 }}>
-          <StatCard
-            icon={<PiggyBank size={18} color="var(--green)" />}
-            label={t.savings.totalSaved}
-            value={formatAmount(totalSaved)}
-            accent="var(--green)"
-          />
-          <StatCard
-            icon={<Target size={18} color="var(--violet)" />}
-            label={t.savings.totalTarget}
-            value={formatAmount(totalTarget)}
-            accent="var(--violet)"
-          />
-          <StatCard
-            icon={<span style={{ fontSize: 18 }}>🎯</span>}
-            label={t.savings.goalsCount}
-            value={String(goals.length)}
-            accent="var(--text2)"
-          />
-        </div>
-
         {/* Goals grid */}
         {goals.length === 0 ? (
           <div style={{
@@ -419,33 +397,6 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       >
         {form}
       </BottomSheet>
-    </div>
-  )
-}
-
-function StatCard({
-  icon, label, value, accent,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  accent: string
-}) {
-  return (
-    <div style={{
-      background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16,
-      padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${accent} 15%, transparent)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {icon}
-        </div>
-        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
-      </div>
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1 }}>{value}</p>
     </div>
   )
 }
