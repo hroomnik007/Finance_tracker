@@ -6,13 +6,15 @@ interface SwipeableRowProps {
   children: React.ReactNode
   disabled?: boolean
   fullSwipeDelete?: boolean
+  isOpen?: boolean
+  onOpen?: () => void
 }
 
 const REVEAL_PX = 80
 const FULL_SWIPE_RATIO = 0.5  // 50% of item width
 const VELOCITY_THRESHOLD = 0.5 // px/ms
 
-export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = true }: SwipeableRowProps) {
+export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = true, isOpen, onOpen }: SwipeableRowProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const onDeleteRef = useRef(onDelete)
   useEffect(() => { onDeleteRef.current = onDelete }, [onDelete])
@@ -29,6 +31,14 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
   const lastX = useRef(0)
   const lastTime = useRef(0)
   const swipeVel = useRef(0)
+
+  useEffect(() => {
+    if (isOpen === false && revealed) {
+      setOffset(0)
+      setRevealed(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   const getW = () => wrapRef.current?.offsetWidth ?? 320
 
@@ -51,6 +61,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
 
   function handleTouchStart(e: React.TouchEvent) {
     if (disabled) return
+    onOpen?.()
     const t = e.touches[0]
     touchStartX.current = t.clientX
     touchStartY.current = t.clientY

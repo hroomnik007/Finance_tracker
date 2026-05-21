@@ -159,6 +159,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const [allIncomeData, setAllIncomeData] = useState<{ date: string; amount: number }[]>([])
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
 
   useEffect(() => {
     if (householdEnabled && user?.household_id) {
@@ -351,9 +352,10 @@ export function IncomePage({ month, year }: IncomePageProps) {
           ) : (
             <>
               {/* Mobile: flat rows */}
-              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }}>
+              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
                 {sorted.map(income => (
-                  <SwipeableRow key={income.id} onDelete={() => deleteIncome(income.id!)}>
+                  <SwipeableRow key={income.id} onDelete={() => deleteIncome(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
+
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
                     onClick={() => openEdit(income)}

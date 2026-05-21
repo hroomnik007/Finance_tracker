@@ -76,6 +76,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
 
   useEffect(() => {
     if (householdEnabled && user?.household_id) {
@@ -404,7 +405,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           </div>
 
           {/* Mobile: flat rows */}
-          <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }}>
+          <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
             {searchFiltered.length === 0 ? (
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '48px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
                 <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>💸</span>
@@ -415,7 +416,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               searchFiltered.map((e: VariableExpense) => {
                 const cat = getCategoryById(e.categoryId)
                 return (
-                  <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)}>
+                  <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
+
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
                     onClick={() => openEdit(e)}

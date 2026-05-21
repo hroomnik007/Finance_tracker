@@ -53,6 +53,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<FixedExpense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
   const [activeCat, setActiveCat] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
 
@@ -415,7 +416,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               const badge = countdownBadge(daysUntil)
               const monthAbbr = MONTHS_SK[month - 1] ?? ''
               return (
-                <SwipeableRow key={expense.id} onDelete={() => handleDelete(expense.id!)}>
+                <SwipeableRow key={expense.id} onDelete={() => handleDelete(expense.id!)} isOpen={openSwipeId === expense.id} onOpen={() => setOpenSwipeId(expense.id!)}>
+
                   <div
                     className="expense-row"
                     style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 0, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'border-color 0.15s', opacity: isPast ? 0.65 : 1 }}
@@ -456,7 +458,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             }
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} onClick={() => setOpenSwipeId(null)}>
                 {upcomingList.length > 0 && (
                   <>
                     {calendarToday > 0 && (
