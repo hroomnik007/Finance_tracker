@@ -57,7 +57,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
-  const [streakTapped, setStreakTapped] = useState(false)
   const [summaryCards, setSummaryCards] = useState<{ balance: number; income: number; expenses: number; savingsRate: number } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -216,16 +215,20 @@ const upcomingFixed = useMemo(() => {
   const greetingBase = greeting.text.split(', ')[0] + ','
 
   const greetingDesktop = (
-    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
         <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
           {greeting.emoji}
         </div>
-        <div style={{ minWidth: 0 }}>
-          <p className="t-label" style={{ marginBottom: 4 }}>{greetingBase}</p>
-          <p style={{ fontSize: 26, fontWeight: 300, color: 'var(--text)', letterSpacing: '-0.6px', lineHeight: 1.1, margin: 0 }}>
-            {firstName} <span style={{ fontWeight: 500 }}>{greeting.emoji}</span>
-          </p>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'nowrap', minWidth: 0 }}>
+          <span style={{ fontSize: 15, color: 'var(--text3)', fontWeight: 400, flexShrink: 0 }}>{greetingBase}</span>
+          <span style={{ fontSize: 26, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1 }}>{firstName}</span>
+          {(user?.currentStreak ?? 0) > 0 && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
+              {user!.currentStreak}
+            </span>
+          )}
         </div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -237,26 +240,20 @@ const upcomingFixed = useMemo(() => {
 
   const greetingRow = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {greeting.text} {greeting.emoji}
-        </span>
-        {(user?.currentStreak ?? 0) > 0 && (
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <span
-              style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', color: '#FB923C', display: 'inline-block', cursor: 'pointer' }}
-              title="Počet dní v rade, kedy si zaznamenal transakciu"
-              onClick={() => { setStreakTapped(true); setTimeout(() => setStreakTapped(false), 3000) }}
-            >
-              🔥 {user!.currentStreak}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+          {greeting.emoji}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+          <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 400, flexShrink: 0 }}>{greetingBase}</span>
+          <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{firstName}</span>
+          {(user?.currentStreak ?? 0) > 0 && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
+              {user!.currentStreak}
             </span>
-            {streakTapped && (
-              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 11, color: 'var(--text2)', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                Streak — dni v rade so záznamom. Pokračuj!
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <span style={{ fontSize: 11, color: 'var(--text3)', flexShrink: 0, whiteSpace: 'nowrap' }}>{todayStr}</span>
     </div>

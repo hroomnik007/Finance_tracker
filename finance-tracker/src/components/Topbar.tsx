@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { CSSProperties } from 'react'
 import type { Page } from '../App'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -28,9 +28,6 @@ function isPhotoUrl(url: string | null | undefined): url is string {
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd, onNavigate }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [streakTooltipVisible, setStreakTooltipVisible] = useState(false)
-  const hideStreakTooltip = useCallback(() => setStreakTooltipVisible(false), [])
-
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
   })
@@ -54,7 +51,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
 
   const now = new Date()
   const householdEnabled = user?.household_enabled ?? false
-  const streak = user?.currentStreak ?? 0
   const showMonth = MONTH_PAGES.includes(page)
   const showToggle = householdEnabled && page === 'dashboard'
   const showAdd = !(['household', 'settings'] as string[]).includes(page)
@@ -164,41 +160,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     </button>
   )
 
-  const streakBadge = (size: 'lg' | 'sm') => (
-    <div
-      style={{ position: 'relative', flexShrink: 0, display: 'inline-flex' }}
-      onMouseEnter={() => setStreakTooltipVisible(true)}
-      onMouseLeave={hideStreakTooltip}
-      onClick={() => setStreakTooltipVisible(v => !v)}
-    >
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: size === 'lg' ? 12 : 11, fontWeight: 700, padding: size === 'lg' ? '4px 9px' : '2px 6px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', cursor: 'default', userSelect: 'none', fontFamily: "'DM Mono', monospace" }}>
-        <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
-        {streak}
-      </span>
-      {streakTooltipVisible && (
-        <div style={{
-          position: 'absolute',
-          bottom: 'calc(100% + 6px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'var(--bg3)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
-          padding: '5px 10px',
-          fontSize: 12,
-          fontWeight: 500,
-          color: 'var(--text)',
-          whiteSpace: 'nowrap',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          zIndex: 100,
-          pointerEvents: 'none',
-        }}>
-          Séria aktivity — {streak} dní za sebou
-        </div>
-      )}
-    </div>
-  )
-
   const barStyle: CSSProperties = {
     background: 'var(--bg2)',
     borderBottom: '1px solid var(--border)',
@@ -212,7 +173,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         className="hidden md:flex items-center"
         style={{ height: 64, padding: '0 20px', gap: 14 }}
       >
-        {page === 'dashboard' && streak > 0 && streakBadge('lg')}
         <div style={{ flex: 1 }} />
 
         {/* Right: toggle + month nav + divider + add + theme + notifications + avatar */}
@@ -261,7 +221,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
               <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user?.name?.split(' ')[0] ?? ''}
               </span>
-              {streak > 0 && streakBadge('sm')}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
               {dateStr}
