@@ -175,14 +175,18 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
   if (!ALL_ACTIVE_PAGES.includes(currentPage)) return null
 
   const handleFABClick = () => {
+    if (currentPage === 'dashboard') {
+      setShowTypeSelector(true)
+      return
+    }
     const modalType = PAGE_MODAL_MAP[currentPage]
     if (modalType) openModal(modalType)
   }
 
   return (
     <>
-      {/* ── Floating Action Button — mobile only ─────────────────────────── */}
-      {isMobile && (
+      {/* ── Floating Action Button — mobile only, dashboard only ────────── */}
+      {isMobile && currentPage === 'dashboard' && (
         <button
           onClick={handleFABClick}
           aria-label="Pridať záznam"

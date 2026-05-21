@@ -163,7 +163,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
         style={{
           transform: `translateX(${offset}px)`,
           transition: tracking ? 'none' : 'transform 0.2s ease',
-          position: 'relative', zIndex: 1, borderRadius: 16, touchAction: 'pan-y',
+          position: 'relative', zIndex: 1, touchAction: 'pan-y',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
