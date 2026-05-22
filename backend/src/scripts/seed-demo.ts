@@ -192,12 +192,43 @@ async function main() {
     }
   }
 
-  // ── 8. Insert all transactions ───────────────────────────────────────────
-  const allTx = [...fixedRows, ...variableRows, ...incomeRows];
+  // ── 8. Household — created before transactions so we can stamp householdId ─
+  const [household] = await db.insert(households).values({
+    name: "Rodina Demových",
+    inviteCode: "DEMO2026",
+    createdBy: peter.id,
+  }).returning();
+
+  await db.insert(householdMembers).values([
+    { householdId: household.id, userId: peter.id },
+    { householdId: household.id, userId: lucia.id },
+    { householdId: household.id, userId: tomas.id },
+  ]);
+
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true, savingsEnabled: true, onboardingComplete: true })
+    .where(eq(users.id, peter.id));
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true })
+    .where(eq(users.id, lucia.id));
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true })
+    .where(eq(users.id, tomas.id));
+
+  console.log(`Created household "${household.name}" (id=${household.id}) with 3 members.`);
+
+  // ── 9. Insert all transactions (with householdId + createdBy stamped) ────
+  // householdId and createdBy must be set so getMonthlyStats can aggregate
+  // per-member totals (it filters WHERE household_id = ? GROUP BY created_by).
+  const allTx = [...fixedRows, ...variableRows, ...incomeRows].map(tx => ({
+    ...tx,
+    householdId: household.id,
+    createdBy: peter.id,
+  }));
   await db.insert(transactions).values(allTx);
   console.log(`Created ${allTx.length} transactions (${fixedRows.length} fixed, ${variableRows.length} variable, ${incomeRows.length} income).`);
 
-  // ── 9. Savings goals ─────────────────────────────────────────────────────
+  // ── 10. Savings goals ────────────────────────────────────────────────────
   await db.insert(savingsGoals).values([
     {
       userId: peter.id,
@@ -231,31 +262,6 @@ async function main() {
     },
   ]);
   console.log("Created 3 savings goals.");
-
-  // ── 10. Household ─────────────────────────────────────────────────────────
-  const [household] = await db.insert(households).values({
-    name: "Rodina Demových",
-    inviteCode: "DEMO2026",
-    createdBy: peter.id,
-  }).returning();
-
-  await db.insert(householdMembers).values([
-    { householdId: household.id, userId: peter.id },
-    { householdId: household.id, userId: lucia.id },
-    { householdId: household.id, userId: tomas.id },
-  ]);
-
-  await db.update(users)
-    .set({ householdId: household.id, householdEnabled: true, savingsEnabled: true, onboardingComplete: true })
-    .where(eq(users.id, peter.id));
-  await db.update(users)
-    .set({ householdId: household.id, householdEnabled: true })
-    .where(eq(users.id, lucia.id));
-  await db.update(users)
-    .set({ householdId: household.id, householdEnabled: true })
-    .where(eq(users.id, tomas.id));
-
-  console.log(`Created household "${household.name}" (id=${household.id}) with 3 members.`);
   console.log("=== Demo seed complete ===");
   process.exit(0);
 }
