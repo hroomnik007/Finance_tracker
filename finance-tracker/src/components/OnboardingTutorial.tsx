@@ -28,6 +28,16 @@ const STEPS: OnboardingStep[] = [
     emoji: '📊',
   },
   {
+    title: 'Stanovte si ciele sporenia',
+    description: 'V sekcii Sporenie si nastavte ciele a sledujte ako sa k nim priblížujete každý mesiac.',
+    emoji: '🐷',
+  },
+  {
+    title: 'Spravujte domácnosť',
+    description: 'Pridajte členov domácnosti a sledujte financie celej rodiny na jednom mieste.',
+    emoji: '🏠',
+  },
+  {
     title: 'Nastavenia',
     description: 'V nastaveniach si prispôsobíte kategórie, limity rozpočtu, menu a ďalšie predvoľby.',
     emoji: '⚙️',

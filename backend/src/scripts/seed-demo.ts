@@ -1,136 +1,262 @@
 import bcrypt from "bcrypt";
-import { eq } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { db } from "../db";
-import { users, categories, transactions } from "../db/schema";
+import {
+  users,
+  categories,
+  transactions,
+  savingsGoals,
+  households,
+  householdMembers,
+} from "../db/schema";
 
 const DEMO_EMAIL = "demo@finvu.sk";
 const DEMO_PASSWORD = "demo123";
-const DEMO_NAME = "Demo";
 
-const DEMO_CATEGORIES = [
-  { name: "Jedlo", type: "expense" as const, color: "#10B981", icon: "🍔" },
-  { name: "Doprava", type: "expense" as const, color: "#F59E0B", icon: "🚗" },
-  { name: "Bývanie", type: "expense" as const, color: "#3B82F6", icon: "🏠" },
-  { name: "Zdravie", type: "expense" as const, color: "#EF4444", icon: "💊" },
-  { name: "Zábava", type: "expense" as const, color: "#8B5CF6", icon: "🎉" },
-  { name: "Plat", type: "income" as const, color: "#34D399", icon: "💰" },
-];
-
-function randomBetween(min: number, max: number) {
-  return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+// Helper: fixed date string YYYY-MM-DD
+function d(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function dateOffset(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split("T")[0];
+// Today: 2026-05-22 → last 3 months = March, April, May 2026
+const MONTHS = [
+  { year: 2026, month: 3 },
+  { year: 2026, month: 4 },
+  { year: 2026, month: 5 },
+];
+
+const EXPENSE_CATS = [
+  { name: "Bývanie",    type: "expense" as const, color: "#3B82F6", icon: "🏠", budgetLimit: "800" },
+  { name: "Jedlo",      type: "expense" as const, color: "#10B981", icon: "🍔", budgetLimit: "400" },
+  { name: "Doprava",    type: "expense" as const, color: "#F59E0B", icon: "🚗", budgetLimit: "200" },
+  { name: "Zdravie",    type: "expense" as const, color: "#EF4444", icon: "💊", budgetLimit: "150" },
+  { name: "Zábava",     type: "expense" as const, color: "#8B5CF6", icon: "🎉", budgetLimit: "100" },
+  { name: "Predplatné", type: "expense" as const, color: "#06B6D4", icon: "📱", budgetLimit: "50"  },
+  { name: "Energie",    type: "expense" as const, color: "#F97316", icon: "⚡", budgetLimit: null },
+  { name: "Poistenie",  type: "expense" as const, color: "#6366F1", icon: "🛡️", budgetLimit: null },
+  { name: "Investície", type: "expense" as const, color: "#059669", icon: "📈", budgetLimit: null },
+  { name: "Oblečenie",  type: "expense" as const, color: "#EC4899", icon: "👕", budgetLimit: null },
+  { name: "Nákupy",     type: "expense" as const, color: "#84CC16", icon: "🛍️", budgetLimit: null },
+  { name: "Ostatné",    type: "expense" as const, color: "#9CA3AF", icon: "📦", budgetLimit: null },
+  { name: "Osobné",     type: "expense" as const, color: "#D97706", icon: "👤", budgetLimit: null },
+  { name: "Iné",        type: "expense" as const, color: "#94A3B8", icon: "✨", budgetLimit: null },
+];
+
+const INCOME_CATS = [
+  { name: "Plat",    type: "income" as const, color: "#34D399", icon: "💰", budgetLimit: null },
+  { name: "Brigáda", type: "income" as const, color: "#A3E635", icon: "💼", budgetLimit: null },
+];
+
+const ALL_CATS = [...EXPENSE_CATS, ...INCOME_CATS];
+
+async function getOrCreateUser(email: string, name: string, avatarUrl: string | null = null) {
+  const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (existing) {
+    // Ensure name is up-to-date
+    await db.update(users).set({ name }).where(eq(users.id, existing.id));
+    return { ...existing, name };
+  }
+  const passwordHash = await bcrypt.hash("demo123", 10);
+  const [created] = await db.insert(users).values({
+    email,
+    passwordHash,
+    name,
+    emailVerified: true,
+    role: "user",
+    avatarUrl,
+    onboardingComplete: true,
+  }).returning();
+  return created;
 }
 
 async function main() {
-  console.log("Seeding demo user...");
+  console.log("=== Seeding demo account ===");
 
-  const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, DEMO_EMAIL)).limit(1);
+  // ── 1. Create/get users ──────────────────────────────────────────────────
+  const peter = await getOrCreateUser(DEMO_EMAIL, "Demo");
+  const lucia = await getOrCreateUser("lucia@finvu.sk", "Demo1");
+  const tomas = await getOrCreateUser("tomas@finvu.sk", "Demo2");
+  console.log(`Users: Demo(${peter.id.slice(0,8)}…), Demo1(${lucia.id.slice(0,8)}…), Demo2(${tomas.id.slice(0,8)}…)`);
 
-  let demoUserId: string;
+  // ── 2. Clear old demo data for Peter ────────────────────────────────────
+  await db.delete(transactions).where(eq(transactions.userId, peter.id));
+  await db.delete(savingsGoals).where(eq(savingsGoals.userId, peter.id));
+  await db.delete(categories).where(eq(categories.userId, peter.id));
+  console.log("Cleared old data for demo user.");
 
-  if (existing.length > 0) {
-    demoUserId = existing[0].id;
-    console.log("Demo user already exists, skipping user creation.");
-  } else {
-    const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-    const [user] = await db
-      .insert(users)
-      .values({
-        email: DEMO_EMAIL,
-        passwordHash,
-        name: DEMO_NAME,
-        emailVerified: true,
-        role: "user",
-      })
-      .returning({ id: users.id });
-    demoUserId = user.id;
-    console.log("Demo user created:", demoUserId);
+  // ── 3. Clear old household if exists ────────────────────────────────────
+  if (peter.householdId) {
+    const hid = peter.householdId;
+    await db.delete(householdMembers).where(eq(householdMembers.householdId, hid));
+    await db.delete(households).where(eq(households.id, hid));
+    await db.update(users).set({ householdId: null, householdEnabled: false })
+      .where(inArray(users.id, [peter.id, lucia.id, tomas.id]));
+    console.log(`Deleted old household ${hid}.`);
   }
 
-  const existingCats = await db.select().from(categories).where(eq(categories.userId, demoUserId));
+  // ── 4. Create categories ─────────────────────────────────────────────────
+  const insertedCats = await db.insert(categories).values(
+    ALL_CATS.map(c => ({
+      userId: peter.id,
+      name: c.name,
+      type: c.type,
+      color: c.color,
+      icon: c.icon,
+      isDefault: true,
+      budgetLimit: c.budgetLimit ?? undefined,
+      autoLimit: false,
+    }))
+  ).returning();
 
-  let categoryIds: string[] = [];
+  const catMap = new Map(insertedCats.map(c => [c.name, c.id]));
+  console.log(`Created ${insertedCats.length} categories.`);
 
-  if (existingCats.length > 0) {
-    console.log("Demo categories already exist, skipping.");
-    categoryIds = existingCats.slice(0, 6).map(c => c.id);
-  } else {
-    const inserted = await db
-      .insert(categories)
-      .values(DEMO_CATEGORIES.map(c => ({ ...c, userId: demoUserId, isDefault: true })))
-      .returning({ id: categories.id });
-    categoryIds = inserted.map(c => c.id);
-    console.log("Demo categories created:", categoryIds.length);
-  }
+  const cid = (name: string) => catMap.get(name)!;
 
-  // Always reset onboardingComplete so each demo session shows onboarding
-  await db.update(users).set({ onboardingComplete: false }).where(eq(users.id, demoUserId));
+  // ── 5. Fixed expenses — last 3 months ───────────────────────────────────
+  const fixedTx: Parameters<typeof db.insert>[0] extends (table: infer T) => infer R ? never : any[] = [];
 
-  await db.delete(transactions).where(eq(transactions.userId, demoUserId));
-  console.log("Demo transactions cleared, re-seeding...");
+  type TxRow = {
+    userId: string; categoryId: string; type: "expense" | "income";
+    amount: string; description: string; date: string; isFixed: boolean;
+  };
 
-  {
-    const expenseCatIds = categoryIds.slice(0, 5);
-    const incomeCatId = categoryIds[5];
+  const fixedRows: TxRow[] = [];
 
-    const txValues = [];
+  const fixedDefs = [
+    { desc: "Nájom",              cat: "Bývanie",    amount: "650",   day: 1  },
+    { desc: "Elektrina",          cat: "Energie",    amount: "50",    day: 14 },
+    { desc: "Internet",           cat: "Predplatné", amount: "24.90", day: 20 },
+    { desc: "Streamovanie video", cat: "Predplatné", amount: "13.99", day: 14 },
+    { desc: "Streamovanie hudba", cat: "Predplatné", amount: "9.99",  day: 12 },
+    { desc: "Poistenie",          cat: "Poistenie",  amount: "59.20", day: 14 },
+    { desc: "Investícia",         cat: "Investície", amount: "100",   day: 20 },
+  ];
 
-    // 3 months of income
-    for (let m = 0; m < 3; m++) {
-      txValues.push({
-        userId: demoUserId,
-        categoryId: incomeCatId,
-        type: "income" as const,
-        amount: String(randomBetween(1200, 1800)),
-        description: "Mesačný plat",
-        date: dateOffset(m * 30 + 1),
-        isFixed: false,
-      });
-    }
-
-    // 30 variable expenses across last 3 months
-    const notes = ["Nákup v Lidl", "Tankovanie", "Nájom", "Lekáreň", "Kino", "Reštaurácia", "MHD", "Potraviny", "Fitnes", "Oblečenie"];
-    for (let i = 0; i < 30; i++) {
-      const catIdx = Math.floor(Math.random() * expenseCatIds.length);
-      txValues.push({
-        userId: demoUserId,
-        categoryId: expenseCatIds[catIdx],
-        type: "expense" as const,
-        amount: String(randomBetween(5, 150)),
-        description: notes[Math.floor(Math.random() * notes.length)],
-        date: dateOffset(Math.floor(Math.random() * 90)),
-        isFixed: false,
-      });
-    }
-
-    // 3 fixed expenses
-    const fixedLabels = [
-      { label: "Nájom", amount: "650" },
-      { label: "Internet", amount: "25" },
-      { label: "Elektrina", amount: "80" },
-    ];
-    for (const f of fixedLabels) {
-      txValues.push({
-        userId: demoUserId,
-        categoryId: expenseCatIds[0],
-        type: "expense" as const,
+  for (const m of MONTHS) {
+    for (const f of fixedDefs) {
+      // Skip future dates (today is 2026-05-22, skip if day > 22 in May)
+      if (m.month === 5 && f.day > 22) continue;
+      fixedRows.push({
+        userId: peter.id,
+        categoryId: cid(f.cat),
+        type: "expense",
         amount: f.amount,
-        description: f.label,
-        date: dateOffset(5),
+        description: f.desc,
+        date: d(m.year, m.month, f.day),
         isFixed: true,
       });
     }
-
-    await db.insert(transactions).values(txValues);
-    console.log("Demo transactions created:", txValues.length);
   }
 
-  console.log("Demo seed complete.");
+  // ── 6. Variable expenses — realistic Slovak household ───────────────────
+  const variableRows: TxRow[] = [
+    // March 2026
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "45.20", description: "Potraviny",             date: d(2026,3,3),  isFixed: false },
+    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "62.50", description: "Tankovanie",            date: d(2026,3,7),  isFixed: false },
+    { userId: peter.id, categoryId: cid("Zdravie"),   type: "expense", amount: "28.90", description: "Lekáreň",               date: d(2026,3,10), isFixed: false },
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "38.40", description: "Potraviny",             date: d(2026,3,15), isFixed: false },
+    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "30.00", description: "MHD mesačná karta",     date: d(2026,3,18), isFixed: false },
+    { userId: peter.id, categoryId: cid("Zábava"),    type: "expense", amount: "22.00", description: "Kino",                  date: d(2026,3,22), isFixed: false },
+    // April 2026
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "52.70", description: "Potraviny",             date: d(2026,4,2),  isFixed: false },
+    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "58.30", description: "Tankovanie",            date: d(2026,4,5),  isFixed: false },
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "41.60", description: "Potraviny",             date: d(2026,4,9),  isFixed: false },
+    { userId: peter.id, categoryId: cid("Oblečenie"), type: "expense", amount: "89.00", description: "Oblečenie",             date: d(2026,4,13), isFixed: false },
+    { userId: peter.id, categoryId: cid("Zdravie"),   type: "expense", amount: "18.50", description: "Lekáreň",               date: d(2026,4,17), isFixed: false },
+    { userId: peter.id, categoryId: cid("Zábava"),    type: "expense", amount: "16.00", description: "Kino",                  date: d(2026,4,20), isFixed: false },
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "67.30", description: "Potraviny",             date: d(2026,4,24), isFixed: false },
+    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "71.00", description: "Tankovanie",            date: d(2026,4,28), isFixed: false },
+    // May 2026
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "33.80", description: "Potraviny",             date: d(2026,5,5),  isFixed: false },
+    { userId: peter.id, categoryId: cid("Oblečenie"), type: "expense", amount: "45.00", description: "Oblečenie",             date: d(2026,5,10), isFixed: false },
+    { userId: peter.id, categoryId: cid("Zdravie"),   type: "expense", amount: "35.20", description: "Lekáreň",               date: d(2026,5,14), isFixed: false },
+    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "58.90", description: "Potraviny",             date: d(2026,5,18), isFixed: false },
+  ];
+
+  // ── 7. Income — last 3 months ───────────────────────────────────────────
+  const incomeRows: TxRow[] = [];
+
+  for (const m of MONTHS) {
+    // Výplata on day 1
+    incomeRows.push({
+      userId: peter.id, categoryId: cid("Plat"), type: "income",
+      amount: "1200", description: "Výplata", date: d(m.year, m.month, 1), isFixed: true,
+    });
+    // Brigáda on day 15 (skip if > 22 in May)
+    if (!(m.month === 5 && 15 > 22)) {
+      incomeRows.push({
+        userId: peter.id, categoryId: cid("Brigáda"), type: "income",
+        amount: "364", description: "Brigáda", date: d(m.year, m.month, 15), isFixed: true,
+      });
+    }
+  }
+
+  // ── 8. Insert all transactions ───────────────────────────────────────────
+  const allTx = [...fixedRows, ...variableRows, ...incomeRows];
+  await db.insert(transactions).values(allTx);
+  console.log(`Created ${allTx.length} transactions (${fixedRows.length} fixed, ${variableRows.length} variable, ${incomeRows.length} income).`);
+
+  // ── 9. Savings goals ─────────────────────────────────────────────────────
+  await db.insert(savingsGoals).values([
+    {
+      userId: peter.id,
+      name: "Dovolenka",
+      targetAmount: "1500",
+      savedAmount: "320",
+      deadline: "2026-08-22",
+      icon: "✈️",
+      color: "#06B6D4",
+      note: "Dovolenka v lete",
+    },
+    {
+      userId: peter.id,
+      name: "Nové auto",
+      targetAmount: "8000",
+      savedAmount: "1200",
+      deadline: "2027-11-22",
+      icon: "🚗",
+      color: "#F59E0B",
+      note: "Nové auto — záloha",
+    },
+    {
+      userId: peter.id,
+      name: "Rezervný fond",
+      targetAmount: "3000",
+      savedAmount: "2100",
+      deadline: "2026-11-22",
+      icon: "🏦",
+      color: "#10B981",
+      note: "Rezerva na 3 mesiace",
+    },
+  ]);
+  console.log("Created 3 savings goals.");
+
+  // ── 10. Household ─────────────────────────────────────────────────────────
+  const [household] = await db.insert(households).values({
+    name: "Rodina Demových",
+    inviteCode: "DEMO2026",
+    createdBy: peter.id,
+  }).returning();
+
+  await db.insert(householdMembers).values([
+    { householdId: household.id, userId: peter.id },
+    { householdId: household.id, userId: lucia.id },
+    { householdId: household.id, userId: tomas.id },
+  ]);
+
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true, savingsEnabled: true, onboardingComplete: true })
+    .where(eq(users.id, peter.id));
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true })
+    .where(eq(users.id, lucia.id));
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true })
+    .where(eq(users.id, tomas.id));
+
+  console.log(`Created household "${household.name}" (id=${household.id}) with 3 members.`);
+  console.log("=== Demo seed complete ===");
   process.exit(0);
 }
 
