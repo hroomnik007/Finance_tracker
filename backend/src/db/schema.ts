@@ -87,6 +87,7 @@ export const categories = pgTable(
     icon: varchar("icon", { length: 50 }),
     isDefault: boolean("is_default").default(false).notNull(),
     budgetLimit: numeric("budget_limit"),
+    autoLimit: boolean("auto_limit").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [

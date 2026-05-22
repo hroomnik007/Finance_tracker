@@ -33,6 +33,7 @@ export function CategoriesPage() {
   const [editing, setEditing] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [autoLimitWarning, setAutoLimitWarning] = useState(false)
 
   const [orderedIds, setOrderedIds] = useState<string[]>(() => {
     try {
@@ -72,15 +73,17 @@ export function CategoriesPage() {
   const [icon, setIcon] = useState('🛒')
   const [budgetLimit, setBudgetLimit] = useState('')
   const [catType, setCatType] = useState<'income' | 'expense'>('expense')
+  const [autoLimit, setAutoLimit] = useState(true)
 
   function openAdd() {
-    setEditing(null); setName(''); setColor(PRESET_COLORS[6]); setIcon('🛒'); setBudgetLimit(''); setCatType('expense')
+    setEditing(null); setName(''); setColor(PRESET_COLORS[6]); setIcon('🛒'); setBudgetLimit(''); setCatType('expense'); setAutoLimit(true)
     setSheetOpen(true)
   }
 
   function openEdit(cat: Category) {
     setEditing(cat); setName(cat.name); setColor(cat.color); setIcon(cat.icon)
     setBudgetLimit(cat.budgetLimit != null ? String(cat.budgetLimit) : ''); setCatType(cat.type)
+    setAutoLimit(cat.autoLimit ?? true)
     setSheetOpen(true)
   }
 
@@ -88,16 +91,36 @@ export function CategoriesPage() {
 
   async function handleSave() {
     if (!name.trim()) return
-    const limit = budgetLimit ? parseFloat(budgetLimit.replace(',', '.')) : undefined
+
     if (editing?.id != null) {
+      const wasManual = editing.autoLimit === false
+      const isNowAuto = autoLimit === true
+      const hasExistingLimit = editing.budgetLimit != null && editing.budgetLimit > 0
+      if (wasManual && isNowAuto && hasExistingLimit) {
+        setAutoLimitWarning(true)
+        return
+      }
+      await doSave()
+    } else {
+      await doSave()
+    }
+  }
+
+  async function doSave(effectiveAutoLimit = autoLimit) {
+    if (!name.trim()) return
+    if (editing?.id != null) {
+      const limit = effectiveAutoLimit ? undefined : (budgetLimit ? parseFloat(budgetLimit.replace(',', '.')) : undefined)
       await updateCategory(editing.id, {
         name: name.trim(), color, icon,
-        budgetLimit: limit && limit > 0 ? limit : undefined,
+        autoLimit: effectiveAutoLimit,
+        ...(effectiveAutoLimit ? {} : { budgetLimit: limit && limit > 0 ? limit : undefined }),
       })
     } else {
+      const limit = effectiveAutoLimit ? undefined : (budgetLimit ? parseFloat(budgetLimit.replace(',', '.')) : undefined)
       await addCategory({
         name: name.trim(), color, icon, type: catType,
-        budgetLimit: limit && limit > 0 ? limit : undefined,
+        autoLimit: effectiveAutoLimit,
+        ...(effectiveAutoLimit ? {} : { budgetLimit: limit && limit > 0 ? limit : undefined }),
       })
     }
     closeSheet()
@@ -566,28 +589,100 @@ export function CategoriesPage() {
           </div>
 
           <div>
-            <label className="form-label">
-              {t.expenses.categories.limitLabel}{' '}
-              <span className="text-[#9D84D4]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
-            </label>
-            <input
-              className="input-field"
-              type="text"
-              inputMode="decimal"
-              placeholder={t.expenses.categories.limitPlaceholder}
-              value={budgetLimit}
-              onChange={e => {
-                const raw = e.target.value.replace(/[^0-9,]/g, '')
-                if ((raw.match(/,/g) || []).length > 1) return
-                setBudgetLimit(raw)
-              }}
-              onKeyDown={e => {
-                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                if (!allowed.includes(e.key)) e.preventDefault()
-              }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label className="form-label" style={{ margin: 0 }}>
+                {t.expenses.categories.limitLabel}{' '}
+                <span className="text-[#9D84D4]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, color: autoLimit ? 'var(--violet)' : 'var(--text3)', fontWeight: 600 }}>
+                  Automatický limit
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAutoLimit(v => !v)}
+                  style={{
+                    width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+                    background: autoLimit ? 'var(--violet)' : 'var(--bg4)',
+                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                  }}
+                  aria-label="Automatický limit"
+                >
+                  <span style={{
+                    position: 'absolute', top: 3, left: autoLimit ? 21 : 3,
+                    width: 16, height: 16, borderRadius: '50%', background: 'white',
+                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  }} />
+                </button>
+              </div>
+            </div>
+            {autoLimit ? (
+              <div style={{
+                padding: '10px 14px', borderRadius: 12,
+                background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)',
+                fontSize: 13, color: 'var(--violet)', display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span>⚡</span>
+                <span>
+                  {editing?.budgetLimit != null && editing.budgetLimit > 0
+                    ? `Automaticky vypočítané: ${editing.budgetLimit} €`
+                    : 'Limit sa vypočíta automaticky zo súčtu fixných výdavkov'}
+                </span>
+              </div>
+            ) : (
+              <input
+                className="input-field"
+                type="text"
+                inputMode="decimal"
+                placeholder={t.expenses.categories.limitPlaceholder}
+                value={budgetLimit}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9,]/g, '')
+                  if ((raw.match(/,/g) || []).length > 1) return
+                  setBudgetLimit(raw)
+                }}
+                onKeyDown={e => {
+                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                  if (!allowed.includes(e.key)) e.preventDefault()
+                }}
+              />
+            )}
           </div>
         </div>
+      </BottomSheet>
+
+      {/* Auto-limit overwrite warning */}
+      <BottomSheet
+        open={autoLimitWarning}
+        onClose={() => setAutoLimitWarning(false)}
+        title="Prepísať limit?"
+        footer={
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={async () => {
+                setAutoLimitWarning(false)
+                await doSave(false)
+              }}
+              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'transparent', color: '#9D84D4', fontSize: '14px', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Nie — ponechať manuálny
+            </button>
+            <button
+              onClick={async () => {
+                setAutoLimitWarning(false)
+                await doSave()
+              }}
+              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', fontSize: '15px', fontWeight: 600, color: 'white', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Áno — prepísať
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-[#B8A3E8] leading-relaxed">
+          Táto kategória má manuálne nastavený limit <strong style={{ color: 'var(--text)' }}>{editing?.budgetLimit} €</strong>.
+          Prepísať automatickým výpočtom zo súčtu fixných výdavkov?
+        </p>
       </BottomSheet>
 
       {/* Delete confirm sheet */}

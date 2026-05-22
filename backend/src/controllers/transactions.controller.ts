@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../db";
 import { transactions, categories, users } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
+import { recalculateCategoryLimit } from "./categories.controller";
 
 const createSchema = z.object({
   categoryId: z.string().uuid().nullable().optional(),
@@ -148,6 +149,9 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
 
   const withCategory = await fetchWithCategory(row.id);
   updateStreakAndBadges(req.userId!, body.data.date).catch(err => console.error('streak update failed:', err));
+  if (row.isFixed && row.categoryId) {
+    recalculateCategoryLimit(row.categoryId, req.userId!).catch(err => console.error('auto-limit recalc failed:', err));
+  }
   res.status(201).json({ data: normalizeAmount(withCategory), newBadges: [] });
 }
 
@@ -155,7 +159,7 @@ export async function updateTransaction(req: AuthRequest, res: Response): Promis
   const id = req.params["id"] as string;
 
   const [existing] = await db
-    .select({ userId: transactions.userId })
+    .select({ userId: transactions.userId, categoryId: transactions.categoryId, isFixed: transactions.isFixed })
     .from(transactions)
     .where(eq(transactions.id, id))
     .limit(1);
@@ -186,6 +190,18 @@ export async function updateTransaction(req: AuthRequest, res: Response): Promis
     .where(and(eq(transactions.id, id), eq(transactions.userId, req.userId!)));
 
   const withCategory = await fetchWithCategory(id);
+
+  if (existing.isFixed) {
+    const oldCatId = existing.categoryId;
+    const newCatId = categoryId !== undefined ? categoryId : oldCatId;
+    const toRecalc = new Set<string>();
+    if (oldCatId) toRecalc.add(oldCatId);
+    if (newCatId) toRecalc.add(newCatId);
+    for (const catId of toRecalc) {
+      recalculateCategoryLimit(catId, req.userId!).catch(err => console.error('auto-limit recalc failed:', err));
+    }
+  }
+
   res.json({ data: normalizeAmount(withCategory) });
 }
 
@@ -193,7 +209,7 @@ export async function deleteTransaction(req: AuthRequest, res: Response): Promis
   const id = req.params["id"] as string;
 
   const [existing] = await db
-    .select({ userId: transactions.userId })
+    .select({ userId: transactions.userId, categoryId: transactions.categoryId, isFixed: transactions.isFixed })
     .from(transactions)
     .where(eq(transactions.id, id))
     .limit(1);
@@ -208,6 +224,11 @@ export async function deleteTransaction(req: AuthRequest, res: Response): Promis
   }
 
   await db.delete(transactions).where(eq(transactions.id, id));
+
+  if (existing.isFixed && existing.categoryId) {
+    recalculateCategoryLimit(existing.categoryId, req.userId!).catch(err => console.error('auto-limit recalc failed:', err));
+  }
+
   res.json({ success: true });
 }
 

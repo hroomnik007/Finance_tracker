@@ -5,7 +5,8 @@ export interface Category {
   name: string
   color: string
   icon: string
-  budgetLimit?: number    // client-only, stored in localStorage
+  budgetLimit?: number
+  autoLimit?: boolean
   type: 'income' | 'expense'
 }
 
@@ -117,6 +118,7 @@ export interface ApiCategory {
   isDefault: boolean
   createdAt: string
   budgetLimit?: number | null
+  autoLimit?: boolean
 }
 
 export interface ApiTransaction {
