@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCategories } from '../hooks/useCategories'
 import { useAuth } from '../context/AuthContext'
+import { deleteAllCategories } from '../api/categories'
 
 interface Template {
   id: string
@@ -78,6 +79,7 @@ export function BudgetTemplateModal({ onComplete }: BudgetTemplateModalProps) {
     if (!template) return
     setLoading(true)
     try {
+      await deleteAllCategories()
       for (const cat of template.categories) {
         await addCategory({ name: cat.name, icon: cat.icon, color: cat.color, type: 'expense', budgetLimit: cat.budgetLimit })
       }

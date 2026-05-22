@@ -7,6 +7,7 @@ export interface CategoryPayload {
   color?: string
   icon?: string
   budgetLimit?: number | null
+  autoLimit?: boolean
 }
 
 export async function getCategories(): Promise<{ data: ApiCategory[] }> {
@@ -31,4 +32,8 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<void> {
   await apiClient.delete(`/api/categories/${id}`)
+}
+
+export async function deleteAllCategories(): Promise<void> {
+  await apiClient.delete('/api/categories')
 }

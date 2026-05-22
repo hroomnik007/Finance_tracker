@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import { categories, transactions, users, householdMembers } from "../db/schema";
@@ -10,7 +10,34 @@ function normalizeCategory(row: CategoryRow) {
   return {
     ...row,
     budgetLimit: row.budgetLimit != null ? Number(row.budgetLimit) : null,
+    autoLimit: row.autoLimit,
   };
+}
+
+export async function recalculateCategoryLimit(categoryId: string, userId: string): Promise<void> {
+  const [cat] = await db
+    .select({ autoLimit: categories.autoLimit })
+    .from(categories)
+    .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+    .limit(1);
+
+  if (!cat?.autoLimit) return;
+
+  const [{ total }] = await db
+    .select({ total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)` })
+    .from(transactions)
+    .where(and(
+      eq(transactions.userId, userId),
+      eq(transactions.categoryId, categoryId),
+      eq(transactions.isFixed, true),
+      eq(transactions.type, "expense")
+    ));
+
+  const newLimit = parseFloat(total ?? "0");
+  await db
+    .update(categories)
+    .set({ budgetLimit: newLimit > 0 ? String(newLimit) : null })
+    .where(eq(categories.id, categoryId));
 }
 
 const createSchema = z.object({
@@ -19,6 +46,7 @@ const createSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   icon: z.string().max(50).optional(),
   budgetLimit: z.number().positive().nullable().optional(),
+  autoLimit: z.boolean().optional(),
 });
 
 const updateSchema = z.object({
@@ -26,6 +54,7 @@ const updateSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   icon: z.string().max(50).optional(),
   budgetLimit: z.number().positive().nullable().optional(),
+  autoLimit: z.boolean().optional(),
 });
 
 export async function listCategories(req: AuthRequest, res: Response): Promise<void> {
@@ -65,10 +94,15 @@ export async function createCategory(req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  const { budgetLimit: bl, ...rest } = body.data
+  const { budgetLimit: bl, autoLimit, ...rest } = body.data
   const [row] = await db
     .insert(categories)
-    .values({ ...rest, userId: req.userId!, budgetLimit: bl != null ? String(bl) : null })
+    .values({
+      ...rest,
+      userId: req.userId!,
+      budgetLimit: bl != null ? String(bl) : null,
+      autoLimit: autoLimit ?? true,
+    })
     .returning();
 
   res.status(201).json({ data: normalizeCategory(row) });
@@ -103,18 +137,32 @@ export async function updateCategory(req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  const { budgetLimit: bl, ...fields } = body.data
-  const setData = {
-    ...fields,
-    ...(body.data.budgetLimit !== undefined ? { budgetLimit: bl != null ? String(bl) : null } : {}),
-  }
+  const { budgetLimit: bl, autoLimit, ...fields } = body.data
+  const setData: Record<string, unknown> = { ...fields };
+  if (body.data.budgetLimit !== undefined) setData.budgetLimit = bl != null ? String(bl) : null;
+  if (autoLimit !== undefined) setData.autoLimit = autoLimit;
+
   const [updated] = await db
     .update(categories)
     .set(setData)
     .where(and(eq(categories.id, id), eq(categories.userId, req.userId!)))
     .returning();
 
+  // When auto_limit is being enabled, immediately recalculate
+  if (autoLimit === true) {
+    await recalculateCategoryLimit(id, req.userId!);
+    const [refreshed] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+    res.json({ data: normalizeCategory(refreshed) });
+    return;
+  }
+
   res.json({ data: normalizeCategory(updated) });
+}
+
+export async function deleteAllCategories(req: AuthRequest, res: Response): Promise<void> {
+  // FK onDelete:'set null' handles transactions automatically
+  await db.delete(categories).where(eq(categories.userId, req.userId!));
+  res.json({ success: true });
 }
 
 export async function deleteCategory(req: AuthRequest, res: Response): Promise<void> {
