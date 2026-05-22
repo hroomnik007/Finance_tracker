@@ -113,12 +113,36 @@ async function main() {
 
   const cid = (name: string) => catMap.get(name)!;
 
-  // ── 5. Fixed expenses — last 3 months ───────────────────────────────────
-  const fixedTx: Parameters<typeof db.insert>[0] extends (table: infer T) => infer R ? never : any[] = [];
+  // ── 5. Create household (before transactions so we have the ID) ──────────
+  const [household] = await db.insert(households).values({
+    name: "Demových",
+    inviteCode: "DEMO2026",
+    createdBy: peter.id,
+  }).returning();
 
+  await db.insert(householdMembers).values([
+    { householdId: household.id, userId: peter.id },
+    { householdId: household.id, userId: lucia.id },
+    { householdId: household.id, userId: tomas.id },
+  ]);
+
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true, savingsEnabled: true, onboardingComplete: true })
+    .where(eq(users.id, peter.id));
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true })
+    .where(eq(users.id, lucia.id));
+  await db.update(users)
+    .set({ householdId: household.id, householdEnabled: true })
+    .where(eq(users.id, tomas.id));
+
+  console.log(`Created household "${household.name}" (id=${household.id}) with 3 members.`);
+
+  // ── 6. Fixed expenses — last 3 months ───────────────────────────────────
   type TxRow = {
     userId: string; categoryId: string; type: "expense" | "income";
     amount: string; description: string; date: string; isFixed: boolean;
+    householdId: number; createdBy: string;
   };
 
   const fixedRows: TxRow[] = [];
@@ -133,66 +157,57 @@ async function main() {
     { desc: "Investícia",         cat: "Investície", amount: "100",   day: 20 },
   ];
 
+  const hid = household.id;
+  const uid = peter.id;
+
   for (const m of MONTHS) {
     for (const f of fixedDefs) {
       // Skip future dates (today is 2026-05-22, skip if day > 22 in May)
       if (m.month === 5 && f.day > 22) continue;
       fixedRows.push({
-        userId: peter.id,
-        categoryId: cid(f.cat),
-        type: "expense",
-        amount: f.amount,
-        description: f.desc,
-        date: d(m.year, m.month, f.day),
-        isFixed: true,
+        userId: uid, categoryId: cid(f.cat), type: "expense",
+        amount: f.amount, description: f.desc, date: d(m.year, m.month, f.day),
+        isFixed: true, householdId: hid, createdBy: uid,
       });
     }
   }
 
-  // ── 6. Variable expenses — realistic Slovak household ───────────────────
+  // ── 7. Variable expenses ─────────────────────────────────────────────────
+  const tx = (cat: string, type: "expense" | "income", amount: string, desc: string, date: string, isFixed = false): TxRow =>
+    ({ userId: uid, categoryId: cid(cat), type, amount, description: desc, date, isFixed, householdId: hid, createdBy: uid });
+
   const variableRows: TxRow[] = [
     // March 2026
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "45.20", description: "Potraviny",             date: d(2026,3,3),  isFixed: false },
-    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "62.50", description: "Tankovanie",            date: d(2026,3,7),  isFixed: false },
-    { userId: peter.id, categoryId: cid("Zdravie"),   type: "expense", amount: "28.90", description: "Lekáreň",               date: d(2026,3,10), isFixed: false },
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "38.40", description: "Potraviny",             date: d(2026,3,15), isFixed: false },
-    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "30.00", description: "MHD mesačná karta",     date: d(2026,3,18), isFixed: false },
-    { userId: peter.id, categoryId: cid("Zábava"),    type: "expense", amount: "22.00", description: "Kino",                  date: d(2026,3,22), isFixed: false },
+    tx("Jedlo",     "expense", "45.20", "Potraviny",         d(2026,3,3)),
+    tx("Doprava",   "expense", "62.50", "Tankovanie",        d(2026,3,7)),
+    tx("Zdravie",   "expense", "28.90", "Lekáreň",           d(2026,3,10)),
+    tx("Jedlo",     "expense", "38.40", "Potraviny",         d(2026,3,15)),
+    tx("Doprava",   "expense", "30.00", "MHD mesačná karta", d(2026,3,18)),
+    tx("Zábava",    "expense", "22.00", "Kino",              d(2026,3,22)),
     // April 2026
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "52.70", description: "Potraviny",             date: d(2026,4,2),  isFixed: false },
-    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "58.30", description: "Tankovanie",            date: d(2026,4,5),  isFixed: false },
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "41.60", description: "Potraviny",             date: d(2026,4,9),  isFixed: false },
-    { userId: peter.id, categoryId: cid("Oblečenie"), type: "expense", amount: "89.00", description: "Oblečenie",             date: d(2026,4,13), isFixed: false },
-    { userId: peter.id, categoryId: cid("Zdravie"),   type: "expense", amount: "18.50", description: "Lekáreň",               date: d(2026,4,17), isFixed: false },
-    { userId: peter.id, categoryId: cid("Zábava"),    type: "expense", amount: "16.00", description: "Kino",                  date: d(2026,4,20), isFixed: false },
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "67.30", description: "Potraviny",             date: d(2026,4,24), isFixed: false },
-    { userId: peter.id, categoryId: cid("Doprava"),   type: "expense", amount: "71.00", description: "Tankovanie",            date: d(2026,4,28), isFixed: false },
+    tx("Jedlo",     "expense", "52.70", "Potraviny",         d(2026,4,2)),
+    tx("Doprava",   "expense", "58.30", "Tankovanie",        d(2026,4,5)),
+    tx("Jedlo",     "expense", "41.60", "Potraviny",         d(2026,4,9)),
+    tx("Oblečenie", "expense", "89.00", "Oblečenie",         d(2026,4,13)),
+    tx("Zdravie",   "expense", "18.50", "Lekáreň",           d(2026,4,17)),
+    tx("Zábava",    "expense", "16.00", "Kino",              d(2026,4,20)),
+    tx("Jedlo",     "expense", "67.30", "Potraviny",         d(2026,4,24)),
+    tx("Doprava",   "expense", "71.00", "Tankovanie",        d(2026,4,28)),
     // May 2026
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "33.80", description: "Potraviny",             date: d(2026,5,5),  isFixed: false },
-    { userId: peter.id, categoryId: cid("Oblečenie"), type: "expense", amount: "45.00", description: "Oblečenie",             date: d(2026,5,10), isFixed: false },
-    { userId: peter.id, categoryId: cid("Zdravie"),   type: "expense", amount: "35.20", description: "Lekáreň",               date: d(2026,5,14), isFixed: false },
-    { userId: peter.id, categoryId: cid("Jedlo"),     type: "expense", amount: "58.90", description: "Potraviny",             date: d(2026,5,18), isFixed: false },
+    tx("Jedlo",     "expense", "33.80", "Potraviny",         d(2026,5,5)),
+    tx("Oblečenie", "expense", "45.00", "Oblečenie",         d(2026,5,10)),
+    tx("Zdravie",   "expense", "35.20", "Lekáreň",           d(2026,5,14)),
+    tx("Jedlo",     "expense", "58.90", "Potraviny",         d(2026,5,18)),
   ];
 
-  // ── 7. Income — last 3 months ───────────────────────────────────────────
+  // ── 8. Income — last 3 months ───────────────────────────────────────────
   const incomeRows: TxRow[] = [];
-
   for (const m of MONTHS) {
-    // Výplata on day 1
-    incomeRows.push({
-      userId: peter.id, categoryId: cid("Plat"), type: "income",
-      amount: "1200", description: "Výplata", date: d(m.year, m.month, 1), isFixed: true,
-    });
-    // Brigáda on day 15 (skip if > 22 in May)
-    if (!(m.month === 5 && 15 > 22)) {
-      incomeRows.push({
-        userId: peter.id, categoryId: cid("Brigáda"), type: "income",
-        amount: "364", description: "Brigáda", date: d(m.year, m.month, 15), isFixed: true,
-      });
-    }
+    incomeRows.push(tx("Plat",    "income", "1200", "Výplata", d(m.year, m.month, 1),  true));
+    incomeRows.push(tx("Brigáda", "income", "364",  "Brigáda", d(m.year, m.month, 15), true));
   }
 
-  // ── 8. Insert all transactions ───────────────────────────────────────────
+  // ── 9. Insert all transactions ───────────────────────────────────────────
   const allTx = [...fixedRows, ...variableRows, ...incomeRows];
   await db.insert(transactions).values(allTx);
   console.log(`Created ${allTx.length} transactions (${fixedRows.length} fixed, ${variableRows.length} variable, ${incomeRows.length} income).`);
@@ -231,31 +246,6 @@ async function main() {
     },
   ]);
   console.log("Created 3 savings goals.");
-
-  // ── 10. Household ─────────────────────────────────────────────────────────
-  const [household] = await db.insert(households).values({
-    name: "Rodina Demových",
-    inviteCode: "DEMO2026",
-    createdBy: peter.id,
-  }).returning();
-
-  await db.insert(householdMembers).values([
-    { householdId: household.id, userId: peter.id },
-    { householdId: household.id, userId: lucia.id },
-    { householdId: household.id, userId: tomas.id },
-  ]);
-
-  await db.update(users)
-    .set({ householdId: household.id, householdEnabled: true, savingsEnabled: true, onboardingComplete: true })
-    .where(eq(users.id, peter.id));
-  await db.update(users)
-    .set({ householdId: household.id, householdEnabled: true })
-    .where(eq(users.id, lucia.id));
-  await db.update(users)
-    .set({ householdId: household.id, householdEnabled: true })
-    .where(eq(users.id, tomas.id));
-
-  console.log(`Created household "${household.name}" (id=${household.id}) with 3 members.`);
   console.log("=== Demo seed complete ===");
   process.exit(0);
 }
