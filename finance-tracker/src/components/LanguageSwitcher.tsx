@@ -1,58 +1,114 @@
+import { useState, useRef, useEffect } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { useSettingsContext } from '../context/SettingsContext'
 
 const LANGS = [
-  { code: 'sk', flag: '🇸🇰', label: 'SK' },
-  { code: 'cs', flag: '🇨🇿', label: 'CS' },
-  { code: 'pl', flag: '🇵🇱', label: 'PL' },
-  { code: 'hu', flag: '🇭🇺', label: 'HU' },
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
+  { code: 'sk', flag: '🇸🇰', label: 'SK', name: 'Slovenčina' },
+  { code: 'cs', flag: '🇨🇿', label: 'CS', name: 'Čeština' },
+  { code: 'pl', flag: '🇵🇱', label: 'PL', name: 'Poľština' },
+  { code: 'hu', flag: '🇭🇺', label: 'HU', name: 'Maďarčina' },
+  { code: 'en', flag: '🇬🇧', label: 'EN', name: 'Angličtina' },
 ] as const
 
 interface LanguageSwitcherProps {
   onLanguageChange?: (lang: string) => void
+  variant?: 'compact' | 'full'
 }
 
-export function LanguageSwitcher({ onLanguageChange }: LanguageSwitcherProps = {}) {
+export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: LanguageSwitcherProps) {
   const { settings, updateSettings } = useSettingsContext()
-  const current = settings.language || 'en'
+  const current = settings.language || 'sk'
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const currentLang = LANGS.find(l => l.code === current) ?? LANGS[0]
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
 
   function handleChange(code: string) {
     updateSettings({ language: code })
     onLanguageChange?.(code)
+    setOpen(false)
   }
 
+  const isCompact = variant === 'compact'
+
   return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-      {LANGS.map(({ code, flag, label }) => {
-        const active = current === code
-        return (
-          <button
-            key={code}
-            type="button"
-            onClick={() => handleChange(code)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '5px 8px',
-              borderRadius: 8,
-              border: `1.5px solid ${active ? 'var(--violet)' : 'var(--border)'}`,
-              background: active ? 'rgba(124,58,237,0.12)' : 'var(--bg2)',
-              color: active ? 'var(--violet)' : 'var(--text3)',
-              fontSize: 11,
-              fontWeight: active ? 700 : 500,
-              cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
-              letterSpacing: '0.04em',
-              transition: 'all 0.15s',
-            }}
-            title={code.toUpperCase()}
-          >
-            <span style={{ fontSize: 14 }}>{flag}</span>
-            <span>{label}</span>
-          </button>
-        )
-      })}
+    <div ref={ref} style={{ position: 'relative', display: isCompact ? 'inline-block' : 'block', width: isCompact ? undefined : 200 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          width: '100%',
+          padding: isCompact ? '6px 10px' : '8px 12px',
+          borderRadius: isCompact ? 8 : 10,
+          cursor: 'pointer',
+          background: isCompact ? 'rgba(255,255,255,0.08)' : 'var(--bg2)',
+          border: `1px solid ${isCompact ? 'rgba(255,255,255,0.15)' : 'var(--border2)'}`,
+          color: isCompact ? 'rgba(255,255,255,0.85)' : 'var(--text)',
+          fontSize: isCompact ? 12 : 13,
+          fontWeight: isCompact ? 600 : 500,
+          fontFamily: "'DM Sans', sans-serif",
+          letterSpacing: isCompact ? '0.04em' : 'normal',
+          transition: 'background 0.15s',
+        }}
+      >
+        <span style={{ fontSize: isCompact ? 14 : 16 }}>{currentLang.flag}</span>
+        <span style={{ flex: 1, textAlign: 'left' }}>{isCompact ? currentLang.label : currentLang.name}</span>
+        <ChevronDown
+          size={13}
+          style={{ opacity: 0.55, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}
+        />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 6px)',
+          right: isCompact ? 0 : undefined,
+          left: isCompact ? undefined : 0,
+          minWidth: isCompact ? 170 : '100%',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border2)',
+          borderRadius: 10,
+          boxShadow: '0 8px 28px rgba(0,0,0,0.38)',
+          overflow: 'hidden',
+          zIndex: 600,
+          padding: '4px 0',
+        }}>
+          {LANGS.map(({ code, flag, name }) => {
+            const active = current === code
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() => handleChange(code)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 14px', border: 'none', cursor: 'pointer',
+                  background: active ? 'rgba(124,58,237,0.15)' : 'transparent',
+                  color: active ? 'var(--violet)' : 'var(--text)',
+                  fontSize: 13, fontWeight: active ? 600 : 400,
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: 'background 0.1s',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 16 }}>{flag}</span>
+                <span>{name}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

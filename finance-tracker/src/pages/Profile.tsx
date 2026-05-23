@@ -465,10 +465,9 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     >
                       <option value="SK">🇸🇰 Slovensko</option>
                       <option value="CZ">🇨🇿 Česko</option>
-                      <option value="AT">🇦🇹 Rakúsko</option>
-                      <option value="DE">🇩🇪 Nemecko</option>
                       <option value="HU">🇭🇺 Maďarsko</option>
                       <option value="PL">🇵🇱 Poľsko</option>
+                      <option value="GB">🇬🇧 Veľká Británia</option>
                     </select>
                   </div>
                 </div>

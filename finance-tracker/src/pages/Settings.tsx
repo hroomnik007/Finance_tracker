@@ -863,6 +863,7 @@ export function SettingsPage() {
 
                   <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
                     <LanguageSwitcher
+                      variant="full"
                       onLanguageChange={lang => {
                         updateUserSettings({ language: lang }).catch(() => { /* non-critical */ })
                       }}
