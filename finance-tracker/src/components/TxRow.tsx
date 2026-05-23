@@ -54,7 +54,7 @@ export function TxRow({ t, compact = false, onDelete, onClick }: TxRowProps) {
           fontSize: compact ? 13 : 14, fontWeight: 500, color: 'var(--text)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2,
         }}>
-          {label || (isIncome ? tr.income.incomeLabel : tr.income.expenseLabel)}
+          {label || (isIncome ? tr.fab.incomeLabel : tr.fab.expenseLabel)}
         </p>
         <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
           {!isIncome && t.categoryName ? `${t.categoryName} · ` : ''}{dateStr}

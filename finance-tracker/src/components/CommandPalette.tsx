@@ -54,7 +54,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
   }, [open])
 
   const actions: PaletteAction[] = [
-    { kind: 'nav', id: 'dashboard', label: t.nav.dashboard, hint: 'Dashboard', icon: '📊', action: () => onNavigate('dashboard') },
+    { kind: 'nav', id: 'dashboard', label: t.nav.overview, hint: 'Dashboard', icon: '📊', action: () => onNavigate('dashboard') },
     { kind: 'nav', id: 'income', label: t.nav.income, hint: 'Income', icon: '💰', action: () => onNavigate('income') },
     { kind: 'nav', id: 'variable-expenses', label: t.palette.variableExpenses, hint: 'Variable', icon: '🧾', action: () => onNavigate('variable-expenses') },
     { kind: 'nav', id: 'fixed-expenses', label: t.palette.fixedExpenses, hint: 'Fixed', icon: '🔒', action: () => onNavigate('fixed-expenses') },
