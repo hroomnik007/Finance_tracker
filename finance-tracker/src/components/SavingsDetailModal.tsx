@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Pencil, Pause, Plus } from 'lucide-react'
 import type { SavingsGoal } from '../types'
+import { useTranslation } from '../i18n'
 
 interface SavingsDetailModalProps {
   goal: SavingsGoal | null
@@ -30,6 +31,7 @@ function calcMonthsLeft(deadline: string | null | undefined): number {
 }
 
 export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmount }: SavingsDetailModalProps) {
+  const { t } = useTranslation()
   const [depositMode, setDepositMode] = useState(false)
   const [depositInput, setDepositInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -38,8 +40,8 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
   useEffect(() => {
     if (!goal) { setAnimated(false); return }
     setAnimated(false)
-    const t = setTimeout(() => setAnimated(true), 60)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setAnimated(true), 60)
+    return () => clearTimeout(timer)
   }, [goal?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -61,10 +63,10 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
   const remaining = Math.max(0, goal.targetAmount - goal.savedAmount)
 
   const stats = [
-    { label: 'MESAČNE', value: monthly > 0 ? formatAmount(monthly) : '—' },
-    { label: 'MESIACOV', value: monthsLeft > 0 ? String(monthsLeft) : '—' },
-    { label: 'TERMÍN', value: goal.deadline ? new Date(goal.deadline).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' }) : '—' },
-    { label: 'ZOSTÁVA', value: formatAmount(remaining) },
+    { label: t.savings.monthlyLabel.toUpperCase(), value: monthly > 0 ? formatAmount(monthly) : '—' },
+    { label: t.savings.monthsLabel.toUpperCase(), value: monthsLeft > 0 ? String(monthsLeft) : '—' },
+    { label: t.savings.deadlineLabel.toUpperCase(), value: goal.deadline ? new Date(goal.deadline).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' }) : '—' },
+    { label: t.savings.remainingLabel.toUpperCase(), value: formatAmount(remaining) },
   ]
 
   async function handleDeposit() {
@@ -113,7 +115,7 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
             {goal.note ? (
               <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.note}</p>
             ) : (
-              <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0' }}>{Math.round(pct)}% splnené</p>
+              <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0' }}>{Math.round(pct)}{t.savings.complete}</p>
             )}
           </div>
           <button
@@ -153,7 +155,7 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
                 {Math.round(pct)}%
               </text>
               <text x="98" y="110" textAnchor="middle" fill="var(--text3)" fontSize="11" fontWeight="500" fontFamily="'DM Sans',sans-serif">
-                naplnené
+                {t.savings.filled}
               </text>
             </svg>
           </div>
@@ -172,15 +174,15 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
         {/* Amount summary row */}
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8, padding: '12px 20px 0' }}>
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 26, fontWeight: 700, color }}>{formatAmount(goal.savedAmount)}</span>
-          <span style={{ fontSize: 13, color: 'var(--text3)' }}>z {formatAmount(goal.targetAmount)}</span>
-          {isCompleted && <span style={{ fontSize: 14, fontWeight: 700, color: '#34D399', marginLeft: 4 }}>🎉 Splnené!</span>}
+          <span style={{ fontSize: 13, color: 'var(--text3)' }}>{t.savings.of} {formatAmount(goal.targetAmount)}</span>
+          {isCompleted && <span style={{ fontSize: 14, fontWeight: 700, color: '#34D399', marginLeft: 4 }}>🎉 {t.savings.completed}</span>}
         </div>
 
         {/* Deposit input */}
         {depositMode && (
           <div style={{ padding: '12px 20px 0', display: 'flex', gap: 8 }}>
             <input
-              type="number" min="0.01" step="0.01" placeholder="Suma vkladu (€)"
+              type="number" min="0.01" step="0.01" placeholder={t.savings.depositPlaceholder}
               value={depositInput}
               onChange={e => setDepositInput(e.target.value)}
               autoFocus
@@ -191,7 +193,7 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
               onClick={handleDeposit}
               disabled={saving || !depositInput || parseFloat(depositInput) <= 0}
               style={{ padding: '10px 18px', borderRadius: 10, background: 'linear-gradient(135deg,#10B981,#059669)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}
-            >{saving ? '...' : 'Uložiť'}</button>
+            >{saving ? '...' : t.common.save}</button>
             <button
               onClick={() => { setDepositMode(false); setDepositInput('') }}
               style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text2)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -206,13 +208,13 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
               onClick={() => setDepositMode(true)}
               style={{ flex: 2, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#10B981,#059669)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: '0 4px 14px rgba(16,185,129,0.35)' }}
             >
-              <Plus size={15} strokeWidth={2.5} /> Vložiť
+              <Plus size={15} strokeWidth={2.5} /> {t.savings.depositBtn}
             </button>
             <button
               onClick={onEdit}
               style={{ flex: 1, height: 44, borderRadius: 12, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
             >
-              <Pencil size={13} /> Upraviť
+              <Pencil size={13} /> {t.common.edit}
             </button>
             <button
               style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text3)', cursor: 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.45 }}
@@ -226,12 +228,12 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
 
         {/* Auto-rules */}
         <div style={{ padding: '18px 20px 0' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>AUTOMATICKÉ PRAVIDLÁ</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.savings.autoRules.toUpperCase()}</div>
           <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
             {[
-              { icon: '📅', label: 'Mesačný prevod', sub: '1. dňa v mesiaci', val: monthly > 0 ? formatAmount(monthly) : '—', accent: '#a78bfa' },
-              { icon: '🎯', label: 'Cieľová suma', sub: `Zostáva ${formatAmount(remaining)}`, val: formatAmount(goal.targetAmount), accent: '#60a5fa' },
-              { icon: '🔔', label: 'Pripomienka', sub: 'Keď splnenie pod 70%', val: '—', accent: '#fb923c' },
+              { icon: '📅', label: t.savings.monthlyTransfer, sub: t.savings.firstOfMonth, val: monthly > 0 ? formatAmount(monthly) : '—', accent: '#a78bfa' },
+              { icon: '🎯', label: t.savings.goalAmount, sub: `${t.savings.remainingLabel} ${formatAmount(remaining)}`, val: formatAmount(goal.targetAmount), accent: '#60a5fa' },
+              { icon: '🔔', label: t.savings.reminder, sub: t.savings.reminderSub, val: '—', accent: '#fb923c' },
             ].map((r, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: r.accent + '18', border: '1px solid ' + r.accent + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>{r.icon}</div>
@@ -247,10 +249,10 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
 
         {/* Recent deposits */}
         <div style={{ padding: '14px 20px 24px' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>POSLEDNÉ VKLADY</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.savings.latestDeposits.toUpperCase()}</div>
           <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 28, opacity: 0.5 }}>🐷</span>
-            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text3)', margin: 0 }}>Zatiaľ žiadne vklady</p>
+            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text3)', margin: 0 }}>{t.savings.noDeposits}</p>
           </div>
         </div>
       </div>

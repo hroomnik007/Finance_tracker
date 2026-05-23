@@ -10,6 +10,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
 import { formatDate, todayISO } from '../utils/format'
+import { useTranslation } from '../i18n'
 import type { VariableExpense, FixedExpense, BudgetStatus } from '../types'
 
 interface ExpensesPageProps {
@@ -69,6 +70,8 @@ export function ExpensesPage({
     setTab(t)
     onTabChange?.(t)
   }
+
+  const { t } = useTranslation()
 
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
     useVariableExpenses(month, year)
@@ -136,8 +139,8 @@ export function ExpensesPage({
       if (bs) {
         const newSpent = bs.spent + amount
         const newPct = (newSpent / bs.limit) * 100
-        if (newPct >= 100 && bs.percentage < 100) showToast(`🚨 Limit pre ${bs.categoryName} bol prekročený!`)
-        else if (newPct >= 90 && bs.percentage < 90) showToast(`⚠️ Blížiš sa k limitu pre ${bs.categoryName}`)
+        if (newPct >= 100 && bs.percentage < 100) showToast(t.expenses.variable.toastLimitExceeded.replace('{name}', bs.categoryName))
+        else if (newPct >= 90 && bs.percentage < 90) showToast(t.expenses.variable.toastLimitWarning.replace('{name}', bs.categoryName))
       }
     }
 
@@ -182,7 +185,7 @@ export function ExpensesPage({
           <div className="flex-1 lg:hidden min-w-0">
             <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
           </div>
-          <h2 className="hidden lg:block text-2xl font-bold text-white shrink-0">Výdavky</h2>
+          <h2 className="hidden lg:block text-2xl font-bold text-white shrink-0">{t.nav.expenses}</h2>
           <div className="hidden lg:block">
             <MonthSwitcher month={month} year={year} onChange={onMonthChange} />
           </div>
@@ -190,10 +193,10 @@ export function ExpensesPage({
         {/* Desktop: two buttons */}
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           <button onClick={openAddFixed} className="btn-secondary">
-            <Plus size={15} /> Fixný výdavok
+            <Plus size={15} /> {t.expenses.fixed.add}
           </button>
           <button onClick={openAdd} className="btn-primary">
-            <Plus size={15} /> Pridať výdavok
+            <Plus size={15} /> {t.expenses.variable.add}
           </button>
         </div>
       </div>
@@ -203,17 +206,17 @@ export function ExpensesPage({
         className="flex rounded-2xl p-1 gap-1 lg:hidden"
         style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
       >
-        {(['variable', 'fixed'] as Tab[]).map(t => (
+        {(['variable', 'fixed'] as Tab[]).map(tabKey => (
           <button
-            key={t}
-            onClick={() => handleTabChange(t)}
+            key={tabKey}
+            onClick={() => handleTabChange(tabKey)}
             className="flex-1 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
             style={{
-              background: tab === t ? 'linear-gradient(135deg, #A78BFA, #7C3AED)' : 'transparent',
-              color: tab === t ? '#ffffff' : '#B8A3E8',
+              background: tab === tabKey ? 'linear-gradient(135deg, #A78BFA, #7C3AED)' : 'transparent',
+              color: tab === tabKey ? '#ffffff' : '#B8A3E8',
             }}
           >
-            {t === 'variable' ? 'Variabilné' : 'Fixné'}
+            {tabKey === 'variable' ? t.nav.variable : t.nav.fixed}
           </button>
         ))}
       </div>
@@ -224,8 +227,8 @@ export function ExpensesPage({
           {sortedDates.length === 0 ? (
             <div className="text-center py-16 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
               <p className="text-4xl mb-3">🧾</p>
-              <p className="text-white font-semibold mb-1">Žiadne variabilné výdavky</p>
-              <p className="text-[#9D84D4] text-sm">Pridaj výdavok tlačidlom +</p>
+              <p className="text-white font-semibold mb-1">{t.expenses.variable.noExpenses}</p>
+              <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesSubtitle}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -248,7 +251,7 @@ export function ExpensesPage({
                                 {cat?.icon ?? '📦'}
                               </div>
                               <div>
-                                <p className="text-white text-sm">{expense.note || cat?.name || 'Výdavok'}</p>
+                                <p className="text-white text-sm">{expense.note || cat?.name || t.expenses.variable.defaultExpense}</p>
                                 <p className="text-[#9D84D4] text-xs">{cat?.name}</p>
                               </div>
                             </div>
@@ -286,14 +289,14 @@ export function ExpensesPage({
         <div className="lg:hidden flex flex-col gap-3">
           <div className="flex justify-end">
             <button onClick={openAddFixed} className="btn-primary">
-              <Plus size={16} /> Pridať fixný
+              <Plus size={16} /> {t.expenses.fixed.add}
             </button>
           </div>
           {fixedExpenses.length === 0 ? (
             <div className="text-center py-16 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
               <p className="text-4xl mb-3">📌</p>
-              <p className="text-white font-semibold mb-1">Žiadne fixné výdavky</p>
-              <p className="text-[#9D84D4] text-sm">Pridaj pravidelné výdavky</p>
+              <p className="text-white font-semibold mb-1">{t.expenses.fixed.noExpenses}</p>
+              <p className="text-[#9D84D4] text-sm">{t.expenses.fixed.noExpensesSubtitle}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -306,7 +309,7 @@ export function ExpensesPage({
                     </div>
                     <div>
                       <p className="text-white text-sm">{expense.label}</p>
-                      <p className="text-[#9D84D4] text-xs">každý mesiac</p>
+                      <p className="text-[#9D84D4] text-xs">{t.expenses.fixed.everyMonth}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -332,11 +335,11 @@ export function ExpensesPage({
 
         {/* Left panel: category budget only (no fixed) */}
         <div className="bg-[var(--bg-surface)] rounded-xl p-5 border border-[var(--border-subtle)]">
-          <h3 className="text-white font-semibold mb-4 text-sm">Kategórie & Rozpočet</h3>
+          <h3 className="text-white font-semibold mb-4 text-sm">{t.expenses.variable.categoriesAndBudget}</h3>
           {budgetStatuses.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-2xl mb-2">📊</p>
-              <p className="text-[#9D84D4] text-sm">Žiadne limity nastavené</p>
+              <p className="text-[#9D84D4] text-sm">{t.dashboard.noLimits}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -365,7 +368,7 @@ export function ExpensesPage({
                     <p className="text-xs text-[#9D84D4]">
                       {formatAmount(bs.spent)} z {formatAmount(bs.limit)}
                     </p>
-                    {bs.isOver && <p className="text-[#f87171] text-xs mt-0.5 font-medium">Limit prekročený!</p>}
+                    {bs.isOver && <p className="text-[#f87171] text-xs mt-0.5 font-medium">{t.dashboard.limitExceeded}</p>}
                   </div>
                 )
               })}
@@ -378,18 +381,18 @@ export function ExpensesPage({
           {sortedVariableExpenses.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-4xl mb-3">🧾</p>
-              <p className="text-white font-semibold mb-1">Žiadne variabilné výdavky</p>
-              <p className="text-[#9D84D4] text-sm">Pridaj výdavok tlačidlom vyššie</p>
+              <p className="text-white font-semibold mb-1">{t.expenses.variable.noExpenses}</p>
+              <p className="text-[#9D84D4] text-sm">{t.expenses.variable.noExpensesDesktop}</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[#9D84D4] text-xs border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
-                  <th className="px-5 py-4 font-medium">Dátum</th>
-                  <th className="px-5 py-4 font-medium">Kategória</th>
-                  <th className="px-5 py-4 font-medium">Poznámka</th>
-                  <th className="px-5 py-4 font-medium text-right">Suma</th>
-                  <th className="px-5 py-4 font-medium text-center">Akcie</th>
+                  <th className="px-5 py-4 font-medium">{t.expenses.variable.date_col}</th>
+                  <th className="px-5 py-4 font-medium">{t.expenses.variable.category_col}</th>
+                  <th className="px-5 py-4 font-medium">{t.expenses.variable.note_col}</th>
+                  <th className="px-5 py-4 font-medium text-right">{t.expenses.variable.amount_col}</th>
+                  <th className="px-5 py-4 font-medium text-center">{t.expenses.variable.actions_col}</th>
                 </tr>
               </thead>
               <tbody>
@@ -450,16 +453,16 @@ export function ExpensesPage({
       <div className="hidden lg:block bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-subtle)]">
           <h3 className="text-white font-semibold text-sm flex items-center gap-2">
-            <Lock size={14} className="text-[#9D84D4]" /> Fixné výdavky tohto mesiaca
+            <Lock size={14} className="text-[#9D84D4]" /> {t.expenses.fixed.thisMonthTitle}
           </h3>
           <button onClick={openAddFixed}
             className="text-[#A78BFA] text-xs hover:text-sky-300 transition-colors cursor-pointer flex items-center gap-1">
-            <Plus size={13} /> Pridať
+            <Plus size={13} /> {t.common.add}
           </button>
         </div>
         {fixedExpenses.length === 0 ? (
           <p className="text-[#9D84D4] text-sm text-center py-8">
-            Žiadne fixné výdavky. Pridaj ich kliknutím na tlačidlo vyššie.
+            {t.expenses.fixed.noExpenses}. {t.expenses.fixed.noExpensesSubtitle}.
           </p>
         ) : (
           <div>
@@ -475,7 +478,7 @@ export function ExpensesPage({
                     </div>
                     <div>
                       <p className="text-white text-sm">{exp.label}</p>
-                      <p className="text-[#9D84D4] text-xs">každý mesiac, deň {exp.dayOfMonth}.</p>
+                      <p className="text-[#9D84D4] text-xs">{t.expenses.fixed.everyMonthDay} {exp.dayOfMonth}.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
@@ -490,7 +493,7 @@ export function ExpensesPage({
             </div>
             {/* Total row */}
             <div className="flex items-center justify-between px-5 py-3.5 border-t border-[var(--border-subtle)] bg-[rgba(167,139,250,0.06)]">
-              <span className="text-white font-semibold text-sm">Spolu</span>
+              <span className="text-white font-semibold text-sm">{t.expenses.fixed.total}</span>
               <span className="text-[#f87171] font-bold">{formatAmount(totalFixed)}</span>
             </div>
           </div>
@@ -514,7 +517,7 @@ export function ExpensesPage({
       <BottomSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        title={editingVar ? 'Upraviť výdavok' : 'Pridať výdavok'}
+        title={editingVar ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
         footer={
           <button
             onClick={handleSaveVar}
@@ -526,14 +529,14 @@ export function ExpensesPage({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            {editingVar ? 'Uložiť zmeny' : 'Pridať výdavok'}
+            {editingVar ? t.expenses.variable.saveChanges : t.expenses.variable.add}
           </button>
         }
       >
         <div className="flex flex-col gap-4">
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Suma
+              {t.expenses.variable.amount}
             </label>
             <input
               type="text"
@@ -560,7 +563,7 @@ export function ExpensesPage({
               style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
             >
               <div className="flex justify-between text-xs mb-2">
-                <span className="text-[#B8A3E8]">Rozpočet: {liveBudget?.categoryName}</span>
+                <span className="text-[#B8A3E8]">{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
                 <span className="font-mono text-[#B8A3E8]">{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
               </div>
               <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#32265A' }}>
@@ -572,7 +575,7 @@ export function ExpensesPage({
 
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Kategória
+              {t.expenses.variable.category}
             </label>
             {!newCatMode ? (
               <select
@@ -583,15 +586,15 @@ export function ExpensesPage({
                 }}
                 className="input-field cursor-pointer"
               >
-                <option value="">-- Vybrať kategóriu --</option>
+                <option value="">{t.expenses.variable.selectCategory}</option>
                 {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}
-                <option value="__new__">+ Nová kategória</option>
+                <option value="__new__">{t.expenses.variable.newCategory}</option>
               </select>
             ) : (
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Názov novej kategórie"
+                  placeholder={t.expenses.variable.newCategoryName}
                   value={newCatName}
                   onChange={e => setNewCatName(e.target.value)}
                   className="input-field flex-1"
@@ -608,7 +611,7 @@ export function ExpensesPage({
 
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Poznámka (nepovinná)
+              {t.expenses.variable.noteLabelOptional}
             </label>
             <input
               type="text"
@@ -621,7 +624,7 @@ export function ExpensesPage({
 
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Dátum
+              {t.expenses.variable.date}
             </label>
             <DateInput
               value={varForm.date}
@@ -634,7 +637,7 @@ export function ExpensesPage({
       <BottomSheet
         open={fixedSheetOpen}
         onClose={() => setFixedSheetOpen(false)}
-        title={editingFixed ? 'Upraviť fixný výdavok' : 'Pridať fixný výdavok'}
+        title={editingFixed ? t.expenses.fixed.editTitle : t.expenses.fixed.newTitle}
         footer={
           <button
             onClick={handleSaveFixed}
@@ -646,14 +649,14 @@ export function ExpensesPage({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            {editingFixed ? 'Uložiť zmeny' : 'Pridať fixný výdavok'}
+            {editingFixed ? t.expenses.variable.saveChanges : t.expenses.fixed.add}
           </button>
         }
       >
         <div className="flex flex-col gap-4">
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Názov
+              {t.expenses.fixed.nameLabel}
             </label>
             <input
               type="text"
@@ -665,7 +668,7 @@ export function ExpensesPage({
           </div>
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Suma
+              {t.expenses.fixed.amountLabel}
             </label>
             <input
               type="text"
@@ -687,7 +690,7 @@ export function ExpensesPage({
           </div>
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9D84D4] mb-2 leading-relaxed">
-              Deň v mesiaci
+              {t.expenses.fixed.dayLabel}
             </label>
             <input
               type="number"
@@ -703,12 +706,12 @@ export function ExpensesPage({
       </BottomSheet>
 
       <ConfirmDialog open={confirmVarId !== null}
-        message="Naozaj chceš vymazať tento výdavok?"
+        message={t.expenses.variable.deleteConfirm}
         onConfirm={async () => { if (confirmVarId !== null) { await deleteVariableExpense(confirmVarId); setConfirmVarId(null) } }}
         onCancel={() => setConfirmVarId(null)}
       />
       <ConfirmDialog open={confirmFixedId !== null}
-        message="Naozaj chceš vymazať tento fixný výdavok?"
+        message={t.expenses.fixed.deleteConfirm}
         onConfirm={async () => { if (confirmFixedId !== null) { await deleteFixedExpense(confirmFixedId); setConfirmFixedId(null) } }}
         onCancel={() => setConfirmFixedId(null)}
       />

@@ -119,7 +119,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           onClick={() => onDashViewChange(v)}
           style={{ height: 26, padding: '0 10px', borderRadius: 18, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: dashView === v ? 'var(--violet)' : 'transparent', color: dashView === v ? 'white' : 'var(--text2)', transition: 'all 0.15s' }}
         >
-          {v === 'personal' ? 'Moje' : 'Rodinné'}
+          {v === 'personal' ? t.dashboard.viewPersonal : t.dashboard.viewFamily}
         </button>
       ))}
     </div>

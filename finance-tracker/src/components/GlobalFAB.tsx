@@ -132,8 +132,8 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
       if (bs) {
         const newSpent = bs.spent + amt
         const newPct = (newSpent / bs.limit) * 100
-        if (newPct >= 100 && bs.percentage < 100) showToast(`🚨 Limit pre ${bs.categoryName} bol prekročený!`)
-        else if (newPct >= 90 && bs.percentage < 90) showToast(`⚠️ Blížiš sa k limitu pre ${bs.categoryName}`)
+        if (newPct >= 100 && bs.percentage < 100) showToast(t.expenses.categories.limitExceededToast.replace('{name}', bs.categoryName))
+        else if (newPct >= 90 && bs.percentage < 90) showToast(t.expenses.categories.nearLimitToast.replace('{name}', bs.categoryName))
       }
     }
     await addVariableExpense({ amount: amt, categoryId: catId, note: varNote, date: varDate })
@@ -203,13 +203,13 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
       )}
 
       {/* ── TYPE SELECTOR (dashboard) ────────────────────────────────────── */}
-      <BottomSheet open={showTypeSelector} onClose={() => setShowTypeSelector(false)} title="Pridať záznam">
+      <BottomSheet open={showTypeSelector} onClose={() => setShowTypeSelector(false)} title={t.fab.title}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {([
-            { type: 'income' as ModalType, label: 'Príjem', icon: '💰', desc: 'Mzda, bonus, iný príjem', color: '#34d399' },
-            { type: 'variable' as ModalType, label: 'Výdavok', icon: '💸', desc: 'Nákup, jedlo, zábava...', color: '#f87171' },
-            { type: 'fixed' as ModalType, label: 'Fixný výdavok', icon: '🔒', desc: 'Nájom, predplatné, splátka', color: '#fbbf24' },
-            { type: 'category' as ModalType, label: 'Kategória', icon: '🏷️', desc: 'Nová kategória výdavkov', color: '#a78bfa' },
+            { type: 'income' as ModalType, label: t.fab.incomeLabel, icon: '💰', desc: t.fab.incomeDesc, color: '#34d399' },
+            { type: 'variable' as ModalType, label: t.fab.expenseLabel, icon: '💸', desc: t.fab.expenseDesc, color: '#f87171' },
+            { type: 'fixed' as ModalType, label: t.fab.fixedLabel, icon: '🔒', desc: t.fab.fixedDesc, color: '#fbbf24' },
+            { type: 'category' as ModalType, label: t.fab.categoryLabel, icon: '🏷️', desc: t.fab.categoryDesc, color: '#a78bfa' },
           ]).map(item => (
             <button
               key={item.type}
@@ -320,7 +320,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
                 boxShadow: (incLabel.trim() && incAmt) ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
-            >Uložiť príjem →</button>
+            >{t.fab.saveIncome} →</button>
           </div>
         </div>
       </BottomSheet>
@@ -456,7 +456,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
                 boxShadow: (varNewCatMode ? varNewCatName.trim() && varAmt : varCatId && varAmt) ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
-            >Uložiť výdavok →</button>
+            >{t.fab.saveExpense} →</button>
           </div>
         </div>
       </BottomSheet>
@@ -521,7 +521,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
                 boxShadow: (fixLabel.trim() && fixAmt) ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
-            >Uložiť fixný výdavok →</button>
+            >{t.fab.saveFixed} →</button>
           </div>
         </div>
       </BottomSheet>
@@ -628,7 +628,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
                 boxShadow: catName.trim() ? '0 4px 16px rgba(139,92,246,0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
-            >Vytvoriť kategóriu →</button>
+            >{t.fab.saveCategory} →</button>
           </div>
         </div>
       </BottomSheet>

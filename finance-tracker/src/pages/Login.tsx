@@ -70,12 +70,12 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       try {
         await loginWithGoogle(tokenResponse.access_token)
       } catch {
-        setError('Google prihlásenie zlyhalo. Skúste znova.')
+        setError(t.auth.googleError)
       } finally {
         setIsGoogleLoading(false)
       }
     },
-    onError: () => setError('Google prihlásenie zlyhalo.'),
+    onError: () => setError(t.auth.googleError),
   })
 
   const handleLogin = async () => {
@@ -90,7 +90,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Prihlásenie zlyhalo')
+      setError(msg ?? t.auth.loginFailed)
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +105,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       setPinModalOpen(false)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setPinError(msg ?? 'Nesprávny PIN.')
+      setPinError(msg ?? t.auth.wrongPin)
       setPinValue('')
     } finally {
       setPinLoading(false)
@@ -166,7 +166,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
         <button
           onClick={toggleTheme}
           style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}
-          title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
+          title={theme === 'dark' ? t.auth.lightMode : t.auth.darkMode}
         >
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
@@ -178,7 +178,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
         <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <img src="/logo.svg" alt="Finvu" style={{ width: 72, height: 72, borderRadius: 18 }} />
           <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', lineHeight: 1, margin: 0 }}>Finvu</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', lineHeight: 1, margin: 0 }}>{t.nav.appName}</h1>
             <p style={{ fontSize: 12, marginTop: 5, marginBottom: 0, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.04em' }}>FINANCIE POD KONTROLOU</p>
           </div>
         </div>
@@ -210,7 +210,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
           {/* Password */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={labelStyle}>Heslo</label>
+              <label style={labelStyle}>{t.auth.password}</label>
               <button
                 type="button"
                 onClick={onNavigateForgotPassword}
@@ -259,9 +259,9 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             {isLoading ? (
               <>
                 <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', animation: 'spin 0.7s linear infinite' }} />
-                Prihlasovanie...
+                {t.auth.loggingInDots}
               </>
-            ) : 'Prihlásiť sa →'}
+            ) : t.auth.loginArrow}
           </button>
 
           {/* PIN login */}
@@ -280,7 +280,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
                 transition: 'background 0.15s',
               }}
             >
-              🔢 Prihlásiť sa PINom
+              {t.auth.loginWithPin}
             </button>
           )}
 
@@ -308,7 +308,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
             }}
           >
             {isGoogleLoading ? (
-              <span>Prihlasujem...</span>
+              <span>{t.auth.loggingIn}</span>
             ) : (
               <>
                 <svg width="17" height="17" viewBox="0 0 18 18">
@@ -349,8 +349,8 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
           >
             <div style={{ textAlign: 'center' }}>
               <span style={{ fontSize: 40 }}>🔢</span>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 8, marginBottom: 0, color: 'var(--text)' }}>Zadajte PIN</h2>
-              <p style={{ fontSize: 13, marginTop: 4, marginBottom: 0, color: 'var(--text3)' }}>4-miestny PIN kód</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 8, marginBottom: 0, color: 'var(--text)' }}>{t.auth.enterPinTitle}</h2>
+              <p style={{ fontSize: 13, marginTop: 4, marginBottom: 0, color: 'var(--text3)' }}>{t.auth.pin4Digit}</p>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>

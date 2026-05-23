@@ -131,7 +131,7 @@ export function CategoriesPage() {
       await deleteCategory(id)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      alert(msg ?? 'Chyba pri mazaní kategórie')
+      alert(msg ?? t.expenses.categories.deleteError)
     }
     setDeleteId(null)
   }
@@ -179,7 +179,7 @@ export function CategoriesPage() {
                 <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
                 <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{heroCatCount} aktívnych</span>
               </div>
-              <p style={{fontSize:10.5,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:6,letterSpacing:'0.12em',textTransform:'uppercase' as const}}>Minuté z rozpočtu</p>
+              <p style={{fontSize:10.5,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:6,letterSpacing:'0.12em',textTransform:'uppercase' as const}}>{t.expenses.categories.spentFromBudget}</p>
               <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:14,flexWrap:'wrap'}}>
                 <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(heroTotalSpent).toLocaleString('sk-SK')}</span>
                 <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((heroTotalSpent%1)*100)).padStart(2,'0')}</span>
@@ -197,17 +197,17 @@ export function CategoriesPage() {
               )}
               <div style={{display:'flex',gap:0,paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
                 <div style={{flex:1}}>
-                  <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Spolu limit</p>
+                  <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.expenses.categories.totalLimit.toUpperCase()}</p>
                   <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'white'}}>{formatAmount(heroTotalLimit)}</p>
                 </div>
                 <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
                 <div style={{flex:1,paddingLeft:18}}>
-                  <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Zostáva</p>
+                  <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.expenses.categories.remaining.toUpperCase()}</p>
                   <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'#c4b5fd'}}>{formatAmount(Math.max(0,heroTotalLimit-heroTotalSpent))}</p>
                 </div>
                 <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
                 <div style={{flex:1,paddingLeft:18}}>
-                  <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Pri limite</p>
+                  <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.expenses.categories.nearLimit.toUpperCase()}</p>
                   <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:heroNearLimitCount>0?'#fca5a5':'white'}}>{heroNearLimitCount}</p>
                 </div>
               </div>
@@ -238,7 +238,7 @@ export function CategoriesPage() {
                       ) : (
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                       )}
-                      {v === 'grid' ? 'Mriežka' : 'Zoznam'}
+                      {v === 'grid' ? t.expenses.categories.viewGrid : t.expenses.categories.viewList}
                     </button>
                   ))}
                 </div>
@@ -337,7 +337,7 @@ export function CategoriesPage() {
                               <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)' }}>
-                              <span>Minuté</span>
+                              <span>{t.expenses.categories.spent}</span>
                               <span style={{ fontWeight: 600, color: barColor }}>{Math.round(pct)}%</span>
                             </div>
                           </>
@@ -392,7 +392,7 @@ export function CategoriesPage() {
                                     <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
                                   </div>
                                   {status && status.spent > 0 && (
-                                    <span style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, display: 'block' }}>Minuté: {formatAmount(status.spent)}</span>
+                                    <span style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, display: 'block' }}>{t.expenses.categories.spent}: {formatAmount(status.spent)}</span>
                                   )}
                                 </>
                               )
@@ -416,23 +416,23 @@ export function CategoriesPage() {
         {categories.length > 0 && (
           <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--bg2)' }}>
 
-            {rpSection('📊 Súhrn kategórií',
+            {rpSection(t.expenses.categories.summarySectionTitle,
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>Celkový počet</span>
+                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>{t.expenses.categories.totalCount}</span>
                   <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{categories.length}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>S limitom</span>
+                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>{t.expenses.categories.withLimit}</span>
                   <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{withLimit.length}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>Bez limitu</span>
+                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>{t.common.noLimit}</span>
                   <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{categories.length - withLimit.length}</span>
                 </div>
                 {mostExpensive && mostExpensive.spent > 0 && (
                   <div style={{ marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>Najvyššie výdavky</div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>{t.expenses.categories.topExpenses}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 16 }}>{mostExpensive.categoryIcon}</span>
                       <span style={{ fontSize: 13, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostExpensive.categoryName}</span>
@@ -443,7 +443,7 @@ export function CategoriesPage() {
               </div>
             )}
 
-            {withLimit.length > 0 && rpSection('💰 Rozpočet na tento mesiac',
+            {withLimit.length > 0 && rpSection(t.expenses.categories.budgetSectionTitle,
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {budgetStatuses.map(b => {
                   const barColor = b.percentage >= 90 ? 'var(--red)' : b.percentage >= 70 ? '#FBBF24' : 'var(--green)'
@@ -468,9 +468,9 @@ export function CategoriesPage() {
               </div>
             )}
 
-            {rpSection('💡 Tipy',
+            {rpSection(t.expenses.categories.tipsSectionTitle,
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>💡 Nastav limity pre kategórie aby si lepšie kontroloval výdavky</div>
+                <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>💡 {t.expenses.categories.hintSetLimits}</div>
                 <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>📊 Sleduj ktorá kategória ťa stojí najviac</div>
                 <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>🎯 Optimálny limit je 70–80 % mesačného priemeru výdavkov</div>
               </div>
@@ -528,7 +528,7 @@ export function CategoriesPage() {
 
           {!editing && (
             <div>
-              <label className="form-label">Typ</label>
+              <label className="form-label">{t.expenses.categories.type}</label>
               <div className="flex gap-2">
                 {(['expense', 'income'] as const).map(type => (
                   <button
@@ -541,7 +541,7 @@ export function CategoriesPage() {
                       border: catType === type ? `1px solid ${type === 'expense' ? '#EF4444' : '#10B981'}40` : '1px solid var(--border-subtle)',
                     }}
                   >
-                    {type === 'expense' ? 'Výdavok' : 'Príjem'}
+                    {type === 'expense' ? t.expenses.categories.typeExpense : t.expenses.categories.typeIncome}
                   </button>
                 ))}
               </div>
@@ -596,7 +596,7 @@ export function CategoriesPage() {
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 12, color: autoLimit ? 'var(--violet)' : 'var(--text3)', fontWeight: 600 }}>
-                  Automatický limit
+                  {t.expenses.categories.autoLimit}
                 </span>
                 <button
                   type="button"
@@ -606,7 +606,7 @@ export function CategoriesPage() {
                     background: autoLimit ? 'var(--violet)' : 'var(--bg4)',
                     position: 'relative', transition: 'background 0.2s', flexShrink: 0,
                   }}
-                  aria-label="Automatický limit"
+                  aria-label={t.expenses.categories.autoLimit}
                 >
                   <span style={{
                     position: 'absolute', top: 3, left: autoLimit ? 21 : 3,
@@ -625,8 +625,8 @@ export function CategoriesPage() {
                 <span>⚡</span>
                 <span>
                   {editing?.budgetLimit != null && editing.budgetLimit > 0
-                    ? `Automaticky vypočítané: ${editing.budgetLimit} €`
-                    : 'Limit sa vypočíta automaticky zo súčtu fixných výdavkov'}
+                    ? t.expenses.categories.autoLimitComputed.replace('{amount}', String(editing.budgetLimit))
+                    : t.expenses.categories.autoLimitDesc}
                 </span>
               </div>
             ) : (

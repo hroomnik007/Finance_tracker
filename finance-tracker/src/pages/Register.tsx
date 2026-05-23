@@ -38,11 +38,11 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
 
   const handleRegister = async () => {
     setError(null)
-    if (!name.trim() || name.trim().length < 2) { setError('Meno musí mať aspoň 2 znaky'); return }
-    if (!email) { setError('Zadaj e-mail'); return }
-    if (password.length < 8) { setError('Heslo musí mať aspoň 8 znakov'); return }
-    if (password !== confirmPassword) { setError('Heslá sa nezhodujú'); return }
-    if (!gdprConsent) { setError('Musíš súhlasiť so spracovaním osobných údajov'); return }
+    if (!name.trim() || name.trim().length < 2) { setError(t.auth.nameMin2); return }
+    if (!email) { setError(t.auth.enterEmail); return }
+    if (password.length < 8) { setError(t.auth.passwordMin8); return }
+    if (password !== confirmPassword) { setError(t.settings.passwordMismatch); return }
+    if (!gdprConsent) { setError(t.auth.gdprRequired); return }
 
     setIsLoading(true)
     try {
@@ -50,7 +50,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
       setVerificationSent(true)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Registrácia zlyhala')
+      setError(msg ?? t.auth.registerFailed)
     } finally {
       setIsLoading(false)
     }
@@ -80,7 +80,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
           boxShadow: 'var(--shadow-elevated)',
         }}>
           <p style={{ fontSize: 48, margin: 0 }}>📧</p>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Skontrolujte email</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t.auth.verifyEmailTitle}</h2>
           <p style={{ fontSize: 14, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 320, margin: 0 }}>{t.auth.verificationSent}</p>
           <button
             type="button"
@@ -110,7 +110,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
         <LanguageSwitcher />
         <button
           onClick={toggleTheme}
-          aria-label={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
+          aria-label={theme === 'dark' ? t.auth.switchToLight : t.auth.switchToDark}
           style={{
             width: 38, height: 38, borderRadius: '50%',
             background: 'var(--bg2)', border: '1px solid var(--border)',
@@ -129,7 +129,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
           <img src="/logo.svg" alt="Finvu" style={{ width: 72, height: 72, borderRadius: 18 }} />
           <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>Finvu</div>
           <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            FINANCIE POD KONTROLOU
+            {t.nav.appTagline.toUpperCase()}
           </div>
         </div>
 
@@ -195,7 +195,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
                 type="button"
                 tabIndex={-1}
                 onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? 'Skryť heslo' : 'Zobraziť heslo'}
+                aria-label={showPassword ? t.auth.hidePasswordLabel : t.auth.showPasswordLabel}
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
@@ -279,9 +279,9 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
             {isLoading ? (
               <>
                 <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.7s linear infinite' }} />
-                Registrácia...
+                {t.common.saving}
               </>
-            ) : 'Registrovať sa →'}
+            ) : t.auth.registerArrow}
           </button>
 
           {/* Login link */}

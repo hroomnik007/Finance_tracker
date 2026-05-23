@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Delete } from 'lucide-react'
+import { useTranslation } from '../i18n'
 
 interface PinLockProps {
   onVerify: (pin: string) => Promise<boolean>
@@ -9,6 +10,7 @@ interface PinLockProps {
 const KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
 export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
+  const { t } = useTranslation()
   const [pin, setPin] = useState('')
   const [shake, setShake] = useState(false)
   const [checking, setChecking] = useState(false)
@@ -59,8 +61,8 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
-        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Zadaj PIN</p>
-        <p style={{ fontSize: 13, color: 'var(--text2)' }}>Finvu je uzamknuté</p>
+        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{t.pin.enterPin}</p>
+        <p style={{ fontSize: 13, color: 'var(--text2)' }}>{t.pin.appLocked}</p>
       </div>
 
       <div

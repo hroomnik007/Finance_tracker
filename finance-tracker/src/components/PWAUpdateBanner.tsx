@@ -1,6 +1,8 @@
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import { useTranslation } from '../i18n'
 
 export function PWAUpdateBanner() {
+  const { t } = useTranslation()
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
 
   if (!needRefresh) return null
@@ -12,7 +14,7 @@ export function PWAUpdateBanner() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       gap: 12, padding: '10px 16px', fontSize: 14, fontWeight: 500,
     }}>
-      <span>Dostupná nová verzia.</span>
+      <span>{t.common.updateAvailable}</span>
       <button
         onClick={() => updateServiceWorker(true)}
         style={{
@@ -21,7 +23,7 @@ export function PWAUpdateBanner() {
           fontSize: 13, fontWeight: 600, cursor: 'pointer',
         }}
       >
-        Aktualizovať
+        {t.common.updateBtn}
       </button>
     </div>
   )

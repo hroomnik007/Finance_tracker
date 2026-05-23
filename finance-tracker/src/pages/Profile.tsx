@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { X, Check, Pencil, Delete, ChevronRight } from 'lucide-react'
+import { useTranslation } from '../i18n'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
 import { updateAvatar, changePassword, updateUserSettings, updateProfile } from '../api/auth'
@@ -75,6 +76,7 @@ type Tab = 'profile' | 'account' | 'achievements'
 export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLogout?: () => void }) {
   const { profileName: ctxName, profileAvatar: ctxAvatar, setProfile } = useSettingsContext()
   const { user, refreshUser } = useAuth()
+  const { t } = useTranslation()
 
   const [tab, setTab] = useState<Tab>('profile')
   const [editMode, setEditMode] = useState(false)
@@ -115,9 +117,9 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   async function handleChangePassword() {
     setChangePwError(null)
-    if (!currentPw || !newPw || !confirmPw) { setChangePwError('Vyplňte všetky polia'); return }
-    if (newPw.length < 8) { setChangePwError('Nové heslo musí mať aspoň 8 znakov'); return }
-    if (newPw !== confirmPw) { setChangePwError('Heslá sa nezhodujú'); return }
+    if (!currentPw || !newPw || !confirmPw) { setChangePwError(t.profile.fillAllFields); return }
+    if (newPw.length < 8) { setChangePwError(t.profile.passwordMin8); return }
+    if (newPw !== confirmPw) { setChangePwError(t.settings.passwordMismatch); return }
     setChangePwLoading(true)
     try {
       await changePassword(currentPw, newPw)
@@ -126,7 +128,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       setTimeout(() => { setChangePwOk(false); setChangePasswordOpen(false) }, 2000)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setChangePwError(msg ?? 'Zmena hesla zlyhala')
+      setChangePwError(msg ?? t.profile.changePwFailed)
     } finally {
       setChangePwLoading(false)
     }
@@ -141,7 +143,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       setPinRemoveLoading(false)
     } else {
       setPinRemoveShake(true)
-      setPinRemoveError('Nesprávny PIN')
+      setPinRemoveError(t.profile.incorrectPin)
       setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
     }
   }, [verifyPin])
@@ -198,7 +200,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
       if (file.size > 10 * 1024 * 1024) {
-        alert('Obrázok je príliš veľký. Max veľkosť je 10 MB.')
+        alert(t.profile.photoTooBig)
         return
       }
       setPhotoUploading(true)
@@ -211,7 +213,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           setProfileAvatarDraft('')
           await refreshUser()
         } catch {
-          alert('Nepodarilo sa nahrať fotku.')
+          alert(t.profile.photoUploadFailed)
         } finally {
           setPhotoUploading(false)
         }
@@ -305,7 +307,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   />
                 ) : (
                   <h2 style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {user?.name || ctxName || 'Používateľ'}
+                    {user?.name || ctxName || t.profile.defaultUser}
                   </h2>
                 )}
                 <button
@@ -319,7 +321,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,191,36,0.18)', color: '#fde68a', border: '1px solid rgba(251,191,36,0.3)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 3 }}>👑 Pro</span>
                 {user?.createdAt && (
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>Člen od {new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}</span>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{t.profile.memberSince.replace('{date}', new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' }))}</span>
                 )}
               </div>
             </div>
@@ -356,10 +358,10 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           {/* Stats strip */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.15)' }}>
             {[
-              { label: 'Transakcie', value: txnCount !== null ? String(txnCount) : '—', color: 'rgba(255,255,255,0.9)' },
-              { label: 'Úspory', value: savingsTotal !== null ? `${savingsTotal.toLocaleString('sk-SK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €` : '—', color: '#34d399' },
-              { label: 'Séria', value: `${user?.currentStreak ?? 0} 🔥`, color: '#FB923C' },
-              { label: 'Sledovanie', value: trackingDays !== null ? `${trackingDays} dní` : '—', color: '#8B5CF6' },
+              { label: t.profile.transactionsStat, value: txnCount !== null ? String(txnCount) : '—', color: 'rgba(255,255,255,0.9)' },
+              { label: t.profile.savingsStat, value: savingsTotal !== null ? `${savingsTotal.toLocaleString('sk-SK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €` : '—', color: '#34d399' },
+              { label: t.profile.streakStat, value: `${user?.currentStreak ?? 0} 🔥`, color: '#FB923C' },
+              { label: t.profile.trackingStat, value: trackingDays !== null ? `${trackingDays} ${t.profile.days}` : '—', color: '#8B5CF6' },
             ].map((stat, i) => (
               <div key={i} style={{ padding: '12px 8px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: stat.color, fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>{stat.value}</div>
@@ -370,27 +372,27 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
           {/* Tab bar */}
           <div style={{ display: 'flex', gap: 0, marginTop: 4 }}>
-            {(['profile', 'account', 'achievements'] as const).map((t) => {
-              const labels: Record<Tab, string> = { profile: 'Profil', account: 'Účet', achievements: 'Úspechy' }
+            {(['profile', 'account', 'achievements'] as const).map((tabKey) => {
+              const labels: Record<Tab, string> = { profile: t.profile.tabProfile, account: t.profile.tabAccount, achievements: t.profile.tabAchievements }
               return (
                 <button
-                  key={t}
-                  onClick={() => { setTab(t); setEditMode(false) }}
+                  key={tabKey}
+                  onClick={() => { setTab(tabKey); setEditMode(false) }}
                   style={{
                     flex: 1,
                     padding: '12px 0',
                     background: 'transparent',
                     border: 'none',
-                    borderBottom: tab === t ? '2px solid var(--violet)' : '2px solid transparent',
-                    color: tab === t ? 'white' : 'rgba(255,255,255,0.45)',
+                    borderBottom: tab === tabKey ? '2px solid var(--violet)' : '2px solid transparent',
+                    color: tab === tabKey ? 'white' : 'rgba(255,255,255,0.45)',
                     fontSize: 13,
-                    fontWeight: tab === t ? 600 : 500,
+                    fontWeight: tab === tabKey ? 600 : 500,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     transition: 'all 0.15s',
                   }}
                 >
-                  {labels[t]}
+                  {labels[tabKey]}
                 </button>
               )
             })}
@@ -405,11 +407,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* OSOBNÉ ÚDAJE section */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>OSOBNÉ ÚDAJE</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>{t.profile.personalData.toUpperCase()}</div>
                 <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                   {/* Meno row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Meno</span>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.settings.name}</span>
                     {editMode ? (
                       <input
                         type="text"
@@ -431,13 +433,13 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   </div>
                   {/* Email row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Email</span>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.auth.email}</span>
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email ?? '—'}</span>
                     <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)', letterSpacing: '0.06em', flexShrink: 0, marginLeft: 6 }}>VERIF.</span>
                   </div>
                   {/* Telefón row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Telefón</span>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.profile.phone}</span>
                     <input
                       type="tel"
                       value={phone}
@@ -451,7 +453,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   </div>
                   {/* Krajina row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>Krajina</span>
+                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.profile.country}</span>
                     <select
                       value={country}
                       onChange={async e => {
@@ -474,18 +476,18 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
               {/* PREDVOLENÁ STRÁNKA */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>PREDVOLENÁ STRÁNKA</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>{t.profile.defaultPage.toUpperCase()}</div>
                 <select
                   value={defaultPageDraft}
                   onChange={e => setDefaultPageDraft(e.target.value)}
                   style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', fontSize: 13, fontFamily: "'DM Sans',sans-serif", outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="dashboard">Prehľad</option>
-                  <option value="income">Príjmy</option>
-                  <option value="variable-expenses">Variabilné výdavky</option>
-                  <option value="fixed-expenses">Fixné výdavky</option>
-                  <option value="categories">Kategórie</option>
-                  <option value="savings">Sporenie</option>
+                  <option value="dashboard">{t.nav.overview}</option>
+                  <option value="income">{t.nav.income}</option>
+                  <option value="variable-expenses">{t.expenses.variable.title}</option>
+                  <option value="fixed-expenses">{t.expenses.fixed.title}</option>
+                  <option value="categories">{t.nav.categories}</option>
+                  <option value="savings">{t.nav.savings}</option>
                 </select>
               </div>
 
@@ -506,7 +508,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     }}
                     style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
                   >
-                    Uložiť zmeny
+                    {t.profile.saveChanges}
                   </button>
                 )}
                 {onLogout && (
@@ -514,7 +516,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     onClick={() => setLogoutConfirm(true)}
                     style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 14, background: 'transparent', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
                   >
-                    Odhlásiť sa
+                    {t.auth.logout}
                   </button>
                 )}
               </div>
@@ -530,15 +532,15 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Finvu Pro</div>
                   <div style={{ fontSize: 12, color: 'var(--text3)' }}>
-                    {user?.createdAt ? `Člen od ${new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}` : 'Všetky funkcie odomknuté'}
+                    {user?.createdAt ? t.profile.memberSince.replace('{date}', new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })) : t.profile.allFeaturesUnlocked}
                   </div>
                 </div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,215,100,0.15)', color: '#fde68a', border: '1px solid rgba(255,215,100,0.3)', letterSpacing: '0.06em', flexShrink: 0 }}>AKTÍVNY</span>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,215,100,0.15)', color: '#fde68a', border: '1px solid rgba(255,215,100,0.3)', letterSpacing: '0.06em', flexShrink: 0 }}>{t.profile.active.toUpperCase()}</span>
               </div>
 
               {/* BEZPEČNOSŤ */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>BEZPEČNOSŤ</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.profile.security.toUpperCase()}</div>
                 <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                   {/* Row 1: Zmeniť heslo */}
                   <button
@@ -549,8 +551,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔐</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Zmeniť heslo</div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Ochrana hesla účtu</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t.profile.changePwTitle}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{t.profile.passwordProtection}</div>
                     </div>
                     <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
                   </button>
@@ -567,8 +569,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: hasPin ? 'rgba(16,185,129,0.12)' : 'rgba(100,116,139,0.12)', border: `1px solid ${hasPin ? 'rgba(16,185,129,0.2)' : 'rgba(100,116,139,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔢</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Prístupový PIN</div>
-                      <div style={{ fontSize: 11, marginTop: 1, color: hasPin ? '#34d399' : 'var(--text3)' }}>{hasPin ? 'Aktívny — zmeniť alebo odstrániť' : 'Neaktívny — nastaviť PIN zámok'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t.profile.pinAccess}</div>
+                      <div style={{ fontSize: 11, marginTop: 1, color: hasPin ? '#34d399' : 'var(--text3)' }}>{hasPin ? t.profile.pinActive : t.profile.pinInactive}</div>
                     </div>
                     <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
                   </button>
@@ -580,7 +582,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
                 style={{ width: '100%', height: 44, borderRadius: 12, fontSize: 13, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
               >
-                Exportovať dáta
+                {t.profile.exportData}
               </button>
             </div>
           )}
@@ -613,8 +615,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               <>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 36, marginBottom: 8 }}>🔢</div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>Zadaj aktuálny PIN</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Overenie pred zmenou</p>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>{t.profile.enterPin}</h3>
+                  <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.profile.pinVerification}</p>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
@@ -658,29 +660,29 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
                   style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
                 >
-                  Zrušiť
+                  {t.common.cancel}
                 </button>
               </>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <h3 style={{ textAlign: 'center', fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Čo chceš urobiť?</h3>
+                <h3 style={{ textAlign: 'center', fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t.profile.whatToDo}</h3>
                 <button
                   onClick={() => { setPinRemoveConfirm(false); setPinVerified(false); setPinSetupOpen(true) }}
                   style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
                 >
-                  Zmeniť PIN
+                  {t.profile.changePin}
                 </button>
                 <button
                   onClick={async () => { await removePin(); setPinRemoveConfirm(false); setPinVerified(false) }}
                   style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
                 >
-                  Odstrániť PIN
+                  {t.profile.removePin}
                 </button>
                 <button
                   onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text3)', fontFamily: 'inherit', padding: '8px 0', textAlign: 'center', width: '100%' }}
                 >
-                  Zrušiť
+                  {t.common.cancel}
                 </button>
               </div>
             )}
@@ -700,11 +702,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Zmeniť heslo</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t.profile.changePwTitle}</h3>
               <button onClick={() => setChangePasswordOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4 }}><X size={16} /></button>
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {(['Aktuálne heslo', 'Nové heslo', 'Potvrdiť nové heslo'] as const).map((label, idx) => {
+              {([t.profile.currentPassword, t.profile.newPassword, t.profile.confirmNewPassword]).map((label, idx) => {
                 const val = idx === 0 ? currentPw : idx === 1 ? newPw : confirmPw
                 const setter = idx === 0 ? setCurrentPw : idx === 1 ? setNewPw : setConfirmPw
                 return (
@@ -726,7 +728,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               )}
               {changePwOk ? (
                 <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                  <Check size={15} /> Heslo zmenené
+                  <Check size={15} /> {t.profile.passwordChanged}
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -734,14 +736,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     onClick={() => setChangePasswordOpen(false)}
                     style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'inherit' }}
                   >
-                    Zrušiť
+                    {t.common.cancel}
                   </button>
                   <button
                     onClick={handleChangePassword}
                     disabled={changePwLoading}
                     style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', border: 'none', cursor: changePwLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: changePwLoading ? 0.7 : 1 }}
                   >
-                    {changePwLoading ? 'Ukladám...' : 'Zmeniť heslo'}
+                    {changePwLoading ? t.profile.saving : t.profile.changePwTitle}
                   </button>
                 </div>
               )}
@@ -762,23 +764,23 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           >
             <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 12 }}>👋</div>
             <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', textAlign: 'center', margin: '0 0 8px' }}>
-              Odhlásiť sa?
+              {t.profile.logoutTitle}
             </h3>
             <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
-              Budete presmerovaný na prihlasovaciu stránku.
+              {t.profile.logoutRedirect}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
               <button
                 onClick={() => setLogoutConfirm(false)}
                 style={{ flex: 1, height: 48, borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
               >
-                Zrušiť
+                {t.common.cancel}
               </button>
               <button
                 onClick={() => { setLogoutConfirm(false); onLogout?.() }}
                 style={{ flex: 1, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
               >
-                Odhlásiť sa
+                {t.auth.logout}
               </button>
             </div>
           </div>

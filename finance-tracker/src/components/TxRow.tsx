@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import type { ApiTransaction } from '../types'
+import { useTranslation } from '../i18n'
 
 interface TxRowProps {
   t: ApiTransaction
@@ -10,6 +11,7 @@ interface TxRowProps {
 }
 
 export function TxRow({ t, compact = false, onDelete, onClick }: TxRowProps) {
+  const { t: tr } = useTranslation()
   const [hover, setHover] = useState(false)
 
   const isIncome = t.type === 'income'
@@ -52,7 +54,7 @@ export function TxRow({ t, compact = false, onDelete, onClick }: TxRowProps) {
           fontSize: compact ? 13 : 14, fontWeight: 500, color: 'var(--text)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2,
         }}>
-          {label || (isIncome ? 'Príjem' : 'Výdavok')}
+          {label || (isIncome ? tr.income.incomeLabel : tr.income.expenseLabel)}
         </p>
         <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
           {!isIncome && t.categoryName ? `${t.categoryName} · ` : ''}{dateStr}

@@ -256,9 +256,9 @@ export function IncomePage({ month, year }: IncomePageProps) {
                 <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
               </div>
               <div style={{display:'flex',gap:14,fontSize:11.5,color:'rgba(255,255,255,0.7)',paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
-                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>↻</span>Opakujúce: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(recurringTotal)}</span></div>
+                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>↻</span>{t.income.recurringLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(recurringTotal)}</span></div>
                 <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
-                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>1×</span>Jednorazové: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(oneTimeTotal)}</span></div>
+                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>1×</span>{t.income.oneTimeLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(oneTimeTotal)}</span></div>
               </div>
             </div>
           </div>
@@ -266,10 +266,10 @@ export function IncomePage({ month, year }: IncomePageProps) {
           {/* Recurring vs. one-time breakdown */}
           {totalAmount > 0 && (
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
-              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>Rozloženie príjmov</div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>{t.income.incomeBreakdown}</div>
               {([
-                { label: 'Opakujúce', amount: recurringTotal, color: '#60a5fa' },
-                { label: 'Jednorazové', amount: oneTimeTotal, color: 'var(--green)' },
+                { label: t.income.recurringLabel, amount: recurringTotal, color: '#60a5fa' },
+                { label: t.income.oneTimeLabel, amount: oneTimeTotal, color: 'var(--green)' },
               ] as const).map(bar => (
                 <div key={bar.label} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>

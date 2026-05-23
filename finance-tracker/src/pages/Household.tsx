@@ -10,16 +10,16 @@ import type { HouseholdData, MonthlyStats, ActivityItem } from '../api/household
 
 const CAT_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#A78BFA', '#F97316']
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, ht: { timeJustNow: string; timeMinutes: string; timeHours: string; timeYesterday: string; timeDays: string }): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
   const hours = Math.floor(mins / 60)
   const days = Math.floor(hours / 24)
-  if (mins < 2) return 'práve teraz'
-  if (mins < 60) return `pred ${mins} min.`
-  if (hours < 24) return `pred ${hours} h`
-  if (days === 1) return 'včera'
-  return `pred ${days} dňami`
+  if (mins < 2) return ht.timeJustNow
+  if (mins < 60) return ht.timeMinutes.replace('{n}', String(mins))
+  if (hours < 24) return ht.timeHours.replace('{n}', String(hours))
+  if (days === 1) return ht.timeYesterday
+  return ht.timeDays.replace('{n}', String(days))
 }
 
 export function HouseholdPage() {
@@ -49,7 +49,7 @@ export function HouseholdPage() {
       setLeavePending(false)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      alert(msg ?? 'Chyba pri opúšťaní domácnosti')
+      alert(msg ?? ht.leaveError)
     } finally {
       setLeaveLoading(false)
     }
@@ -144,7 +144,7 @@ export function HouseholdPage() {
               Rodina {householdData?.name ?? ht.title}
             </span>
           </div>
-          <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6, letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>Spoločný zostatok</p>
+          <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6, letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>{ht.sharedBalance}</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 14, flexWrap: 'wrap' as const }}>
             <span style={{ fontSize: 14, fontWeight: 500, color: balance >= 0 ? '#86efac' : '#fca5a5', marginRight: 2 }}>{balance >= 0 ? '+' : '−'}</span>
             <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(balance)).toLocaleString('sk-SK')}</span>
@@ -156,23 +156,23 @@ export function HouseholdPage() {
               color: savingsRate >= 0 ? '#86efac' : '#fca5a5',
               border: `1px solid ${savingsRate >= 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`,
             }}>
-              {savingsRate >= 0 ? `+${savingsRate}% úspora` : 'v mínuse'}
+              {savingsRate >= 0 ? `+${savingsRate}% ${ht.savings}` : ht.inMinus}
             </span>
           </div>
           {/* Stats row */}
           <div style={{ display: 'flex', gap: 18, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>Spolu príjmy</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>{ht.totalIncomeStat}</p>
               <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#86efac' }}>+{formatAmount(totalIncome)}</p>
             </div>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>Spolu výdavky</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>{ht.totalExpensesStat}</p>
               <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: '#fca5a5' }}>−{formatAmount(totalExpenses)}</p>
             </div>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>Členov</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 3 }}>{ht.membersCount}</p>
               <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 15, color: 'white' }}>{memberCount}</p>
             </div>
           </div>
@@ -181,20 +181,20 @@ export function HouseholdPage() {
 
       {/* ── ČLENOVIA section header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', flexShrink: 0 }}>Členovia ({memberCount})</p>
+        <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', flexShrink: 0 }}>{ht.membersSection} ({memberCount})</p>
         {householdData && (
           leavePending ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)' }}>Naozaj opustiť?</span>
+              <span style={{ fontSize: 12, color: 'var(--text3)' }}>{ht.confirmLeave}</span>
               <button
                 onClick={() => setLeavePending(false)}
                 style={{ padding: '5px 12px', borderRadius: 10, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
-              >Zrušiť</button>
+              >{t.common.cancel}</button>
               <button
                 onClick={handleLeaveHousehold}
                 disabled={leaveLoading}
                 style={{ padding: '5px 12px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: leaveLoading ? 0.6 : 1 }}
-              >{leaveLoading ? '...' : 'Potvrdiť'}</button>
+              >{leaveLoading ? '...' : ht.confirmBtn}</button>
             </div>
           ) : (
             <div style={{ display: 'flex', gap: 8 }}>
@@ -204,13 +204,13 @@ export function HouseholdPage() {
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Pozvať člena
+                  {ht.inviteMember}
                 </button>
               )}
               <button
                 onClick={() => setLeavePending(true)}
                 style={{ padding: '6px 14px', borderRadius: 10, border: '1px solid rgba(248,113,113,0.3)', background: 'transparent', color: '#f87171', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-              >Opustiť domácnosť</button>
+              >{ht.leaveHousehold}</button>
             </div>
           )
         )}
@@ -253,11 +253,11 @@ export function HouseholdPage() {
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       {m.is_owner ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 99, background: 'rgba(139,92,246,0.13)', color: 'var(--violet)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                          <Crown size={9} /> Správca
+                          <Crown size={9} /> {ht.owner}
                         </span>
                       ) : (
                         <span style={{ fontSize: 10.5, fontWeight: 500, padding: '2px 7px', borderRadius: 99, background: 'var(--bg3)', color: 'var(--text3)', border: '1px solid var(--border)' }}>
-                          Člen
+                          {ht.member}
                         </span>
                       )}
                       <span style={{ fontSize: 10, width: 4, height: 4, borderRadius: '50%', background: memberColor, display: 'inline-block' }} />
@@ -268,15 +268,15 @@ export function HouseholdPage() {
                 {/* 3-col mini stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
                   <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(22,163,74,0.08)', borderRadius: 10 }}>
-                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>Príjmy</p>
+                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>{ht.incomeStat}</p>
                     <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: 'var(--green)' }}>+{formatAmount(inc)}</p>
                   </div>
                   <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(220,38,38,0.07)', borderRadius: 10 }}>
-                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>Výdavky</p>
+                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>{ht.expensesStat}</p>
                     <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: 'var(--red)' }}>−{formatAmount(exp)}</p>
                   </div>
                   <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(139,92,246,0.08)', borderRadius: 10 }}>
-                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>Saldo</p>
+                    <p style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 2 }}>{ht.balanceStat}</p>
                     <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 13, color: bal >= 0 ? 'var(--violet)' : 'var(--red)' }}>
                       {bal >= 0 ? '+' : '−'}{formatAmount(Math.abs(bal))}
                     </p>
@@ -286,7 +286,7 @@ export function HouseholdPage() {
                 {/* Rozdelenie výdavkov */}
                 {exp > 0 && (
                   <>
-                    <p style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 6 }}>Rozdelenie výdavkov</p>
+                    <p style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 6 }}>{ht.expenseBreakdown}</p>
                     <div style={{ display: 'flex', height: 8, borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
                       {catBreakdown.map((c, j) => (
                         <div key={j} style={{ flex: c.val, background: c.color, transition: 'flex 0.7s' }} title={`${c.name}: ${formatAmount(c.val)}`} />
@@ -315,7 +315,7 @@ export function HouseholdPage() {
       {activityFeed.length > 0 && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: '18px 20px', boxShadow: 'var(--card-shadow)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>Aktivita</p>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)' }}>{ht.activityLabel}</p>
             <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: 'rgba(52,211,153,0.13)', color: 'var(--green)', fontWeight: 700 }}>● Live</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -323,7 +323,7 @@ export function HouseholdPage() {
               const member = householdData?.members.find(m => m.id === a.created_by)
               const name = a.created_by_name ?? member?.name ?? '?'
               const isIncome = a.type === 'income'
-              const actionText = isIncome ? 'pridal/a príjem' : 'pridal/a výdavok'
+              const actionText = isIncome ? ht.addedIncome : ht.addedExpense
               return (
                 <div key={i} style={{ display: 'flex', gap: 12, padding: '11px 0', borderBottom: i < activityFeed.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
                   <MemberAvatar
@@ -338,7 +338,7 @@ export function HouseholdPage() {
                       <span style={{ color: 'var(--text3)' }}> {actionText} </span>
                       <span style={{ fontWeight: 500 }}>{a.description ?? '—'}</span>
                     </p>
-                    <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(a.created_at)}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(a.created_at, ht)}</p>
                   </div>
                   <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 600, color: isIncome ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>
                     {isIncome ? '+' : '−'}{formatAmount(a.amount)}
@@ -351,10 +351,10 @@ export function HouseholdPage() {
       )}
 
       {/* ── Invite BottomSheet ── */}
-      <BottomSheet open={inviteOpen} onClose={() => setInviteOpen(false)} title="Pozvať člena">
+      <BottomSheet open={inviteOpen} onClose={() => setInviteOpen(false)} title={ht.inviteMember}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', padding: '8px 0' }}>
           <div style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', lineHeight: 1.6 }}>
-            Zdieľaj tento kód s členom rodiny. Kód zadá v sekcii Rodinné financie v Nastaveniach.
+            {ht.inviteCodeDesc}
           </div>
           <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 16, padding: '20px 32px', textAlign: 'center' }}>
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
@@ -368,7 +368,7 @@ export function HouseholdPage() {
             onClick={handleCopy}
             style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 32px', borderRadius: 14, background: copied ? 'rgba(52,211,153,0.15)' : 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: copied ? '#34D399' : 'white', fontSize: 15, fontWeight: 600, border: copied ? '1px solid rgba(52,211,153,0.3)' : 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', width: '100%', justifyContent: 'center' }}
           >
-            {copied ? <><Check size={16} /> Skopírované!</> : <><Copy size={16} /> Kopírovať kód</>}
+            {copied ? <><Check size={16} /> {ht.copied}</> : <><Copy size={16} /> {ht.copyCodeBtn}</>}
           </button>
         </div>
       </BottomSheet>

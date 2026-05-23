@@ -27,7 +27,7 @@ export function VerifyEmailPage({ token, onNavigateLogin }: VerifyEmailPageProps
         <h1 className="text-2xl font-bold text-[#E2D9F3]">{t.auth.verifyEmailTitle}</h1>
 
         {status === 'loading' && (
-          <p className="text-[#9D84D4]">Overujem email...</p>
+          <p className="text-[#9D84D4]">{t.auth.verifyingEmail}</p>
         )}
         {status === 'success' && (
           <div className="flex flex-col items-center gap-4">

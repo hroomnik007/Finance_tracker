@@ -118,7 +118,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           {isExpanded && (
             <div>
               <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>Finvu</span>
-              <div style={{ fontSize: 9, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>Financie pod kontrolou</div>
+              <div style={{ fontSize: 9, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>{t.nav.appTagline}</div>
             </div>
           )}
         </div>
@@ -323,7 +323,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
         {/* Expand/collapse toggle */}
         <button
           onClick={onToggle}
-          aria-label={isExpanded ? 'Zbaliť sidebar' : 'Rozbaliť sidebar'}
+          aria-label={isExpanded ? t.nav.collapseSidebar : t.nav.expandSidebar}
           style={{
             position: 'absolute',
             right: -12,

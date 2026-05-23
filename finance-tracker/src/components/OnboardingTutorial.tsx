@@ -80,7 +80,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
       setWebauthnDone(true)
       if (user?.email) localStorage.setItem(`webauthn_enabled_${user.email}`, '1')
     } catch (e: unknown) {
-      setWebauthnError((e as Error)?.message ?? 'Registrácia zlyhala.')
+      setWebauthnError((e as Error)?.message ?? t.auth.registerFailed)
     } finally {
       setWebauthnLoading(false)
     }

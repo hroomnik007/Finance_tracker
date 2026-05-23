@@ -309,7 +309,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
               <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
               <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{goalCount} aktívnych cieľov</span>
             </div>
-            <p style={{fontSize:10.5,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:6,letterSpacing:'0.12em',textTransform:'uppercase' as const}}>Celkové úspory</p>
+            <p style={{fontSize:10.5,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:6,letterSpacing:'0.12em',textTransform:'uppercase' as const}}>{t.savings.totalSavingsLabel.toUpperCase()}</p>
             <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:14,flexWrap:'wrap'}}>
               <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalSaved).toLocaleString('sk-SK')}</span>
               <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalSaved%1)*100)).padStart(2,'0')}</span>
@@ -327,12 +327,12 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
             )}
             <div style={{display:'flex',gap:0,paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
               <div style={{flex:1}}>
-                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Mesačne</p>
+                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.savings.monthlyLabel.toUpperCase()}</p>
                 <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'#5eead4'}}>+{formatAmount(monthlyAmount)}</p>
               </div>
               <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
               <div style={{flex:1,paddingLeft:18}}>
-                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>Zostáva spolu</p>
+                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.savings.remainingTotal.toUpperCase()}</p>
                 <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'white'}}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</p>
               </div>
             </div>

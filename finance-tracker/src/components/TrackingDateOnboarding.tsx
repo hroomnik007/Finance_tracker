@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { updateUserSettings } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from '../i18n'
 
 interface Props {
   onDone: () => void
 }
 
 export function TrackingDateOnboarding({ onDone }: Props) {
+  const { t } = useTranslation()
   const { refreshUser } = useAuth()
   const [date, setDate] = useState(() => {
     const d = new Date()
@@ -44,16 +46,16 @@ export function TrackingDateOnboarding({ onDone }: Props) {
 
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', margin: '0 0 10px' }}>
-            Vitaj! 👋
+            {t.onboarding.trackingTitle}
           </h1>
           <p style={{ fontSize: 15, color: 'var(--text2)', margin: 0, lineHeight: 1.6 }}>
-            Od kedy chceš sledovať financie?
+            {t.onboarding.trackingSubtitle}
           </p>
         </div>
 
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Počiatočný dátum
+            {t.onboarding.trackingLabel}
           </label>
           <input
             type="date"
@@ -74,7 +76,7 @@ export function TrackingDateOnboarding({ onDone }: Props) {
             }}
           />
           <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
-            Transakcie a príjmy pred týmto dátumom sa nebudú zobrazovať v histórii.
+            {t.onboarding.trackingNote}
           </p>
         </div>
 
@@ -97,7 +99,7 @@ export function TrackingDateOnboarding({ onDone }: Props) {
               boxShadow: '0 4px 16px rgba(124,58,237,0.4)',
             }}
           >
-            {saving ? 'Ukladám...' : 'Pokračovať →'}
+            {saving ? t.common.saving : t.common.continueArrow}
           </button>
           <button
             onClick={handleSkip}
@@ -115,7 +117,7 @@ export function TrackingDateOnboarding({ onDone }: Props) {
               fontFamily: 'inherit',
             }}
           >
-            Preskočiť
+            {t.onboarding.skip}
           </button>
         </div>
       </div>

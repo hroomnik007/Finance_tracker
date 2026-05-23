@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Page } from '../App'
+import { useTranslation } from '../i18n'
 
 interface TxnSearchItem {
   id: string
@@ -39,6 +40,7 @@ function formatAmt(amount: number): string {
 }
 
 export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme, transactions = [], onTransactionNavigate }: CommandPaletteProps) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [selIdx, setSelIdx] = useState(0)
   const inpRef = useRef<HTMLInputElement>(null)
@@ -52,17 +54,17 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
   }, [open])
 
   const actions: PaletteAction[] = [
-    { kind: 'nav', id: 'dashboard', label: 'Prehľad', hint: 'Dashboard', icon: '📊', action: () => onNavigate('dashboard') },
-    { kind: 'nav', id: 'income', label: 'Príjmy', hint: 'Income', icon: '💰', action: () => onNavigate('income') },
-    { kind: 'nav', id: 'variable-expenses', label: 'Variabilné výdavky', hint: 'Variable', icon: '🧾', action: () => onNavigate('variable-expenses') },
-    { kind: 'nav', id: 'fixed-expenses', label: 'Fixné výdavky', hint: 'Fixed', icon: '🔒', action: () => onNavigate('fixed-expenses') },
-    { kind: 'nav', id: 'categories', label: 'Kategórie', hint: 'Categories', icon: '🏷️', action: () => onNavigate('categories') },
-    { kind: 'nav', id: 'household', label: 'Domácnosť', hint: 'Household', icon: '🏠', action: () => onNavigate('household') },
-    { kind: 'nav', id: 'savings', label: 'Sporenie', hint: 'Savings', icon: '🐷', action: () => onNavigate('savings') },
-    { kind: 'nav', id: 'settings', label: 'Nastavenia', hint: 'Settings', icon: '⚙️', action: () => onNavigate('settings') },
-    { kind: 'act', id: 'add-exp', label: 'Pridať výdavok', hint: 'New expense', icon: '➕', action: () => onAdd('expense') },
-    { kind: 'act', id: 'add-inc', label: 'Pridať príjem', hint: 'New income', icon: '➕', action: () => onAdd('income') },
-    { kind: 'act', id: 'toggle-theme', label: 'Prepnúť tému', hint: 'Theme', icon: '🌓', action: onToggleTheme },
+    { kind: 'nav', id: 'dashboard', label: t.nav.dashboard, hint: 'Dashboard', icon: '📊', action: () => onNavigate('dashboard') },
+    { kind: 'nav', id: 'income', label: t.nav.income, hint: 'Income', icon: '💰', action: () => onNavigate('income') },
+    { kind: 'nav', id: 'variable-expenses', label: t.palette.variableExpenses, hint: 'Variable', icon: '🧾', action: () => onNavigate('variable-expenses') },
+    { kind: 'nav', id: 'fixed-expenses', label: t.palette.fixedExpenses, hint: 'Fixed', icon: '🔒', action: () => onNavigate('fixed-expenses') },
+    { kind: 'nav', id: 'categories', label: t.nav.categories, hint: 'Categories', icon: '🏷️', action: () => onNavigate('categories') },
+    { kind: 'nav', id: 'household', label: t.nav.household, hint: 'Household', icon: '🏠', action: () => onNavigate('household') },
+    { kind: 'nav', id: 'savings', label: t.nav.savings, hint: 'Savings', icon: '🐷', action: () => onNavigate('savings') },
+    { kind: 'nav', id: 'settings', label: t.nav.settings, hint: 'Settings', icon: '⚙️', action: () => onNavigate('settings') },
+    { kind: 'act', id: 'add-exp', label: t.expenses.variable.add, hint: 'New expense', icon: '➕', action: () => onAdd('expense') },
+    { kind: 'act', id: 'add-inc', label: t.income.add, hint: 'New income', icon: '➕', action: () => onAdd('income') },
+    { kind: 'act', id: 'toggle-theme', label: t.palette.toggleTheme, hint: 'Theme', icon: '🌓', action: onToggleTheme },
   ]
 
   const q = query.toLowerCase().trim()
@@ -71,7 +73,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
     : actions
 
   const txnMatches: TxnSearchItem[] = q.length >= 2
-    ? transactions.filter(t => t.label.toLowerCase().includes(q)).slice(0, 5)
+    ? transactions.filter(txn => txn.label.toLowerCase().includes(q)).slice(0, 5)
     : []
 
   const allItems: PaletteItem[] = filteredActions.map((a, i) => ({ ...a, _i: i }))
@@ -96,7 +98,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
       else if (e.key === 'Enter') {
         e.preventDefault()
         if (selIdx < allItems.length) { if (allItems[selIdx]) trigger(allItems[selIdx]) }
-        else { const t = txnMatches[selIdx - allItems.length]; if (t) triggerTxn(t) }
+        else { const txnItem = txnMatches[selIdx - allItems.length]; if (txnItem) triggerTxn(txnItem) }
       }
     }
     window.addEventListener('keydown', h)
@@ -113,7 +115,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
   let curSection: string | null = null
   const rows: React.ReactNode[] = []
   allItems.forEach((item, i) => {
-    const section = item.kind === 'nav' ? 'Navigácia' : 'Akcie'
+    const section = item.kind === 'nav' ? t.palette.navigation : t.palette.actions
     if (section !== curSection) {
       rows.push(<div key={'s-' + section}>{sectionTitle(section)}</div>)
       curSection = section
@@ -140,17 +142,17 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
   })
 
   if (txnMatches.length > 0) {
-    rows.push(<div key="s-txn">{sectionTitle('Transakcie')}</div>)
-    txnMatches.forEach((t, ti) => {
+    rows.push(<div key="s-txn">{sectionTitle(t.palette.transactions)}</div>)
+    txnMatches.forEach((txnItem, ti) => {
       const globalIdx = allItems.length + ti
       const sel = selIdx === globalIdx
-      const isIncome = t.type === 'income'
-      const amtStr = formatAmt(t.amount)
-      const dateStr = t.date ? t.date.slice(0, 10).split('-').reverse().join('.') : ''
+      const isIncome = txnItem.type === 'income'
+      const amtStr = formatAmt(txnItem.amount)
+      const dateStr = txnItem.date ? txnItem.date.slice(0, 10).split('-').reverse().join('.') : ''
       rows.push(
         <div
-          key={'txn-' + t.id}
-          onClick={() => triggerTxn(t)}
+          key={'txn-' + txnItem.id}
+          onClick={() => triggerTxn(txnItem)}
           onMouseEnter={() => setSelIdx(globalIdx)}
           style={{
             display: 'flex', alignItems: 'center', gap: 11, padding: '9px 16px', cursor: 'pointer',
@@ -160,7 +162,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
           }}
         >
           <span style={{ fontSize: 15, width: 22, display: 'flex', justifyContent: 'center' }}>{isIncome ? '💰' : '🧾'}</span>
-          <span style={{ flex: 1, fontSize: 13.5, color: 'var(--text)', fontWeight: sel ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
+          <span style={{ flex: 1, fontSize: 13.5, color: 'var(--text)', fontWeight: sel ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txnItem.label}</span>
           <span style={{ fontSize: 12, fontFamily: "'DM Mono',monospace", color: 'var(--text3)', flexShrink: 0 }}>{amtStr}</span>
           <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{dateStr}</span>
           {sel && <KbdKey label="↵" />}
@@ -192,7 +194,7 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
             type="text"
             value={query}
             onChange={e => { setQuery(e.target.value); setSelIdx(0) }}
-            placeholder="Hľadať alebo vykonať akciu…"
+            placeholder={t.palette.placeholder}
             style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text)', fontSize: 15, fontFamily: "'DM Sans', sans-serif" }}
           />
           <KbdKey label="esc" />
@@ -201,16 +203,16 @@ export function CommandPalette({ open, onClose, onNavigate, onAdd, onToggleTheme
           {rows.length > 0 ? rows : (
             <div style={{ padding: '28px 16px', textAlign: 'center' }}>
               <p style={{ fontSize: 24, marginBottom: 8 }}>🔍</p>
-              <p style={{ fontSize: 13, color: 'var(--text3)' }}>Žiadne výsledky pre "{query}"</p>
+              <p style={{ fontSize: 13, color: 'var(--text3)' }}>{t.palette.noResults.replace('{query}', query)}</p>
             </div>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg)', fontSize: 11, color: 'var(--text3)' }}>
           <div style={{ display: 'flex', gap: 14 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><KbdKey label="↑↓" /> pohyb</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><KbdKey label="↵" /> vybrať</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><KbdKey label="↑↓" /> {t.palette.moveHint}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><KbdKey label="↵" /> {t.palette.selectHint}</span>
           </div>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><KbdKey label="⌘K" /> otvoriť</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><KbdKey label="⌘K" /> {t.palette.openHint}</span>
         </div>
       </div>
     </div>

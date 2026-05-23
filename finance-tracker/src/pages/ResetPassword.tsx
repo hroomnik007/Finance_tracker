@@ -40,15 +40,15 @@ export function ResetPasswordPage({ token, onNavigateLogin }: ResetPasswordPageP
 
   const handleSubmit = async () => {
     setError(null)
-    if (newPassword.length < 8) { setError('Heslo musí mať aspoň 8 znakov'); return }
-    if (newPassword !== confirmPassword) { setError('Heslá sa nezhodujú'); return }
+    if (newPassword.length < 8) { setError(t.auth.passwordMin8); return }
+    if (newPassword !== confirmPassword) { setError(t.settings.passwordMismatch); return }
     setIsLoading(true)
     try {
       await resetPassword(token, newPassword)
       setSuccess(true)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setError(msg ?? 'Odkaz na obnovu hesla je neplatný alebo vypršal')
+      setError(msg ?? t.auth.linkExpired)
     } finally {
       setIsLoading(false)
     }
@@ -113,7 +113,7 @@ export function ResetPasswordPage({ token, onNavigateLogin }: ResetPasswordPageP
           <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>{t.auth.resetPasswordTitle}</div>
           {!success && (
             <p style={{ fontSize: 14, color: 'var(--text3)', marginTop: 8 }}>
-              Zadaj nové heslo pre svoj účet.
+              {t.auth.resetPasswordDesc}
             </p>
           )}
         </div>
@@ -133,8 +133,8 @@ export function ResetPasswordPage({ token, onNavigateLogin }: ResetPasswordPageP
             gap: 12,
           }}>
             <p style={{ fontSize: 24, margin: 0 }}>✅</p>
-            <p style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>Heslo bolo úspešne zmenené.</p>
-            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Presmerovanie na prihlásenie za {countdown}s…</p>
+            <p style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>{t.auth.resetSuccessMsg}</p>
+            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.auth.redirectingIn.replace('{n}', String(countdown))}</p>
           </div>
         ) : (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -154,7 +154,7 @@ export function ResetPasswordPage({ token, onNavigateLogin }: ResetPasswordPageP
               <label style={labelStyle}>{t.auth.newPasswordLabel}</label>
               <input
                 type="password"
-                placeholder="min. 8 znakov"
+                placeholder={t.auth.minChars}
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 onFocus={() => setP1Focused(true)}
@@ -193,7 +193,7 @@ export function ResetPasswordPage({ token, onNavigateLogin }: ResetPasswordPageP
                 transition: 'opacity 0.15s',
               }}
             >
-              {isLoading ? 'Ukladám...' : t.auth.resetPasswordBtn}
+              {isLoading ? t.auth.saving : t.auth.resetPasswordBtn}
             </button>
           </div>
         )}

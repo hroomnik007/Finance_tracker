@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Delete, Check } from 'lucide-react'
+import { useTranslation } from '../i18n'
 
 interface PinSetupModalProps {
   open: boolean
@@ -10,6 +11,7 @@ interface PinSetupModalProps {
 const KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
 export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
+  const { t } = useTranslation()
   const [step, setStep] = useState<'enter' | 'confirm' | 'success'>('enter')
   const [first, setFirst] = useState('')
   const [pin, setPin] = useState('')
@@ -76,15 +78,15 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
           <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Check size={28} color="#34d399" />
           </div>
-          <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>PIN bol nastavený</p>
-          <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>Môžeš sa teraz prihlasovať pomocou PIN kódu.</p>
+          <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>{t.pin.pinSet}</p>
+          <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>{t.pin.pinSetDesc}</p>
         </div>
       </div>
     )
   }
 
-  const title = step === 'enter' ? 'Zadaj nový PIN' : 'Potvrď PIN'
-  const sub = step === 'enter' ? 'Zvoľ si 4-ciferný PIN kód' : 'Zadaj PIN znova pre potvrdenie'
+  const title = step === 'enter' ? t.pin.enterNew : t.pin.confirm
+  const sub = step === 'enter' ? t.pin.choose : t.pin.confirmDesc
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>

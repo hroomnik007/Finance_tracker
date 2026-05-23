@@ -38,3 +38,7 @@ pnpm-debug.log*
 dev-dist/
 public/sw.js
 public/workbox-*.js
+
+# Unrelated local projects
+Finvu/
+privyzap_phase1/

@@ -149,7 +149,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   }
 
 
-  const MONTHS_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec']
+  const MONTHS_SK = t.monthsShort
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -221,8 +221,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           <PieChart>
             <Pie
               data={[
-                { name: 'Fixné', value: total > 0 ? total : 0.001 },
-                { name: 'Variabilné', value: variableTotal > 0 ? variableTotal : 0.001 },
+                { name: t.nav.fixed, value: total > 0 ? total : 0.001 },
+                { name: t.nav.variable, value: variableTotal > 0 ? variableTotal : 0.001 },
               ]}
               cx="50%" cy="50%" innerRadius={28} outerRadius={46}
               paddingAngle={2} dataKey="value" startAngle={90} endAngle={-270}
@@ -241,20 +241,20 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f97316', flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>Fixné</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.nav.fixed}</div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{formatAmount(total)}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#7c3aed', flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>Variabilné</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.nav.variable}</div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{formatAmount(variableTotal)}</div>
           </div>
         </div>
         {(total + variableTotal) > 0 && (
           <div style={{ fontSize: 11, color: '#f97316', fontWeight: 700, marginTop: 8 }}>
-            Fixné {Math.round((total / (total + variableTotal)) * 100)}%
+            {t.nav.fixed} {Math.round((total / (total + variableTotal)) * 100)}%
           </div>
         )}
       </div>
@@ -299,7 +299,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
                 <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>FIXNÉ VÝDAVKY</span>
                 <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
-                <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>Opakujúce každý mesiac</span>
+                <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{t.expenses.fixed.recurringMonthly}</span>
               </div>
               <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
                 <span style={{fontSize:14,fontWeight:500,color:'#fde68a',marginRight:4}}>−</span>
@@ -308,9 +308,9 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€/mes.</span>
               </div>
               <div style={{display:'flex',gap:18,fontSize:11.5,color:'rgba(255,255,255,0.7)',paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
-                <div>Ročne: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(filteredTotal * 12)}</span></div>
+                <div>{t.expenses.fixed.yearlyLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(filteredTotal * 12)}</span></div>
                 <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
-                <div>Splátok: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{filtered.length}</span></div>
+                <div>{t.expenses.fixed.installmentsLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{filtered.length}</span></div>
               </div>
             </div>
           </div>
@@ -318,7 +318,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Calendar strip — desktop only */}
           <div className="hidden lg:block">
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>Kalendár mesiaca</div>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(31, 1fr)', gap: 2, marginBottom: 8 }}>
               {Array.from({ length: daysInCurrentMonth }, (_, i) => {
                 const day = i + 1
@@ -330,7 +330,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 return (
                   <div
                     key={day}
-                    title={hasPayment ? dayFixed.map(f => `${f.label} ${formatAmount(f.amount)}`).join(', ') : 'Žiadna platba'}
+                    title={hasPayment ? dayFixed.map(f => `${f.label} ${formatAmount(f.amount)}`).join(', ') : t.expenses.fixed.noExpenses}
                     style={{
                       aspectRatio: '1',
                       borderRadius: 6,

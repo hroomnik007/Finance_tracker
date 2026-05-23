@@ -11,7 +11,6 @@ interface ExpenseHeatmapProps {
   onNavigate?: (page: 'variable-expenses') => void
 }
 
-const DAYS_SK = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne']
 
 function getDayColor(amount: number, maxAmount: number, isLight: boolean): string {
   if (isLight) {
@@ -97,7 +96,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
 
       {/* Day headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
-        {DAYS_SK.map(d => (
+        {t.daysShort.map(d => (
           <div key={d} style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-hint)', fontWeight: 600, padding: '2px 0' }}>
             {d}
           </div>

@@ -230,7 +230,7 @@ const upcomingFixed = useMemo(() => {
         </div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <p className="t-label" style={{ marginBottom: 4 }}>Dnes</p>
+        <p className="t-label" style={{ marginBottom: 4 }}>{t.dashboard.today}</p>
         <p style={{ fontSize: 13, color: 'var(--text2)', fontFamily: "'DM Mono', monospace", letterSpacing: '-0.2px', margin: 0 }}>{todayStr}</p>
       </div>
     </div>
@@ -443,7 +443,7 @@ const upcomingFixed = useMemo(() => {
                 onClick={() => setShowAllPie(p => !p)}
                 style={{ fontSize: 12, color: 'var(--violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}
               >
-                {showAllPie ? 'Zobraziť menej ↑' : `+ ${remainingPieCount} ďalších →`}
+                {showAllPie ? t.dashboard.showLess : t.dashboard.moreItems.replace('{n}', String(remainingPieCount))}
               </button>
             )}
           </div>
@@ -540,7 +540,7 @@ const upcomingFixed = useMemo(() => {
             ))}
           </div>
         ) : (
-          <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>Žiadne nadchádzajúce platby</p>
+          <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noUpcomingPayments}</p>
         )}
       </div>
 
@@ -716,11 +716,11 @@ const upcomingFixed = useMemo(() => {
         >
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px' }}>Sledovanie od dátumu</h3>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>Transakcie pred týmto dátumom sa nebudú zobrazovať v histórii.</p>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px' }}>{t.dashboard.trackingFromTitle}</h3>
+              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.dashboard.trackingFromNote}</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Počiatočný dátum</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t.onboarding.trackingLabel}</label>
               <input
                 type="date"
                 value={trackingDate}
@@ -755,7 +755,7 @@ const upcomingFixed = useMemo(() => {
                   opacity: (trackingSaving || !trackingDate) ? 0.6 : 1,
                 }}
               >
-                {trackingSaving ? 'Ukladám...' : 'Uložiť'}
+                {trackingSaving ? t.common.saving : t.common.save}
               </button>
             </div>
           </div>

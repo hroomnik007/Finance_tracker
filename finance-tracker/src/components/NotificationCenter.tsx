@@ -5,6 +5,7 @@ import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from '../i18n'
 
 interface Notification {
   id: string
@@ -33,6 +34,7 @@ interface NotificationCenterProps {
 }
 
 export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
@@ -90,8 +92,8 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           id: `budget-${cat.id}`,
           icon: pct >= 100 ? '🚨' : '⚠️',
           title: `Limit ${cat.name} ${Math.round(pct)}%`,
-          body: `${formatAmount(spent)} zo ${formatAmount(limit)} mesačného limitu`,
-          time: 'dnes',
+          body: t.notifications.spentOf.replace('{spent}', formatAmount(spent)).replace('{limit}', formatAmount(limit)),
+          time: t.notifications.today,
           read: false,
           color: pct >= 100 ? '#f87171' : '#FB923C',
           amount: `${Math.round(spent)} / ${Math.round(limit)} €`,
@@ -114,12 +116,12 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         } catch { /* plain text description */ }
         const diff = dayOfMonth >= todayDay ? dayOfMonth - todayDay : daysInMonth - todayDay + dayOfMonth
         if (diff > 7) continue
-        const timeStr = diff === 0 ? 'dnes' : diff === 1 ? 'zajtra' : `o ${diff} dní`
+        const timeStr = diff === 0 ? t.notifications.today : diff === 1 ? t.notifications.tomorrow : t.notifications.inDays.replace('{n}', String(diff))
         ns.push({
           id: `fixed-${tx.id}`,
           icon: '📅',
           title: `${label} ${timeStr}`,
-          body: `Splatnosť ${dayOfMonth}. dňa v mesiaci`,
+          body: t.notifications.dueDay.replace('{n}', String(dayOfMonth)),
           time: timeStr,
           read: false,
           color: '#f87171',
@@ -135,12 +137,12 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         const dayDiff = Math.max(0, Math.floor(
           (now.getTime() - new Date(latest.date + 'T12:00:00').getTime()) / 86400000
         ))
-        const timeStr = dayDiff === 0 ? 'dnes' : dayDiff === 1 ? 'včera' : `pred ${dayDiff} dňami`
+        const timeStr = dayDiff === 0 ? t.notifications.today : dayDiff === 1 ? t.notifications.yesterday : t.notifications.daysAgo.replace('{n}', String(dayDiff))
         ns.push({
           id: `income-${latest.id}`,
           icon: '💰',
-          title: 'Príjem pripísaný',
-          body: `${latest.description ?? 'Príjem'} — ${formatAmount(latest.amount)}`,
+          title: t.notifications.incomeReceived,
+          body: `${latest.description ?? t.notifications.incomeDefault} — ${formatAmount(latest.amount)}`,
           time: timeStr,
           read: dayDiff > 0,
           color: '#34d399',
@@ -158,8 +160,8 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           id: `savings-${goal.id}`,
           icon: goal.icon ?? '🎯',
           title: `${goal.name} ${Math.round(pct)}%`,
-          body: `Zostáva ${formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))} do cieľa`,
-          time: 'aktuálne',
+          body: t.notifications.goalRemaining.replace('{amount}', formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))),
+          time: t.notifications.currentTime,
           read: true,
           color: '#8B5CF6',
           amount: `${formatAmount(goal.savedAmount)} / ${formatAmount(goal.targetAmount)}`,
@@ -203,7 +205,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       {/* Bell button */}
       <button
         onClick={() => setOpen(v => !v)}
-        aria-label="Notifikácie"
+        aria-label={t.notifications.ariaLabel}
         style={{
           width: 34, height: 34, borderRadius: '50%',
           background: open ? 'var(--bg3)' : 'transparent',
@@ -244,17 +246,17 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Notifikácie</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{t.notifications.title}</span>
               {unreadCount > 0 && (
                 <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(139,92,246,0.16)', color: 'var(--violet)', fontFamily: "'DM Mono', monospace" }}>
-                  {unreadCount} nové
+                  {unreadCount} {t.notifications.newBadge}
                 </span>
               )}
             </div>
             {notifications.length > 0 && (
               unreadCount > 0
-                ? <button onClick={markAllRead} style={{ fontSize: 11.5, color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Označiť všetky</button>
-                : <button onClick={clearAll} style={{ fontSize: 11.5, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>Vyčistiť</button>
+                ? <button onClick={markAllRead} style={{ fontSize: 11.5, color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>{t.notifications.markAll}</button>
+                : <button onClick={clearAll} style={{ fontSize: 11.5, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>{t.notifications.clear}</button>
             )}
           </div>
 
@@ -262,13 +264,13 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           {loading ? (
             <div style={{ padding: '32px 16px', textAlign: 'center' }}>
               <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--violet)', animation: 'spin 0.8s linear infinite', margin: '0 auto 8px' }} />
-              <div style={{ fontSize: 12, color: 'var(--text3)' }}>Načítavam...</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t.notifications.loading}</div>
             </div>
           ) : notifications.length === 0 ? (
             <div style={{ padding: '40px 16px', textAlign: 'center' }}>
               <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.7 }}>🔕</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>Všetko stíhate</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text3)' }}>Žiadne nové upozornenia.</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>{t.notifications.emptyTitle}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text3)' }}>{t.notifications.emptyBody}</div>
             </div>
           ) : (
             <div style={{ maxHeight: 420, overflowY: 'auto' }}>
@@ -313,11 +315,11 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
                     {n.amount && (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 700, color: n.color }}>{n.amount}</span>
-                        {n.target && <span style={{ fontSize: 10.5, color: 'var(--text3)' }}>· Otvoriť →</span>}
+                        {n.target && <span style={{ fontSize: 10.5, color: 'var(--text3)' }}>· {t.notifications.openLink}</span>}
                       </div>
                     )}
                     {!n.amount && n.target && (
-                      <p style={{ fontSize: 10.5, color: 'var(--violet)', fontWeight: 600, marginTop: 4 }}>Otvoriť →</p>
+                      <p style={{ fontSize: 10.5, color: 'var(--violet)', fontWeight: 600, marginTop: 4 }}>{t.notifications.openLink}</p>
                     )}
                   </div>
                   {/* Unread dot */}

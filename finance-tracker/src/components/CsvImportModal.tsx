@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import Papa from 'papaparse'
 import { X, Upload, Check, ChevronDown } from 'lucide-react'
 import { createTransaction } from '../api/transactions'
+import { useTranslation } from '../i18n'
 
 interface ImportRow {
   date: string
@@ -141,6 +142,7 @@ function parseMBank(rows: CsvRow[]): ImportRow[] {
 }
 
 export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProps) {
+  const { t } = useTranslation()
   const [format, setFormat] = useState<BankFormat>('revolut')
   const [showFormatPicker, setShowFormatPicker] = useState(false)
   const [rows, setRows] = useState<ImportRow[]>([])
@@ -185,10 +187,10 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           case 'bank365':  parsed = parse365Bank(result.data); break
         }
         if (parsed.length === 0) {
-          setError('Žiadne platné záznamy neboli nájdené. Skontrolujte formát súboru.')
+          setError(t.csv.noValidRecords)
         } else {
           if (parsed.length > 500) {
-            setWarning('CSV obsahuje viac ako 500 riadkov. Importuje sa prvých 500.')
+            setWarning(t.csv.tooManyRows)
             parsed = parsed.slice(0, 500)
           } else {
             setWarning(null)
@@ -196,13 +198,13 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           setRows(applyFilter(parsed))
         }
       },
-      error: () => setError('Chyba pri čítaní súboru.'),
+      error: () => setError(t.csv.readError),
     })
   }
 
   function applyCustomMapping() {
     if (!customMapping.date || !customMapping.amount) {
-      setError('Vyberte stĺpec pre dátum a sumu.')
+      setError(t.csv.columnMappingError)
       return
     }
     const parsed: ImportRow[] = rawCsvRows
@@ -220,7 +222,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
       })
       .filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
     if (parsed.length === 0) {
-      setError('Žiadne platné záznamy. Skontrolujte mapovanie stĺpcov.')
+      setError(t.csv.noMappingRecords)
     } else {
       setError(null)
       let limited = parsed
@@ -248,7 +250,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
       setImportedCount(selected.length)
       setRows([])
     } catch {
-      setError('Chyba pri importe. Skúste znova.')
+      setError(t.csv.importError)
     } finally {
       setImporting(false)
     }
@@ -269,7 +271,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#E2D9F3' }}>Import CSV</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#E2D9F3' }}>{t.csv.title}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9D84D4', padding: 4 }}>
             <X size={18} />
           </button>
@@ -280,8 +282,8 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           {importedCount !== null ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
-              <p style={{ fontSize: 18, fontWeight: 600, color: '#34D399', marginBottom: 8 }}>Importovaných {importedCount} transakcií</p>
-              <button onClick={onClose} style={{ height: 48, padding: '0 32px', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 12 }}>Zatvoriť</button>
+              <p style={{ fontSize: 18, fontWeight: 600, color: '#34D399', marginBottom: 8 }}>{t.csv.importSuccess.replace('{n}', String(importedCount))}</p>
+              <button onClick={onClose} style={{ height: 48, padding: '0 32px', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 12 }}>{t.csv.close}</button>
             </div>
           ) : rows.length === 0 && csvHeaders.length === 0 ? (
             <div>
@@ -314,8 +316,8 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
                 onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = '#4C3A8A'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
               >
                 <Upload size={32} style={{ color: '#7C3AED', margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#E2D9F3', marginBottom: 4 }}>Presuň CSV sem</p>
-                <p style={{ fontSize: 13, color: '#9D84D4' }}>alebo klikni pre výber súboru</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: '#E2D9F3', marginBottom: 4 }}>{t.csv.dragHere}</p>
+                <p style={{ fontSize: 13, color: '#9D84D4' }}>{t.csv.orClick}</p>
                 <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
               </div>
@@ -324,26 +326,26 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           ) : csvHeaders.length > 0 ? (
             // Custom column mapping
             <div>
-              <p style={{ fontSize: 13, color: '#9D84D4', marginBottom: 16 }}>Namapuj stĺpce z CSV súboru:</p>
+              <p style={{ fontSize: 13, color: '#9D84D4', marginBottom: 16 }}>{t.csv.mapColumns}</p>
               {(['date', 'description', 'amount'] as const).map(field => (
                 <div key={field} style={{ marginBottom: 12 }}>
                   <label style={{ fontSize: 12, color: '#9D84D4', display: 'block', marginBottom: 4 }}>
-                    {field === 'date' ? 'Dátum *' : field === 'description' ? 'Popis' : 'Suma *'}
+                    {field === 'date' ? t.csv.dateCol : field === 'description' ? t.csv.descCol : t.csv.amountCol}
                   </label>
                   <select
                     value={customMapping[field]}
                     onChange={e => setCustomMapping(m => ({ ...m, [field]: e.target.value }))}
                     style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid #4C3A8A', borderRadius: 10, color: '#E2D9F3', fontSize: 13, fontFamily: 'inherit' }}
                   >
-                    <option value="">— nezvolený —</option>
+                    <option value="">{t.csv.noMapping}</option>
                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
               ))}
               {error && <p style={{ color: '#F87171', fontSize: 13, marginTop: 8 }}>{error}</p>}
               <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                <button onClick={reset} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 12, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Späť</button>
-                <button onClick={applyCustomMapping} style={{ flex: 2, height: 44, background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Pokračovať</button>
+                <button onClick={reset} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 12, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.back}</button>
+                <button onClick={applyCustomMapping} style={{ flex: 2, height: 44, background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.continue}</button>
               </div>
             </div>
           ) : (
@@ -352,9 +354,9 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
                 <p style={{ fontSize: 12, color: '#FBBF24', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>{warning}</p>
               )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <p style={{ fontSize: 13, color: '#9D84D4' }}>{rows.length} záznamov · <span style={{ color: '#A78BFA' }}>{selectedCount}</span> vybraných</p>
+                <p style={{ fontSize: 13, color: '#9D84D4' }}>{rows.length} {t.csv.records} · <span style={{ color: '#A78BFA' }}>{selectedCount}</span> {t.csv.selectedCount}</p>
                 <button onClick={() => setRows(r => r.map(x => ({ ...x, selected: !allSelected })))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A78BFA', fontSize: 13, fontFamily: 'inherit' }}>
-                  {allSelected ? 'Odznačiť' : 'Vybrať všetky'}
+                  {allSelected ? t.csv.deselectAll : t.csv.selectAll}
                 </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -383,10 +385,10 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
         {/* Footer */}
         {rows.length > 0 && importedCount === null && (
           <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, flexShrink: 0 }}>
-            <button onClick={reset} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 14, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušiť</button>
+            <button onClick={reset} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 14, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.common.cancel}</button>
             <button onClick={handleImport} disabled={selectedCount === 0 || importing}
               style={{ flex: 2, height: 48, background: selectedCount > 0 ? 'linear-gradient(135deg,#7C3AED,#6D28D9)' : '#32265A', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: selectedCount > 0 && !importing ? 'pointer' : 'default', opacity: importing ? 0.7 : 1, fontFamily: 'inherit' }}>
-              {importing ? 'Importujem...' : `Importovať (${selectedCount})`}
+              {importing ? t.csv.importing : `${t.csv.importBtn} (${selectedCount})`}
             </button>
           </div>
         )}

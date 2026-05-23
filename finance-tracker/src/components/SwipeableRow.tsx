@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Trash2 } from 'lucide-react'
+import { useTranslation } from '../i18n'
 
 interface SwipeableRowProps {
   onDelete: () => void
@@ -15,6 +16,7 @@ const FULL_SWIPE_RATIO = 0.5  // 50% of item width
 const VELOCITY_THRESHOLD = 0.5 // px/ms
 
 export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = true, isOpen, onOpen }: SwipeableRowProps) {
+  const { t } = useTranslation()
   const wrapRef = useRef<HTMLDivElement>(null)
   const onDeleteRef = useRef(onDelete)
   useEffect(() => { onDeleteRef.current = onDelete }, [onDelete])
@@ -166,7 +168,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
             }}
           >
             <Trash2 size={18} />
-            <span style={{ fontSize: 11, fontWeight: 600 }}>Zmazať</span>
+            <span style={{ fontSize: 11, fontWeight: 600 }}>{t.common.delete}</span>
           </button>
         </div>
       )}

@@ -287,9 +287,9 @@ export function SettingsPage() {
 
   async function handleChangePassword() {
     setChangePwError(null)
-    if (!currentPw || !newPw || !confirmPw) { setChangePwError('Vyplňte všetky polia'); return }
-    if (newPw.length < 8) { setChangePwError('Nové heslo musí mať aspoň 8 znakov'); return }
-    if (newPw !== confirmPw) { setChangePwError('Heslá sa nezhodujú'); return }
+    if (!currentPw || !newPw || !confirmPw) { setChangePwError(t.profile.fillAllFields); return }
+    if (newPw.length < 8) { setChangePwError(t.profile.passwordMin8); return }
+    if (newPw !== confirmPw) { setChangePwError(t.settings.passwordMismatch); return }
     setChangePwLoading(true)
     try {
       await changePassword(currentPw, newPw)
@@ -298,7 +298,7 @@ export function SettingsPage() {
       setTimeout(() => { setChangePwOk(false); setChangePwOpen(false) }, 2000)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setChangePwError(msg ?? 'Zmena hesla zlyhala')
+      setChangePwError(msg ?? t.profile.changePwFailed)
     } finally {
       setChangePwLoading(false)
     }
@@ -315,7 +315,7 @@ export function SettingsPage() {
       const ok = await verifyLockPin(next)
       if (!ok) {
         setPinRemoveShake(true)
-        setPinRemoveError('Nesprávny PIN')
+        setPinRemoveError(t.profile.incorrectPin)
         setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
       } else {
         await removePin()
@@ -703,6 +703,15 @@ export function SettingsPage() {
     finally { setTrackingSaving(false) }
   }
 
+  const sectionLabels: Record<SettingsSection, string> = {
+    appearance: t.settings.sectionAppearance,
+    finance: t.settings.sectionFinance,
+    notifications: t.settings.sectionNotifications,
+    security: t.settings.sectionSecurity,
+    data: t.settings.sectionData,
+    about: t.settings.sectionAbout,
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -710,8 +719,8 @@ export function SettingsPage() {
 
       {/* Settings page header */}
       <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-        <p className="t-label" style={{ marginBottom: 6 }}>Nastavenia</p>
-        <p style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0 }}>Prispôsobte si Finvu</p>
+        <p className="t-label" style={{ marginBottom: 6 }}>{t.settings.title}</p>
+        <p style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0 }}>{t.settings.subtitle}</p>
       </div>
 
       {/* 2-col grid: left nav + right content */}
@@ -738,7 +747,7 @@ export function SettingsPage() {
                 }}
               >
                 <Icon size={16} strokeWidth={isActive ? 2 : 1.8} />
-                {s.label}
+                {sectionLabels[s.id]}
               </button>
             )
           })}
@@ -762,7 +771,7 @@ export function SettingsPage() {
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
-                {s.label}
+                {sectionLabels[s.id]}
               </button>
             )
           })}
@@ -1110,8 +1119,8 @@ export function SettingsPage() {
 
                   {/* PIN */}
                   <SettingRow
-                    label="PIN kód"
-                    sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>PIN je aktívny</span> : 'Rýchly zámok aplikácie'}
+                    label={t.settings.pinCodeLabel}
+                    sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{t.settings.pinIsActive}</span> : t.settings.pinAppLock}
                   >
                     {hasPin ? (
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -1119,14 +1128,14 @@ export function SettingsPage() {
                           onClick={() => setPinSetupOpen(true)}
                           className="btn-secondary py-1.5 text-xs"
                         >
-                          Zmeniť
+                          {t.settings.change}
                         </button>
                         <button
                           onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }}
                           className="btn-secondary py-1.5 text-xs"
                           style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
                         >
-                          Odstrániť
+                          {t.common.remove}
                         </button>
                       </div>
                     ) : (
@@ -1134,7 +1143,7 @@ export function SettingsPage() {
                         onClick={() => setPinSetupOpen(true)}
                         className="btn-secondary py-1.5 text-xs"
                       >
-                        Nastaviť
+                        {t.settings.setup}
                       </button>
                     )}
                   </SettingRow>
@@ -1301,7 +1310,7 @@ export function SettingsPage() {
                   <div className="flex flex-col gap-3 mb-5">
                     <div className="flex items-start gap-3">
                       <span className="text-base leading-none mt-0.5">🔒</span>
-                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
+                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">{t.settings.secureServer}</p>
                     </div>
                     <div className="flex items-start gap-3">
                       <span className="text-base leading-none mt-0.5">🔧</span>
@@ -1379,10 +1388,10 @@ export function SettingsPage() {
             className="modal-in"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Odstrániť PIN</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.profile.removePin}</h2>
               <button onClick={() => setPinRemoveOpen(false)} className="btn-icon"><X size={16} /></button>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>Zadaj aktuálny PIN pre potvrdenie</p>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>{t.settings.removePinConfirm}</p>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
               <div style={{ display: 'flex', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
                 {[0,1,2,3].map(i => (
@@ -1428,26 +1437,26 @@ export function SettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Náhľad importu</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.settings.importPreview}</h2>
               <button onClick={() => setImportPreview(null)} className="btn-icon">
                 <X size={16} />
               </button>
             </div>
             <div className="flex flex-col divide-y divide-white/[0.06] mb-5">
               <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Príjmy</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.nav.income}</span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.incomeCount}</span>
               </div>
               <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Výdavky (variabilné)</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.settings.variableExpenses}</span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.expenseCount}</span>
               </div>
               <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Fixné výdavky</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.settings.fixedExpenses}</span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.fixedCount}</span>
               </div>
               <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>Kategórie</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.nav.categories}</span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.categoryCount}</span>
               </div>
             </div>
@@ -1458,14 +1467,14 @@ export function SettingsPage() {
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-colors cursor-pointer disabled:opacity-60"
                 style={{ background: 'var(--accent-color)' }}
               >
-                {importLoading ? 'Importujem...' : 'Zlúčiť s existujúcimi'}
+                {importLoading ? t.settings.importing : t.settings.importMerge}
               </button>
               <button
                 onClick={() => handleImportConfirm('replace')}
                 disabled={importLoading}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-60"
               >
-                {importLoading ? 'Importujem...' : 'Nahradiť všetko'}
+                {importLoading ? t.settings.importing : t.settings.importReplace}
               </button>
             </div>
           </div>
@@ -1478,23 +1487,21 @@ export function SettingsPage() {
           <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
-                {dangerAction === 'expenses' && 'Vymazať všetky výdavky'}
-                {dangerAction === 'incomes' && 'Vymazať všetky príjmy'}
-                {dangerAction === 'reset' && 'Reset aplikácie'}
+                {dangerAction === 'expenses' && t.settings.dangerExpensesTitle}
+                {dangerAction === 'incomes' && t.settings.dangerIncomesTitle}
+                {dangerAction === 'reset' && t.settings.dangerResetTitle}
               </h2>
               <button onClick={() => setDangerAction(null)} className="btn-icon">
                 <X size={16} />
               </button>
             </div>
             <p className="text-sm text-[color:var(--text3)] mb-5">
-              {dangerAction === 'reset'
-                ? 'Táto akcia vymaže VŠETKY transakcie a nastavenia. Akcia je nevratná.'
-                : 'Táto akcia je nevratná. Všetky záznamy budú trvalo vymazané.'}
+              {dangerAction === 'reset' ? t.settings.dangerResetDesc : t.settings.dangerDeleteDesc}
             </p>
             {dangerAction === 'reset' && (
               <div className="mb-4">
                 <label className="text-[11px] font-semibold uppercase tracking-wider text-red-400 mb-2 block">
-                  Pre potvrdenie napíšte "VYMAZAŤ"
+                  {t.settings.dangerResetConfirmLabel}
                 </label>
                 <input
                   type="text"
@@ -1510,14 +1517,14 @@ export function SettingsPage() {
                 onClick={() => setDangerAction(null)}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer"
               >
-                Zrušiť
+                {t.common.cancel}
               </button>
               <button
                 onClick={executeDangerAction}
                 disabled={dangerLoading || (dangerAction === 'reset' && dangerConfirmText !== 'VYMAZAŤ')}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {dangerLoading ? 'Mažem...' : 'Vymazať'}
+                {dangerLoading ? t.settings.dangerDeleting : t.settings.dangerDeleteBtn}
               </button>
             </div>
           </div>
@@ -1554,7 +1561,7 @@ export function SettingsPage() {
             <div className="flex flex-col gap-3 mb-5">
               <div className="flex items-start gap-3">
                 <span className="text-base leading-none mt-0.5">🔒</span>
-                <p className="text-xs text-[color:var(--text2)] leading-relaxed">Dáta uložené na zabezpečenom serveri</p>
+                <p className="text-xs text-[color:var(--text2)] leading-relaxed">{t.settings.secureServer}</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-base leading-none mt-0.5">🔧</span>
