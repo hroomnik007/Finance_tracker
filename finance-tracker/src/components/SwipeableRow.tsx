@@ -61,7 +61,6 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
 
   function handleTouchStart(e: React.TouchEvent) {
     if (disabled) return
-    onOpen?.()
     const t = e.touches[0]
     touchStartX.current = t.clientX
     touchStartY.current = t.clientY
@@ -81,6 +80,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
     if (!isSwiping.current) {
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
         isSwiping.current = true
+        onOpen?.()
       } else if (Math.abs(dy) > 8) {
         setTracking(false)
         return
@@ -149,25 +149,27 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
       }}
       onClick={() => { if (revealed) { setOffset(0); setRevealed(false) } }}
     >
-      {/* Delete background */}
-      <div className="swipe-actions" style={{
-        position: 'absolute', right: 0, top: 0, bottom: 0, width: REVEAL_PX,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: pastHalf ? '#DC2626' : '#ef4444',
-        borderRadius: '0 16px 16px 0',
-        transition: 'background 0.15s',
-      }}>
-        <button
-          onClick={e => { e.stopPropagation(); onDelete() }}
-          style={{
-            background: 'none', border: 'none', color: 'white', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: 8,
-          }}
-        >
-          <Trash2 size={18} />
-          <span style={{ fontSize: 11, fontWeight: 600 }}>Zmazať</span>
-        </button>
-      </div>
+      {/* Delete background — only rendered when swiping or revealed */}
+      {(offset < 0 || revealed) && (
+        <div className="swipe-actions" style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0, width: REVEAL_PX,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: pastHalf ? '#DC2626' : '#ef4444',
+          borderRadius: '0 16px 16px 0',
+          transition: 'background 0.15s',
+        }}>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete() }}
+            style={{
+              background: 'none', border: 'none', color: 'white', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: 8,
+            }}
+          >
+            <Trash2 size={18} />
+            <span style={{ fontSize: 11, fontWeight: 600 }}>Zmazať</span>
+          </button>
+        </div>
+      )}
 
       {/* Swipeable content */}
       <div

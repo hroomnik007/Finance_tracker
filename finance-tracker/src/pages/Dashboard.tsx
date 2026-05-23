@@ -99,11 +99,13 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       .map(cat => ({
         name: cat.name,
         icon: cat.icon,
-        value: variableExpenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0),
+        value:
+          variableExpenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0) +
+          fixedExpenses.filter(f => f.categoryId === cat.id).reduce((s, f) => s + f.amount, 0),
         color: cat.color,
       }))
       .filter(d => d.value > 0)
-  , [categories, variableExpenses])
+  , [categories, variableExpenses, fixedExpenses])
 
   const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
   const legendItems = showAllPie ? sortedPieData : sortedPieData.slice(0, 5)
