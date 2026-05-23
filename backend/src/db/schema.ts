@@ -42,6 +42,7 @@ export const users = pgTable("users", {
   householdEnabled: boolean("household_enabled").default(false),
   savingsEnabled: boolean("savings_enabled").default(false),
   theme: varchar("theme", { length: 20 }).default("dark"),
+  language: varchar("language", { length: 10 }).default("sk"),
   trackingStartDate: date("tracking_start_date"),
   onboardingBannerDismissed: boolean("onboarding_banner_dismissed").default(false).notNull(),
   lastActiveAt: timestamp("last_active_at"),

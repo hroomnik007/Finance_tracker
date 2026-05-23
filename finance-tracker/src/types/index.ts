@@ -54,7 +54,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   currency: 'EUR',
-  language: 'sk',
+  language: '',
   dateFormat: 'DD.MM.YYYY',
   firstDayOfWeek: 'monday',
   firstDayOfMonth: 1,
@@ -98,6 +98,7 @@ export interface AuthUser {
   tracking_start_date?: string | null
   onboarding_banner_dismissed?: boolean
   has_pin?: boolean
+  language?: string | null
   isDemo?: boolean
   phone?: string | null
   country?: string | null

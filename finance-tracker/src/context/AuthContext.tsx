@@ -20,6 +20,7 @@ import {
   updateUserSettings,
   pinLogin as apiPinLogin,
 } from '../api/auth'
+import { applyLanguageSetting } from './SettingsContext'
 import type { AuthUser } from '../types'
 
 interface AuthContextValue {
@@ -103,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
           } catch { /* ignore */ }
         }
+        if (me.language) applyLanguageSetting(me.language)
       } catch {
         setUser(null)
       } finally {
@@ -134,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('theme_preference', me.theme)
         document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
       }
+      if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
 
@@ -158,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
 
@@ -170,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
 
@@ -181,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
 

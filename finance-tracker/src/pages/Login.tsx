@@ -4,6 +4,7 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
 import { getAuthMethods } from '../api/auth'
+import { LanguageSwitcher } from '../components/LanguageSwitcher'
 
 interface LoginPageProps {
   onNavigateRegister: () => void
@@ -159,14 +160,17 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       {/* Atmospheric blob */}
       <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 70%)', pointerEvents: 'none' }} />
 
-      {/* Theme toggle */}
-      <button
-        onClick={toggleTheme}
-        style={{ position: 'fixed', top: 16, right: 16, width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, zIndex: 100 }}
-        title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
-      >
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      {/* Top controls: language switcher + theme toggle */}
+      <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, zIndex: 100 }}>
+        <LanguageSwitcher />
+        <button
+          onClick={toggleTheme}
+          style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}
+          title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+      </div>
 
       <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 24, position: 'relative' }}>
 

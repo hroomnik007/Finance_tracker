@@ -42,6 +42,7 @@ function userPublic(u: {
   householdId?: number | null; householdEnabled?: boolean | null;
   savingsEnabled?: boolean | null;
   theme?: string | null;
+  language?: string | null;
   trackingStartDate?: string | null;
   onboardingBannerDismissed?: boolean | null;
   pinHash?: string | null;
@@ -59,6 +60,7 @@ function userPublic(u: {
     household_enabled: u.householdEnabled ?? false,
     savings_enabled: u.savingsEnabled ?? false,
     theme: u.theme ?? null,
+    language: u.language ?? null,
     tracking_start_date: u.trackingStartDate ?? null,
     onboarding_banner_dismissed: u.onboardingBannerDismissed ?? false,
     has_pin: !!u.pinHash,
@@ -379,7 +381,7 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
 
 export async function updateUserSettings(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled, trackingStartDate, onboardingBannerDismissed } = req.body as {
+  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled, trackingStartDate, onboardingBannerDismissed, language } = req.body as {
     onboardingComplete?: boolean;
     monthlyEmailEnabled?: boolean;
     defaultPage?: string;
@@ -388,10 +390,12 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
     savingsEnabled?: boolean;
     trackingStartDate?: string | null;
     onboardingBannerDismissed?: boolean;
+    language?: string;
   };
   const VALID_PAGES = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings'];
   const VALID_FORMATS = ['sk', 'en', 'de'];
   const VALID_THEMES = ['dark', 'light', 'system'];
+  const VALID_LANGS = ['sk', 'cs', 'pl', 'hu', 'en'];
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const update: Record<string, unknown> = { updatedAt: new Date() };
   if (typeof onboardingComplete === 'boolean') update.onboardingComplete = onboardingComplete;
@@ -399,6 +403,7 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
   if (typeof defaultPage === 'string' && VALID_PAGES.includes(defaultPage)) update.defaultPage = defaultPage;
   if (typeof currencyFormat === 'string' && VALID_FORMATS.includes(currencyFormat)) update.currencyFormat = currencyFormat;
   if (typeof theme === 'string' && VALID_THEMES.includes(theme)) update.theme = theme;
+  if (typeof language === 'string' && VALID_LANGS.includes(language)) update.language = language;
   if (typeof savingsEnabled === 'boolean') update.savingsEnabled = savingsEnabled;
   if (trackingStartDate === null || (typeof trackingStartDate === 'string' && DATE_RE.test(trackingStartDate))) {
     update.trackingStartDate = trackingStartDate ?? null;

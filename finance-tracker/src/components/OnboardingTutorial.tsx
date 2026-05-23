@@ -4,50 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import { usePinLock } from '../hooks/usePinLock'
 import { PinSetupModal } from './PinSetupModal'
 import { savePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
+import { useTranslation } from '../i18n'
 
-interface OnboardingStep {
-  title: string
-  description: string
-  emoji: string
-}
-
-const STEPS: OnboardingStep[] = [
-  {
-    title: 'Vitajte vo Finvu!',
-    description: 'Toto je váš prehľad financií. Tu vidíte súhrn príjmov, výdavkov a zostatok na jeden pohľad.',
-    emoji: '🎉',
-  },
-  {
-    title: 'Pridajte príjmy',
-    description: 'Kliknite na "Príjmy" v menu a pridajte váš plat alebo iné príjmy pomocou tlačidla +.',
-    emoji: '💰',
-  },
-  {
-    title: 'Sledujte výdavky',
-    description: 'V sekcii "Výdavky" zaznamenajte nákupy podľa kategórií a sledujte, kam idú vaše peniaze.',
-    emoji: '📊',
-  },
-  {
-    title: 'Stanovte si ciele sporenia',
-    description: 'V sekcii Sporenie si nastavte ciele a sledujte ako sa k nim priblížujete každý mesiac.',
-    emoji: '🐷',
-  },
-  {
-    title: 'Spravujte domácnosť',
-    description: 'Pridajte členov domácnosti a sledujte financie celej rodiny na jednom mieste.',
-    emoji: '🏠',
-  },
-  {
-    title: 'Nastavenia',
-    description: 'V nastaveniach si prispôsobíte kategórie, limity rozpočtu, menu a ďalšie predvoľby.',
-    emoji: '⚙️',
-  },
-  {
-    title: 'Spôsob prihlásenia',
-    description: 'Vyberte si, ako sa budete prihlasovať do aplikácie.',
-    emoji: '🔐',
-  },
-]
+const STEP_EMOJIS = ['🎉', '💰', '📊', '🐷', '🏠', '⚙️', '🔐']
 
 export function useOnboarding() {
   const { user, isLoading, isGuest, completeOnboarding: saveOnboarding } = useAuth()
@@ -77,6 +36,17 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
   const [exiting, setExiting] = useState(false)
   const { user } = useAuth()
   const { setupPin } = usePinLock()
+  const { t } = useTranslation()
+
+  const STEPS = [
+    { title: t.onboarding.step0Title, description: t.onboarding.step0Desc, emoji: STEP_EMOJIS[0] },
+    { title: t.onboarding.step1Title, description: t.onboarding.step1Desc, emoji: STEP_EMOJIS[1] },
+    { title: t.onboarding.step2Title, description: t.onboarding.step2Desc, emoji: STEP_EMOJIS[2] },
+    { title: t.onboarding.step3Title, description: t.onboarding.step3Desc, emoji: STEP_EMOJIS[3] },
+    { title: t.onboarding.step4Title, description: t.onboarding.step4Desc, emoji: STEP_EMOJIS[4] },
+    { title: t.onboarding.step5Title, description: t.onboarding.step5Desc, emoji: STEP_EMOJIS[5] },
+    { title: t.onboarding.step6Title, description: t.onboarding.step6Desc, emoji: STEP_EMOJIS[6] },
+  ]
   const [pinSetupOpen, setPinSetupOpen] = useState(false)
   const [webauthnDone, setWebauthnDone] = useState(false)
   const [webauthnLoading, setWebauthnLoading] = useState(false)
@@ -217,13 +187,13 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
             user?.isDemo ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', padding: '20px', borderRadius: '16px', background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', textAlign: 'center' }}>
                 <span style={{ fontSize: 36 }}>🚀</span>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Toto je demo účet.</p>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>Zaregistruj sa pre plný prístup a uloženie vlastných dát.</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.onboarding.demoTitle}</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{t.onboarding.demoDesc}</p>
                 <button
                   onClick={() => { window.location.hash = 'register' }}
                   style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
-                  Zaregistrovať sa →
+                  {t.onboarding.demoBtn}
                 </button>
               </div>
             ) : (
@@ -242,8 +212,8 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
               >
                 <span style={{ fontSize: 24 }}>✉️</span>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Email + heslo</p>
-                  <p style={{ fontSize: 12, color: '#34d399' }}>✓ Aktívne</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{t.onboarding.emailLabel}</p>
+                  <p style={{ fontSize: 12, color: '#34d399' }}>{t.onboarding.emailActive}</p>
                 </div>
               </div>
 
@@ -267,12 +237,12 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
               >
                 <span style={{ fontSize: 24 }}>🔢</span>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>PIN kód</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{t.onboarding.pinLabel}</p>
                   <p style={{ fontSize: 12, color: pinDone ? '#34d399' : 'var(--text-muted)' }}>
-                    {pinDone ? '✓ Nastavený' : 'Rýchle prihlásenie 4-miestnym PINom'}
+                    {pinDone ? t.onboarding.pinSetLabel : t.onboarding.pinDesc}
                   </p>
                 </div>
-                {!pinDone && <span style={{ fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>Nastaviť →</span>}
+                {!pinDone && <span style={{ fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>{t.onboarding.setupBtn}</span>}
               </button>
 
               {/* WebAuthn */}
@@ -297,12 +267,12 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                 >
                   <span style={{ fontSize: 24 }}>🔐</span>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Biometria / Passkey</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{t.onboarding.biometryLabel}</p>
                     <p style={{ fontSize: 12, color: webauthnDone ? '#34d399' : 'var(--text-muted)' }}>
-                      {webauthnDone ? '✓ Zaregistrované' : webauthnLoading ? 'Registrujem...' : 'Odtlačok prsta alebo Face ID'}
+                      {webauthnDone ? t.onboarding.biometrySetLabel : webauthnLoading ? t.onboarding.biometryLoading : t.onboarding.biometryDesc}
                     </p>
                   </div>
-                  {!webauthnDone && !webauthnLoading && <span style={{ fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>Nastaviť →</span>}
+                  {!webauthnDone && !webauthnLoading && <span style={{ fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>{t.onboarding.setupBtn}</span>}
                 </button>
               )}
               {webauthnError && (
@@ -327,7 +297,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                 cursor: 'pointer',
               }}
             >
-              Preskočiť
+              {t.onboarding.skip}
             </button>
             <button
               onClick={handleNext}
@@ -347,7 +317,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                 gap: '6px',
               }}
             >
-              {isLastStep ? 'Začať!' : 'Ďalej'}
+              {isLastStep ? t.onboarding.start : t.onboarding.next}
               {!isLastStep && <ChevronRight size={16} />}
             </button>
           </div>

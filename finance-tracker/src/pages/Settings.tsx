@@ -8,6 +8,7 @@ import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
 import { useSettingsContext } from '../context/SettingsContext'
+import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
@@ -21,11 +22,6 @@ const CURRENCIES = [
   { value: 'USD', label: '$ US Dollar' },
   { value: 'GBP', label: '£ Libra' },
   { value: 'CZK', label: 'Kč Česká koruna' },
-]
-
-const LANGUAGES = [
-  { value: 'sk', label: 'Slovenčina' },
-  { value: 'en', label: 'English' },
 ]
 
 const DATE_FORMATS = [
@@ -857,13 +853,11 @@ export function SettingsPage() {
                   </SettingRow>
 
                   <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
-                    <select
-                      value={settings.language}
-                      onChange={e => updateSettings({ language: e.target.value })}
-                      className="select-field"
-                    >
-                      {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                    </select>
+                    <LanguageSwitcher
+                      onLanguageChange={lang => {
+                        updateUserSettings({ language: lang }).catch(() => { /* non-critical */ })
+                      }}
+                    />
                   </SettingRow>
 
                   <SettingRow label={t.settings.dateFormat}>

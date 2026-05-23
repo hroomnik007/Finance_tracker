@@ -1,16 +1,32 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react'
 import { DEFAULT_SETTINGS } from '../types'
 import type { AppSettings } from '../types'
 
 const SETTINGS_KEY = 'app_settings'
+const SUPPORTED_LANGS = ['sk', 'cs', 'pl', 'hu', 'en']
+
+function detectBrowserLanguage(): string {
+  try {
+    const lang = (navigator.language || 'en').split('-')[0].toLowerCase()
+    return SUPPORTED_LANGS.includes(lang) ? lang : 'en'
+  } catch {
+    return 'en'
+  }
+}
 
 function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
-    if (!raw) return DEFAULT_SETTINGS
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    const stored = raw ? JSON.parse(raw) : null
+    const settings: AppSettings = { ...DEFAULT_SETTINGS, ...(stored ?? {}) }
+    if (!settings.language) {
+      settings.language = detectBrowserLanguage()
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)) } catch { /* ignore */ }
+    }
+    return settings
   } catch {
-    return DEFAULT_SETTINGS
+    const settings = { ...DEFAULT_SETTINGS, language: detectBrowserLanguage() }
+    return settings
   }
 }
 
@@ -45,6 +61,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [profileAvatar, setProfileAvatar] = useState<string>(
     () => localStorage.getItem('profile_avatar') ?? '👤'
   )
+
+  useEffect(() => {
+    const handler = () => setSettings(loadSettings())
+    window.addEventListener('settings:language-changed', handler)
+    return () => window.removeEventListener('settings:language-changed', handler)
+  }, [])
 
   const updateSettings = useCallback((partial: Partial<AppSettings>) => {
     setSettings(prev => {
@@ -83,4 +105,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
 export function useSettingsContext() {
   return useContext(SettingsContext)
+}
+
+export function applyLanguageSetting(lang: string) {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY)
+    const settings = raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS }
+    settings.language = lang
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  } catch { /* ignore */ }
+  window.dispatchEvent(new Event('settings:language-changed'))
 }

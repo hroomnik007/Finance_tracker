@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import { LanguageSwitcher } from '../components/LanguageSwitcher'
 
 interface RegisterPageProps {
   onNavigateLogin: () => void
@@ -104,20 +105,22 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
         filter: 'blur(40px)',
       }} />
 
-      {/* Theme toggle */}
-      <button
-        onClick={toggleTheme}
-        aria-label={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
-        style={{
-          position: 'fixed', top: 16, right: 16,
-          width: 38, height: 38, borderRadius: '50%',
-          background: 'var(--bg2)', border: '1px solid var(--border)',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16, zIndex: 100,
-        }}
-      >
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      {/* Top controls: language switcher + theme toggle */}
+      <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, zIndex: 100 }}>
+        <LanguageSwitcher />
+        <button
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
+          style={{
+            width: 38, height: 38, borderRadius: '50%',
+            background: 'var(--bg2)', border: '1px solid var(--border)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16, flexShrink: 0,
+          }}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+      </div>
 
       <div className="fade-up" style={{ width: '100%', maxWidth: 460, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 1 }}>
 
