@@ -7,6 +7,7 @@ export interface Category {
   icon: string
   budgetLimit?: number
   autoLimit?: boolean
+  hasFixedExpenses?: boolean
   type: 'income' | 'expense'
 }
 
@@ -120,6 +121,7 @@ export interface ApiCategory {
   createdAt: string
   budgetLimit?: number | null
   autoLimit?: boolean
+  hasFixedExpenses?: boolean
 }
 
 export interface ApiTransaction {

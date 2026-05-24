@@ -76,14 +76,15 @@ export function CategoriesPage() {
   const [autoLimit, setAutoLimit] = useState(true)
 
   function openAdd() {
-    setEditing(null); setName(''); setColor(PRESET_COLORS[6]); setIcon('🛒'); setBudgetLimit(''); setCatType('expense'); setAutoLimit(true)
+    setEditing(null); setName(''); setColor(PRESET_COLORS[6]); setIcon('🛒'); setBudgetLimit(''); setCatType('expense'); setAutoLimit(false)
     setSheetOpen(true)
   }
 
   function openEdit(cat: Category) {
     setEditing(cat); setName(cat.name); setColor(cat.color); setIcon(cat.icon)
     setBudgetLimit(cat.budgetLimit != null ? String(cat.budgetLimit) : ''); setCatType(cat.type)
-    setAutoLimit(cat.autoLimit ?? true)
+    // Auto-limit toggle only relevant when category has fixed expenses
+    setAutoLimit(cat.hasFixedExpenses ? (cat.autoLimit ?? true) : false)
     setSheetOpen(true)
   }
 
@@ -598,29 +599,31 @@ export function CategoriesPage() {
                 {t.expenses.categories.limitLabel}{' '}
                 <span className="text-[#9D84D4]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12, color: autoLimit ? 'var(--violet)' : 'var(--text3)', fontWeight: 600 }}>
-                  {t.expenses.categories.autoLimit}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setAutoLimit(v => !v)}
-                  style={{
-                    width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
-                    background: autoLimit ? 'var(--violet)' : 'var(--bg4)',
-                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                  }}
-                  aria-label={t.expenses.categories.autoLimit}
-                >
-                  <span style={{
-                    position: 'absolute', top: 3, left: autoLimit ? 21 : 3,
-                    width: 16, height: 16, borderRadius: '50%', background: 'white',
-                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                  }} />
-                </button>
-              </div>
+              {editing?.hasFixedExpenses && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: autoLimit ? 'var(--violet)' : 'var(--text3)', fontWeight: 600 }}>
+                    {t.expenses.categories.autoLimit}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAutoLimit(v => !v)}
+                    style={{
+                      width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+                      background: autoLimit ? 'var(--violet)' : 'var(--bg4)',
+                      position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                    }}
+                    aria-label={t.expenses.categories.autoLimit}
+                  >
+                    <span style={{
+                      position: 'absolute', top: 3, left: autoLimit ? 21 : 3,
+                      width: 16, height: 16, borderRadius: '50%', background: 'white',
+                      transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    }} />
+                  </button>
+                </div>
+              )}
             </div>
-            {autoLimit ? (
+            {editing?.hasFixedExpenses && autoLimit ? (
               <div style={{
                 padding: '10px 14px', borderRadius: 12,
                 background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)',

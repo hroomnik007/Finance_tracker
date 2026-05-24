@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import { categories, transactions, users, householdMembers } from "../db/schema";
@@ -34,10 +34,18 @@ export async function recalculateCategoryLimit(categoryId: string, userId: strin
     ));
 
   const newLimit = parseFloat(total ?? "0");
-  await db
-    .update(categories)
-    .set({ budgetLimit: newLimit > 0 ? String(newLimit) : null })
-    .where(eq(categories.id, categoryId));
+  if (newLimit > 0) {
+    await db
+      .update(categories)
+      .set({ budgetLimit: String(newLimit) })
+      .where(eq(categories.id, categoryId));
+  } else {
+    // All fixed expenses removed — disable auto_limit so category returns to manual mode
+    await db
+      .update(categories)
+      .set({ budgetLimit: null, autoLimit: false })
+      .where(eq(categories.id, categoryId));
+  }
 }
 
 const createSchema = z.object({
@@ -84,7 +92,26 @@ export async function listCategories(req: AuthRequest, res: Response): Promise<v
       .orderBy(categories.type, categories.name);
   }
 
-  res.json({ data: rows.map(normalizeCategory) });
+  // Determine which categories have at least one fixed expense transaction
+  const categoryIds = rows.map((r) => r.id);
+  let fixedCatIds = new Set<string>();
+  if (categoryIds.length > 0) {
+    const fixedRows = await db
+      .select({ categoryId: transactions.categoryId })
+      .from(transactions)
+      .where(and(
+        eq(transactions.isFixed, true),
+        eq(transactions.type, "expense"),
+        isNotNull(transactions.categoryId),
+        inArray(transactions.categoryId, categoryIds)
+      ))
+      .groupBy(transactions.categoryId);
+    fixedCatIds = new Set(fixedRows.map((r) => r.categoryId!));
+  }
+
+  res.json({
+    data: rows.map((r) => ({ ...normalizeCategory(r), hasFixedExpenses: fixedCatIds.has(r.id) })),
+  });
 }
 
 export async function createCategory(req: AuthRequest, res: Response): Promise<void> {
@@ -101,11 +128,11 @@ export async function createCategory(req: AuthRequest, res: Response): Promise<v
       ...rest,
       userId: req.userId!,
       budgetLimit: bl != null ? String(bl) : null,
-      autoLimit: autoLimit ?? true,
+      autoLimit: autoLimit ?? false,
     })
     .returning();
 
-  res.status(201).json({ data: normalizeCategory(row) });
+  res.status(201).json({ data: { ...normalizeCategory(row), hasFixedExpenses: false } });
 }
 
 export async function updateCategory(req: AuthRequest, res: Response): Promise<void> {
@@ -148,15 +175,25 @@ export async function updateCategory(req: AuthRequest, res: Response): Promise<v
     .where(and(eq(categories.id, id), eq(categories.userId, req.userId!)))
     .returning();
 
-  // When auto_limit is being enabled, immediately recalculate
+  // When auto_limit is being enabled, immediately recalculate from existing fixed expenses
   if (autoLimit === true) {
     await recalculateCategoryLimit(id, req.userId!);
     const [refreshed] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
-    res.json({ data: normalizeCategory(refreshed) });
+    const [hasFixed] = await db
+      .select({ categoryId: transactions.categoryId })
+      .from(transactions)
+      .where(and(eq(transactions.categoryId, id), eq(transactions.isFixed, true), eq(transactions.type, "expense")))
+      .limit(1);
+    res.json({ data: { ...normalizeCategory(refreshed), hasFixedExpenses: !!hasFixed } });
     return;
   }
 
-  res.json({ data: normalizeCategory(updated) });
+  const [hasFixed] = await db
+    .select({ categoryId: transactions.categoryId })
+    .from(transactions)
+    .where(and(eq(transactions.categoryId, id), eq(transactions.isFixed, true), eq(transactions.type, "expense")))
+    .limit(1);
+  res.json({ data: { ...normalizeCategory(updated), hasFixedExpenses: !!hasFixed } });
 }
 
 export async function deleteAllCategories(req: AuthRequest, res: Response): Promise<void> {

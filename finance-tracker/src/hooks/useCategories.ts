@@ -37,7 +37,8 @@ function toCategory(c: ApiCategory, limits: Record<string, number>): Category {
     type: c.type,
     // prefer server value; fall back to localStorage for backwards compatibility
     budgetLimit: c.budgetLimit != null ? c.budgetLimit : limits[c.id],
-    autoLimit: c.autoLimit ?? true,
+    autoLimit: c.autoLimit ?? false,
+    hasFixedExpenses: c.hasFixedExpenses ?? false,
   }
 }
 
