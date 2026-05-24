@@ -115,13 +115,6 @@ const pillStyle = (active: boolean): React.CSSProperties => ({
   flexShrink: 0,
 })
 
-const rpSection = (title: string, children: React.ReactNode) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-    <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
-    {children}
-  </div>
-)
-
 export function IncomePage({ month, year }: IncomePageProps) {
   const { incomes, addIncome, updateIncome, deleteIncome } = useIncomes(month, year)
   const { formatAmount, formatDate } = useFormatters()
@@ -263,7 +256,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '4px 0 8px' }}>
               <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
                 👥 Všetci
               </button>
