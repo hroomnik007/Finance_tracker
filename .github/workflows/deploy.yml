@@ -43,7 +43,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd /var/www/finance-tracker-repo/finance-tracker
-            find /var/www/finance-tracker-repo/finance-tracker/node_modules -maxdepth 1 -mindepth 1 -exec rm -rf {} + 2>/dev/null || true
+            rm -rf node_modules && npm cache clean --force
             npm ci --legacy-peer-deps
             export PATH="$PATH:$(pwd)/node_modules/.bin"
             git log --pretty=format:'{"hash":"%h","date":"%ad","message":"%s"}' --date=short -50 2>/dev/null | grep -v '^$' | awk 'NR==1{print "["} NR>1{print ","} {print} END{print "]"}' > public/changelog.json || echo "[]" > public/changelog.json
