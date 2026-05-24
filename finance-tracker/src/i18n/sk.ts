@@ -289,7 +289,7 @@ export const sk = {
     language: 'Jazyk',
     languageNote: 'Zmena jazyka sa prejaví okamžite',
     dateFormat: 'Formát dátumu',
-    firstDayOfWeek: 'Prvý deň týždňa',
+    firstDayOfWeek: 'Začiatok týždňa',
     save: 'Uložiť nastavenia',
     saved: 'Nastavenia boli uložené',
     data: 'Dáta',

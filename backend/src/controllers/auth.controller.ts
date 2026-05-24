@@ -98,6 +98,18 @@ async function createSession(userId: string, req: Request): Promise<string> {
   const ua = (req.headers['user-agent'] as string | undefined) ?? ''
   const rawIp = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ?? req.ip ?? ''
   const { deviceName, browser } = parseUA(ua)
+
+  if (deviceName && browser) {
+    const existing = await db.select({ id: userSessions.id })
+      .from(userSessions)
+      .where(and(eq(userSessions.userId, userId), eq(userSessions.deviceName, deviceName), eq(userSessions.browser, browser)))
+      .limit(1)
+    if (existing.length > 0) {
+      await db.update(userSessions).set({ lastActive: new Date() }).where(eq(userSessions.id, existing[0].id))
+      return existing[0].id
+    }
+  }
+
   const [session] = await db.insert(userSessions).values({
     userId,
     deviceName,

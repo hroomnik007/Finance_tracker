@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet } from 'lucide-react'
-import * as XLSX from '@e965/xlsx'
+import { X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet, ExternalLink } from 'lucide-react'
+import { CsvImportModal } from '../components/CsvImportModal'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
-import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
+import { updateWeeklyEmail, updateUserSettings, changePassword, savePin, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
+import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
@@ -13,7 +13,7 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
-import type { ApiTransaction, ApiCategory, UserSession } from '../types'
+import type { ApiTransaction, UserSession } from '../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,8 @@ const CURRENCIES = [
   { value: 'USD', label: '$ US Dollar' },
   { value: 'GBP', label: '£ Libra' },
   { value: 'CZK', label: 'Kč Česká koruna' },
+  { value: 'HUF', label: '🇭🇺 Ft Forint' },
+  { value: 'PLN', label: '🇵🇱 zł Złoty' },
 ]
 
 const DATE_FORMATS = [
@@ -38,12 +40,6 @@ const ACCENT_COLORS = [
   { name: 'Ružová', value: '#EC4899' },
   { name: 'Červená', value: '#EF4444' },
 ]
-
-interface ChangelogEntry {
-  hash: string
-  date: string
-  message: string
-}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -136,22 +132,7 @@ function saveLocalPref(key: string, value: unknown) {
   try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* ignore */ }
 }
 
-// ── Import types ──────────────────────────────────────────────────────────────
-
-interface ImportFileData {
-  transactions: ApiTransaction[]
-  categories: ApiCategory[]
-}
-
-interface ImportPreview {
-  data: ImportFileData
-  incomeCount: number
-  expenseCount: number
-  fixedCount: number
-  categoryCount: number
-}
-
-type DangerAction = 'expenses' | 'incomes' | 'reset'
+type DangerAction = 'transactions' | 'reset'
 
 type SettingsSection = 'appearance' | 'finance' | 'notifications' | 'security' | 'data' | 'about'
 
@@ -343,8 +324,14 @@ export function SettingsPage() {
   const [monthlyEmail, setMonthlyEmail] = useState(user?.monthlyEmailEnabled ?? false)
   const [monthlyEmailSaving, setMonthlyEmailSaving] = useState(false)
   const [budgetWarnings, setBudgetWarningsState] = useState(() => loadLocalPref<boolean>('budget_warnings_enabled', true))
-  const [monthlySummary, setMonthlySummaryState] = useState(() => loadLocalPref<boolean>('monthly_summary_enabled', false))
   const [savingsGoalReminder, setSavingsGoalReminderState] = useState(() => loadLocalPref<boolean>('savings_goal_reminder_enabled', false))
+
+  // Data section
+  const [csvImportOpen, setCsvImportOpen] = useState(false)
+
+  // Deactivation modals
+  const [deactivateOpen, setDeactivateOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   function handleNotificationsToggle() {
     const next = !notificationsEnabled
@@ -424,151 +411,6 @@ export function SettingsPage() {
     window.print()
   }
 
-  async function handleExportXlsx() {
-    try {
-      setExportError(null)
-      const [transactions, { data: categories }] = await Promise.all([
-        fetchAllTransactions({}),
-        getCategories(),
-      ])
-      const incomesData = transactions.filter(t => t.type === 'income').map(t => ({
-        Dátum: t.date,
-        Popis: t.description ?? '',
-        Suma: t.amount,
-      }))
-      const expensesData = transactions.filter(t => t.type === 'expense' && !t.isFixed).map(t => ({
-        Dátum: t.date,
-        Kategória: t.categoryName ?? '',
-        Poznámka: t.description ?? '',
-        Suma: t.amount,
-      }))
-      const categoriesData = categories.map(c => ({
-        Ikona: c.icon,
-        Názov: c.name,
-        Typ: c.type,
-        Limit: c.budgetLimit ?? '',
-      }))
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(incomesData), 'Príjmy')
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), 'Výdavky')
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categoriesData), 'Kategórie')
-      XLSX.writeFile(wb, `finvu-export-${new Date().toISOString().split('T')[0]}.xlsx`)
-    } catch {
-      setExportError('Export zlyhal. Skúste znova.')
-    }
-  }
-
-  async function handleShareReport() {
-    try {
-      const [allT, { data: cats }] = await Promise.all([
-        fetchAllTransactions({}),
-        getCategories(),
-      ])
-      const totalIncome = allT.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-      const totalExpenses = allT.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-      const byCategory = cats
-        .map(cat => {
-          const total = allT
-            .filter(tx => tx.categoryId === cat.id && tx.type === 'expense')
-            .reduce((s, tx) => s + tx.amount, 0)
-          return {
-            name: cat.name,
-            color: cat.color ?? '#9D84D4',
-            total,
-            percentage: totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0,
-          }
-        })
-        .filter(c => c.total > 0)
-      const data = JSON.stringify({
-        title: 'Finvu — Finančný prehľad',
-        totalIncome,
-        totalExpenses,
-        balance: totalIncome - totalExpenses,
-        byCategory,
-        generatedAt: new Date().toISOString(),
-      })
-      const { token } = await createSharedReport(data, 24 * 7)
-      const url = `${window.location.origin}${window.location.pathname}#report/${token}`
-      await navigator.clipboard.writeText(url)
-      alert(`Odkaz bol skopírovaný do schránky:\n${url}`)
-    } catch {
-      alert('Nepodarilo sa vytvoriť zdieľaný odkaz.')
-    }
-  }
-
-  // ── Section 4: Import ─────────────────────────────────────────────────────
-  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null)
-  const [importError, setImportError] = useState<string | null>(null)
-  const [importOk, setImportOk] = useState(false)
-  const [importLoading, setImportLoading] = useState(false)
-
-  function handleImportFileSelect() {
-    setImportError(null)
-    setImportOk(false)
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json,application/json'
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        try {
-          const raw = JSON.parse(ev.target?.result as string)
-          if (!Array.isArray(raw.transactions)) {
-            setImportError('Nepodporovaný formát. Exportujte dáta znova a skúste importovať nový súbor.')
-            return
-          }
-          const transactions = raw.transactions as ApiTransaction[]
-          const categories = Array.isArray(raw.categories) ? raw.categories as ApiCategory[] : []
-          setImportPreview({
-            data: { transactions, categories },
-            incomeCount: transactions.filter(t => t.type === 'income').length,
-            expenseCount: transactions.filter(t => t.type === 'expense' && !t.isFixed).length,
-            fixedCount: transactions.filter(t => t.type === 'expense' && t.isFixed).length,
-            categoryCount: categories.length,
-          })
-        } catch {
-          setImportError('Neplatný JSON súbor.')
-        }
-      }
-      reader.readAsText(file)
-    }
-    input.click()
-  }
-
-  async function handleImportConfirm(mode: 'merge' | 'replace') {
-    if (!importPreview) return
-    setImportLoading(true)
-    try {
-      if (mode === 'replace') {
-        while (true) {
-          const { data: existing } = await getTransactions({ limit: 200 })
-          if (existing.length === 0) break
-          await Promise.all(existing.map(t => deleteTransaction(t.id)))
-        }
-      }
-      await Promise.all(
-        importPreview.data.transactions.map(t =>
-          createTransaction({
-            type: t.type,
-            amount: t.amount,
-            description: t.description ?? undefined,
-            date: t.date,
-            isFixed: t.isFixed,
-            categoryId: t.categoryId,
-          })
-        )
-      )
-      setImportPreview(null)
-      setImportOk(true)
-      setTimeout(() => setImportOk(false), 3000)
-    } catch {
-      setImportError('Import zlyhal. Skúste znova.')
-    } finally {
-      setImportLoading(false)
-    }
-  }
 
   // ── Section 5: Danger Zone ────────────────────────────────────────────────
   const [dangerAction, setDangerAction] = useState<DangerAction | null>(null)
@@ -579,15 +421,9 @@ export function SettingsPage() {
     if (!dangerAction) return
     setDangerLoading(true)
     try {
-      if (dangerAction === 'expenses') {
+      if (dangerAction === 'transactions') {
         while (true) {
-          const { data } = await getTransactions({ type: 'expense', limit: 200 })
-          if (data.length === 0) break
-          await Promise.all(data.map(t => deleteTransaction(t.id)))
-        }
-      } else if (dangerAction === 'incomes') {
-        while (true) {
-          const { data } = await getTransactions({ type: 'income', limit: 200 })
+          const { data } = await getTransactions({ limit: 200 })
           if (data.length === 0) break
           await Promise.all(data.map(t => deleteTransaction(t.id)))
         }
@@ -610,28 +446,6 @@ export function SettingsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // ── Modals ────────────────────────────────────────────────────────────────
-
-  // ── Changelog ─────────────────────────────────────────────────────────────
-  const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([])
-  const [changelogLoading, setChangelogLoading] = useState(false)
-
-  useEffect(() => {
-    if (activeSection !== 'about') return
-    setChangelogLoading(true)
-    fetch('/changelog.json')
-      .then(r => r.json())
-      .then((data: ChangelogEntry[]) => {
-        const filtered = data.filter(e =>
-          !e.message.startsWith('build(deps)') &&
-          !e.message.startsWith('Merge') &&
-          !e.message.startsWith('chore(deps)')
-        ).slice(0, 30)
-        setChangelogEntries(filtered)
-      })
-      .catch(() => {})
-      .finally(() => setChangelogLoading(false))
-  }, [activeSection])
 
   const buildDate = import.meta.env.VITE_BUILD_DATE as string | undefined
 
@@ -702,10 +516,6 @@ export function SettingsPage() {
     }
   }
 
-  const firstDayOfWeekOptions = [
-    { value: 'monday', label: t.settings.monday },
-    { value: 'sunday', label: t.settings.sunday },
-  ]
 
   // ── Tracking start date ───────────────────────────────────────────────────
   const [trackingDate, setTrackingDate] = useState(() => user?.tracking_start_date ?? '')
@@ -814,9 +624,9 @@ export function SettingsPage() {
           {/* ── APPEARANCE SECTION ── */}
           {activeSection === 'appearance' && (
             <>
-              {/* Section 2: Vzhľad & Téma */}
+              {/* Card 1: Téma */}
               <SectionCard>
-                <SectionHeader emoji="🎨" label={t.settings.appearanceSection} />
+                <SectionHeader emoji="🎨" label={t.settings.theme} />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
                     <div style={{ display: 'flex', gap: 6 }}>
@@ -843,32 +653,38 @@ export function SettingsPage() {
                       ))}
                     </div>
                   </SettingRow>
-
-                  <SettingRow label={t.settings.accentColor}>
-                    <div className="flex gap-2">
-                      {ACCENT_COLORS.map(c => (
-                        <button
-                          key={c.value}
-                          onClick={() => handleAccentChange(c.value)}
-                          title={c.name}
-                          className="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
-                          style={{
-                            backgroundColor: c.value,
-                            outline: accentColor === c.value ? `2px solid ${c.value}` : 'none',
-                            outlineOffset: 2,
-                          }}
-                        >
-                          {accentColor === c.value && (
-                            <div className="w-2 h-2 rounded-full bg-white/80" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </SettingRow>
-
                   <SettingRow label={t.settings.compactMode} sublabel={t.settings.compactModeSubtitle}>
                     <Toggle checked={compactMode} onChange={handleCompactToggle} />
                   </SettingRow>
+                </div>
+              </SectionCard>
+
+              {/* Card 2: Akcentová farba */}
+              <SectionCard>
+                <SectionHeader emoji="🎨" label={t.settings.accentColor} />
+                <div style={{ padding: '12px 20px 16px' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 14, marginTop: 0 }}>Použije sa pre tlačidlá, ikony a grafy</p>
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    {ACCENT_COLORS.map(c => (
+                      <button
+                        key={c.value}
+                        onClick={() => handleAccentChange(c.value)}
+                        title={c.name}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+                          border: 'none', backgroundColor: c.value, flexShrink: 0,
+                          outline: accentColor === c.value ? `3px solid ${c.value}` : 'none',
+                          outlineOffset: 3, transition: 'transform 0.15s',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                        className="hover:scale-110"
+                      >
+                        {accentColor === c.value && (
+                          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.85)' }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </SectionCard>
             </>
@@ -912,13 +728,23 @@ export function SettingsPage() {
                   </SettingRow>
 
                   <SettingRow label={t.settings.firstDayOfWeek}>
-                    <select
-                      value={settings.firstDayOfWeek}
-                      onChange={e => updateSettings({ firstDayOfWeek: e.target.value })}
-                      className="select-field"
-                    >
-                      {firstDayOfWeekOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                    </select>
+                    <div style={{ display: 'flex', background: 'var(--bg3)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+                      {(['monday', 'sunday'] as const).map((day, i) => (
+                        <button
+                          key={day}
+                          onClick={() => updateSettings({ firstDayOfWeek: day })}
+                          style={{
+                            padding: '5px 16px', borderRadius: 6, fontSize: 13,
+                            fontWeight: settings.firstDayOfWeek === day ? 600 : 400,
+                            background: settings.firstDayOfWeek === day ? 'var(--accent-color)' : 'transparent',
+                            color: settings.firstDayOfWeek === day ? 'white' : 'var(--text2)',
+                            border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                          }}
+                        >
+                          {i === 0 ? t.daysShort[0] : t.daysShort[6]}
+                        </button>
+                      ))}
+                    </div>
                   </SettingRow>
 
                 </div>
@@ -1058,17 +884,6 @@ export function SettingsPage() {
                         const next = !budgetWarnings
                         setBudgetWarningsState(next)
                         saveLocalPref('budget_warnings_enabled', next)
-                      }}
-                    />
-                  </SettingRow>
-
-                  <SettingRow label={t.settings.monthlyReminders} sublabel={t.settings.monthlyRemindersSubtitle}>
-                    <Toggle
-                      checked={monthlySummary}
-                      onChange={() => {
-                        const next = !monthlySummary
-                        setMonthlySummaryState(next)
-                        saveLocalPref('monthly_summary_enabled', next)
                       }}
                     />
                   </SettingRow>
@@ -1229,101 +1044,24 @@ export function SettingsPage() {
                     ⚠️ {t.settings.deactivationSection}
                   </p>
                 </div>
-                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                  {/* Deaktivovať účet */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 12 }}>
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)', margin: 0 }}>{t.settings.deactivateAccount}</p>
-                      <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>{t.settings.deactivateAccountDesc}</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
-                        {t.settings.deactivateAccountConfirmLabel}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="DEAKTIVOVAŤ"
-                        value={deactivateConfirm}
-                        onChange={e => { setDeactivateConfirm(e.target.value); setDeactivateError(null) }}
-                        className="input-field"
-                      />
-                    </div>
-                    {deactivateError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deactivateError}</p>}
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label="Vymazať všetky transakcie" sublabel="Nevratná operácia — všetky tx budú odstránené">
+                    <button onClick={() => { setDangerAction('transactions'); setDangerConfirmText('') }} className="btn-settings-danger">Vymazať</button>
+                  </SettingRow>
+                  <SettingRow label="Resetovať aplikáciu" sublabel="Vymaže všetky dáta a nastavenia">
+                    <button onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }} className="btn-settings-danger">Reset</button>
+                  </SettingRow>
+                  <SettingRow label="Deaktivovať účet" sublabel="Účet bude skrytý, dáta zostanú 30 dní">
+                    <button onClick={() => { setDeactivateOpen(true); setDeactivateConfirm(''); setDeactivateError(null) }} className="btn-settings-danger">Deaktivovať</button>
+                  </SettingRow>
+                  <SettingRow label="Zmazať účet" sublabel="Trvale odstráni účet a všetky dáta — táto akcia je nezvratná">
                     <button
-                      disabled={deactivateConfirm !== 'DEAKTIVOVAŤ' || isDeactivating}
-                      onClick={async () => {
-                        setIsDeactivating(true)
-                        try {
-                          await apiDeactivateAccount()
-                          await logout()
-                        } catch {
-                          setDeactivateError('Nepodarilo sa deaktivovať účet. Skúste znova.')
-                          setIsDeactivating(false)
-                        }
-                      }}
-                      style={{
-                        width: '100%', height: 44, borderRadius: 12,
-                        background: deactivateConfirm === 'DEAKTIVOVAŤ' ? 'rgba(239,68,68,0.15)' : 'transparent',
-                        border: '1px solid rgba(239,68,68,0.4)',
-                        color: 'var(--red)', fontSize: 14, fontWeight: 600,
-                        cursor: deactivateConfirm === 'DEAKTIVOVAŤ' && !isDeactivating ? 'pointer' : 'not-allowed',
-                        opacity: isDeactivating ? 0.6 : 1, fontFamily: 'inherit', transition: 'all 0.15s',
-                      }}
+                      onClick={() => { setDeleteOpen(true); setDeleteConfirm(''); setDeleteError(null) }}
+                      style={{ background: '#DC2626', border: 'none', color: 'white', borderRadius: 8, padding: '6px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                     >
-                      {isDeactivating ? t.settings.deactivating : t.settings.deactivateAccountConfirmBtn}
+                      Zmazať účet
                     </button>
-                  </div>
-
-                  {/* Zmazať účet */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 12 }}>
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)', margin: 0 }}>{t.settings.deleteAccount}</p>
-                      <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>{t.settings.deleteAccountDesc}</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
-                        {t.settings.deleteAccountConfirmLabel}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="ZMAZAŤ"
-                        value={deleteConfirm}
-                        onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
-                        className="input-field"
-                      />
-                    </div>
-                    {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deleteError}</p>}
-                    <button
-                      disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
-                      onClick={async () => {
-                        setIsDeleting(true)
-                        try {
-                          await deleteAccount()
-                        } catch (err: unknown) {
-                          const status = (err as { response?: { status?: number } })?.response?.status
-                          if (status === 502 || status === 501 || status === 404) {
-                            setDeleteError(t.settings.deleteAccountUnavailable)
-                          } else {
-                            setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
-                          }
-                          setIsDeleting(false)
-                        }
-                      }}
-                      style={{
-                        width: '100%', height: 44, borderRadius: 12,
-                        background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
-                        border: '1px solid #DC2626',
-                        color: deleteConfirm === 'ZMAZAŤ' ? 'white' : 'var(--red)',
-                        fontSize: 14, fontWeight: 600,
-                        cursor: deleteConfirm === 'ZMAZAŤ' && !isDeleting ? 'pointer' : 'not-allowed',
-                        opacity: isDeleting ? 0.6 : 1, fontFamily: 'inherit', transition: 'all 0.15s',
-                      }}
-                    >
-                      {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
-                    </button>
-                  </div>
-
+                  </SettingRow>
                 </div>
               </SectionCard>
             </>
@@ -1332,85 +1070,30 @@ export function SettingsPage() {
           {/* ── DATA SECTION ── */}
           {activeSection === 'data' && (
             <>
-              {/* Section 4: Dáta */}
               <div ref={dataRef} id="data-section">
               <SectionCard>
-                <SectionHeader emoji="💾" label={t.settings.data} />
-                <div className="flex flex-col" style={{ padding: 'var(--card-padding, 20px)', gap: 'var(--gap-size, 16px)' }}>
-
-                  <div>
-                    <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 8 }}>Export</p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button onClick={handleExportJSON} className="btn-secondary justify-center py-1.5 text-xs">
-                        📄 {t.settings.exportJson}
-                      </button>
-                      <button onClick={handleExportPDF} className="btn-secondary justify-center py-1.5 text-xs">
-                        🖨️ {t.settings.printPdf}
-                      </button>
-                      <button onClick={handleExportCSV} className="btn-secondary justify-center py-1.5 text-xs">
-                        📋 {t.settings.exportCsv}
-                      </button>
-                      <button onClick={handleExportXlsx} className="btn-secondary justify-center py-1.5 text-xs">
-                        📊 {t.settings.exportXlsx}
-                      </button>
+                <SectionHeader emoji="💾" label="Export a import" />
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label="Exportovať dáta" sublabel="Stiahnuť všetky transakcie a kategórie">
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={handleExportJSON} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>JSON</button>
+                      <button onClick={handleExportCSV} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>CSV</button>
+                      <button onClick={handleExportPDF} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>PDF</button>
                     </div>
-                    {user && (
-                      <button onClick={handleShareReport} className="btn-primary w-full justify-center py-1.5 text-xs mt-1.5">
-                        🔗 {t.settings.shareOverview}
-                      </button>
-                    )}
-                    {exportError && <p className="text-xs text-red-400 mt-2">{exportError}</p>}
-                  </div>
-
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                    <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, marginBottom: 6 }}>Import</p>
-                    <button onClick={handleImportFileSelect} className="btn-secondary w-full justify-center py-1.5 text-xs">
+                  </SettingRow>
+                  <SettingRow label="Importovať CSV" sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP">
+                    <button onClick={() => setCsvImportOpen(true)} className="btn-settings">
                       <Upload size={13} />
-                      {t.settings.importJson}
+                      Vybrať súbor
                     </button>
-                    {importError && <p className="text-xs text-red-400 mt-2">{importError}</p>}
-                    {importOk && <p className="text-xs text-emerald-400 mt-2">{t.settings.importSuccess}</p>}
-                  </div>
-
-                  <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
-                    {t.settings.dataNote}
-                  </p>
+                  </SettingRow>
                 </div>
+                <div style={{ borderTop: '1px solid var(--border)', padding: '10px 20px' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.settings.dataNote}</p>
+                </div>
+                {exportError && <p style={{ fontSize: 12, color: '#F87171', padding: '0 20px 12px', margin: 0 }}>{exportError}</p>}
               </SectionCard>
               </div>
-
-              {/* Section 5: Danger Zone */}
-              <SectionCard>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
-                    ⚠️ {t.settings.dangerZone}
-                  </p>
-                </div>
-                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {([
-                    { key: 'expenses', label: `🗑️ ${t.settings.deleteExpenses}` },
-                    { key: 'incomes', label: `🗑️ ${t.settings.deleteIncomes}` },
-                    { key: 'reset', label: `💥 ${t.settings.resetApp}` },
-                  ] as const).map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => { setDangerAction(key); setDangerConfirmText('') }}
-                      style={{
-                        width: '100%', padding: '12px 16px', borderRadius: 12,
-                        background: 'transparent',
-                        border: '1px solid rgba(239,68,68,0.25)',
-                        color: 'var(--red)', fontSize: 14, fontWeight: 500,
-                        cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                      }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.06)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </SectionCard>
-
             </>
           )}
 
@@ -1418,13 +1101,13 @@ export function SettingsPage() {
           {activeSection === 'about' && (
             <>
               <SectionCard>
-                <SectionHeader emoji="ℹ️" label="O aplikácii" />
-                <div style={{ padding: 20 }}>
-                  <div className="flex flex-col items-center mb-5">
+                {/* App header row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img
                       src="/logo.svg"
                       alt="Finvu"
-                      className="w-[52px] h-[52px] rounded-xl mb-3 shrink-0"
+                      style={{ width: 48, height: 48, borderRadius: 12 }}
                       onError={e => {
                         const el = e.currentTarget as HTMLImageElement
                         el.style.display = 'none'
@@ -1432,73 +1115,85 @@ export function SettingsPage() {
                         if (fallback) fallback.style.display = 'flex'
                       }}
                     />
-                    <div className="w-[52px] h-[52px] rounded-xl items-center justify-center mb-3 shrink-0" style={{ background: 'var(--accent-color)', display: 'none' }}>
-                      <span className="text-white font-bold text-2xl leading-none">F</span>
-                    </div>
-                    <p className="text-base font-bold text-[color:var(--text)]">Finvu</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                      <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", padding: '2px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', display: 'inline-block' }}>
-                        v1.1.0
-                      </span>
-                      {buildDate && (
-                        <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", padding: '2px 10px', borderRadius: 99, background: 'var(--bg3)', color: 'var(--text3)', display: 'inline-block' }}>
-                          {buildDate}
-                        </span>
-                      )}
+                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--accent-color)', display: 'none', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ color: 'white', fontWeight: 700, fontSize: 22 }}>F</span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-3 mb-5">
-                    <div className="flex items-start gap-3">
-                      <span className="text-base leading-none mt-0.5">🔒</span>
-                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">{t.settings.secureServer}</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-base leading-none mt-0.5">🔧</span>
-                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-base leading-none mt-0.5">🌐</span>
-                      <p className="text-xs text-[color:var(--text2)] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
-                    </div>
+                  <div>
+                    <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Finvu</p>
+                    <p style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono',monospace", margin: '3px 0 0' }}>
+                      v1.1.0{buildDate ? ` · build ${buildDate}` : ''}
+                    </p>
                   </div>
-                  <p className="text-xs text-center text-[color:var(--text3)]">© 2024–2026 Finvu · pedani.eu</p>
+                </div>
+                {/* Links */}
+                <div className="divide-y divide-white/[0.04]">
+                  <SettingRow label="Webová stránka">
+                    <a
+                      href="https://finvu.pedani.eu"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--violet)', textDecoration: 'none', fontWeight: 500 }}
+                    >
+                      finvu.pedani.eu <ExternalLink size={12} />
+                    </a>
+                  </SettingRow>
+                  <SettingRow label="Zásady ochrany">
+                    <span style={{ fontSize: 13, color: 'var(--text3)' }}>Otvoriť →</span>
+                  </SettingRow>
+                  <SettingRow label="Podmienky používania">
+                    <span style={{ fontSize: 13, color: 'var(--text3)' }}>Otvoriť →</span>
+                  </SettingRow>
+                  <SettingRow label="Licencie a poďakovania">
+                    <span style={{ fontSize: 13, color: 'var(--text3)' }}>Otvoriť →</span>
+                  </SettingRow>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border)', padding: '10px 20px' }}>
+                  <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>© 2024–2026 Finvu · pedani.eu</p>
                 </div>
               </SectionCard>
 
+              {/* Changelog — static grouped by version */}
               <SectionCard>
                 <SectionHeader emoji="📋" label="Changelog" />
-                <div style={{ padding: 20 }}>
-                  {changelogLoading ? (
-                    <p style={{ fontSize: 13, color: 'var(--text3)' }}>Načítavam changelog...</p>
-                  ) : changelogEntries.length === 0 ? (
-                    <p style={{ fontSize: 13, color: 'var(--text3)' }}>Changelog nie je k dispozícii.</p>
-                  ) : (
-                    <div className="flex flex-col gap-0">
-                      {(() => {
-                        const byDate: Record<string, ChangelogEntry[]> = {}
-                        changelogEntries.forEach(e => {
-                          if (!byDate[e.date]) byDate[e.date] = []
-                          byDate[e.date].push(e)
-                        })
-                        const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a))
-                        return dates.map((date, di) => (
-                          <div key={date} className={di > 0 ? 'mt-4 pt-4 border-t border-white/[0.06]' : ''}>
-                            <p style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 600, color: 'var(--text3)', marginBottom: 8, letterSpacing: '0.05em' }}>
-                              {date}
-                            </p>
-                            <ul className="flex flex-col gap-1.5">
-                              {byDate[date].map(entry => (
-                                <li key={entry.hash} className="flex items-start gap-2 text-xs text-[color:var(--text2)]">
-                                  <span style={{ fontFamily: "'DM Mono',monospace", color: 'var(--text3)', fontSize: 10, marginTop: 2, flexShrink: 0 }}>{entry.hash}</span>
-                                  <span>{entry.message}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))
-                      })()}
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  {[
+                    {
+                      version: 'v1.1.0',
+                      date: 'Máj 2026',
+                      items: [
+                        'Podpora 5 jazykov — SK, CS, PL, HU, EN',
+                        'Aktívne relácie zariadení s deduplication',
+                        'Pozastavenie sporiacich cieľov',
+                        'Automatický limit kategórií z fixných výdavkov',
+                      ],
+                    },
+                    {
+                      version: 'v1.0.0',
+                      date: 'Apríl 2026',
+                      items: [
+                        'Dashboard, príjmy, výdavky, sporenie',
+                        'Domácnosť, PWA, push notifikácie',
+                      ],
+                    },
+                  ].map((release, ri) => (
+                    <div key={release.version} style={ri > 0 ? { marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' } : {}}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)' }}>
+                          {release.version}
+                        </span>
+                        <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", color: 'var(--text3)' }}>{release.date}</span>
+                      </div>
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {release.items.map(item => (
+                          <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text2)' }}>
+                            <span style={{ color: 'var(--violet)', flexShrink: 0, marginTop: 1 }}>·</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  )}
+                  ))}
                 </div>
               </SectionCard>
             </>
@@ -1559,64 +1254,13 @@ export function SettingsPage() {
         </div>
       )}
 
-      {/* ── IMPORT PREVIEW MODAL ── */}
-      {importPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
-            <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.settings.importPreview}</h2>
-              <button onClick={() => setImportPreview(null)} className="btn-icon">
-                <X size={16} />
-              </button>
-            </div>
-            <div className="flex flex-col divide-y divide-white/[0.06] mb-5">
-              <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.nav.income}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.incomeCount}</span>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.settings.variableExpenses}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.expenseCount}</span>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.settings.fixedExpenses}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.fixedCount}</span>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{t.nav.categories}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: "'DM Mono',monospace" }}>{importPreview.categoryCount}</span>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleImportConfirm('merge')}
-                disabled={importLoading}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-colors cursor-pointer disabled:opacity-60"
-                style={{ background: 'var(--accent-color)' }}
-              >
-                {importLoading ? t.settings.importing : t.settings.importMerge}
-              </button>
-              <button
-                onClick={() => handleImportConfirm('replace')}
-                disabled={importLoading}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-60"
-              >
-                {importLoading ? t.settings.importing : t.settings.importReplace}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── DANGER CONFIRM MODAL ── */}
       {dangerAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
           <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
-                {dangerAction === 'expenses' && t.settings.dangerExpensesTitle}
-                {dangerAction === 'incomes' && t.settings.dangerIncomesTitle}
-                {dangerAction === 'reset' && t.settings.dangerResetTitle}
+                {dangerAction === 'transactions' ? 'Vymazať všetky transakcie' : t.settings.dangerResetTitle}
               </h2>
               <button onClick={() => setDangerAction(null)} className="btn-icon">
                 <X size={16} />
@@ -1658,6 +1302,107 @@ export function SettingsPage() {
         </div>
       )}
 
+      {/* ── DEACTIVATE ACCOUNT MODAL ── */}
+      {deactivateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
+          <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.settings.deactivateAccount}</h2>
+              <button onClick={() => setDeactivateOpen(false)} className="btn-icon"><X size={16} /></button>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>{t.settings.deactivateAccountDesc}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--red)' }}>
+                {t.settings.deactivateAccountConfirmLabel}
+              </label>
+              <input
+                type="text"
+                placeholder="DEAKTIVOVAŤ"
+                value={deactivateConfirm}
+                onChange={e => { setDeactivateConfirm(e.target.value); setDeactivateError(null) }}
+                className="input-field"
+              />
+            </div>
+            {deactivateError && <p style={{ fontSize: 12, color: 'var(--red)', marginBottom: 8 }}>{deactivateError}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => setDeactivateOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer">
+                {t.common.cancel}
+              </button>
+              <button
+                disabled={deactivateConfirm !== 'DEAKTIVOVAŤ' || isDeactivating}
+                onClick={async () => {
+                  setIsDeactivating(true)
+                  try {
+                    await apiDeactivateAccount()
+                    await logout()
+                  } catch {
+                    setDeactivateError('Nepodarilo sa deaktivovať účet. Skúste znova.')
+                    setIsDeactivating(false)
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isDeactivating ? t.settings.deactivating : t.settings.deactivateAccountConfirmBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DELETE ACCOUNT MODAL ── */}
+      {deleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
+          <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.settings.deleteAccount}</h2>
+              <button onClick={() => setDeleteOpen(false)} className="btn-icon"><X size={16} /></button>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>{t.settings.deleteAccountDesc}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--red)' }}>
+                {t.settings.deleteAccountConfirmLabel}
+              </label>
+              <input
+                type="text"
+                placeholder="ZMAZAŤ"
+                value={deleteConfirm}
+                onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
+                className="input-field"
+              />
+            </div>
+            {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', marginBottom: 8 }}>{deleteError}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer">
+                {t.common.cancel}
+              </button>
+              <button
+                disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true)
+                  try {
+                    await deleteAccount()
+                  } catch (err: unknown) {
+                    const status = (err as { response?: { status?: number } })?.response?.status
+                    if (status === 502 || status === 501 || status === 404) {
+                      setDeleteError(t.settings.deleteAccountUnavailable)
+                    } else {
+                      setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                    }
+                    setIsDeleting(false)
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : undefined }}
+              >
+                {isDeleting ? 'Mažem...' : t.settings.deleteAccountConfirmBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CSV IMPORT MODAL ── */}
+      <CsvImportModal open={csvImportOpen} onClose={() => setCsvImportOpen(false)} />
 
       <PinSetupModal
         open={pinSetupOpen}

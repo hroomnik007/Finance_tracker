@@ -291,7 +291,7 @@ export const en: Translations = {
     language: 'Language',
     languageNote: 'Language change takes effect immediately',
     dateFormat: 'Date format',
-    firstDayOfWeek: 'First day of week',
+    firstDayOfWeek: 'Week start',
     save: 'Save settings',
     saved: 'Settings saved',
     data: 'Data',

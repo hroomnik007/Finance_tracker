@@ -291,7 +291,7 @@ export const hu: Translations = {
     language: 'Nyelv',
     languageNote: 'A nyelv módosítása azonnal érvényes',
     dateFormat: 'Dátumformátum',
-    firstDayOfWeek: 'A hét első napja',
+    firstDayOfWeek: 'Hét kezdete',
     save: 'Beállítások mentése',
     saved: 'Beállítások mentve',
     data: 'Adatok',

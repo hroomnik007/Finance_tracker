@@ -291,7 +291,7 @@ export const cs: Translations = {
     language: 'Jazyk',
     languageNote: 'Změna jazyka se projeví okamžitě',
     dateFormat: 'Formát data',
-    firstDayOfWeek: 'První den týdne',
+    firstDayOfWeek: 'Začátek týdne',
     save: 'Uložit nastavení',
     saved: 'Nastavení uloženo',
     data: 'Data',
