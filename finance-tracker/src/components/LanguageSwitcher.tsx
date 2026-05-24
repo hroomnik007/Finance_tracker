@@ -19,14 +19,29 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
   const { settings, updateSettings } = useSettingsContext()
   const current = settings.language || 'sk'
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const [dropPos, setDropPos] = useState<{ top: number; left?: number; right?: number; width: number } | null>(null)
 
   const currentLang = LANGS.find(l => l.code === current) ?? LANGS[0]
+  const isCompact = variant === 'compact'
+
+  function openDropdown() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      if (isCompact) {
+        setDropPos({ top: r.bottom + 6, right: window.innerWidth - r.right, width: 170 })
+      } else {
+        setDropPos({ top: r.bottom + 6, left: r.left, width: r.width })
+      }
+    }
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!open) return
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -38,13 +53,12 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
     setOpen(false)
   }
 
-  const isCompact = variant === 'compact'
-
   return (
-    <div ref={ref} style={{ position: 'relative', display: isCompact ? 'inline-block' : 'block', width: isCompact ? undefined : 200 }}>
+    <div ref={wrapperRef} style={{ position: 'relative', display: isCompact ? 'inline-block' : 'block', width: isCompact ? undefined : 200 }}>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={openDropdown}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           width: '100%',
@@ -69,19 +83,19 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
         />
       </button>
 
-      {open && (
+      {open && dropPos && (
         <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 6px)',
-          right: isCompact ? 0 : undefined,
-          left: isCompact ? undefined : 0,
-          minWidth: isCompact ? 170 : '100%',
+          position: 'fixed',
+          top: dropPos.top,
+          left: dropPos.left,
+          right: dropPos.right,
+          width: dropPos.width,
           background: 'var(--bg2)',
           border: '1px solid var(--border2)',
           borderRadius: 10,
           boxShadow: '0 8px 28px rgba(0,0,0,0.38)',
           overflow: 'hidden',
-          zIndex: 600,
+          zIndex: 9000,
           padding: '4px 0',
         }}>
           {LANGS.map(({ code, flag, name }) => {

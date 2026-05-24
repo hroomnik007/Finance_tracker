@@ -160,6 +160,8 @@ export function usePinLock() {
     prevUserRef.current = user
     if (prev !== null && user === null) {
       sessionStorage.removeItem(PIN_SESSION_KEY)
+      // Reset locked state so next login via password/Google triggers PinLock
+      if (lockMethodRef.current === 'pin') setLocked(true)
     }
   }, [user])
 

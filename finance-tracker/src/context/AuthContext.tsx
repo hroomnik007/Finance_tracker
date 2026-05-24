@@ -174,6 +174,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      // PIN was just used to authenticate — mark session verified so PinLock doesn't show again
+      sessionStorage.setItem('pin_verified_session', 'true')
       if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
