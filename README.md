@@ -61,8 +61,8 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 ### Infraštruktúra
 - **Docker** + **Docker Compose** (backend + PostgreSQL)
 - **GitHub Actions** — automatický CI/CD deploy na každý push na `main`
-- **Hetzner VPS** (Debian) — `api.pedani.eu`
-- **GitHub Pages** — frontend `finvu.pedani.eu`
+- **VPS server** (backend API)
+- Frontend: https://finvu.pedani.eu
 
 ---
 
@@ -109,19 +109,7 @@ Migrácie sú číslované SQL súbory v `backend/migrations/` a spúšťajú sa
 
 ## Deployment
 
-Každý push na vetvu `main` spustí GitHub Actions workflow, ktorý:
-
-1. Zbuildí frontend (`npm run build`)
-2. Nasadí statické súbory na GitHub Pages (`finvu.pedani.eu`)
-3. Zbuildí backend Docker image a nasadí ho na Hetzner VPS
-
-```bash
-# Manuálny deploy frontendu
-./deploy.sh frontend
-
-# Reštart backendu na serveri
-docker compose restart backend
-```
+Každý push na `main` spustí automatický build a deploy.
 
 ---
 
