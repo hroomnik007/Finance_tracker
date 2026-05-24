@@ -8,6 +8,7 @@ interface SavingsDetailModalProps {
   deposits?: Deposit[]
   onClose: () => void
   onEdit: () => void
+  onDelete?: () => void
   onDeposit: (amount: number) => Promise<void>
   onDeleteDeposit?: (depositId: string) => Promise<void>
   onPause?: () => Promise<void>
@@ -34,7 +35,7 @@ function calcMonthsLeft(deadline: string | null | undefined): number {
   return Math.max(0, (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth()))
 }
 
-export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDeposit, onDeleteDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
+export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDelete, onDeposit, onDeleteDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
   const { t } = useTranslation()
   const [depositMode, setDepositMode] = useState(false)
   const [depositInput, setDepositInput] = useState('')
@@ -245,6 +246,15 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDep
                 title={t.savings.pauseBtn}
               >
                 <Pause size={14} />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--red)', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title={t.common.delete}
+              >
+                <Trash2 size={14} />
               </button>
             )}
           </div>

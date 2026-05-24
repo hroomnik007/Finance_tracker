@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Plus, Pencil, Trash2, PiggyBank, CalendarDays } from 'lucide-react'
+import { Plus, PiggyBank } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
 import { SwipeableRow } from '../components/SwipeableRow'
@@ -377,18 +377,18 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
             )}
             <div style={{display:'flex',gap:0,paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
               <div style={{flex:1}}>
-                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.savings.monthlyLabel.toUpperCase()}</p>
-                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'#5eead4'}}>+{formatAmount(monthlyAmount)}</p>
+                <p style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.07em',marginBottom:3}}>{t.savings.monthlyLabel.toUpperCase()}</p>
+                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:13,color:'#5eead4'}}>+{formatAmount(monthlyAmount)}</p>
               </div>
               <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
-              <div style={{flex:1,paddingLeft:18}}>
-                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.savings.remainingTotal.toUpperCase()}</p>
-                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'white'}}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</p>
+              <div style={{flex:1,paddingLeft:10}}>
+                <p style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.07em',marginBottom:3}}>{t.savings.remainingTotal.toUpperCase()}</p>
+                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:13,color:'white'}}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</p>
               </div>
               <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
-              <div style={{flex:1,paddingLeft:18}}>
-                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>% Z PRÍJMOV</p>
-                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'#a78bfa'}}>
+              <div style={{flex:1,paddingLeft:10}}>
+                <p style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.07em',marginBottom:3}}>% Z PRÍJMOV</p>
+                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:13,color:'#a78bfa'}}>
                   {incomePercent !== null ? `${incomePercent}%` : '—'}
                 </p>
               </div>
@@ -419,8 +419,6 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
                     formatAmount={formatAmount}
                     t={t.savings}
                     onClick={() => openDetail(goal)}
-                    onEdit={() => openEdit(goal)}
-                    onDelete={() => handleDelete(goal)}
                   />
                 </SwipeableRow>
               ))}
@@ -434,8 +432,6 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
                     formatAmount={formatAmount}
                     t={t.savings}
                     onClick={() => openDetail(goal)}
-                    onEdit={() => openEdit(goal)}
-                    onDelete={() => handleDelete(goal)}
                     desktop
                   />
                 </div>
@@ -462,6 +458,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
         deposits={deposits}
         onClose={closeDetail}
         onEdit={() => { if (selectedGoal) openEdit(selectedGoal) }}
+        onDelete={selectedGoal ? async () => { await handleDelete(selectedGoal); closeDetail() } : undefined}
         onDeposit={handleDeposit}
         onDeleteDeposit={handleDeleteDeposit}
         onPause={handlePause}
@@ -479,6 +476,15 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       </BottomSheet>
     </div>
   )
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '')
+  if (h.length !== 6) return `rgba(124,58,237,${alpha})`
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
 function MiniRing({ pct, color, size = 64 }: { pct: number; color: string; size?: number }) {
@@ -502,14 +508,12 @@ function MiniRing({ pct, color, size = 64 }: { pct: number; color: string; size?
 }
 
 function GoalCard({
-  goal, formatAmount, t, onClick, onEdit, onDelete, desktop = false,
+  goal, formatAmount, t, onClick, desktop = false,
 }: {
   goal: SavingsGoal
   formatAmount: (n: number) => string
   t: { of: string; completed: string; daysLeft: string; overdue: string; remaining: string; pausedBadge: string }
   onClick: () => void
-  onEdit: () => void
-  onDelete: () => void
   desktop?: boolean
 }) {
   const pct = goal.targetAmount > 0 ? Math.min(100, (goal.savedAmount / goal.targetAmount) * 100) : 0
@@ -530,9 +534,8 @@ function GoalCard({
       )
     } else {
       deadlineBadge = (
-        <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 3 }}>
-          <CalendarDays size={11} />
-          {t.daysLeft.replace('{n}', String(days))}
+        <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+          do {goal.deadline}
         </span>
       )
     }
@@ -580,107 +583,83 @@ function GoalCard({
 
         {/* Amounts */}
         <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: '0 0 3px', letterSpacing: '-0.5px' }}>
-            {formatAmount(goal.savedAmount)}
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
-            / {formatAmount(goal.targetAmount)}
-            {!isCompleted && monthly > 0 && <span style={{ marginLeft: 4 }}>· auto +{formatAmount(monthly)}/mes.</span>}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
+              {formatAmount(goal.savedAmount)}
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
+              / {formatAmount(goal.targetAmount)}
+            </p>
+          </div>
           {!isCompleted && (
             <p style={{ fontSize: 11, color: 'var(--text3)', margin: '4px 0 0' }}>
-              {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))} {t.remaining}
+              {t.remaining} {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))}
+              {monthly > 0 && ` · auto +${formatAmount(monthly)}/mes.`}
             </p>
           )}
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={e => { e.stopPropagation(); onEdit() }}
-            style={{ flex: 1, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}
-          >
-            <Pencil size={12} />
-          </button>
-          <button
-            onClick={e => { e.stopPropagation(); onDelete() }}
-            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}
-          >
-            <Trash2 size={12} />
-          </button>
         </div>
       </div>
     )
   }
 
+  const accentRgba12 = hexToRgba(barColor, 0.12)
+  const accentRgba05 = hexToRgba(barColor, 0.05)
+  const accentRgba20 = hexToRgba(barColor, 0.20)
+  const accentRgba30 = hexToRgba(barColor, 0.30)
+
   return (
     <div
       onClick={onClick}
       style={{
-        background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16,
-        padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12,
-        cursor: 'pointer', transition: 'border-color 0.15s',
+        background: `linear-gradient(135deg, ${accentRgba12} 0%, ${accentRgba05} 100%)`,
+        border: `1px solid ${accentRgba30}`,
+        borderRadius: 16,
+        padding: '14px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        cursor: 'pointer',
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-          background: `${goal.color ?? '#7C3AED'}22`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
-        }}>
-          {goal.icon ?? '🎯'}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
-            {goal.paused && (
-              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
-            )}
+      {/* Top row: icon+name+deadline | ring */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 11, flexShrink: 0,
+            background: accentRgba20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+          }}>
+            {goal.icon ?? '🎯'}
           </div>
-          {isCompleted ? (
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
-          ) : deadlineBadge}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+              {goal.paused && (
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
+              )}
+            </div>
+            {isCompleted ? (
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
+            ) : goal.deadline ? (
+              <span style={{ fontSize: 11, color: 'var(--text3)' }}>do {goal.deadline}</span>
+            ) : null}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-          <button
-            onClick={e => { e.stopPropagation(); onEdit() }}
-            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}
-          >
-            <Pencil size={13} />
-          </button>
-          <button
-            onClick={e => { e.stopPropagation(); onDelete() }}
-            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
+        <MiniRing pct={pct} color={barColor} size={58} />
       </div>
 
-      {/* Progress bar */}
+      {/* Amounts */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
             {formatAmount(goal.savedAmount)}
           </span>
-          <span style={{ fontSize: 12, color: 'var(--text3)' }}>
-            {Math.round(pct)}% {t.of} {formatAmount(goal.targetAmount)}
-          </span>
-        </div>
-        <div style={{ height: 7, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', borderRadius: 99,
-            width: `${pct}%`,
-            background: barColor,
-            transition: 'width 0.4s ease',
-          }} />
+          <span style={{ fontSize: 12, color: 'var(--text3)' }}>/ {formatAmount(goal.targetAmount)}</span>
         </div>
         {!isCompleted && (
-          <p style={{ fontSize: 11, color: 'var(--text3)', margin: '5px 0 0' }}>
-            {formatAmount(goal.targetAmount - goal.savedAmount)} {t.remaining}
+          <p style={{ fontSize: 11, color: 'var(--text3)', margin: '3px 0 0' }}>
+            {t.remaining} {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))}
+            {monthly > 0 && ` · auto +${formatAmount(monthly)}/mes.`}
           </p>
         )}
       </div>

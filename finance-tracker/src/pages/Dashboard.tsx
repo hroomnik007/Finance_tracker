@@ -66,7 +66,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const { fixedExpenses } = useFixedExpenses(month, year)
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses })
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses, fixedExpenses })
   const { goals: savingsGoals } = useSavings()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
@@ -668,7 +668,7 @@ const upcomingFixed = useMemo(() => {
   )
 
   return (
-    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
     <div style={{ padding: '20px' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
       {/* Tracking start date banner */}
@@ -772,7 +772,7 @@ const upcomingFixed = useMemo(() => {
       {/* ════════════════════════════════════════
           MOBILE LAYOUT
       ════════════════════════════════════════ */}
-      <div className="flex flex-col gap-4 lg:hidden">
+      <div className="flex flex-col gap-4 lg:hidden" style={{ paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
         <div>{greetingRow}</div>
         {heroSection}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
