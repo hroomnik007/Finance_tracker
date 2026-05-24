@@ -8,6 +8,22 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { SavingsGoal } from '../types'
 
+const DEPOSITS_KEY = 'savings_deposits'
+
+interface Deposit { amount: number; date: string }
+
+function loadAllDeposits(): Record<string, Deposit[]> {
+  try { return JSON.parse(localStorage.getItem(DEPOSITS_KEY) ?? '{}') } catch { return {} }
+}
+
+function saveDeposit(goalId: string, amount: number) {
+  const all = loadAllDeposits()
+  const list = all[goalId] ?? []
+  list.unshift({ amount, date: new Date().toISOString() })
+  all[goalId] = list.slice(0, 20)
+  try { localStorage.setItem(DEPOSITS_KEY, JSON.stringify(all)) } catch { /* ignore */ }
+}
+
 const PRESET_COLORS = [
   '#7C3AED', '#A78BFA', '#10B981', '#34D399', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899',
 ]
@@ -53,6 +69,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 
   const [view, setView] = useState<'list' | 'detail' | 'edit'>('list')
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null)
+  const [deposits, setDeposits] = useState<Deposit[]>([])
 
   const [formName, setFormName] = useState('')
   const [formTarget, setFormTarget] = useState('')
@@ -67,14 +84,17 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     if (openAddTrigger) openAdd()
   }, [openAddTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (goals.length === 0) return
+  const [initialGoalId] = useState(() => {
     const params = window.location.hash.split('?')[1] ?? ''
-    const id = new URLSearchParams(params).get('id')
-    if (!id) return
-    const goal = goals.find(g => g.id === id)
+    return new URLSearchParams(params).get('id')
+  })
+
+  useEffect(() => {
+    if (!initialGoalId || goals.length === 0) return
+    const goal = goals.find(g => g.id === initialGoalId)
     if (goal && view === 'list') {
       setSelectedGoal(goal)
+      setDeposits(loadAllDeposits()[goal.id!] ?? [])
       setView('detail')
     }
   }, [goals]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -106,6 +126,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 
   function openDetail(goal: SavingsGoal) {
     setSelectedGoal(goal)
+    setDeposits(loadAllDeposits()[goal.id!] ?? [])
     setView('detail')
     if (goal.id) window.location.hash = `savings?id=${goal.id}`
   }
@@ -114,6 +135,8 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     if (!selectedGoal?.id) return
     const newSaved = selectedGoal.savedAmount + amount
     await updateGoal(selectedGoal.id, { savedAmount: newSaved })
+    saveDeposit(selectedGoal.id, amount)
+    setDeposits(loadAllDeposits()[selectedGoal.id] ?? [])
     setSelectedGoal(prev => prev ? { ...prev, savedAmount: newSaved } : null)
   }
 
@@ -409,6 +432,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 
       <SavingsDetailModal
         goal={view === 'detail' ? selectedGoal : null}
+        deposits={deposits}
         onClose={closeDetail}
         onEdit={() => { if (selectedGoal) openEdit(selectedGoal) }}
         onDeposit={handleDeposit}

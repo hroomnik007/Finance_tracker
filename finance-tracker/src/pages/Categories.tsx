@@ -4,6 +4,7 @@ import { BottomSheet } from '../components/BottomSheet'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
+import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useFormatters } from '../hooks/useFormatters'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useTranslation } from '../i18n'
@@ -27,7 +28,24 @@ export function CategoriesPage() {
   const { t } = useTranslation()
   const now = new Date()
   const { variableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
+  const { fixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
+
+  // Combine variable + paid fixed expenses for accurate budget tracking
+  const allExpenses = useMemo(() => [
+    ...variableExpenses,
+    ...fixedExpenses
+      .filter(fe => fe.categoryId != null)
+      .map(fe => ({
+        id: fe.id,
+        amount: fe.amount,
+        categoryId: fe.categoryId as string,
+        note: fe.label,
+        date: '',
+        created_by: null as null,
+      })),
+  ], [variableExpenses, fixedExpenses])
+
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allExpenses })
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
@@ -285,7 +303,7 @@ export function CategoriesPage() {
                             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(status.spent)}</span>
                           )}
                           {cat.budgetLimit != null && (
-                            <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>{Math.round(pct)}%</span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>{Math.round(status?.percentage ?? 0)}%</span>
                           )}
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                             <button onClick={() => openEdit(cat)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={12} /></button>
@@ -327,21 +345,18 @@ export function CategoriesPage() {
                             </div>
                           </div>
                         </div>
-                        {/* Spent amount */}
-                        {status && status.spent > 0 && (
-                          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
-                            -{formatAmount(status.spent)}
-                          </div>
-                        )}
-                        {/* Progress bar */}
+                        {/* Spent amount + progress bar */}
                         {cat.budgetLimit != null && (
                           <>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+                              -{formatAmount(status?.spent ?? 0)}
+                            </div>
                             <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 6 }}>
                               <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)' }}>
                               <span>{t.expenses.categories.spent}</span>
-                              <span style={{ fontWeight: 600, color: barColor }}>{Math.round(pct)}%</span>
+                              <span style={{ fontWeight: 600, color: barColor }}>{Math.round(status?.percentage ?? 0)}%</span>
                             </div>
                           </>
                         )}
@@ -381,7 +396,7 @@ export function CategoriesPage() {
                                 const pct = status ? Math.min(status.percentage, 100) : 0
                                 const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
                                 return (
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>{Math.round(pct)}%</span>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>{Math.round(status?.percentage ?? 0)}%</span>
                                 )
                               })()}
                             </div>
@@ -394,9 +409,7 @@ export function CategoriesPage() {
                                   <div style={{ height: 3, borderRadius: 99, background: 'var(--bg4)', marginTop: 4, overflow: 'hidden' }}>
                                     <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
                                   </div>
-                                  {status && status.spent > 0 && (
-                                    <span style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, display: 'block' }}>{t.expenses.categories.spent}: {formatAmount(status.spent)}</span>
-                                  )}
+                                  <span style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, display: 'block' }}>{t.expenses.categories.spent}: {formatAmount(status?.spent ?? 0)}</span>
                                 </>
                               )
                             })()}
@@ -532,7 +545,7 @@ export function CategoriesPage() {
           </div>
 
           {!editing && (
-            <div>
+            <div className="hidden lg:block">
               <label className="form-label">{t.expenses.categories.type}</label>
               <div className="flex gap-2">
                 {(['expense', 'income'] as const).map(type => (

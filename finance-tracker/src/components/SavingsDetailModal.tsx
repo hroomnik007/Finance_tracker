@@ -3,8 +3,11 @@ import { X, Pencil, Pause, Play, Plus } from 'lucide-react'
 import type { SavingsGoal } from '../types'
 import { useTranslation } from '../i18n'
 
+interface Deposit { amount: number; date: string }
+
 interface SavingsDetailModalProps {
   goal: SavingsGoal | null
+  deposits?: Deposit[]
   onClose: () => void
   onEdit: () => void
   onDeposit: (amount: number) => Promise<void>
@@ -32,7 +35,7 @@ function calcMonthsLeft(deadline: string | null | undefined): number {
   return Math.max(0, (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth()))
 }
 
-export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
+export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
   const { t } = useTranslation()
   const [depositMode, setDepositMode] = useState(false)
   const [depositInput, setDepositInput] = useState('')
@@ -270,10 +273,23 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, onPause, 
         {/* Recent deposits */}
         <div style={{ padding: '14px 20px', paddingBottom: 'max(24px, calc(16px + env(safe-area-inset-bottom, 0px)))' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.savings.latestDeposits.toUpperCase()}</div>
-          <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 28, opacity: 0.5 }}>🐷</span>
-            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text3)', margin: 0 }}>{t.savings.noDeposits}</p>
-          </div>
+          {deposits.length === 0 ? (
+            <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 28, opacity: 0.5 }}>🐷</span>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text3)', margin: 0 }}>{t.savings.noDeposits}</p>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+              {deposits.slice(0, 10).map((d, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+                    {new Date(d.date).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 600, color: '#34D399' }}>+{formatAmount(d.amount)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
