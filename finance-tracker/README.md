@@ -1,80 +1,144 @@
-# React + TypeScript + Vite
+# Finvu — Financie pod kontrolou
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<p align="center">
+  <img src="public/logo.svg" alt="Finvu logo" width="80" height="80" />
+</p>
 
-Currently, two official plugins are available:
+<p align="center">
+  <strong>Moderná PWA aplikácia na správu rodinných financií</strong><br/>
+  Sledujte príjmy, výdavky, sporenie a rozpočet pre celú domácnosť na jednom mieste.
+</p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+<p align="center">
+  <a href="https://finvu.pedani.eu">🌐 finvu.pedani.eu</a>
+</p>
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Funkcie
 
-## Expanding the ESLint configuration
+- **Dashboard** — prehľad príjmov, výdavkov a zostatku s heatmapou a donut grafom
+- **Variabilné výdavky** — kategorizácia, import z banky (Revolut, Tatra banka, SLSP, mBank, 365.bank)
+- **Fixné výdavky** — opakujúce sa platby s upozorneniami pred splatnosťou
+- **Sporenie** — ciele s progress trackingom, pozastavenie/obnovenie, deep link
+- **Domácnosť** — zdieľané financie, prehľad podľa členov domácnosti
+- **Rozpočet** — limity na kategórie, auto-limit z fixných výdavkov, vizuálny progress
+- **5 jazykov** — SK, CS, PL, HU, EN s automatickou detekciou jazyka prehliadača
+- **PWA** — inštalovateľné na mobile aj desktop, offline podpora
+- **Dark / Light mode**
+- **Export** — PDF, XLSX, CSV
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Demo
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| | |
+|---|---|
+| URL | https://finvu.pedani.eu |
+| Email | `demo@finvu.sk` |
+| Heslo | `demo123` |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie, domácnosť s členmi.
+
+---
+
+## Tech stack
+
+### Frontend
+- **React 19** + **TypeScript 5.7** + **Vite 8**
+- **Tailwind CSS 4**
+- **i18n** — vlastný typovaný systém (5 jazykov, 413 kľúčov)
+- **Recharts** — grafy
+- **PWA** — Vite PWA Plugin + Workbox (Service Worker)
+- **Export** — jsPDF, xlsx, papaparse
+
+### Backend
+- **Node.js** + **Express** + **TypeScript**
+- **PostgreSQL** + **Drizzle ORM**
+- **JWT** (access token v pamäti) + **httpOnly cookie** (refresh token)
+- **WebAuthn** (passkeys), Google OAuth, PIN login
+
+### Infraštruktúra
+- **Docker** + **Docker Compose** (backend + PostgreSQL)
+- **GitHub Actions** — automatický CI/CD deploy na každý push na `main`
+- **Hetzner VPS** (Debian, CX23) — `api.pedani.eu`
+- **GitHub Pages** — frontend `finvu.pedani.eu`
+
+---
+
+## Lokálny vývoj
+
+### Požiadavky
+
+- Node.js 22+
+- Docker + Docker Compose
+
+### Frontend
+
+```bash
+cd finance-tracker
+cp .env.example .env          # nastaviť VITE_API_URL=http://localhost:3001
+npm install
+npm run dev                   # → http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Backend
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd backend
+cp .env.example .env          # nastaviť DATABASE_URL, JWT_SECRET, atď.
+docker compose up -d postgres # spustiť iba databázu
+npm install
+npm run migrate               # spustiť migrácie
+npm run dev                   # → http://localhost:3001
 ```
 
-Deployed automatically to https://financie.pedani.eu via GitHub Actions.
+### Databázové migrácie
 
+```bash
+# Lokálne
+npm run migrate
 
+# Produkcia (v Docker kontajneri)
+docker exec finance-tracker-repo-backend-1 node dist/scripts/migrate.js
+```
 
+Migrácie sú číslované SQL súbory v `backend/migrations/` a spúšťajú sa automaticky pri deployi.
 
+---
 
+## Deployment
+
+Každý push na vetvu `main` spustí GitHub Actions workflow, ktorý:
+
+1. Zbuildí frontend (`npm run build`)
+2. Nasadí statické súbory na GitHub Pages (`finvu.pedani.eu`)
+3. Zbuildí backend Docker image a nasadí ho na Hetzner VPS
+
+```bash
+# Manuálny deploy frontendu
+./deploy.sh frontend
+
+# Reštart backendu na serveri
+docker compose restart backend
+```
+
+---
+
+## Autentifikácia
+
+Podporované metódy:
+
+| Metóda | Popis |
+|---|---|
+| Email + heslo | Štandardná registrácia |
+| Google OAuth | Prihlásenie cez Google účet |
+| WebAuthn (Passkeys) | Biometria / hardvérový kľúč |
+| PIN | Rýchle prihlásenie PIN kódom |
+| Demo | Testovací účet bez registrácie |
+
+---
+
+## Licencia
+
+Súkromný projekt. Všetky práva vyhradené.
