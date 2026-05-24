@@ -107,7 +107,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   function openDetail(goal: SavingsGoal) {
     setSelectedGoal(goal)
     setView('detail')
-    if (goal.id) window.location.hash = `sporenie?id=${goal.id}`
+    if (goal.id) window.location.hash = `savings?id=${goal.id}`
   }
 
   async function handleDeposit(amount: number) {
@@ -140,7 +140,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   function closeDetail() {
     setSelectedGoal(null)
     setView('list')
-    window.location.hash = 'sporenie'
+    window.location.hash = 'savings'
   }
 
   const handleSave = useCallback(async () => {
