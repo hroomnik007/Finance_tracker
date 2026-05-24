@@ -368,7 +368,7 @@ export function CategoriesPage() {
               </div>
 
               {/* Mobile list with swipe-to-delete */}
-              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 0 }}>
+              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
                 {sortedCategories.map(cat => (
                   <SwipeableRow
                     key={cat.id}
