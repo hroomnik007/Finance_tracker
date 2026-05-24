@@ -167,19 +167,16 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {categoryTotals.map(({ id, amount: catAmt }) => {
             const cat = getCat(id)
             const icon = cat?.icon ?? FALLBACK_ICON
-            const color = cat?.color ?? FALLBACK_COLOR
             const name = cat?.name ?? '—'
-            const pct = total > 0 ? (catAmt / total) * 100 : 0
             return (
-              <div key={id || '__none__'}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{icon}</span><span>{name}</span>
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{formatAmount(catAmt)}</span>
-                </div>
-                <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: color, transition: 'width 0.5s' }} />
+              <div key={id || '__none__'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+                  <span style={{ flexShrink: 0 }}>{icon}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, marginLeft: 8 }}>
+                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: 'var(--text2)' }}>{formatAmount(catAmt)}<span style={{ fontSize: 10, color: 'var(--text3)' }}>/mes.</span></span>
+                  <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: 'var(--text3)' }}>{formatAmount(catAmt * 12)} / rok</span>
                 </div>
               </div>
             )
