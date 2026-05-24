@@ -271,8 +271,8 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#E2D9F3' }}>{t.csv.title}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9D84D4', padding: 4 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.csv.title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text2)', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
@@ -291,16 +291,16 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
               <div style={{ position: 'relative', marginBottom: 20 }}>
                 <button
                   onClick={() => setShowFormatPicker(p => !p)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid #4C3A8A', borderRadius: 12, cursor: 'pointer', color: '#E2D9F3', fontSize: 14, fontFamily: 'inherit' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 12, cursor: 'pointer', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }}
                 >
                   <span>{currentBank.emoji} {currentBank.label}</span>
-                  <ChevronDown size={16} color="#9D84D4" />
+                  <ChevronDown size={16} color="var(--text3)" />
                 </button>
                 {showFormatPicker && (
-                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: '#2A1F4A', border: '1px solid #4C3A8A', borderRadius: 12, overflow: 'hidden', zIndex: 10 }}>
+                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 12, overflow: 'hidden', zIndex: 10 }}>
                     {BANK_FORMATS.map(b => (
                       <button key={b.id} onClick={() => { setFormat(b.id); setShowFormatPicker(false) }}
-                        style={{ display: 'block', width: '100%', padding: '10px 14px', background: b.id === format ? 'rgba(124,58,237,0.2)' : 'transparent', border: 'none', color: b.id === format ? '#A78BFA' : '#E2D9F3', fontSize: 14, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                        style={{ display: 'block', width: '100%', padding: '10px 14px', background: b.id === format ? 'rgba(124,58,237,0.2)' : 'transparent', border: 'none', color: b.id === format ? 'var(--violet)' : 'var(--text)', fontSize: 14, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                         {b.emoji} {b.label}
                       </button>
                     ))}
@@ -309,15 +309,15 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
               </div>
 
               <div
-                style={{ border: '2px dashed #4C3A8A', borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: 'rgba(124,58,237,0.03)' }}
+                style={{ border: '2px dashed var(--border2)', borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: 'rgba(124,58,237,0.03)' }}
                 onClick={() => fileRef.current?.click()}
                 onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = '#7C3AED' }}
-                onDragLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#4C3A8A' }}
-                onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = '#4C3A8A'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+                onDragLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border2)' }}
+                onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border2)'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
               >
                 <Upload size={32} style={{ color: '#7C3AED', margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#E2D9F3', marginBottom: 4 }}>{t.csv.dragHere}</p>
-                <p style={{ fontSize: 13, color: '#9D84D4' }}>{t.csv.orClick}</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{t.csv.dragHere}</p>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.csv.orClick}</p>
                 <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
               </div>
@@ -326,16 +326,16 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           ) : csvHeaders.length > 0 ? (
             // Custom column mapping
             <div>
-              <p style={{ fontSize: 13, color: '#9D84D4', marginBottom: 16 }}>{t.csv.mapColumns}</p>
+              <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>{t.csv.mapColumns}</p>
               {(['date', 'description', 'amount'] as const).map(field => (
                 <div key={field} style={{ marginBottom: 12 }}>
-                  <label style={{ fontSize: 12, color: '#9D84D4', display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontSize: 12, color: 'var(--text3)', display: 'block', marginBottom: 4 }}>
                     {field === 'date' ? t.csv.dateCol : field === 'description' ? t.csv.descCol : t.csv.amountCol}
                   </label>
                   <select
                     value={customMapping[field]}
                     onChange={e => setCustomMapping(m => ({ ...m, [field]: e.target.value }))}
-                    style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid #4C3A8A', borderRadius: 10, color: '#E2D9F3', fontSize: 13, fontFamily: 'inherit' }}
+                    style={{ width: '100%', padding: '8px 12px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 10, color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
                   >
                     <option value="">{t.csv.noMapping}</option>
                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
@@ -344,7 +344,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
               ))}
               {error && <p style={{ color: '#F87171', fontSize: 13, marginTop: 8 }}>{error}</p>}
               <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                <button onClick={reset} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 12, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.back}</button>
+                <button onClick={reset} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border2)', borderRadius: 12, color: 'var(--text2)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.back}</button>
                 <button onClick={applyCustomMapping} style={{ flex: 2, height: 44, background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.continue}</button>
               </div>
             </div>
@@ -354,22 +354,22 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
                 <p style={{ fontSize: 12, color: '#FBBF24', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>{warning}</p>
               )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <p style={{ fontSize: 13, color: '#9D84D4' }}>{rows.length} {t.csv.records} · <span style={{ color: '#A78BFA' }}>{selectedCount}</span> {t.csv.selectedCount}</p>
-                <button onClick={() => setRows(r => r.map(x => ({ ...x, selected: !allSelected })))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A78BFA', fontSize: 13, fontFamily: 'inherit' }}>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{rows.length} {t.csv.records} · <span style={{ color: 'var(--violet)' }}>{selectedCount}</span> {t.csv.selectedCount}</p>
+                <button onClick={() => setRows(r => r.map(x => ({ ...x, selected: !allSelected })))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--violet)', fontSize: 13, fontFamily: 'inherit' }}>
                   {allSelected ? t.csv.deselectAll : t.csv.selectAll}
                 </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {rows.map((row, i) => (
                   <div key={i} onClick={() => setRows(r => r.map((x, j) => j === i ? { ...x, selected: !x.selected } : x))}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, cursor: 'pointer', background: row.selected ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${row.selected ? 'rgba(124,58,237,0.3)' : 'rgba(255,255,255,0.05)'}` }}>
-                    <div style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, background: row.selected ? '#7C3AED' : 'transparent', border: `2px solid ${row.selected ? '#7C3AED' : '#4C3A8A'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, cursor: 'pointer', background: row.selected ? 'rgba(124,58,237,0.08)' : 'var(--bg3)', border: `1px solid ${row.selected ? 'rgba(124,58,237,0.3)' : 'var(--border)'}` }}>
+                    <div style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, background: row.selected ? '#7C3AED' : 'transparent', border: `2px solid ${row.selected ? '#7C3AED' : 'var(--border2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {row.selected && <Check size={12} color="white" strokeWidth={3} />}
                     </div>
                     <span style={{ fontSize: 18, flexShrink: 0 }}>{row.type === 'income' ? '💰' : '💸'}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 500, color: '#E2D9F3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.description || '—'}</p>
-                      <p style={{ fontSize: 11, color: '#9D84D4', marginTop: 1 }}>{row.date}</p>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.description || '—'}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text3)', margin: '1px 0 0' }}>{row.date}</p>
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 600, color: row.type === 'income' ? '#34D399' : '#F87171', flexShrink: 0 }}>
                       {row.type === 'income' ? '+' : '-'}{row.amount.toFixed(2)} €
@@ -385,9 +385,9 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
         {/* Footer */}
         {rows.length > 0 && importedCount === null && (
           <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, flexShrink: 0 }}>
-            <button onClick={reset} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid #4C3A8A', borderRadius: 14, color: '#9D84D4', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.common.cancel}</button>
+            <button onClick={reset} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border2)', borderRadius: 14, color: 'var(--text2)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.common.cancel}</button>
             <button onClick={handleImport} disabled={selectedCount === 0 || importing}
-              style={{ flex: 2, height: 48, background: selectedCount > 0 ? 'linear-gradient(135deg,#7C3AED,#6D28D9)' : '#32265A', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: selectedCount > 0 && !importing ? 'pointer' : 'default', opacity: importing ? 0.7 : 1, fontFamily: 'inherit' }}>
+              style={{ flex: 2, height: 48, background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: selectedCount > 0 && !importing ? 'pointer' : 'default', opacity: importing || selectedCount === 0 ? 0.4 : 1, fontFamily: 'inherit' }}>
               {importing ? t.csv.importing : `${t.csv.importBtn} (${selectedCount})`}
             </button>
           </div>

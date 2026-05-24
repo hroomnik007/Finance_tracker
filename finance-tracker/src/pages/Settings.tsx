@@ -22,8 +22,8 @@ const CURRENCIES = [
   { value: 'USD', label: '$ US Dollar' },
   { value: 'GBP', label: '£ Libra' },
   { value: 'CZK', label: 'Kč Česká koruna' },
-  { value: 'HUF', label: '🇭🇺 Ft Forint' },
-  { value: 'PLN', label: '🇵🇱 zł Złoty' },
+  { value: 'HUF', label: 'Ft Forint' },
+  { value: 'PLN', label: 'zł Złoty' },
 ]
 
 const DATE_FORMATS = [
@@ -782,7 +782,7 @@ export function SettingsPage() {
                       onClick={handleSaveTrackingDate}
                       disabled={trackingSaving}
                       className="btn-primary py-2 text-sm"
-                      style={{ flex: 1, opacity: trackingSaving ? 0.6 : 1 }}
+                      style={{ opacity: trackingSaving ? 0.6 : 1 }}
                     >
                       {trackingSaving ? 'Ukladám...' : 'Uložiť'}
                     </button>
