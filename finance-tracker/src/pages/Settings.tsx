@@ -83,17 +83,16 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       type="button"
       onClick={onChange}
       disabled={disabled}
-      className={`w-11 h-6 rounded-full transition-all duration-200 relative flex-shrink-0 ${
+      className={`w-12 h-[26px] rounded-full transition-all duration-200 relative flex-shrink-0 ${
         disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
       }`}
       style={{
-        background: checked ? 'var(--accent-color)' : '#32265A',
-        border: checked ? '1px solid var(--accent-color)' : '1px solid #4C3A8A',
+        background: checked ? 'var(--accent-color)' : 'var(--toggle-inactive)',
       }}
     >
       <div
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-          checked ? 'translate-x-5' : 'translate-x-0'
+        className={`absolute top-[3px] left-[3px] w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+          checked ? 'translate-x-[22px]' : 'translate-x-0'
         }`}
       />
     </button>
@@ -810,7 +809,7 @@ export function SettingsPage() {
         </div>
 
         {/* Right content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* ── APPEARANCE SECTION ── */}
           {activeSection === 'appearance' && (
@@ -1113,7 +1112,7 @@ export function SettingsPage() {
                     <SettingRow label="Zmeniť heslo" sublabel="Aktualizovať prihlasovacie heslo">
                       <button
                         onClick={() => { setChangePwOpen(o => !o); setChangePwError(null) }}
-                        className="btn-secondary py-1.5 text-xs"
+                        className="btn-settings"
                       >
                         {changePwOpen ? 'Zavrieť' : 'Zmeniť'}
                       </button>
@@ -1139,11 +1138,11 @@ export function SettingsPage() {
                   >
                     {hasPin ? (
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => setPinSetupOpen(true)} className="btn-secondary py-1.5 text-xs">{t.settings.change}</button>
-                        <button onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }} className="btn-secondary py-1.5 text-xs" style={{ color: 'var(--red)', borderColor: 'var(--red)' }}>{t.common.remove}</button>
+                        <button onClick={() => setPinSetupOpen(true)} className="btn-settings">{t.settings.change}</button>
+                        <button onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }} className="btn-settings-danger">{t.common.remove}</button>
                       </div>
                     ) : (
-                      <button onClick={() => setPinSetupOpen(true)} className="btn-secondary py-1.5 text-xs">{t.settings.setup}</button>
+                      <button onClick={() => setPinSetupOpen(true)} className="btn-settings">{t.settings.setup}</button>
                     )}
                   </SettingRow>
 
@@ -1209,8 +1208,8 @@ export function SettingsPage() {
                               <button
                                 onClick={() => handleDeleteSession(session.id)}
                                 disabled={sessionDeletingId === session.id}
-                                className="btn-secondary py-1 text-xs"
-                                style={{ color: 'var(--red)', borderColor: 'rgba(239,68,68,0.3)', opacity: sessionDeletingId === session.id ? 0.5 : 1, flexShrink: 0 }}
+                                className="btn-settings-danger"
+                                style={{ flexShrink: 0 }}
                               >
                                 {t.settings.logoutSession}
                               </button>

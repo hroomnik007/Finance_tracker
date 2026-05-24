@@ -498,7 +498,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 {onLogout && (
                   <button
                     onClick={() => setLogoutConfirm(true)}
-                    style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 14, background: 'transparent', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                    className="btn-settings-danger"
+                    style={{ width: '100%', height: 44, justifyContent: 'center', borderRadius: 8, fontSize: 14, fontWeight: 500 }}
                   >
                     {t.auth.logout}
                   </button>
