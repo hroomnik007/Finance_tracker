@@ -313,7 +313,9 @@ export function CategoriesPage() {
                             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
                             {cat.budgetLimit != null
                               ? <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
-                              : <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.noLimit}</div>
+                              : cat.autoLimit
+                                ? <div style={{ fontSize: 12, color: 'var(--violet)', marginTop: 2 }}>⚡ {t.expenses.categories.autoLimit}</div>
+                                : <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.noLimit}</div>
                             }
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -398,6 +400,8 @@ export function CategoriesPage() {
                               )
                             })()}
                           </>
+                        ) : cat.autoLimit ? (
+                          <span style={{ fontSize: 12, color: 'var(--violet)' }}>⚡ {t.expenses.categories.autoLimit}</span>
                         ) : (
                           <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.expenses.categories.noLimit}</span>
                         )}
