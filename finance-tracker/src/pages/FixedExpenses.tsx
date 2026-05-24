@@ -446,7 +446,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                       <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: isPast ? 'var(--text3)' : 'var(--red)' }}>{formatAmount(expense.amount)}</span>
                       {!isPast && <span style={{ fontSize: 10, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 7px', borderRadius: 20 }}>{badge.text}</span>}
-                      {isPast && <span style={{ fontSize: 10, color: 'var(--text3)', padding: '2px 7px' }}>zaplatené</span>}
+                      {isPast && <span style={{ fontSize: 12, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', padding: '2px 8px', borderRadius: 20 }}>✓ Zaplatené</span>}
                     </div>
                     <div className="expense-actions hidden lg:flex" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
                       <button onClick={() => openEdit(expense)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={13} /></button>
