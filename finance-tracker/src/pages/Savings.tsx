@@ -7,6 +7,7 @@ import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { listDeposits, addDeposit, deleteDeposit } from '../api/savings'
+import { getSummaryCards } from '../api/transactions'
 import type { SavingsGoal, Deposit } from '../types'
 
 const PRESET_COLORS = [
@@ -47,6 +48,14 @@ function daysUntil(deadline: string): number {
   return Math.round((target.getTime() - today.getTime()) / 86400000)
 }
 
+function goalMonthly(goal: SavingsGoal): number {
+  if (!goal.deadline) return 0
+  const today = new Date()
+  const deadline = new Date(goal.deadline)
+  const ml = Math.max(1, (deadline.getFullYear() - today.getFullYear()) * 12 + (deadline.getMonth() - today.getMonth()))
+  return Math.max(0, goal.targetAmount - goal.savedAmount) / ml
+}
+
 export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   const { goals, addGoal, updateGoal, deleteGoal, pauseGoal, resumeGoal } = useSavings()
   const { formatAmount } = useFormatters()
@@ -55,6 +64,14 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   const [view, setView] = useState<'list' | 'detail' | 'edit'>('list')
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null)
   const [deposits, setDeposits] = useState<Deposit[]>([])
+  const [monthlyIncome, setMonthlyIncome] = useState<number | null>(null)
+
+  useEffect(() => {
+    const now = new Date()
+    getSummaryCards(now.getFullYear(), now.getMonth() + 1)
+      .then(({ income }) => setMonthlyIncome(income))
+      .catch(() => {})
+  }, [])
 
   const [formName, setFormName] = useState('')
   const [formTarget, setFormTarget] = useState('')
@@ -84,14 +101,10 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
   const goalCount = goals.length
   const overallPct = totalTarget > 0 ? Math.round(totalSaved / totalTarget * 100) : 0
-  const monthlyAmount = goals.reduce((s, g) => {
-    if (!g.deadline) return s
-    const today = new Date()
-    const deadline = new Date(g.deadline)
-    const monthsLeft = Math.max(1, (deadline.getFullYear() - today.getFullYear()) * 12 + (deadline.getMonth() - today.getMonth()))
-    const remaining = Math.max(0, g.targetAmount - g.savedAmount)
-    return s + remaining / monthsLeft
-  }, 0)
+  const monthlyAmount = goals.filter(g => !g.paused).reduce((s, g) => s + goalMonthly(g), 0)
+  const incomePercent = monthlyIncome && monthlyIncome > 0
+    ? Math.round(monthlyAmount / monthlyIncome * 100)
+    : null
 
   function openAdd() {
     setSelectedGoal(null)
@@ -372,6 +385,13 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
                 <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>{t.savings.remainingTotal.toUpperCase()}</p>
                 <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'white'}}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</p>
               </div>
+              <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
+              <div style={{flex:1,paddingLeft:18}}>
+                <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.08em',marginBottom:3}}>% Z PRÍJMOV</p>
+                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:15,color:'#a78bfa'}}>
+                  {incomePercent !== null ? `${incomePercent}%` : '—'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -389,20 +409,39 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
             <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.savings.noGoalsSubtitle}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 16 }}>
-            {goals.map(goal => (
-              <SwipeableRow key={goal.id} onDelete={() => deleteGoal(goal.id!)}>
-                <GoalCard
-                  goal={goal}
-                  formatAmount={formatAmount}
-                  t={t.savings}
-                  onClick={() => openDetail(goal)}
-                  onEdit={() => openEdit(goal)}
-                  onDelete={() => handleDelete(goal)}
-                />
-              </SwipeableRow>
-            ))}
-          </div>
+          <>
+            {/* Mobile: vertical list with swipe-to-delete */}
+            <div className="flex flex-col gap-4 lg:hidden">
+              {goals.map(goal => (
+                <SwipeableRow key={goal.id} onDelete={() => deleteGoal(goal.id!)}>
+                  <GoalCard
+                    goal={goal}
+                    formatAmount={formatAmount}
+                    t={t.savings}
+                    onClick={() => openDetail(goal)}
+                    onEdit={() => openEdit(goal)}
+                    onDelete={() => handleDelete(goal)}
+                  />
+                </SwipeableRow>
+              ))}
+            </div>
+            {/* Desktop: horizontal scroll row */}
+            <div className="hidden lg:flex overflow-x-auto gap-4 pb-2" style={{ scrollbarWidth: 'none' }}>
+              {goals.map(goal => (
+                <div key={goal.id} style={{ width: 300, flexShrink: 0 }}>
+                  <GoalCard
+                    goal={goal}
+                    formatAmount={formatAmount}
+                    t={t.savings}
+                    onClick={() => openDetail(goal)}
+                    onEdit={() => openEdit(goal)}
+                    onDelete={() => handleDelete(goal)}
+                    desktop
+                  />
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
       </div>
@@ -442,8 +481,28 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   )
 }
 
+function MiniRing({ pct, color, size = 64 }: { pct: number; color: string; size?: number }) {
+  const sw = 5
+  const r = (size - sw * 2) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ * (1 - Math.min(pct, 100) / 100)
+  const c = size / 2
+  return (
+    <svg width={size} height={size} style={{ flexShrink: 0 }}>
+      <circle cx={c} cy={c} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw} />
+      <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={sw}
+        strokeDasharray={`${circ} ${circ}`} strokeDashoffset={offset}
+        strokeLinecap="round" transform={`rotate(-90 ${c} ${c})`} />
+      <text x={c} y={c} textAnchor="middle" dominantBaseline="central"
+        fill="var(--text)" fontSize={10} fontWeight={700} fontFamily="'DM Mono', monospace">
+        {Math.round(pct)}%
+      </text>
+    </svg>
+  )
+}
+
 function GoalCard({
-  goal, formatAmount, t, onClick, onEdit, onDelete,
+  goal, formatAmount, t, onClick, onEdit, onDelete, desktop = false,
 }: {
   goal: SavingsGoal
   formatAmount: (n: number) => string
@@ -451,10 +510,12 @@ function GoalCard({
   onClick: () => void
   onEdit: () => void
   onDelete: () => void
+  desktop?: boolean
 }) {
   const pct = goal.targetAmount > 0 ? Math.min(100, (goal.savedAmount / goal.targetAmount) * 100) : 0
   const isCompleted = pct >= 100
   const barColor = isCompleted ? 'var(--green)' : goal.color ?? '#7C3AED'
+  const monthly = goalMonthly(goal)
 
   let deadlineBadge: React.ReactNode = null
   if (goal.deadline) {
@@ -475,6 +536,81 @@ function GoalCard({
         </span>
       )
     }
+  }
+
+  if (desktop) {
+    return (
+      <div
+        onClick={onClick}
+        style={{
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
+          borderLeft: `3px solid ${goal.color ?? '#7C3AED'}`,
+          borderRadius: 16,
+          padding: '18px 20px',
+          cursor: 'pointer',
+          transition: 'border-color 0.15s',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+          height: '100%',
+          boxSizing: 'border-box',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)'; (e.currentTarget as HTMLElement).style.borderLeftColor = goal.color ?? '#7C3AED' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.borderLeftColor = goal.color ?? '#7C3AED' }}
+      >
+        {/* Top: name + ring */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 20 }}>{goal.icon ?? '🎯'}</span>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+              {goal.paused && (
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
+              )}
+            </div>
+            {isCompleted ? (
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
+            ) : deadlineBadge && (
+              <div style={{ display: 'flex' }}>{deadlineBadge}</div>
+            )}
+          </div>
+          <MiniRing pct={pct} color={barColor} size={64} />
+        </div>
+
+        {/* Amounts */}
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: '0 0 3px', letterSpacing: '-0.5px' }}>
+            {formatAmount(goal.savedAmount)}
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
+            / {formatAmount(goal.targetAmount)}
+            {!isCompleted && monthly > 0 && <span style={{ marginLeft: 4 }}>· auto +{formatAmount(monthly)}/mes.</span>}
+          </p>
+          {!isCompleted && (
+            <p style={{ fontSize: 11, color: 'var(--text3)', margin: '4px 0 0' }}>
+              {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))} {t.remaining}
+            </p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onEdit() }}
+            style={{ flex: 1, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete() }}
+            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
