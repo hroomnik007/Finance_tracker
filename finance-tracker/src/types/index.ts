@@ -142,6 +142,12 @@ export interface ApiTransaction {
   household_id?: number | null
 }
 
+export interface Deposit {
+  id: string
+  amount: number
+  date: string
+}
+
 export interface ApiSavingsGoal {
   id: string
   userId: string

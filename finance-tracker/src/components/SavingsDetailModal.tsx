@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
-import { X, Pencil, Pause, Play, Plus } from 'lucide-react'
-import type { SavingsGoal } from '../types'
+import { X, Pencil, Pause, Play, Plus, Trash2 } from 'lucide-react'
+import type { SavingsGoal, Deposit } from '../types'
 import { useTranslation } from '../i18n'
-
-interface Deposit { amount: number; date: string }
 
 interface SavingsDetailModalProps {
   goal: SavingsGoal | null
@@ -11,6 +9,7 @@ interface SavingsDetailModalProps {
   onClose: () => void
   onEdit: () => void
   onDeposit: (amount: number) => Promise<void>
+  onDeleteDeposit?: (depositId: string) => Promise<void>
   onPause?: () => Promise<void>
   onResume?: () => Promise<void>
   formatAmount: (n: number) => string
@@ -35,13 +34,15 @@ function calcMonthsLeft(deadline: string | null | undefined): number {
   return Math.max(0, (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth()))
 }
 
-export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
+export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDeposit, onDeleteDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
   const { t } = useTranslation()
   const [depositMode, setDepositMode] = useState(false)
   const [depositInput, setDepositInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [pauseLoading, setPauseLoading] = useState(false)
   const [animated, setAnimated] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!goal) { setAnimated(false); return }
@@ -281,11 +282,41 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDep
           ) : (
             <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
               {deposits.slice(0, 10).map((d, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
-                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+                <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text3)', flex: 1 }}>
                     {new Date(d.date).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 600, color: '#34D399' }}>+{formatAmount(d.amount)}</span>
+                  {confirmDeleteId === d.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>Zmazať {formatAmount(d.amount)} €?</span>
+                      <button
+                        onClick={async () => {
+                          if (!onDeleteDeposit) return
+                          setDeleting(true)
+                          try { await onDeleteDeposit(d.id) } finally { setDeleting(false); setConfirmDeleteId(null) }
+                        }}
+                        disabled={deleting}
+                        style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.6 : 1 }}
+                      >Áno</button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        style={{ fontSize: 11, color: 'var(--text3)', background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit' }}
+                      >Nie</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 600, color: '#34D399' }}>+{formatAmount(d.amount)}</span>
+                      {onDeleteDeposit && (
+                        <button
+                          onClick={() => setConfirmDeleteId(d.id)}
+                          style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                          title="Zmazať vklad"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
               ))}
             </div>

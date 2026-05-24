@@ -6,23 +6,8 @@ import { SwipeableRow } from '../components/SwipeableRow'
 import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import type { SavingsGoal } from '../types'
-
-const DEPOSITS_KEY = 'savings_deposits'
-
-interface Deposit { amount: number; date: string }
-
-function loadAllDeposits(): Record<string, Deposit[]> {
-  try { return JSON.parse(localStorage.getItem(DEPOSITS_KEY) ?? '{}') } catch { return {} }
-}
-
-function saveDeposit(goalId: string, amount: number) {
-  const all = loadAllDeposits()
-  const list = all[goalId] ?? []
-  list.unshift({ amount, date: new Date().toISOString() })
-  all[goalId] = list.slice(0, 20)
-  try { localStorage.setItem(DEPOSITS_KEY, JSON.stringify(all)) } catch { /* ignore */ }
-}
+import { listDeposits, addDeposit, deleteDeposit } from '../api/savings'
+import type { SavingsGoal, Deposit } from '../types'
 
 const PRESET_COLORS = [
   '#7C3AED', '#A78BFA', '#10B981', '#34D399', '#EF4444', '#F59E0B', '#3B82F6', '#EC4899',
@@ -92,11 +77,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   useEffect(() => {
     if (!initialGoalId || goals.length === 0) return
     const goal = goals.find(g => g.id === initialGoalId)
-    if (goal && view === 'list') {
-      setSelectedGoal(goal)
-      setDeposits(loadAllDeposits()[goal.id!] ?? [])
-      setView('detail')
-    }
+    if (goal && view === 'list') openDetail(goal)
   }, [goals]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
@@ -124,20 +105,27 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     setView('edit')
   }
 
-  function openDetail(goal: SavingsGoal) {
+  async function openDetail(goal: SavingsGoal) {
     setSelectedGoal(goal)
-    setDeposits(loadAllDeposits()[goal.id!] ?? [])
     setView('detail')
     if (goal.id) window.location.hash = `savings?id=${goal.id}`
+    if (goal.id) {
+      try { setDeposits(await listDeposits(goal.id)) } catch { setDeposits([]) }
+    }
   }
 
   async function handleDeposit(amount: number) {
     if (!selectedGoal?.id) return
-    const newSaved = selectedGoal.savedAmount + amount
-    await updateGoal(selectedGoal.id, { savedAmount: newSaved })
-    saveDeposit(selectedGoal.id, amount)
-    setDeposits(loadAllDeposits()[selectedGoal.id] ?? [])
-    setSelectedGoal(prev => prev ? { ...prev, savedAmount: newSaved } : null)
+    const { goal: updated, deposit } = await addDeposit(selectedGoal.id, amount)
+    setDeposits(prev => [deposit, ...prev])
+    setSelectedGoal(prev => prev ? { ...prev, savedAmount: updated.savedAmount } : null)
+  }
+
+  async function handleDeleteDeposit(depositId: string) {
+    if (!selectedGoal?.id) return
+    const updated = await deleteDeposit(selectedGoal.id, depositId)
+    setDeposits(prev => prev.filter(d => d.id !== depositId))
+    setSelectedGoal(prev => prev ? { ...prev, savedAmount: updated.savedAmount } : null)
   }
 
   function openEdit(goal: SavingsGoal) {
@@ -436,6 +424,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
         onClose={closeDetail}
         onEdit={() => { if (selectedGoal) openEdit(selectedGoal) }}
         onDeposit={handleDeposit}
+        onDeleteDeposit={handleDeleteDeposit}
         onPause={handlePause}
         onResume={handleResume}
         formatAmount={formatAmount}

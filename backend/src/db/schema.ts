@@ -199,3 +199,12 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type SavingsGoal = typeof savingsGoals.$inferSelect;
 export type NewSavingsGoal = typeof savingsGoals.$inferInsert;
+
+export const savingsDeposits = pgTable("savings_deposits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  goalId: uuid("goal_id").notNull().references(() => savingsGoals.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export type SavingsDeposit = typeof savingsDeposits.$inferSelect;

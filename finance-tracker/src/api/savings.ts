@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { ApiSavingsGoal } from '../types'
+import type { ApiSavingsGoal, Deposit } from '../types'
 
 export interface SavingsGoalPayload {
   name: string
@@ -41,4 +41,19 @@ export async function pauseSavingsGoal(id: string): Promise<{ data: ApiSavingsGo
 export async function resumeSavingsGoal(id: string): Promise<{ data: ApiSavingsGoal }> {
   const { data } = await apiClient.patch(`/api/savings/${id}/resume`)
   return data as { data: ApiSavingsGoal }
+}
+
+export async function listDeposits(goalId: string): Promise<Deposit[]> {
+  const { data } = await apiClient.get(`/api/savings/${goalId}/deposits`)
+  return (data as { data: Deposit[] }).data
+}
+
+export async function addDeposit(goalId: string, amount: number): Promise<{ goal: ApiSavingsGoal; deposit: Deposit }> {
+  const { data } = await apiClient.post(`/api/savings/${goalId}/deposits`, { amount })
+  return (data as { data: { goal: ApiSavingsGoal; deposit: Deposit } }).data
+}
+
+export async function deleteDeposit(goalId: string, depositId: string): Promise<ApiSavingsGoal> {
+  const { data } = await apiClient.delete(`/api/savings/${goalId}/deposits/${depositId}`)
+  return (data as { data: ApiSavingsGoal }).data
 }

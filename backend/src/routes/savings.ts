@@ -7,6 +7,9 @@ import {
   deleteSavingsGoal,
   pauseSavingsGoal,
   resumeSavingsGoal,
+  listDeposits,
+  addDeposit,
+  deleteDeposit,
 } from "../controllers/savings.controller";
 
 const router = Router();
@@ -19,5 +22,8 @@ router.patch("/:id", updateSavingsGoal);
 router.patch("/:id/pause", pauseSavingsGoal);
 router.patch("/:id/resume", resumeSavingsGoal);
 router.delete("/:id", deleteSavingsGoal);
+router.get("/:id/deposits", listDeposits);
+router.post("/:id/deposits", addDeposit);
+router.delete("/:id/deposits/:depositId", deleteDeposit);
 
 export default router;

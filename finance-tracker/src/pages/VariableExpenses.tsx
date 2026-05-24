@@ -35,8 +35,9 @@ interface VarForm {
 
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
 
-const getBudgetBarColor = (pct: number) => {
-  if (pct >= 100) return 'var(--red)'
+const getBudgetBarColor = (pct: number, autoLimit = false) => {
+  if (autoLimit) return '#22c55e'
+  if (pct >= 100) return '#ef4444'
   if (pct >= 80) return '#FBBF24'
   return 'var(--green)'
 }
@@ -377,7 +378,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                                     <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>{cat?.name ?? '—'}</div>
                                     {bs && (
                                       <div style={{ width: 48, height: 3, borderRadius: 2, background: 'var(--bg4)', marginTop: 3, overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: getBudgetBarColor(bs.percentage) }} />
+                                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: getBudgetBarColor(bs.percentage, cat?.autoLimit ?? false) }} />
                                       </div>
                                     )}
                                   </div>
@@ -453,7 +454,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {budgetStatuses.map((bs: BudgetStatus) => {
-                  const barColor = getBudgetBarColor(bs.percentage)
+                  const bsCat = getCategoryById(bs.categoryId)
+                  const barColor = getBudgetBarColor(bs.percentage, bsCat?.autoLimit ?? false)
                   const pct = Math.min(bs.percentage, 100)
                   return (
                     <div key={bs.categoryId} style={{ background: 'var(--bg3)', border: bs.isOver ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--border)', borderRadius: 12, padding: '12px 14px' }}>

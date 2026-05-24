@@ -553,7 +553,8 @@ const upcomingFixed = useMemo(() => {
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>
         {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => {
-          const barColor = b.percentage >= 90 ? '#F87171' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
+          const bCat = categories.find(c => c.id === b.categoryId)
+          const barColor = (bCat?.autoLimit) ? '#22c55e' : b.percentage >= 100 ? '#ef4444' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
           return (
             <div key={b.categoryId} style={{ marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>

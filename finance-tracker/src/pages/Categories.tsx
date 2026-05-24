@@ -269,7 +269,8 @@ export function CategoriesPage() {
                   {sortedCategories.map((cat, i) => {
                     const status = budgetStatuses.find(b => b.categoryId === cat.id)
                     const pct = status ? Math.min(status.percentage, 100) : 0
-                    const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
+                    const rawPct = status?.percentage ?? 0
+                    const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
                     const isDragging = dragIdx === i
                     const isDragOver = dragOverIdx === i && dragIdx !== i
                     const dragProps = {
@@ -393,17 +394,18 @@ export function CategoriesPage() {
                               <span style={{ fontSize: 12, fontWeight: 600, color: cat.color }}>Limit: {formatAmount(cat.budgetLimit)}</span>
                               {(() => {
                                 const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                                const pct = status ? Math.min(status.percentage, 100) : 0
-                                const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
+                                const rawPct = status?.percentage ?? 0
+                                const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
                                 return (
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>{Math.round(status?.percentage ?? 0)}%</span>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>{Math.round(rawPct)}%</span>
                                 )
                               })()}
                             </div>
                             {(() => {
                               const status = budgetStatuses.find(b => b.categoryId === cat.id)
                               const pct = status ? Math.min(status.percentage, 100) : 0
-                              const barColor = pct >= 90 ? 'var(--red)' : pct >= 70 ? '#FBBF24' : cat.color
+                              const rawPct = status?.percentage ?? 0
+                              const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
                               return (
                                 <>
                                   <div style={{ height: 3, borderRadius: 99, background: 'var(--bg4)', marginTop: 4, overflow: 'hidden' }}>
@@ -464,7 +466,8 @@ export function CategoriesPage() {
             {withLimit.length > 0 && rpSection(t.expenses.categories.budgetSectionTitle,
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {budgetStatuses.map(b => {
-                  const barColor = b.percentage >= 90 ? 'var(--red)' : b.percentage >= 70 ? '#FBBF24' : 'var(--green)'
+                  const rpCat = categories.find(c => c.id === b.categoryId)
+                  const barColor = (rpCat?.autoLimit) ? '#22c55e' : b.percentage >= 100 ? '#ef4444' : b.percentage >= 70 ? '#FBBF24' : 'var(--green)'
                   return (
                     <div key={b.categoryId}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>

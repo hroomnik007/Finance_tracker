@@ -1,8 +1,8 @@
 import { Response } from "express";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { savingsGoals } from "../db/schema";
+import { savingsGoals, savingsDeposits } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 
 type SavingsGoalRow = typeof savingsGoals.$inferSelect;
@@ -149,4 +149,70 @@ export async function deleteSavingsGoal(req: AuthRequest, res: Response): Promis
 
   await db.delete(savingsGoals).where(eq(savingsGoals.id, id));
   res.json({ success: true });
+}
+
+function normalizeDeposit(d: typeof savingsDeposits.$inferSelect) {
+  return { id: d.id, amount: Number(d.amount), date: d.createdAt.toISOString() };
+}
+
+export async function listDeposits(req: AuthRequest, res: Response): Promise<void> {
+  const goalId = req.params["id"] as string;
+  const [goal] = await db.select({ userId: savingsGoals.userId }).from(savingsGoals).where(eq(savingsGoals.id, goalId)).limit(1);
+  if (!goal) { res.status(404).json({ error: "Not found" }); return; }
+  if (goal.userId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const rows = await db.select().from(savingsDeposits)
+    .where(eq(savingsDeposits.goalId, goalId))
+    .orderBy(sql`${savingsDeposits.createdAt} DESC`)
+    .limit(20);
+  res.json({ data: rows.map(normalizeDeposit) });
+}
+
+export async function addDeposit(req: AuthRequest, res: Response): Promise<void> {
+  const goalId = req.params["id"] as string;
+  const [goal] = await db.select().from(savingsGoals).where(eq(savingsGoals.id, goalId)).limit(1);
+  if (!goal) { res.status(404).json({ error: "Not found" }); return; }
+  if (goal.userId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const body = z.object({ amount: z.number().positive() }).safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: "Invalid amount" }); return; }
+
+  const newSaved = String(Number(goal.savedAmount) + body.data.amount);
+  const [deposit] = await db.insert(savingsDeposits).values({
+    goalId,
+    userId: req.userId!,
+    amount: String(body.data.amount),
+  }).returning();
+
+  const [updated] = await db.update(savingsGoals)
+    .set({ savedAmount: newSaved, updatedAt: new Date() })
+    .where(eq(savingsGoals.id, goalId))
+    .returning();
+
+  res.status(201).json({ data: { goal: normalizeGoal(updated), deposit: normalizeDeposit(deposit) } });
+}
+
+export async function deleteDeposit(req: AuthRequest, res: Response): Promise<void> {
+  const goalId = req.params["id"] as string;
+  const depositId = req.params["depositId"] as string;
+
+  const [deposit] = await db.select().from(savingsDeposits)
+    .where(and(
+      eq(savingsDeposits.id, depositId),
+      eq(savingsDeposits.goalId, goalId),
+      eq(savingsDeposits.userId, req.userId!),
+    ))
+    .limit(1);
+  if (!deposit) { res.status(404).json({ error: "Deposit not found" }); return; }
+
+  await db.delete(savingsDeposits).where(eq(savingsDeposits.id, depositId));
+
+  const [goal] = await db.select().from(savingsGoals).where(eq(savingsGoals.id, goalId)).limit(1);
+  const newSaved = String(Math.max(0, Number(goal.savedAmount) - Number(deposit.amount)));
+  const [updated] = await db.update(savingsGoals)
+    .set({ savedAmount: newSaved, updatedAt: new Date() })
+    .where(eq(savingsGoals.id, goalId))
+    .returning();
+
+  res.json({ data: normalizeGoal(updated) });
 }
