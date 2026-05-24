@@ -667,7 +667,7 @@ const upcomingFixed = useMemo(() => {
   )
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}>
     <div style={{ padding: '20px' }} className="flex flex-col gap-4 lg:gap-0 pb-4 w-full">
 
       {/* Tracking start date banner */}

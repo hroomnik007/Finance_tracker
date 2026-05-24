@@ -377,7 +377,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                                     <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>{cat?.name ?? '—'}</div>
                                     {bs && (
                                       <div style={{ width: 48, height: 3, borderRadius: 2, background: 'var(--bg4)', marginTop: 3, overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: cat?.color ?? '#9D84D4' }} />
+                                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: getBudgetBarColor(bs.percentage) }} />
                                       </div>
                                     )}
                                   </div>
