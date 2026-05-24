@@ -56,7 +56,7 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 - **Node.js** + **Express** + **TypeScript**
 - **PostgreSQL** + **Drizzle ORM**
 - **JWT** (access token v pamäti) + **httpOnly cookie** (refresh token)
-- **WebAuthn** (passkeys), Google OAuth, PIN login
+- **WebAuthn** Google OAuth, PIN login
 
 ### Infraštruktúra
 - **Docker** + **Docker Compose** (backend + PostgreSQL)
