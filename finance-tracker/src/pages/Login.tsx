@@ -179,7 +179,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
           <img src="/logo.svg" alt="Finvu" style={{ width: 72, height: 72, borderRadius: 18 }} />
           <div style={{ textAlign: 'center' }}>
             <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', lineHeight: 1, margin: 0 }}>{t.nav.appName}</h1>
-            <p style={{ fontSize: 12, marginTop: 5, marginBottom: 0, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.04em' }}>FINANCIE POD KONTROLOU</p>
+            <p style={{ fontSize: 12, marginTop: 5, marginBottom: 0, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.04em' }}>{t.nav.appTagline.toUpperCase()}</p>
           </div>
         </div>
 
