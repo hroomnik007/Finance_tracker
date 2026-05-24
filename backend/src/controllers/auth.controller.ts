@@ -21,6 +21,7 @@ import {
 import { sendEmail, verificationEmailHtml, resetPasswordEmailHtml, resetPasswordEmailText } from "../lib/email";
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories";
 import { AuthRequest } from "../middleware/authenticate";
+import { resetDemoAccount, DEMO_EMAIL } from "../lib/resetDemo";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -140,8 +141,20 @@ export async function login(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const accessToken = await issueTokens(res, user.id, user.email);
-  res.json({ user: userPublic(user), accessToken });
+  // Reset demo account data on every login, then re-fetch the updated user record
+  let loginUser = user;
+  if (email === DEMO_EMAIL) {
+    try {
+      await resetDemoAccount(user.id);
+      const [refreshed] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+      if (refreshed) loginUser = refreshed;
+    } catch (e) {
+      console.error("[demo-reset] failed:", e);
+    }
+  }
+
+  const accessToken = await issueTokens(res, loginUser.id, loginUser.email);
+  res.json({ user: userPublic(loginUser), accessToken });
 }
 
 export async function refresh(req: Request, res: Response): Promise<void> {
@@ -253,13 +266,24 @@ export async function updateAvatar(req: AuthRequest, res: Response): Promise<voi
 }
 
 export async function demoLogin(req: Request, res: Response): Promise<void> {
-  const [user] = await db.select().from(users).where(eq(users.email, "demo@finvu.sk")).limit(1);
+  const [user] = await db.select().from(users).where(eq(users.email, DEMO_EMAIL)).limit(1);
   if (!user) {
     res.status(404).json({ error: "Demo account not available. Run db:seed-demo first." });
     return;
   }
-  const accessToken = await issueTokens(res, user.id, user.email);
-  res.json({ user: userPublic(user), accessToken });
+
+  // Reset demo data, then re-fetch for updated household/savings state
+  let loginUser = user;
+  try {
+    await resetDemoAccount(user.id);
+    const [refreshed] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (refreshed) loginUser = refreshed;
+  } catch (e) {
+    console.error("[demo-reset] failed:", e);
+  }
+
+  const accessToken = await issueTokens(res, loginUser.id, loginUser.email);
+  res.json({ user: userPublic(loginUser), accessToken });
 }
 
 export async function verifyEmail(req: Request, res: Response): Promise<void> {
