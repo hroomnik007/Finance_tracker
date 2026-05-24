@@ -284,17 +284,23 @@ export function CategoriesPage() {
                           <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
-                            {cat.budgetLimit != null && status && (
-                              <div style={{ height: 3, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden', marginTop: 5 }}>
-                                <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-                              </div>
+                            {cat.budgetLimit != null && (
+                              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
                             )}
                           </div>
-                          {status && status.spent > 0 && (
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(status.spent)}</span>
+                          {cat.budgetLimit != null && status && (
+                            <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                              <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+                              </div>
+                            </div>
                           )}
-                          {cat.budgetLimit != null && (
-                            <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>{Math.round(status?.percentage ?? 0)}%</span>
+                          {cat.budgetLimit == null && status && status.spent > 0 && (
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(status.spent)}</span>
                           )}
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                             <button onClick={() => openEdit(cat)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={12} /></button>
