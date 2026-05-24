@@ -121,7 +121,6 @@ Podporované metódy:
 |---|---|
 | Email + heslo | Štandardná registrácia |
 | Google OAuth | Prihlásenie cez Google účet |
-| WebAuthn (Passkeys) | Biometria / hardvérový kľúč |
 | PIN | Rýchle prihlásenie PIN kódom |
 | Demo | Testovací účet bez registrácie |
 
