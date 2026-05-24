@@ -680,7 +680,9 @@ export function SettingsPage() {
                         className="hover:scale-110"
                       >
                         {accentColor === c.value && (
-                          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.85)' }} />
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
                         )}
                       </button>
                     ))}
@@ -1040,7 +1042,7 @@ export function SettingsPage() {
               {/* DEAKTIVÁCIA */}
               <SectionCard>
                 <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
                     ⚠️ {t.settings.deactivationSection}
                   </p>
                 </div>

@@ -155,21 +155,11 @@ export function CategoriesPage() {
     setDeleteId(null)
   }
 
-  const withLimit = categories.filter(c => c.budgetLimit != null && c.budgetLimit > 0)
-  const mostExpensive = [...budgetStatuses].sort((a, b) => b.spent - a.spent)[0]
-
   const heroTotalSpent = budgetStatuses.reduce((s, b) => s + b.spent, 0)
   const heroTotalLimit = budgetStatuses.reduce((s, b) => s + b.limit, 0)
   const heroOverallPct = heroTotalLimit > 0 ? Math.round(heroTotalSpent / heroTotalLimit * 100) : 0
   const heroNearLimitCount = budgetStatuses.filter(b => b.limit > 0 && b.spent >= b.limit * 0.9).length
   const heroCatCount = categories.length
-
-  const rpSection = (title: string, children: React.ReactNode) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
-      {children}
-    </div>
-  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -431,74 +421,6 @@ export function CategoriesPage() {
 
           <div className="lg:hidden" style={{ height: 180 }} />
         </div>
-
-        {/* Right panel — desktop only */}
-        {categories.length > 0 && (
-          <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--bg2)' }}>
-
-            {rpSection(t.expenses.categories.summarySectionTitle,
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>{t.expenses.categories.totalCount}</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{categories.length}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>{t.expenses.categories.withLimit}</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{withLimit.length}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text2)' }}>{t.common.noLimit}</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{categories.length - withLimit.length}</span>
-                </div>
-                {mostExpensive && mostExpensive.spent > 0 && (
-                  <div style={{ marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>{t.expenses.categories.topExpenses}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 16 }}>{mostExpensive.categoryIcon}</span>
-                      <span style={{ fontSize: 13, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostExpensive.categoryName}</span>
-                      <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--red)' }}>{formatAmount(mostExpensive.spent)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {withLimit.length > 0 && rpSection(t.expenses.categories.budgetSectionTitle,
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {budgetStatuses.map(b => {
-                  const rpCat = categories.find(c => c.id === b.categoryId)
-                  const barColor = (rpCat?.autoLimit) ? '#22c55e' : b.percentage >= 100 ? '#ef4444' : b.percentage >= 70 ? '#FBBF24' : 'var(--green)'
-                  return (
-                    <div key={b.categoryId}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-                          <span style={{ flexShrink: 0 }}>{b.categoryIcon}</span>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.categoryName}</span>
-                        </span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: barColor, flexShrink: 0, marginLeft: 8 }}>{Math.round(b.percentage)}%</span>
-                      </div>
-                      <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 4 }}>
-                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(b.percentage, 100)}%`, background: barColor, transition: 'width 0.3s' }} />
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
-                        {formatAmount(b.spent)} {t.common.of} {formatAmount(b.limit)}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {rpSection(t.expenses.categories.tipsSectionTitle,
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>💡 {t.expenses.categories.hintSetLimits}</div>
-                <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>📊 Sleduj ktorá kategória ťa stojí najviac</div>
-                <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>🎯 Optimálny limit je 70–80 % mesačného priemeru výdavkov</div>
-              </div>
-            )}
-
-          </div>
-        )}
 
       </div>
 
