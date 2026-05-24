@@ -4,7 +4,6 @@ import { savePin, deletePin, pinLogin, sessionCheck, pingSession } from '../api/
 
 const LOCK_METHOD_KEY = 'lock_method'
 const PIN_SESSION_KEY = 'pin_verified_session'
-const AUTO_LOCK_MS = 5 * 60 * 1000
 
 export function usePinLock() {
   const { user, refreshUser } = useAuth()
@@ -29,6 +28,8 @@ export function usePinLock() {
   const lockedRef = useRef(locked)
   lockedRef.current = locked
 
+  const autoLockMs = (user?.auto_lock_minutes ?? 5) * 60 * 1000
+
   // Always clear the session flag when locking so hard-refresh also shows PIN.
   const lockAndClearSession = useCallback(() => {
     sessionStorage.removeItem(PIN_SESSION_KEY)
@@ -38,8 +39,8 @@ export function usePinLock() {
   const resetTimer = useCallback(() => {
     if (!lockMethod) return
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(lockAndClearSession, AUTO_LOCK_MS)
-  }, [lockMethod, lockAndClearSession])
+    timerRef.current = setTimeout(lockAndClearSession, autoLockMs)
+  }, [lockMethod, lockAndClearSession, autoLockMs])
 
   useEffect(() => {
     if (!lockMethod || locked) return
@@ -61,7 +62,7 @@ export function usePinLock() {
       if (document.hidden) {
         hiddenAt = Date.now()
       } else {
-        if (hiddenAt !== null && Date.now() - hiddenAt > AUTO_LOCK_MS) {
+        if (hiddenAt !== null && Date.now() - hiddenAt > autoLockMs) {
           lockAndClearSession()
         }
         hiddenAt = null

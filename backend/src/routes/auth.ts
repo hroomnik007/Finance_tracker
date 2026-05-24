@@ -5,6 +5,7 @@ import {
   verifyEmail, forgotPassword, resetPassword, deleteAccount,
   updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth, updateUserSettings,
   pinLogin, updatePin, removePin, changePassword, getAuthMethods, sessionCheck, pingSession,
+  getSessions, deleteSession, deactivateAccount,
 } from "../controllers/auth.controller";
 import {
   webauthnRegisterOptions, webauthnRegisterVerify,
@@ -77,6 +78,11 @@ router.post("/pin-login",       loginLimiter, pinLogin);
 router.patch("/pin",            authenticateToken, updatePin);
 router.delete("/pin",           authenticateToken, removePin);
 router.patch("/password",       authenticateToken, changePassword);
+
+// Sessions
+router.get("/sessions",                       authenticateToken, getSessions);
+router.delete("/sessions/:id",                authenticateToken, deleteSession);
+router.post("/deactivate",                    authenticateToken, deactivateAccount);
 
 // WebAuthn
 router.get("/webauthn/register-options",      authenticateToken, webauthnRegisterOptions);

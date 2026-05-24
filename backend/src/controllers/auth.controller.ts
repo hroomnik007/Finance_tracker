@@ -5,7 +5,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
-import { users, refreshTokens, categories, transactions, webauthnCredentials, households, passwordResetTokens } from "../db/schema";
+import { users, refreshTokens, categories, transactions, webauthnCredentials, households, passwordResetTokens, userSessions } from "../db/schema";
 import { env } from "../config/env";
 import {
   signAccessToken,
@@ -47,6 +47,7 @@ function userPublic(u: {
   trackingStartDate?: string | null;
   onboardingBannerDismissed?: boolean | null;
   pinHash?: string | null;
+  autoLockMinutes?: number | null;
 }) {
   return {
     id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl ?? null,
@@ -65,10 +66,62 @@ function userPublic(u: {
     tracking_start_date: u.trackingStartDate ?? null,
     onboarding_banner_dismissed: u.onboardingBannerDismissed ?? false,
     has_pin: !!u.pinHash,
+    auto_lock_minutes: u.autoLockMinutes ?? null,
   };
 }
 
-async function issueTokens(res: Response, userId: string, email: string): Promise<string> {
+function parseUA(ua: string): { deviceName: string; browser: string } {
+  const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua)
+  let browser = 'Unknown'
+  if (/Chrome\/(\d+)/i.test(ua) && !/Chromium|OPR|Edg/i.test(ua)) {
+    browser = `Chrome ${ua.match(/Chrome\/(\d+)/)?.[1] ?? ''}`
+  } else if (/Firefox\/(\d+)/i.test(ua)) {
+    browser = `Firefox ${ua.match(/Firefox\/(\d+)/)?.[1] ?? ''}`
+  } else if (/Edg\/(\d+)/i.test(ua)) {
+    browser = `Edge ${ua.match(/Edg\/(\d+)/)?.[1] ?? ''}`
+  } else if (/OPR\/(\d+)/i.test(ua)) {
+    browser = `Opera ${ua.match(/OPR\/(\d+)/)?.[1] ?? ''}`
+  } else if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) {
+    browser = 'Safari'
+  }
+  let deviceName = 'Desktop'
+  if (/iPhone/i.test(ua)) deviceName = 'iPhone'
+  else if (/iPad/i.test(ua)) deviceName = 'iPad'
+  else if (/Android/i.test(ua)) deviceName = isMobile ? 'Android Phone' : 'Android Tablet'
+  else if (/Mac/i.test(ua)) deviceName = 'Mac'
+  else if (/Windows/i.test(ua)) deviceName = 'Windows PC'
+  else if (/Linux/i.test(ua)) deviceName = 'Linux'
+  return { deviceName, browser }
+}
+
+async function createSession(userId: string, req: Request): Promise<string> {
+  const ua = (req.headers['user-agent'] as string | undefined) ?? ''
+  const rawIp = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ?? req.ip ?? ''
+  const { deviceName, browser } = parseUA(ua)
+  const [session] = await db.insert(userSessions).values({
+    userId,
+    deviceName,
+    browser,
+    ip: rawIp,
+    location: null,
+  }).returning({ id: userSessions.id })
+
+  // Non-blocking location lookup
+  if (rawIp && rawIp !== '::1' && rawIp !== '127.0.0.1') {
+    fetch(`http://ip-api.com/json/${rawIp}?fields=city,country`)
+      .then(r => r.json())
+      .then((data) => {
+        const d = data as { city?: string; country?: string }
+        const loc = [d.city, d.country].filter(Boolean).join(', ')
+        if (loc) db.update(userSessions).set({ location: loc }).where(eq(userSessions.id, session.id)).catch(() => {})
+      })
+      .catch(() => {})
+  }
+
+  return session.id
+}
+
+async function issueTokens(res: Response, userId: string, email: string, req?: Request): Promise<{ accessToken: string; sessionId: string }> {
   const accessToken = signAccessToken({ userId, email });
   const refreshToken = signRefreshToken({ userId, email });
   const tokenHash = await hashToken(refreshToken);
@@ -76,7 +129,9 @@ async function issueTokens(res: Response, userId: string, email: string): Promis
   await db.insert(refreshTokens).values({ userId, tokenHash, expiresAt: refreshTokenExpiry() });
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
   res.cookie(REFRESH_COOKIE, refreshToken, REFRESH_COOKIE_OPTIONS);
-  return accessToken;
+
+  const sessionId = req ? await createSession(userId, req) : randomUUID()
+  return { accessToken, sessionId };
 }
 
 export async function register(req: Request, res: Response): Promise<void> {
@@ -141,6 +196,11 @@ export async function login(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (user.isDeactivated) {
+    res.status(403).json({ error: "Váš účet je deaktivovaný. Pre reaktiváciu kontaktujte podporu.", code: "ACCOUNT_DEACTIVATED" });
+    return;
+  }
+
   // Reset demo account data on every login, then re-fetch the updated user record
   let loginUser = user;
   if (email === DEMO_EMAIL) {
@@ -153,8 +213,8 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
   }
 
-  const accessToken = await issueTokens(res, loginUser.id, loginUser.email);
-  res.json({ user: userPublic(loginUser), accessToken });
+  const { accessToken, sessionId } = await issueTokens(res, loginUser.id, loginUser.email, req);
+  res.json({ user: userPublic(loginUser), accessToken, sessionId });
 }
 
 export async function refresh(req: Request, res: Response): Promise<void> {
@@ -282,8 +342,8 @@ export async function demoLogin(req: Request, res: Response): Promise<void> {
     console.error("[demo-reset] failed:", e);
   }
 
-  const accessToken = await issueTokens(res, loginUser.id, loginUser.email);
-  res.json({ user: userPublic(loginUser), accessToken });
+  const { accessToken, sessionId } = await issueTokens(res, loginUser.id, loginUser.email, req);
+  res.json({ user: userPublic(loginUser), accessToken, sessionId });
 }
 
 export async function verifyEmail(req: Request, res: Response): Promise<void> {
@@ -405,7 +465,7 @@ export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promis
 
 export async function updateUserSettings(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled, trackingStartDate, onboardingBannerDismissed, language } = req.body as {
+  const { onboardingComplete, monthlyEmailEnabled, defaultPage, currencyFormat, theme, savingsEnabled, trackingStartDate, onboardingBannerDismissed, language, autoLockMinutes } = req.body as {
     onboardingComplete?: boolean;
     monthlyEmailEnabled?: boolean;
     defaultPage?: string;
@@ -415,6 +475,7 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
     trackingStartDate?: string | null;
     onboardingBannerDismissed?: boolean;
     language?: string;
+    autoLockMinutes?: number | null;
   };
   const VALID_PAGES = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings'];
   const VALID_FORMATS = ['sk', 'en', 'de'];
@@ -433,6 +494,9 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
     update.trackingStartDate = trackingStartDate ?? null;
   }
   if (typeof onboardingBannerDismissed === 'boolean') update.onboardingBannerDismissed = onboardingBannerDismissed;
+  if (autoLockMinutes === null || (typeof autoLockMinutes === 'number' && [1, 5, 15].includes(autoLockMinutes))) {
+    update.autoLockMinutes = autoLockMinutes;
+  }
   await db.update(users).set(update).where(eq(users.id, userId));
   res.json({ success: true });
 }
@@ -481,13 +545,13 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, lastActiveAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', language: 'sk', trackingStartDate: null, onboardingBannerDismissed: false };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, lastActiveAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', language: 'sk', trackingStartDate: null, onboardingBannerDismissed: false, autoLockMinutes: null, isDeactivated: false };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }
 
-  const accessJwt = await issueTokens(res, user.id, user.email);
-  res.json({ user: userPublic(user), accessToken: accessJwt });
+  const { accessToken: accessJwt, sessionId } = await issueTokens(res, user.id, user.email, req);
+  res.json({ user: userPublic(user), accessToken: accessJwt, sessionId });
 }
 
 export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {
@@ -521,8 +585,8 @@ export async function pinLogin(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const accessToken = await issueTokens(res, user.id, user.email);
-  res.json({ user: userPublic(user), accessToken });
+  const { accessToken, sessionId } = await issueTokens(res, user.id, user.email, req);
+  res.json({ user: userPublic(user), accessToken, sessionId });
 }
 
 export async function updatePin(req: AuthRequest, res: Response): Promise<void> {
@@ -571,19 +635,51 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
 
 export async function sessionCheck(req: AuthRequest, res: Response): Promise<void> {
   const [row] = await db
-    .select({ lastActiveAt: users.lastActiveAt })
+    .select({ lastActiveAt: users.lastActiveAt, autoLockMinutes: users.autoLockMinutes })
     .from(users)
     .where(eq(users.id, req.userId!))
     .limit(1);
 
   if (!row) { res.status(404).json({ error: "User not found" }); return; }
 
-  const TIMEOUT_MS = 5 * 60 * 1000;
+  const minutes = row.autoLockMinutes ?? 5;
+  const TIMEOUT_MS = minutes * 60 * 1000;
   if (row.lastActiveAt && Date.now() - row.lastActiveAt.getTime() > TIMEOUT_MS) {
     res.json({ valid: false, reason: "timeout" });
   } else {
     res.json({ valid: true });
   }
+}
+
+export async function getSessions(req: AuthRequest, res: Response): Promise<void> {
+  const sessions = await db
+    .select()
+    .from(userSessions)
+    .where(eq(userSessions.userId, req.userId!))
+    .orderBy(userSessions.createdAt)
+  res.json({ data: sessions })
+}
+
+export async function deleteSession(req: AuthRequest, res: Response): Promise<void> {
+  const { id } = req.params as { id: string }
+  const [session] = await db
+    .select({ id: userSessions.id, userId: userSessions.userId })
+    .from(userSessions)
+    .where(eq(userSessions.id, id))
+    .limit(1)
+  if (!session || session.userId !== req.userId!) {
+    res.status(404).json({ error: 'Session not found' })
+    return
+  }
+  await db.delete(userSessions).where(eq(userSessions.id, id))
+  res.json({ success: true })
+}
+
+export async function deactivateAccount(req: AuthRequest, res: Response): Promise<void> {
+  const userId = req.userId!
+  await db.update(users).set({ isDeactivated: true, updatedAt: new Date() }).where(eq(users.id, userId))
+  res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path })
+  res.json({ success: true })
 }
 
 export async function pingSession(req: AuthRequest, res: Response): Promise<void> {

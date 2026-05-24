@@ -103,6 +103,7 @@ export interface AuthUser {
   isDemo?: boolean
   phone?: string | null
   country?: string | null
+  auto_lock_minutes?: number | null
   household?: {
     id: number
     name: string
@@ -173,6 +174,17 @@ export interface SavingsGoal {
   color?: string
   note?: string
   paused?: boolean
+}
+
+export interface UserSession {
+  id: string
+  userId: string
+  deviceName: string | null
+  browser: string | null
+  ip: string | null
+  location: string | null
+  lastActive: string
+  createdAt: string
 }
 
 export interface ApiSummary {

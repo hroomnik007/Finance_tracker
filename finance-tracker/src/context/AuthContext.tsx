@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [doLogout])
 
   const login = useCallback(async (email: string, password: string, rememberMe = false) => {
-    const { user: me, accessToken } = await apiLogin(email, password)
+    const { user: me, accessToken, sessionId } = await apiLogin(email, password) as { user: AuthUser; accessToken: string; sessionId?: string }
     setAccessToken(accessToken)
     setUser(me)
     setIsGuest(false)
@@ -132,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
       if (me.theme) {
         localStorage.setItem('theme_preference', me.theme)
         document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
@@ -141,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const loginDemo = useCallback(async () => {
-    const { user: me, accessToken } = await apiDemoLogin()
+    const { user: me, accessToken, sessionId } = await apiDemoLogin() as { user: AuthUser; accessToken: string; sessionId?: string }
     setAccessToken(accessToken)
     setUser({ ...me, onboardingComplete: false, isDemo: true })
     setIsGuest(false)
@@ -149,11 +150,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
     } catch { /* ignore */ }
   }, [])
 
   const loginWithGoogle = useCallback(async (googleAccessToken: string) => {
-    const { user: me, accessToken } = await apiGoogleLogin(googleAccessToken)
+    const { user: me, accessToken, sessionId } = await apiGoogleLogin(googleAccessToken) as { user: AuthUser; accessToken: string; sessionId?: string }
     setAccessToken(accessToken)
     setUser(me)
     setIsGuest(false)
@@ -161,12 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
       if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
 
   const loginWithPin = useCallback(async (email: string, pin: string) => {
-    const { user: me, accessToken } = await apiPinLogin(email, pin)
+    const { user: me, accessToken, sessionId } = await apiPinLogin(email, pin) as { user: AuthUser; accessToken: string; sessionId?: string }
     setAccessToken(accessToken)
     setUser(me)
     setIsGuest(false)
@@ -176,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem('just_logged_in', 'true')
       // PIN was just used to authenticate — mark session verified so PinLock doesn't show again
       sessionStorage.setItem('pin_verified_session', 'true')
+      if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
       if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])

@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { AuthUser } from '../types'
+import type { AuthUser, UserSession } from '../types'
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser'
 
 export async function login(email: string, password: string): Promise<{ user: AuthUser; accessToken: string }> {
@@ -85,8 +85,22 @@ export async function updateUserSettings(settings: {
   trackingStartDate?: string | null
   onboardingBannerDismissed?: boolean
   language?: string
+  autoLockMinutes?: number | null
 }): Promise<void> {
   await apiClient.patch('/api/auth/settings', settings)
+}
+
+export async function getSessions(): Promise<UserSession[]> {
+  const { data } = await apiClient.get('/api/auth/sessions')
+  return (data as { data: UserSession[] }).data
+}
+
+export async function deleteSessionById(sessionId: string): Promise<void> {
+  await apiClient.delete(`/api/auth/sessions/${sessionId}`)
+}
+
+export async function deactivateAccount(): Promise<void> {
+  await apiClient.post('/api/auth/deactivate')
 }
 
 export async function createSharedReport(data: string, expiresInHours?: number): Promise<{ token: string }> {

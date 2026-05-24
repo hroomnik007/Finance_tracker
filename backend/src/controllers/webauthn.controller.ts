@@ -11,8 +11,9 @@ import type {
 } from "@simplewebauthn/server";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { users, webauthnCredentials, refreshTokens } from "../db/schema";
+import { users, webauthnCredentials, refreshTokens, userSessions } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
+import { randomUUID } from "crypto";
 import {
   signAccessToken,
   signRefreshToken,
@@ -39,14 +40,15 @@ function consumeChallenge(key: string): string | null {
   return entry.challenge;
 }
 
-async function issueTokens(res: Response, userId: string, email: string): Promise<string> {
+async function issueTokens(res: Response, userId: string, email: string): Promise<{ accessToken: string; sessionId: string }> {
   const accessToken = signAccessToken({ userId, email });
   const refreshToken = signRefreshToken({ userId, email });
   const tokenHash = await hashToken(refreshToken);
   await db.insert(refreshTokens).values({ userId, tokenHash, expiresAt: refreshTokenExpiry() });
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
   res.cookie(REFRESH_COOKIE, refreshToken, REFRESH_COOKIE_OPTIONS);
-  return accessToken;
+  const [session] = await db.insert(userSessions).values({ userId, deviceName: 'Passkey', browser: 'WebAuthn' }).returning({ id: userSessions.id })
+  return { accessToken, sessionId: session?.id ?? randomUUID() };
 }
 
 function userPublic(u: typeof users.$inferSelect) {
@@ -202,6 +204,6 @@ export async function webauthnAuthenticateVerify(req: any, res: Response): Promi
   const [user] = await db.select().from(users).where(eq(users.id, storedCred.userId)).limit(1);
   if (!user) { res.status(404).json({ error: "Používateľ nenájdený." }); return; }
 
-  const accessToken = await issueTokens(res, user.id, user.email);
-  res.json({ user: userPublic(user), accessToken });
+  const { accessToken, sessionId } = await issueTokens(res, user.id, user.email);
+  res.json({ user: userPublic(user), accessToken, sessionId });
 }

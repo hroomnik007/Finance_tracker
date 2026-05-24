@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Upload, Palette, Bell, Shield, Database, Info, User } from 'lucide-react'
+import { X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet } from 'lucide-react'
 import * as XLSX from '@e965/xlsx'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin } from '../api/auth'
+import { updateWeeklyEmail, createSharedReport, updateUserSettings, changePassword, savePin, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
 import { getTransactions, deleteTransaction, createTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -13,7 +13,7 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
-import type { ApiTransaction, ApiCategory } from '../types'
+import type { ApiTransaction, ApiCategory, UserSession } from '../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -39,41 +39,11 @@ const ACCENT_COLORS = [
   { name: 'Červená', value: '#EF4444' },
 ]
 
-const CHANGELOG = [
-  {
-    version: 'v1.1.0',
-    date: 'Apr 2026',
-    items: [
-      'Nový dizajn stránky Nastavenia',
-      'Dashboard: heatmapa, predikcia výdavkov, porovnanie mesiacov',
-      'Profil: avatar, séria aktivít, odznaky',
-      'PIN zamok a WebAuthn passkeys',
-      'Zdieľané reporty s verejným odkazom',
-    ],
-  },
-  {
-    version: 'v1.0.1',
-    date: 'Mar 2026',
-    items: [
-      'Opravené načítanie po F5 (auth race condition)',
-      'Mobilný layout — obsah sa viac neposúva vpravo',
-      'Heatmapa výdavkov — správna výška buniek',
-      'Opravené TypeScript chyby v grafoch príjmov',
-    ],
-  },
-  {
-    version: 'v1.0.0',
-    date: 'Feb 2026',
-    items: [
-      'Úvodné vydanie aplikácie Finvu',
-      'Sledovanie príjmov a variabilných výdavkov',
-      'Fixné výdavky a kategórie s limitmi',
-      'Export do JSON, CSV, PDF',
-      'Dashboard s grafmi a štatistikami',
-      'PWA podpora — offline, inštalácia',
-    ],
-  },
-]
+interface ChangelogEntry {
+  hash: string
+  date: string
+  message: string
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -200,7 +170,7 @@ const SECTIONS = [
 export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
-  const { deleteAccount, user, updateMonthlyEmail, refreshUser } = useAuth()
+  const { deleteAccount, user, updateMonthlyEmail, refreshUser, logout } = useAuth()
   const { setupPin, hasPin, removePin, verifyPin: verifyLockPin } = usePinLockContext()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
@@ -285,6 +255,46 @@ export function SettingsPage() {
   const [changePwError, setChangePwError] = useState<string | null>(null)
   const [changePwOk, setChangePwOk] = useState(false)
 
+  // Auto lock
+  const [autoLockMinutes, setAutoLockMinutes] = useState<number | null>(() => user?.auto_lock_minutes ?? null)
+  const [autoLockSaving, setAutoLockSaving] = useState(false)
+
+  async function handleAutoLockChange(val: number | null) {
+    setAutoLockMinutes(val)
+    setAutoLockSaving(true)
+    try {
+      await updateUserSettings({ autoLockMinutes: val })
+      await refreshUser()
+    } finally {
+      setAutoLockSaving(false)
+    }
+  }
+
+  // Sessions
+  const [sessions, setSessions] = useState<UserSession[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(false)
+  const [sessionDeletingId, setSessionDeletingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (activeSection !== 'security') return
+    setSessionsLoading(true)
+    getSessions().then(setSessions).catch(() => {}).finally(() => setSessionsLoading(false))
+  }, [activeSection])
+
+  async function handleDeleteSession(id: string) {
+    setSessionDeletingId(id)
+    try {
+      await deleteSessionById(id)
+      setSessions(prev => prev.filter(s => s.id !== id))
+    } catch { /* ignore */ }
+    finally { setSessionDeletingId(null) }
+  }
+
+  // Deactivate account
+  const [deactivateConfirm, setDeactivateConfirm] = useState('')
+  const [deactivateError, setDeactivateError] = useState<string | null>(null)
+  const [isDeactivating, setIsDeactivating] = useState(false)
+
   async function handleChangePassword() {
     setChangePwError(null)
     if (!currentPw || !newPw || !confirmPw) { setChangePwError(t.profile.fillAllFields); return }
@@ -335,6 +345,7 @@ export function SettingsPage() {
   const [monthlyEmailSaving, setMonthlyEmailSaving] = useState(false)
   const [budgetWarnings, setBudgetWarningsState] = useState(() => loadLocalPref<boolean>('budget_warnings_enabled', true))
   const [monthlySummary, setMonthlySummaryState] = useState(() => loadLocalPref<boolean>('monthly_summary_enabled', false))
+  const [savingsGoalReminder, setSavingsGoalReminderState] = useState(() => loadLocalPref<boolean>('savings_goal_reminder_enabled', false))
 
   function handleNotificationsToggle() {
     const next = !notificationsEnabled
@@ -601,8 +612,29 @@ export function SettingsPage() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   // ── Modals ────────────────────────────────────────────────────────────────
-  const [showAbout, setShowAbout] = useState(false)
-  const [showChangelog, setShowChangelog] = useState(false)
+
+  // ── Changelog ─────────────────────────────────────────────────────────────
+  const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([])
+  const [changelogLoading, setChangelogLoading] = useState(false)
+
+  useEffect(() => {
+    if (activeSection !== 'about') return
+    setChangelogLoading(true)
+    fetch('/changelog.json')
+      .then(r => r.json())
+      .then((data: ChangelogEntry[]) => {
+        const filtered = data.filter(e =>
+          !e.message.startsWith('build(deps)') &&
+          !e.message.startsWith('Merge') &&
+          !e.message.startsWith('chore(deps)')
+        ).slice(0, 30)
+        setChangelogEntries(filtered)
+      })
+      .catch(() => {})
+      .finally(() => setChangelogLoading(false))
+  }, [activeSection])
+
+  const buildDate = import.meta.env.VITE_BUILD_DATE as string | undefined
 
   // ── Savings toggle ────────────────────────────────────────────────────────
   const savingsEnabled = user?.savings_enabled ?? false
@@ -1013,7 +1045,6 @@ export function SettingsPage() {
           {/* ── NOTIFICATIONS SECTION ── */}
           {activeSection === 'notifications' && (
             <>
-              {/* Section 3: Notifikácie */}
               <SectionCard>
                 <SectionHeader emoji="🔔" label={t.settings.notificationsSection} />
                 <div className="divide-y divide-white/[0.04]">
@@ -1043,6 +1074,17 @@ export function SettingsPage() {
                     />
                   </SettingRow>
 
+                  <SettingRow label={t.settings.savingsGoalReminder} sublabel={t.settings.savingsGoalReminderSubtitle}>
+                    <Toggle
+                      checked={savingsGoalReminder}
+                      onChange={() => {
+                        const next = !savingsGoalReminder
+                        setSavingsGoalReminderState(next)
+                        saveLocalPref('savings_goal_reminder_enabled', next)
+                      }}
+                    />
+                  </SettingRow>
+
                   <SettingRow label={t.settings.weeklyEmailLabel} sublabel={t.settings.weeklyEmailSubtitle}>
                     <Toggle checked={weeklyEmail} onChange={handleWeeklyEmailToggle} disabled={weeklyEmailSaving} />
                   </SettingRow>
@@ -1061,10 +1103,9 @@ export function SettingsPage() {
           {/* ── SECURITY SECTION ── */}
           {activeSection === 'security' && (
             <>
-              {/* Section: Bezpečnosť */}
               <div ref={securityRef} id="bezpecnost-section">
               <SectionCard>
-                <SectionHeader emoji="🔐" label="Bezpečnosť" />
+                <SectionHeader emoji="🔐" label={t.settings.sectionSecurity} />
                 <div className="divide-y divide-white/[0.04]">
 
                   {/* Zmeniť heslo */}
@@ -1079,39 +1120,12 @@ export function SettingsPage() {
                     </SettingRow>
                     {changePwOpen && (
                       <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {changePwError && (
-                          <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{changePwError}</p>
-                        )}
-                        {changePwOk && (
-                          <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Heslo zmenené</p>
-                        )}
-                        <input
-                          type="password"
-                          placeholder="Aktuálne heslo"
-                          value={currentPw}
-                          onChange={e => setCurrentPw(e.target.value)}
-                          className="input-field text-sm"
-                        />
-                        <input
-                          type="password"
-                          placeholder="Nové heslo (min. 8 znakov)"
-                          value={newPw}
-                          onChange={e => setNewPw(e.target.value)}
-                          className="input-field text-sm"
-                        />
-                        <input
-                          type="password"
-                          placeholder="Potvrď nové heslo"
-                          value={confirmPw}
-                          onChange={e => setConfirmPw(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
-                          className="input-field text-sm"
-                        />
-                        <button
-                          onClick={handleChangePassword}
-                          disabled={changePwLoading}
-                          className="btn-primary py-2 text-sm justify-center disabled:opacity-40"
-                        >
+                        {changePwError && <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{changePwError}</p>}
+                        {changePwOk && <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Heslo zmenené</p>}
+                        <input type="password" placeholder="Aktuálne heslo" value={currentPw} onChange={e => setCurrentPw(e.target.value)} className="input-field text-sm" />
+                        <input type="password" placeholder="Nové heslo (min. 8 znakov)" value={newPw} onChange={e => setNewPw(e.target.value)} className="input-field text-sm" />
+                        <input type="password" placeholder="Potvrď nové heslo" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChangePassword()} className="input-field text-sm" />
+                        <button onClick={handleChangePassword} disabled={changePwLoading} className="btn-primary py-2 text-sm justify-center disabled:opacity-40">
                           {changePwLoading ? 'Ukladám...' : 'Uložiť heslo'}
                         </button>
                       </div>
@@ -1125,33 +1139,194 @@ export function SettingsPage() {
                   >
                     {hasPin ? (
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={() => setPinSetupOpen(true)}
-                          className="btn-secondary py-1.5 text-xs"
-                        >
-                          {t.settings.change}
-                        </button>
-                        <button
-                          onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }}
-                          className="btn-secondary py-1.5 text-xs"
-                          style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
-                        >
-                          {t.common.remove}
-                        </button>
+                        <button onClick={() => setPinSetupOpen(true)} className="btn-secondary py-1.5 text-xs">{t.settings.change}</button>
+                        <button onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }} className="btn-secondary py-1.5 text-xs" style={{ color: 'var(--red)', borderColor: 'var(--red)' }}>{t.common.remove}</button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => setPinSetupOpen(true)}
-                        className="btn-secondary py-1.5 text-xs"
-                      >
-                        {t.settings.setup}
-                      </button>
+                      <button onClick={() => setPinSetupOpen(true)} className="btn-secondary py-1.5 text-xs">{t.settings.setup}</button>
                     )}
+                  </SettingRow>
+
+                  {/* Automatické uzamknutie */}
+                  <SettingRow label={t.settings.autoLock} sublabel={t.settings.autoLockSubtitle}>
+                    <select
+                      value={autoLockMinutes ?? 'never'}
+                      onChange={e => handleAutoLockChange(e.target.value === 'never' ? null : Number(e.target.value))}
+                      disabled={autoLockSaving || !hasPin}
+                      className="select-field"
+                      style={{ opacity: (!hasPin) ? 0.4 : 1 }}
+                    >
+                      <option value="never">{t.settings.autoLockNever}</option>
+                      <option value="1">{t.settings.autoLock1min}</option>
+                      <option value="5">{t.settings.autoLock5min}</option>
+                      <option value="15">{t.settings.autoLock15min}</option>
+                    </select>
                   </SettingRow>
 
                 </div>
               </SectionCard>
               </div>
+
+              {/* Aktívne relácie */}
+              <SectionCard>
+                <SectionHeader emoji="🖥️" label={t.settings.activeSessions} />
+                <div style={{ padding: '4px 0 8px' }}>
+                  {sessionsLoading ? (
+                    <p style={{ fontSize: 13, color: 'var(--text3)', padding: '12px 20px' }}>Načítavam...</p>
+                  ) : sessions.length === 0 ? (
+                    <p style={{ fontSize: 13, color: 'var(--text3)', padding: '12px 20px' }}>{t.settings.activeSessionsSubtitle}</p>
+                  ) : (
+                    <div className="divide-y divide-white/[0.04]">
+                      {sessions.map(session => {
+                        const isCurrent = session.id === (typeof window !== 'undefined' ? localStorage.getItem('finvu_session_id') : null)
+                        const DeviceIcon = /iPhone|iPad/i.test(session.deviceName ?? '') ? Smartphone
+                          : /Android Phone/i.test(session.deviceName ?? '') ? Smartphone
+                          : /Tablet/i.test(session.deviceName ?? '') ? Tablet
+                          : /Mac|Windows|Linux/i.test(session.deviceName ?? '') ? Laptop
+                          : Monitor
+                        return (
+                          <div key={session.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px' }}>
+                            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <DeviceIcon size={18} strokeWidth={1.5} color="var(--text2)" />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', margin: 0 }}>{session.deviceName ?? 'Neznáme zariadenie'}</p>
+                                {isCurrent && (
+                                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(52,211,153,0.15)', color: '#34D399', fontFamily: "'DM Mono',monospace", letterSpacing: '0.05em' }}>
+                                    {t.settings.currentSessionBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
+                                {session.browser ?? ''}{session.location ? ` · ${session.location}` : ''}{session.ip ? ` · ${session.ip}` : ''}
+                              </p>
+                              <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, fontFamily: "'DM Mono',monospace" }}>
+                                {new Date(session.createdAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+                            {!isCurrent && (
+                              <button
+                                onClick={() => handleDeleteSession(session.id)}
+                                disabled={sessionDeletingId === session.id}
+                                className="btn-secondary py-1 text-xs"
+                                style={{ color: 'var(--red)', borderColor: 'rgba(239,68,68,0.3)', opacity: sessionDeletingId === session.id ? 0.5 : 1, flexShrink: 0 }}
+                              >
+                                {t.settings.logoutSession}
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
+
+              {/* DEAKTIVÁCIA */}
+              <SectionCard>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--red)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
+                    ⚠️ {t.settings.deactivationSection}
+                  </p>
+                </div>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                  {/* Deaktivovať účet */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 12 }}>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)', margin: 0 }}>{t.settings.deactivateAccount}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>{t.settings.deactivateAccountDesc}</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
+                        {t.settings.deactivateAccountConfirmLabel}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="DEAKTIVOVAŤ"
+                        value={deactivateConfirm}
+                        onChange={e => { setDeactivateConfirm(e.target.value); setDeactivateError(null) }}
+                        className="input-field"
+                      />
+                    </div>
+                    {deactivateError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deactivateError}</p>}
+                    <button
+                      disabled={deactivateConfirm !== 'DEAKTIVOVAŤ' || isDeactivating}
+                      onClick={async () => {
+                        setIsDeactivating(true)
+                        try {
+                          await apiDeactivateAccount()
+                          await logout()
+                        } catch {
+                          setDeactivateError('Nepodarilo sa deaktivovať účet. Skúste znova.')
+                          setIsDeactivating(false)
+                        }
+                      }}
+                      style={{
+                        width: '100%', height: 44, borderRadius: 12,
+                        background: deactivateConfirm === 'DEAKTIVOVAŤ' ? 'rgba(239,68,68,0.15)' : 'transparent',
+                        border: '1px solid rgba(239,68,68,0.4)',
+                        color: 'var(--red)', fontSize: 14, fontWeight: 600,
+                        cursor: deactivateConfirm === 'DEAKTIVOVAŤ' && !isDeactivating ? 'pointer' : 'not-allowed',
+                        opacity: isDeactivating ? 0.6 : 1, fontFamily: 'inherit', transition: 'all 0.15s',
+                      }}
+                    >
+                      {isDeactivating ? t.settings.deactivating : t.settings.deactivateAccountConfirmBtn}
+                    </button>
+                  </div>
+
+                  {/* Zmazať účet */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 12 }}>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)', margin: 0 }}>{t.settings.deleteAccount}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>{t.settings.deleteAccountDesc}</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
+                        {t.settings.deleteAccountConfirmLabel}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="ZMAZAŤ"
+                        value={deleteConfirm}
+                        onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
+                        className="input-field"
+                      />
+                    </div>
+                    {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deleteError}</p>}
+                    <button
+                      disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
+                      onClick={async () => {
+                        setIsDeleting(true)
+                        try {
+                          await deleteAccount()
+                        } catch (err: unknown) {
+                          const status = (err as { response?: { status?: number } })?.response?.status
+                          if (status === 502 || status === 501 || status === 404) {
+                            setDeleteError(t.settings.deleteAccountUnavailable)
+                          } else {
+                            setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
+                          }
+                          setIsDeleting(false)
+                        }
+                      }}
+                      style={{
+                        width: '100%', height: 44, borderRadius: 12,
+                        background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
+                        border: '1px solid #DC2626',
+                        color: deleteConfirm === 'ZMAZAŤ' ? 'white' : 'var(--red)',
+                        fontSize: 14, fontWeight: 600,
+                        cursor: deleteConfirm === 'ZMAZAŤ' && !isDeleting ? 'pointer' : 'not-allowed',
+                        opacity: isDeleting ? 0.6 : 1, fontFamily: 'inherit', transition: 'all 0.15s',
+                      }}
+                    >
+                      {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
+                    </button>
+                  </div>
+
+                </div>
+              </SectionCard>
             </>
           )}
 
@@ -1237,56 +1412,6 @@ export function SettingsPage() {
                 </div>
               </SectionCard>
 
-              {/* Delete account */}
-              <SectionCard>
-                <SectionHeader emoji="🗑️" label={t.settings.deleteAccount} />
-                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <p style={{ fontSize: 14, color: 'var(--text3)', margin: 0, lineHeight: 1.6 }}>{t.settings.deleteAccountDesc}</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.12em', color: 'var(--red)', margin: 0 }}>
-                      {t.settings.deleteAccountConfirmLabel}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="ZMAZAŤ"
-                      value={deleteConfirm}
-                      onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
-                      className="input-field"
-                    />
-                  </div>
-                  {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{deleteError}</p>}
-                  <button
-                    disabled={deleteConfirm !== 'ZMAZAŤ' || isDeleting}
-                    onClick={async () => {
-                      setIsDeleting(true)
-                      try {
-                        await deleteAccount()
-                      } catch (err: unknown) {
-                        const status = (err as { response?: { status?: number } })?.response?.status
-                        if (status === 502 || status === 501 || status === 404) {
-                          setDeleteError(t.settings.deleteAccountUnavailable)
-                        } else {
-                          setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
-                        }
-                        setIsDeleting(false)
-                      }
-                    }}
-                    style={{
-                      width: '100%', height: 48, borderRadius: 12,
-                      background: deleteConfirm === 'ZMAZAŤ' ? '#DC2626' : 'transparent',
-                      border: '1px solid #DC2626',
-                      color: deleteConfirm === 'ZMAZAŤ' ? 'white' : 'var(--red)',
-                      fontSize: 15, fontWeight: 600,
-                      cursor: deleteConfirm === 'ZMAZAŤ' && !isDeleting ? 'pointer' : 'not-allowed',
-                      opacity: isDeleting ? 0.6 : 1,
-                      fontFamily: 'inherit',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {isDeleting ? 'Mazám...' : t.settings.deleteAccountConfirmBtn}
-                  </button>
-                </div>
-              </SectionCard>
             </>
           )}
 
@@ -1297,16 +1422,31 @@ export function SettingsPage() {
                 <SectionHeader emoji="ℹ️" label="O aplikácii" />
                 <div style={{ padding: 20 }}>
                   <div className="flex flex-col items-center mb-5">
-                    <div
-                      className="w-[52px] h-[52px] rounded-xl flex items-center justify-center mb-3 shrink-0"
-                      style={{ background: 'var(--accent-color)' }}
-                    >
+                    <img
+                      src="/logo.svg"
+                      alt="Finvu"
+                      className="w-[52px] h-[52px] rounded-xl mb-3 shrink-0"
+                      onError={e => {
+                        const el = e.currentTarget as HTMLImageElement
+                        el.style.display = 'none'
+                        const fallback = el.nextElementSibling as HTMLElement | null
+                        if (fallback) fallback.style.display = 'flex'
+                      }}
+                    />
+                    <div className="w-[52px] h-[52px] rounded-xl items-center justify-center mb-3 shrink-0" style={{ background: 'var(--accent-color)', display: 'none' }}>
                       <span className="text-white font-bold text-2xl leading-none">F</span>
                     </div>
                     <p className="text-base font-bold text-[color:var(--text)]">Finvu</p>
-                    <span style={{ fontSize: 11, marginTop: 6, fontFamily: "'DM Mono',monospace", padding: '2px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', display: 'inline-block' }}>
-                      v1.1.0
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                      <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", padding: '2px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)', display: 'inline-block' }}>
+                        v1.1.0
+                      </span>
+                      {buildDate && (
+                        <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", padding: '2px 10px', borderRadius: 99, background: 'var(--bg3)', color: 'var(--text3)', display: 'inline-block' }}>
+                          {buildDate}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-col gap-3 mb-5">
                     <div className="flex items-start gap-3">
@@ -1329,52 +1469,39 @@ export function SettingsPage() {
               <SectionCard>
                 <SectionHeader emoji="📋" label="Changelog" />
                 <div style={{ padding: 20 }}>
-                  <div className="flex flex-col gap-5">
-                    {CHANGELOG.map((entry, i) => (
-                      <div key={entry.version}>
-                        <div className="flex items-center gap-2 mb-2.5">
-                          <span style={{
-                            fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 600,
-                            padding: '2px 8px', borderRadius: 99,
-                            background: i === 0 ? 'rgba(139,92,246,0.18)' : 'var(--bg4)',
-                            color: i === 0 ? 'var(--violet)' : 'var(--text3)',
-                            display: 'inline-block',
-                          }}>
-                            {entry.version}
-                          </span>
-                          <span className="text-xs text-[color:var(--text3)]">{entry.date}</span>
-                        </div>
-                        <ul className="flex flex-col gap-1.5">
-                          {entry.items.map(item => (
-                            <li key={item} className="flex items-start gap-2 text-xs text-[color:var(--text2)]">
-                              <span className="text-[color:var(--text3)] mt-px shrink-0">•</span>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        {i < CHANGELOG.length - 1 && (
-                          <div className="mt-4 border-t border-white/[0.06]" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  {changelogLoading ? (
+                    <p style={{ fontSize: 13, color: 'var(--text3)' }}>Načítavam changelog...</p>
+                  ) : changelogEntries.length === 0 ? (
+                    <p style={{ fontSize: 13, color: 'var(--text3)' }}>Changelog nie je k dispozícii.</p>
+                  ) : (
+                    <div className="flex flex-col gap-0">
+                      {(() => {
+                        const byDate: Record<string, ChangelogEntry[]> = {}
+                        changelogEntries.forEach(e => {
+                          if (!byDate[e.date]) byDate[e.date] = []
+                          byDate[e.date].push(e)
+                        })
+                        const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a))
+                        return dates.map((date, di) => (
+                          <div key={date} className={di > 0 ? 'mt-4 pt-4 border-t border-white/[0.06]' : ''}>
+                            <p style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 600, color: 'var(--text3)', marginBottom: 8, letterSpacing: '0.05em' }}>
+                              {date}
+                            </p>
+                            <ul className="flex flex-col gap-1.5">
+                              {byDate[date].map(entry => (
+                                <li key={entry.hash} className="flex items-start gap-2 text-xs text-[color:var(--text2)]">
+                                  <span style={{ fontFamily: "'DM Mono',monospace", color: 'var(--text3)', fontSize: 10, marginTop: 2, flexShrink: 0 }}>{entry.hash}</span>
+                                  <span>{entry.message}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))
+                      })()}
+                    </div>
+                  )}
                 </div>
               </SectionCard>
-
-              <div className="flex justify-end gap-3 pb-2">
-                <button
-                  onClick={() => setShowChangelog(true)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer" style={{ background: 'var(--bg3)', borderColor: 'var(--border)', color: 'var(--text2)' }}
-                >
-                  Changelog (modal)
-                </button>
-                <button
-                  onClick={() => setShowAbout(true)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer" style={{ background: 'var(--bg3)', borderColor: 'var(--border)', color: 'var(--text2)' }}
-                >
-                  O aplikácii (modal)
-                </button>
-              </div>
             </>
           )}
 
@@ -1532,97 +1659,6 @@ export function SettingsPage() {
         </div>
       )}
 
-      {/* ── ABOUT MODAL ── */}
-      {showAbout && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in"
-          onClick={() => setShowAbout(false)}
-        >
-          <div
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }}
-            className="modal-in"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>O aplikácii</h2>
-              <button onClick={() => setShowAbout(false)} className="btn-icon"><X size={16} /></button>
-            </div>
-            <div className="flex flex-col items-center mb-5">
-              <div
-                className="w-[52px] h-[52px] rounded-xl flex items-center justify-center mb-3 shrink-0"
-                style={{ background: 'var(--accent-color)' }}
-              >
-                <span className="text-white font-bold text-2xl leading-none">F</span>
-              </div>
-              <p className="text-base font-bold text-[color:var(--text)]">Finvu</p>
-              <span className="text-xs mt-1.5 font-mono px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
-                v1.1.0
-              </span>
-            </div>
-            <div className="flex flex-col gap-3 mb-5">
-              <div className="flex items-start gap-3">
-                <span className="text-base leading-none mt-0.5">🔒</span>
-                <p className="text-xs text-[color:var(--text2)] leading-relaxed">{t.settings.secureServer}</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-base leading-none mt-0.5">🔧</span>
-                <p className="text-xs text-[color:var(--text2)] leading-relaxed">React 19 · TypeScript · Vite · Tailwind CSS 4</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-base leading-none mt-0.5">🌐</span>
-                <p className="text-xs text-[color:var(--text2)] leading-relaxed">PWA — funguje offline, inštalovateľná</p>
-              </div>
-            </div>
-            <p className="text-xs text-center text-[color:var(--text3)]">© 2024–2026 Finvu · pedani.eu</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── CHANGELOG MODAL ── */}
-      {showChangelog && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in"
-          onClick={() => setShowChangelog(false)}
-        >
-          <div
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384, maxHeight: '80vh', overflowY: 'auto' }}
-            className="modal-in"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Changelog</h2>
-              <button onClick={() => setShowChangelog(false)} className="btn-icon"><X size={16} /></button>
-            </div>
-            <div className="flex flex-col gap-5">
-              {CHANGELOG.map((entry, i) => (
-                <div key={entry.version}>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <span
-                      className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
-                        i === 0 ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-[color:var(--text3)]'
-                      }`}
-                    >
-                      {entry.version}
-                    </span>
-                    <span className="text-xs text-[color:var(--text3)]">{entry.date}</span>
-                  </div>
-                  <ul className="flex flex-col gap-1.5">
-                    {entry.items.map(item => (
-                      <li key={item} className="flex items-start gap-2 text-xs text-[color:var(--text2)]">
-                        <span className="text-[color:var(--text3)] mt-px shrink-0">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {i < CHANGELOG.length - 1 && (
-                    <div className="mt-4 border-t border-white/[0.06]" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       <PinSetupModal
         open={pinSetupOpen}

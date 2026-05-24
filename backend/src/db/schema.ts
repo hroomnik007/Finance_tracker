@@ -46,6 +46,8 @@ export const users = pgTable("users", {
   trackingStartDate: date("tracking_start_date"),
   onboardingBannerDismissed: boolean("onboarding_banner_dismissed").default(false).notNull(),
   lastActiveAt: timestamp("last_active_at"),
+  autoLockMinutes: integer("auto_lock_minutes"),
+  isDeactivated: boolean("is_deactivated").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -208,3 +210,15 @@ export const savingsDeposits = pgTable("savings_deposits", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type SavingsDeposit = typeof savingsDeposits.$inferSelect;
+
+export const userSessions = pgTable("user_sessions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  deviceName: varchar("device_name", { length: 255 }),
+  browser: varchar("browser", { length: 100 }),
+  ip: varchar("ip", { length: 50 }),
+  location: varchar("location", { length: 255 }),
+  lastActive: timestamp("last_active").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export type UserSession = typeof userSessions.$inferSelect;
