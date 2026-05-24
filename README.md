@@ -36,7 +36,7 @@
 |---|---|
 | URL | https://finvu.pedani.eu |
 | Email | `demo@finvu.sk` |
-| Heslo | `demo123` |
+| Heslo | `demo` (zobrazené po kliknutí na tlačidlo Demo) |
 
 Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie, domácnosť s členmi.
 
@@ -61,7 +61,7 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 ### Infraštruktúra
 - **Docker** + **Docker Compose** (backend + PostgreSQL)
 - **GitHub Actions** — automatický CI/CD deploy na každý push na `main`
-- **Hetzner VPS** (Debian, CX23) — `api.pedani.eu`
+- **Hetzner VPS** (Debian) — `api.pedani.eu`
 - **GitHub Pages** — frontend `finvu.pedani.eu`
 
 ---
@@ -100,7 +100,7 @@ npm run dev                   # → http://localhost:3001
 npm run migrate
 
 # Produkcia (v Docker kontajneri)
-docker exec finance-tracker-repo-backend-1 node dist/scripts/migrate.js
+docker exec <backend-container> node dist/scripts/migrate.js
 ```
 
 Migrácie sú číslované SQL súbory v `backend/migrations/` a spúšťajú sa automaticky pri deployi.
