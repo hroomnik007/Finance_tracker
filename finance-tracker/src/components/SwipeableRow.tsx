@@ -143,6 +143,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
         position: 'relative',
         overflow: 'hidden',
         borderRadius: 16,
+        width: '100%',
         WebkitTransform: 'translateZ(0)',
         transform: 'translateZ(0)',
         height: isCollapsing ? 0 : collapseH,
@@ -179,6 +180,7 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
           transform: `translateX(${offset}px)`,
           transition: tracking ? 'none' : 'transform 0.2s ease',
           position: 'relative', zIndex: 1, touchAction: 'pan-y',
+          width: '100%',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}

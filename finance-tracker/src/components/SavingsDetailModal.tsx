@@ -91,8 +91,8 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDep
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
-      style={{ background: 'rgba(0,0,0,0.65)' }}
+      className="fixed inset-0 flex items-end md:items-center justify-center p-0 md:p-4"
+      style={{ background: 'rgba(0,0,0,0.65)', zIndex: 60 }}
       onClick={onClose}
     >
       <div
@@ -272,7 +272,7 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDep
         </div>
 
         {/* Recent deposits */}
-        <div style={{ padding: '14px 20px', paddingBottom: 'max(24px, calc(16px + env(safe-area-inset-bottom, 0px)))' }}>
+        <div style={{ padding: '14px 20px', paddingBottom: 'max(40px, calc(24px + env(safe-area-inset-bottom, 0px)))' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.savings.latestDeposits.toUpperCase()}</div>
           {deposits.length === 0 ? (
             <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
