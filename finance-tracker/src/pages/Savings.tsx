@@ -479,21 +479,24 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 }
 
 
-function MiniRing({ pct, color, size = 64 }: { pct: number; color: string; size?: number }) {
-  const sw = 5
+function MiniRing({ pct, color, size, accent, label }: {
+  pct: number; color: string; size: number; accent: string; label: string
+}) {
+  const sw = 3
   const r = (size - sw * 2) / 2
   const circ = 2 * Math.PI * r
   const offset = circ * (1 - Math.min(pct, 100) / 100)
   const c = size / 2
+  const trackColor = pct === 0 ? `${accent}33` : 'var(--bg4)'
   return (
     <svg width={size} height={size} style={{ flexShrink: 0 }}>
-      <circle cx={c} cy={c} r={r} fill="none" stroke="var(--bg4)" strokeWidth={sw} />
+      <circle cx={c} cy={c} r={r} fill="none" stroke={trackColor} strokeWidth={sw} />
       <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={sw}
         strokeDasharray={`${circ} ${circ}`} strokeDashoffset={offset}
         strokeLinecap="round" transform={`rotate(-90 ${c} ${c})`} />
       <text x={c} y={c} textAnchor="middle" dominantBaseline="central"
-        fill="var(--text)" fontSize={10} fontWeight={700} fontFamily="'DM Mono', monospace">
-        {Math.round(pct)}%
+        fill="var(--text)" fontSize={11} fontWeight={600} fontFamily="'DM Mono', monospace">
+        {label}
       </text>
     </svg>
   )
@@ -508,114 +511,59 @@ function GoalCard({
   onClick: () => void
   desktop?: boolean
 }) {
-  const pct = goal.targetAmount > 0 ? Math.min(100, (goal.savedAmount / goal.targetAmount) * 100) : 0
+  const [active, setActive] = useState(false)
+  const rawPct = goal.targetAmount > 0 ? (goal.savedAmount / goal.targetAmount) * 100 : 0
+  const pct = Math.min(100, rawPct)
   const isCompleted = pct >= 100
   const accent = goal.color ?? '#7C3AED'
   const barColor = isCompleted ? 'var(--green)' : accent
   const monthly = goalMonthly(goal)
 
-  let deadlineBadge: React.ReactNode = null
-  if (goal.deadline) {
+  const pctRounded = Math.round(pct * 10) / 10
+  const pctLabel = goal.savedAmount > 0 && pctRounded === 0 ? '< 1%' : `${pctRounded}%`
+  const ringSize = desktop ? 56 : 52
+
+  let deadlineEl: React.ReactNode = null
+  if (goal.deadline && !isCompleted) {
     const days = daysUntil(goal.deadline)
-    if (isCompleted) {
-      deadlineBadge = null
-    } else if (days < 0) {
-      deadlineBadge = (
-        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--red)', background: 'color-mix(in srgb, var(--red) 12%, transparent)', padding: '2px 7px', borderRadius: 20 }}>
+    if (days < 0) {
+      deadlineEl = (
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--red)', background: 'color-mix(in srgb, var(--red) 12%, transparent)', padding: '2px 6px', borderRadius: 20 }}>
           {t.overdue}
         </span>
       )
     } else {
-      deadlineBadge = (
-        <span style={{ fontSize: 11, color: 'var(--text3)' }}>
-          do {goal.deadline}
-        </span>
-      )
+      deadlineEl = <span style={{ fontSize: 12, color: 'var(--text3)' }}>do {goal.deadline}</span>
     }
-  }
-
-  if (desktop) {
-    return (
-      <div
-        onClick={onClick}
-        style={{
-          background: 'var(--bg2)',
-          border: '1px solid var(--border)',
-          borderLeft: `3px solid ${goal.color ?? '#7C3AED'}`,
-          borderRadius: 16,
-          padding: '18px 20px',
-          cursor: 'pointer',
-          transition: 'border-color 0.15s',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-          height: '100%',
-          boxSizing: 'border-box',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)'; (e.currentTarget as HTMLElement).style.borderLeftColor = goal.color ?? '#7C3AED' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.borderLeftColor = goal.color ?? '#7C3AED' }}
-      >
-        {/* Top: name + ring */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5, flexWrap: 'wrap' }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${accent}26`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{goal.icon ?? '🎯'}</div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
-              {goal.paused && (
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
-              )}
-            </div>
-            {isCompleted ? (
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
-            ) : deadlineBadge && (
-              <div style={{ display: 'flex' }}>{deadlineBadge}</div>
-            )}
-          </div>
-          <MiniRing pct={pct} color={barColor} size={76} />
-        </div>
-
-        {/* Amounts */}
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
-              {formatAmount(goal.savedAmount)}
-            </p>
-            <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
-              / {formatAmount(goal.targetAmount)}
-            </p>
-          </div>
-          {!isCompleted && (
-            <p style={{ fontSize: 11, color: 'var(--text3)', margin: '4px 0 0' }}>
-              {t.remaining} {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))}
-              {monthly > 0 && ` · auto +${formatAmount(monthly)}/mes.`}
-            </p>
-          )}
-        </div>
-      </div>
-    )
   }
 
   return (
     <div
       onClick={onClick}
+      onPointerDown={() => setActive(true)}
+      onPointerUp={() => setActive(false)}
+      onPointerLeave={() => setActive(false)}
       style={{
-        background: `linear-gradient(135deg, ${accent}1a 0%, ${accent}0d 100%)`,
-        border: `1px solid ${accent}4d`,
+        background: 'var(--bg2)',
+        border: active ? `1px solid ${accent}` : '1px solid var(--border)',
         borderRadius: 16,
-        padding: '14px 16px',
+        padding: '12px 16px',
+        cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
-        cursor: 'pointer',
+        gap: 8,
+        boxSizing: 'border-box',
+        transition: 'border-color 0.12s',
+        ...(desktop ? { height: '100%' } : {}),
       }}
     >
-      {/* Top row: icon+name+deadline | ring */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+      {/* Top row: icon + name/deadline + ring */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 11, flexShrink: 0,
+            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
             background: `${accent}26`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
           }}>
             {goal.icon ?? '🎯'}
           </div>
@@ -627,25 +575,23 @@ function GoalCard({
               )}
             </div>
             {isCompleted ? (
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
-            ) : goal.deadline ? (
-              <span style={{ fontSize: 11, color: 'var(--text3)' }}>do {goal.deadline}</span>
-            ) : null}
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
+            ) : deadlineEl}
           </div>
         </div>
-        <MiniRing pct={pct} color={barColor} size={66} />
+        <MiniRing pct={pct} color={barColor} size={ringSize} accent={accent} label={pctLabel} />
       </div>
 
       {/* Amounts */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
             {formatAmount(goal.savedAmount)}
           </span>
-          <span style={{ fontSize: 12, color: 'var(--text3)' }}>/ {formatAmount(goal.targetAmount)}</span>
+          <span style={{ fontSize: 13, color: 'var(--text3)' }}>/ {formatAmount(goal.targetAmount)}</span>
         </div>
         {!isCompleted && (
-          <p style={{ fontSize: 11, color: 'var(--text3)', margin: '3px 0 0' }}>
+          <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0' }}>
             {t.remaining} {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))}
             {monthly > 0 && ` · auto +${formatAmount(monthly)}/mes.`}
           </p>
