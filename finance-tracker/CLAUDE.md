@@ -14,7 +14,7 @@ Aktuálna verzia: **Finvu 2026 v3** — design system z `colors_and_type.css` to
 - Vite PWA Plugin + Workbox — offline/PWA
 - jsPDF + xlsx + papaparse — export (PDF, XLSX, CSV)
 - CSV import: Revolut, Tatra banka, SLSP, mBank, 365.bank (via CsvImportModal)
-- i18n — SK (primárny jazyk) / EN
+- i18n — SK / CS / PL / HU / EN (5 jazykov, auto-detekcia pri prvej návšteve)
 
 ### Autentifikácia
 - WebAuthn (passkeys)
@@ -61,6 +61,20 @@ finance-tracker/src/
 - createSharedReport / getSharedReport
 - deleteAccount
 
+## Internacionalizácia (i18n)
+
+- **5 jazykov**: SK (primárny), CS, PL, HU, EN
+- **Súbory**: `src/i18n/sk.ts`, `cs.ts`, `pl.ts`, `hu.ts`, `en.ts` — každý ~413 kľúčov, 16 skupín
+- **Štruktúra**: všetkých 5 súborov musí mať **identickú štruktúru** zodpovedajúcu `typeof sk` — TypeScript to vynucuje cez `satisfies`
+- **Hook**: `useTranslation()` vracia `{ t: Translations }` — `t` je priamy objekt SK/CS/PL/HU/EN podľa aktívneho jazyka
+- **Auto-detekcia**: pri prvej návšteve sa jazyk deteguje z prehliadača (i18next-browser-languagedetector alebo `navigator.language`)
+- **Uloženie preferencie**: jazyk sa ukladá do DB (`users.language`, migrácia 014) aj do `localStorage`
+- **Language switcher**: `src/components/LanguageSwitcher.tsx` — 2 varianty:
+  - `compact` — na Login/Register stránke (top-right, tmavé sklo, zobrazuje vlajka + kód + chevron)
+  - `full` — v Settings → Financie → Jazyk (celá šírka, zobrazuje vlajka + celý názov)
+  - Dropdown používa `position: fixed` s `getBoundingClientRect()` aby unikol `overflow: hidden` z `SectionCard`
+- **Tagline na Login stránke**: `{t.nav.appTagline.toUpperCase()}` — nie hardcoded string
+
 ## Príkazy
 ```bash
 cd finance-tracker
@@ -74,7 +88,67 @@ npm run preview   # preview buildu
 - Backend: Hetzner CX23, `https://api.pedani.eu`
 - deploy.sh v root adresári
 
+## Databázové migrácie
+
+Migrácie sú číslované SQL súbory v `backend/migrations/`, automaticky spúšťané cez `backend/src/scripts/migrate.ts`.
+
+| Súbor | Obsah |
+|---|---|
+| `014_add_language_and_auto_limit.sql` | `language` stĺpec na `users`; `auto_limit` boolean na `categories` |
+| `015_savings_goal_paused.sql` | `paused` boolean na `savings_goals` (default `false`) |
+
+**Spustenie migrácií v produkcii** (vnútri Docker kontajnera):
+```bash
+docker exec finance-tracker-repo-backend-1 node dist/scripts/migrate.js
+```
+- Migrácie musia byť **skopírované do produkčného Dockerfile stage** (COPY migrations) — inak nie sú dostupné v kontajneri
+- Len GitHub remote (`origin`) je relevantný pre server-side git operácie — Gitea je LAN-only a server ho nedosiahne
+
 ## Pravidlá pre Claude
+
+## Modul Sporenie
+
+- **API endpointy**: `GET/POST /api/savings`, `PATCH /api/savings/:id`, `DELETE /api/savings/:id`
+- **Pozastaviť/Obnoviť**: `PATCH /api/savings/:id/pause` a `/resume` — nastavujú `paused` boolean v DB
+  - Pozastavené ciele preskakujú mesačné prevody a notifikácie
+  - UI: oranžový badge `POZASTAVENÉ` na karte aj v detail modali; tlačidlo prepína medzi `Pozastaviť`/`Obnoviť`
+- **Deep link**: otvorenie detailu cieľa zapíše `#sporenie?id=GOAL_ID` do URL
+  - F5 / zdieľanie URL: `useEffect` v `SavingsPage` pri načítaní goals skontroluje hash parameter `?id=` a auto-otvorí detail
+  - `App.tsx → getPageFromHash()` stripuje query params (`split('?')[0]`), takže `#sporenie?id=X` zostane na savings stránke
+- **SavingsDetailModal**: `maxHeight: 90svh` (iOS safe area), `WebkitOverflowScrolling: touch`, bottom padding `env(safe-area-inset-bottom)`
+- **Hook**: `useSavings` — exportuje `{ goals, addGoal, updateGoal, deleteGoal, pauseGoal, resumeGoal, reload }`
+
+## Modul Kategórie
+
+- **auto_limit**: boolean stĺpec na `categories` — keď `true`, budget limit kategórie sa automaticky vypočítava zo sumy fixných výdavkov priradených tej kategórii
+- Prepočítava sa pri každom vytvorení / aktualizácii / zmazaní fixného výdavku
+- Ak používateľ nastaví manuálny limit na kategórii s `auto_limit = true`, dostane varovanie
+
+## Modul Profil
+
+- **Úspory stat**: suma všetkých `savedAmount` naprieč savings goals; zobrazuje `—` keď žiadne ciele neexistujú (nie `0 €`)
+- **Telefón**: pole bolo odstránené z UI aj save logiky
+- **Krajina**: SK, CZ, HU, PL, GB (Veľká Británia) — AT a DE boli odstránené
+- **Jazyk**: zmena jazyka v Profile/Settings ukladá preferenicu do DB (`users.language`)
+- **Štatistiky v hlavičke**: počet transakcií (z API), celkové sporenie, dátum registrácie
+
+## Onboarding
+
+- **7 krokov**: Vitajte → Príjmy → Výdavky → Sporenie → Domácnosť → Nastavenia → Spôsob prihlásenia
+- **Budget template**: výber šablóny **nahradí** existujúce kategórie (nie pridá k nim) — `replaceCategories` flag
+- **"Preskočiť" na template kroku**: zachová default kategórie nezmenené
+- Onboarding sa zobrazí len raz — stav sleduje `user.onboarding_complete` (DB) a `user.onboarding_banner_dismissed`
+
+## Demo účet
+
+- **Email**: `demo@finvu.sk` (heslo: demopassword alebo cez "Demo" tlačidlo)
+- **Predvyplnené dáta**: príjmy, fixné aj variabilné výdavky, savings goals, členovia domácnosti
+- **Seed skript**: `backend/src/scripts/seed-demo.ts` — spúšťa sa ručne:
+  ```bash
+  docker exec finance-tracker-repo-backend-1 node dist/scripts/seed-demo.js
+  ```
+- Domácnosť: `"Demových"`, household_id priradené všetkým transakciám
+- Demo účet má `isDemo: true` — niektoré akcie sú zakázané (napr. zmena hesla)
 
 ### Kód
 - Vždy TypeScript — žiadny `any`, žiadne implicitné typy
@@ -180,7 +254,7 @@ docker compose up --build -d
 - Úspora badge: `↑ X % úspora`, padding 8px 16px, fontWeight 700, fontSize 13, `#34d399`, `rgba(52,211,153,0.2)` bg
 - PRÍJMY/VÝDAVKY: % zmena vs predchádzajúci mesiac (↑/↓ badge), animované sumy cez `useCountUp`
 
-**Ľavý stĺpec** (desktop grid): hero karta → heatmap + donut (grid-cols-2)
+**Ľavý stĺpec** (desktop grid): hero karta → heatmap + donut (`grid grid-cols-2 items-stretch` — obe karty rovnaká výška)
 **Mobilný layout**: hero → donut → heatmap → pravý panel
 
 **Donut graf** (`pieChartCard`):
@@ -217,6 +291,7 @@ docker compose up --build -d
 - Background: `var(--bg)` — NIE hardcoded `#0a0814` (kvôli light mode kompatibilite)
 - Input polia: theme-aware — svetlé pozadie v light mode cez `inputStyle(focused, theme)` funkciu
 - Theme toggle: `position: fixed, top: 16, right: 16` — dostupný pred prihlásením
+- Language switcher (compact): `position: fixed, top: 16, left: 16` — vlajka + kód + chevron, dropdown `position: fixed`
 
 ### CsvImportModal
 - Podporované banky: Revolut, Tatra banka, SLSP, mBank, 365.bank, Vlastný CSV
@@ -226,6 +301,7 @@ docker compose up --build -d
 ### Kategórie
 - Desktop header button: `Pridať kategóriu` (BEZ leading `+` — `Plus` ikona ho už zobrazuje)
 - Celkové využitie rozpočtu: summary bar nad gridom — `totalSpent`/`totalLimit` zo všetkých kategórií s limitom
+- `auto_limit` kategórie: budget limit sa auto-prepočíta keď sa zmení fixný výdavok s touto kategóriou
 
 ### Domácnosť
 - Názov domácnosti sa zobrazuje s prefixom `"Rodina "` — napr. `"Rodina Bližňákovcov"`
@@ -247,7 +323,17 @@ docker compose up --build -d
 ## Modules
 - **BottomSheet** (`components/BottomSheet.tsx`): props: `open`, `onClose`, `title`, `children`, `footer?`, `onImportCsv?`. Mobile: slides up from bottom with drag-to-close. Desktop: centered modal. Drag handle + header are swipe targets on mobile.
 
+## PIN lock — gotchas
+
+- `loginWithPin` v `AuthContext` musí volať `sessionStorage.setItem('pin_verified_session', 'true')` — inak `PinLock` sa ukáže druhýkrát po PIN prihlásení
+- Po logout musí `usePinLock` resetovať `locked = true` — inak ďalší login cez heslo/Google nevyvolá PinLock
+- `pin_verified_session` kľúč (sessionStorage) + `lock_method` (localStorage) sú dve rôzne veci — nemiešať
+
 ## Key constraints
 - `BottomSheet` `onImportCsv` must be `undefined` when in edit mode — import only makes sense when adding new records
 - Never render both mobile and desktop Import CSV buttons simultaneously — use `hidden lg:flex` / `lg:hidden` pattern
 - `dashView` force-reset to `'personal'` requires `user` to be loaded — add `&& user` guard to prevent premature reset on initial render
+- **i18n — nový jazykový kľúč**: pridať do **všetkých 5 súborov** (sk/en/cs/pl/hu) naraz; TypeScript build zlyhá ak chýba kľúč v niektorom súbore
+- **LanguageSwitcher dropdown**: používa `position: fixed` + `getBoundingClientRect()` — **nie** `position: absolute`, pretože `SectionCard` má `overflow: hidden` ktoré by dropdown orizlo
+- **Savings deep link**: `App.tsx → getPageFromHash()` stripuje `?` query params — bez toho by `#sporenie?id=X` padlo na dashboard
+- **Docker migrácie**: spustiť `docker exec ... node dist/scripts/migrate.js` po každej novej migrácii; migrácie musia byť COPY-ované v Dockerfile pred `npm run build`
