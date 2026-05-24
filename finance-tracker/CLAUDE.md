@@ -1,5 +1,10 @@
 # Finvu 2026 v3 — CLAUDE.md
 
+## Povinné pravidlo pre každý prompt
+Na začiatku každého promptu si prečítaj tento CLAUDE.md súbor celý, pred tým ako začneš akúkoľvek prácu. Toto zabezpečí že poznáš aktuálnu štruktúru projektu, konvencie a gotchas bez toho aby si musel hľadať súbory manuálne.
+
+---
+
 ## O projekte
 PWA aplikácia na sledovanie rodinných financií. Mobile-first, privacy-first.
 Inšpirovaná Monarch Money. Hostovaná na `pedani.eu` (Hetzner CX23).
