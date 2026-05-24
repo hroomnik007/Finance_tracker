@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Check, Pencil, Delete, ChevronRight } from 'lucide-react'
+import { X, Check, Pencil, Delete, ChevronRight, LogOut } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
@@ -476,9 +476,9 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               </div>
 
               {/* Footer buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                 {defaultPageSaveOk ? (
-                  <div style={{ width: '100%', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                  <div style={{ flex: 2, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
                     <Check size={15} /> Uložené
                   </div>
                 ) : (
@@ -490,7 +490,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                         setTimeout(() => setDefaultPageSaveOk(false), 2000)
                       } catch { /* non-critical */ }
                     }}
-                    style={{ width: '100%', height: 48, borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     {t.profile.saveChanges}
                   </button>
@@ -499,8 +499,9 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   <button
                     onClick={() => setLogoutConfirm(true)}
                     className="btn-settings-danger"
-                    style={{ width: '100%', height: 44, justifyContent: 'center', borderRadius: 8, fontSize: 14, fontWeight: 500 }}
+                    style={{ flex: 1, height: 44, justifyContent: 'center', borderRadius: 10, fontSize: 13, fontWeight: 500, gap: 6 }}
                   >
+                    <LogOut size={14} strokeWidth={2} />
                     {t.auth.logout}
                   </button>
                 )}
