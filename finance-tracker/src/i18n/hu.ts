@@ -73,6 +73,7 @@ export const hu: Translations = {
     spendLessThan: 'Költsön kevesebbet mint',
     refresh: 'Frissítés',
     setLimits: 'Beállítás',
+    showMore: 'Több mutatása →',
     streakTooltip: 'nap egymás után',
     motivationalGood: 'Szép munka! A bevételek több mint {pct}%-át megtakarítottad.',
     motivationalBad: 'Figyelem — a kiadások meghaladják a bevételeket. Próbálja csökkenteni a változó kiadásokat.',

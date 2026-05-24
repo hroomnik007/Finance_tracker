@@ -73,6 +73,7 @@ export const en: Translations = {
     spendLessThan: 'Spend less than',
     refresh: 'Refresh',
     setLimits: 'Set limits',
+    showMore: 'Show more →',
     streakTooltip: 'days in a row',
     motivationalGood: 'Great job! You saved more than 30% of your income.',
     motivationalBad: 'Warning — expenses exceed income. Try to reduce variable expenses.',

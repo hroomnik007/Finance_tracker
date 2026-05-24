@@ -73,6 +73,7 @@ export const pl: Translations = {
     spendLessThan: 'Wydaj mniej niż',
     refresh: 'Odśwież',
     setLimits: 'Ustaw',
+    showMore: 'Pokaż więcej →',
     streakTooltip: 'dni z rzędu',
     motivationalGood: 'Świetna robota! Zaoszczędziłeś ponad {pct} % dochodów.',
     motivationalBad: 'Uwaga — wydatki przekraczają dochody. Spróbuj ograniczyć zmienne wydatki.',

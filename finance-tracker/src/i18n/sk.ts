@@ -71,6 +71,7 @@ export const sk = {
     spendLessThan: 'Minutie menej ako',
     refresh: 'Aktualizovať',
     setLimits: 'Nastaviť',
+    showMore: 'Zobraziť viac →',
     streakTooltip: 'dní v rade',
     motivationalGood: 'Skvelá práca! Ušetrili ste viac ako {pct} % príjmov.',
     motivationalBad: 'Pozor — výdavky prevyšujú príjmy. Skúste obmedziť variabilné výdavky.',

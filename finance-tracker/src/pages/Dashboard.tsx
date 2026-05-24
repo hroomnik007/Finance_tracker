@@ -67,6 +67,14 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses, fixedExpenses })
+  const sortedBudgetStatuses = useMemo(() =>
+    budgetStatuses
+      .filter(b => b.limit > 0)
+      .map(b => ({ ...b, txCount: allVariableExpenses.filter(e => e.categoryId === b.categoryId).length }))
+      .sort((a, b) => b.txCount - a.txCount || b.spent - a.spent)
+      .slice(0, 5),
+    [budgetStatuses, allVariableExpenses]
+  )
   const { goals: savingsGoals } = useSavings()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
@@ -552,11 +560,11 @@ const upcomingFixed = useMemo(() => {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>
-        {budgetStatuses.filter(b => b.limit > 0).slice(0, 4).map(b => {
+        {sortedBudgetStatuses.map(b => {
           const bCat = categories.find(c => c.id === b.categoryId)
           const barColor = (bCat?.autoLimit) ? '#22c55e' : b.percentage >= 100 ? '#ef4444' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
           return (
-            <div key={b.categoryId} style={{ marginBottom: 12 }}>
+            <div key={b.categoryId} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span>{b.categoryIcon}</span> {b.categoryName}
@@ -569,7 +577,7 @@ const upcomingFixed = useMemo(() => {
             </div>
           )
         })}
-        {budgetStatuses.filter(b => b.limit > 0).length === 0 && (
+        {sortedBudgetStatuses.length === 0 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noLimits}</p>
             <button
@@ -579,6 +587,14 @@ const upcomingFixed = useMemo(() => {
               {t.dashboard.setLimits}
             </button>
           </div>
+        )}
+        {sortedBudgetStatuses.length > 0 && (
+          <button
+            onClick={() => onNavigate('categories')}
+            style={{ marginTop: 4, fontSize: 12, color: 'var(--violet)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', display: 'block' }}
+          >
+            {t.dashboard.showMore}
+          </button>
         )}
       </div>
 

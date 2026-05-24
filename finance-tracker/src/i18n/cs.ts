@@ -73,6 +73,7 @@ export const cs: Translations = {
     spendLessThan: 'Utratit méně než',
     refresh: 'Aktualizovat',
     setLimits: 'Nastavit',
+    showMore: 'Zobrazit více →',
     streakTooltip: 'dní v řadě',
     motivationalGood: 'Skvělá práce! Ušetřili jste více než {pct} % příjmů.',
     motivationalBad: 'Pozor — výdaje převyšují příjmy. Zkuste omezit variabilní výdaje.',
