@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, TrendingUp } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -18,17 +17,6 @@ import { getMyHousehold } from '../api/households'
 import type { HouseholdMember } from '../api/households'
 import type { Income } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
-
-function getLast12Months(monthsShort: string[]) {
-  const now = new Date()
-  return Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
-    return {
-      label: monthsShort[d.getMonth()],
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-    }
-  })
-}
 
 
 interface IncomePageProps {
@@ -115,15 +103,6 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
   )
 }
 
-const TOOLTIP_STYLE = {
-  background: 'var(--bg2)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  padding: '8px 12px',
-  color: 'var(--text)',
-  fontFamily: "'DM Sans', sans-serif",
-  fontSize: 13,
-}
 
 const pillStyle = (active: boolean): React.CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -154,9 +133,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const [form, setForm] = useState<FormState>(makeEmpty())
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
-  const [yearlyData, setYearlyData] = useState<{ label: string; total: number }[]>([])
-  const [_prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
-  const [allIncomeData, setAllIncomeData] = useState<{ date: string; amount: number }[]>([])
+  const [yearlyIncome, setYearlyIncome] = useState(0)
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
@@ -168,20 +145,18 @@ export function IncomePage({ month, year }: IncomePageProps) {
   }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
-    const months = getLast12Months(t.monthsShort)
-    Promise.all(months.map(m => getTransactions({ type: 'income', month: m.key, limit: 200 })))
+    const now = new Date()
+    const lastMonth = year === now.getFullYear() ? now.getMonth() + 1 : 12
+    const months = Array.from({ length: lastMonth }, (_, i) =>
+      `${year}-${String(i + 1).padStart(2, '0')}`
+    )
+    Promise.all(months.map(m => getTransactions({ type: 'income', month: m, limit: 200 })))
       .then(results => {
-        const allData = results.flatMap(r => r.data)
-        setYearlyData(months.map((m, i) => ({
-          label: m.label,
-          total: results[i].data.reduce((s, tx) => s + tx.amount, 0),
-        })))
-        setAllIncomeData(allData.map(tx => ({ date: tx.date ?? '', amount: tx.amount })))
-        const prevTotal = results[10].data.reduce((s, tx) => s + tx.amount, 0)
-        setPrevMonthTotal(prevTotal > 0 ? prevTotal : null)
+        const total = results.flatMap(r => r.data).reduce((s, tx) => s + tx.amount, 0)
+        setYearlyIncome(total)
       })
       .catch(() => {})
-  }, [])
+  }, [year])
 
   const openAdd = () => { setEditing(null); setForm(makeEmpty()); setSheetOpen(true) }
   const openEdit = (income: Income) => {
@@ -215,7 +190,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
   const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const yearlyProjection = recurringMonthlyTotal * 12
-  const yearlyIncome = allIncomeData.filter(r => r.date.startsWith(String(year))).reduce((s, r) => s + r.amount, 0)
 
   const recurringTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const oneTimeTotal = totalAmount - recurringTotal
@@ -299,21 +273,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
                   {m.name}
                 </button>
               ))}
-            </div>
-          )}
-
-          {/* 12-month bar chart */}
-          {yearlyData.length > 0 && (
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 16 }}>{t.income.yearlyChart}</div>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={yearlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-                  <XAxis dataKey="label" tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text3)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--text)', fontWeight: 600 }} itemStyle={{ color: '#34d399' }} formatter={(v) => [formatAmount(Number(v ?? 0)), t.income.totalLabel]} />
-                  <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
             </div>
           )}
 
