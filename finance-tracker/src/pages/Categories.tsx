@@ -255,7 +255,7 @@ export function CategoriesPage() {
 
               {/* Desktop 2-column grid */}
               <div className="hidden lg:block">
-                <div style={{ display: view === 'grid' ? 'grid' : 'flex', gridTemplateColumns: view === 'grid' ? '1fr 1fr' : undefined, flexDirection: view === 'list' ? 'column' : undefined, gap: 12 }}>
+                <div style={{ display: view === 'grid' ? 'grid' : 'flex', gridTemplateColumns: view === 'grid' ? 'repeat(4, 1fr)' : undefined, flexDirection: view === 'list' ? 'column' : undefined, gap: 12 }}>
                   {sortedCategories.map((cat, i) => {
                     const status = budgetStatuses.find(b => b.categoryId === cat.id)
                     const pct = status ? Math.min(status.percentage, 100) : 0
