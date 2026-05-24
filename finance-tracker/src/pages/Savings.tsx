@@ -478,14 +478,6 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   )
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace('#', '')
-  if (h.length !== 6) return `rgba(124,58,237,${alpha})`
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `rgba(${r},${g},${b},${alpha})`
-}
 
 function MiniRing({ pct, color, size = 64 }: { pct: number; color: string; size?: number }) {
   const sw = 5
@@ -518,7 +510,8 @@ function GoalCard({
 }) {
   const pct = goal.targetAmount > 0 ? Math.min(100, (goal.savedAmount / goal.targetAmount) * 100) : 0
   const isCompleted = pct >= 100
-  const barColor = isCompleted ? 'var(--green)' : goal.color ?? '#7C3AED'
+  const accent = goal.color ?? '#7C3AED'
+  const barColor = isCompleted ? 'var(--green)' : accent
   const monthly = goalMonthly(goal)
 
   let deadlineBadge: React.ReactNode = null
@@ -566,7 +559,7 @@ function GoalCard({
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 20 }}>{goal.icon ?? '🎯'}</span>
+              <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${accent}26`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{goal.icon ?? '🎯'}</div>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
               {goal.paused && (
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
@@ -578,7 +571,7 @@ function GoalCard({
               <div style={{ display: 'flex' }}>{deadlineBadge}</div>
             )}
           </div>
-          <MiniRing pct={pct} color={barColor} size={64} />
+          <MiniRing pct={pct} color={barColor} size={76} />
         </div>
 
         {/* Amounts */}
@@ -602,17 +595,12 @@ function GoalCard({
     )
   }
 
-  const accentRgba12 = hexToRgba(barColor, 0.12)
-  const accentRgba05 = hexToRgba(barColor, 0.05)
-  const accentRgba20 = hexToRgba(barColor, 0.20)
-  const accentRgba30 = hexToRgba(barColor, 0.30)
-
   return (
     <div
       onClick={onClick}
       style={{
-        background: `linear-gradient(135deg, ${accentRgba12} 0%, ${accentRgba05} 100%)`,
-        border: `1px solid ${accentRgba30}`,
+        background: `linear-gradient(135deg, ${accent}1a 0%, ${accent}0d 100%)`,
+        border: `1px solid ${accent}4d`,
         borderRadius: 16,
         padding: '14px 16px',
         display: 'flex',
@@ -626,7 +614,7 @@ function GoalCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           <div style={{
             width: 42, height: 42, borderRadius: 11, flexShrink: 0,
-            background: accentRgba20,
+            background: `${accent}26`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
           }}>
             {goal.icon ?? '🎯'}
@@ -645,7 +633,7 @@ function GoalCard({
             ) : null}
           </div>
         </div>
-        <MiniRing pct={pct} color={barColor} size={58} />
+        <MiniRing pct={pct} color={barColor} size={66} />
       </div>
 
       {/* Amounts */}
