@@ -112,7 +112,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   const [changePwOk, setChangePwOk] = useState(false)
   const [defaultPageDraft, setDefaultPageDraft] = useState<string>(user?.defaultPage ?? 'dashboard')
   const [defaultPageSaveOk, setDefaultPageSaveOk] = useState(false)
-  const [phone, setPhone] = useState(user?.phone ?? '')
   const [country, setCountry] = useState(user?.country ?? 'SK')
 
   async function handleChangePassword() {
@@ -172,7 +171,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   useEffect(() => {
     getSavingsGoals().then(({ data }) => {
-      setSavingsTotal(data.reduce((s, g) => s + g.savedAmount, 0))
+      setSavingsTotal(data.length === 0 ? null : data.reduce((s, g) => s + g.savedAmount, 0))
     }).catch(() => {})
   }, [])
 
@@ -436,20 +435,6 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.auth.email}</span>
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email ?? '—'}</span>
                     <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)', letterSpacing: '0.06em', flexShrink: 0, marginLeft: 6 }}>VERIF.</span>
-                  </div>
-                  {/* Telefón row */}
-                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.profile.phone}</span>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      onBlur={async () => {
-                        try { await updateProfile({ phone }); await refreshUser() } catch { /* non-critical */ }
-                      }}
-                      placeholder="—"
-                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: phone ? 'var(--text)' : 'var(--text3)', fontFamily: 'inherit', padding: 0 }}
-                    />
                   </div>
                   {/* Krajina row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px' }}>

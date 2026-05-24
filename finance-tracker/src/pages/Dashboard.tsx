@@ -786,7 +786,7 @@ const upcomingFixed = useMemo(() => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
           {greetingDesktop}
           {heroSection}
-          <div className="grid grid-cols-2" style={{ gap: 16 }}>
+          <div className="grid grid-cols-2 items-stretch" style={{ gap: 16 }}>
             {heatmapCard}
             {pieChartCard}
           </div>

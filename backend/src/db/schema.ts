@@ -168,6 +168,7 @@ export const savingsGoals = pgTable("savings_goals", {
   icon: varchar("icon", { length: 50 }),
   color: varchar("color", { length: 7 }),
   note: varchar("note", { length: 500 }),
+  paused: boolean("paused").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

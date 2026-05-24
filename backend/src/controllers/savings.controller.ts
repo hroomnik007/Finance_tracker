@@ -111,6 +111,24 @@ export async function updateSavingsGoal(req: AuthRequest, res: Response): Promis
   res.json({ data: normalizeGoal(updated) });
 }
 
+export async function pauseSavingsGoal(req: AuthRequest, res: Response): Promise<void> {
+  const id = req.params["id"] as string;
+  const [existing] = await db.select({ userId: savingsGoals.userId }).from(savingsGoals).where(eq(savingsGoals.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Savings goal not found" }); return; }
+  if (existing.userId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [updated] = await db.update(savingsGoals).set({ paused: true, updatedAt: new Date() }).where(eq(savingsGoals.id, id)).returning();
+  res.json({ data: normalizeGoal(updated) });
+}
+
+export async function resumeSavingsGoal(req: AuthRequest, res: Response): Promise<void> {
+  const id = req.params["id"] as string;
+  const [existing] = await db.select({ userId: savingsGoals.userId }).from(savingsGoals).where(eq(savingsGoals.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Savings goal not found" }); return; }
+  if (existing.userId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [updated] = await db.update(savingsGoals).set({ paused: false, updatedAt: new Date() }).where(eq(savingsGoals.id, id)).returning();
+  res.json({ data: normalizeGoal(updated) });
+}
+
 export async function deleteSavingsGoal(req: AuthRequest, res: Response): Promise<void> {
   const id = req.params["id"] as string;
 

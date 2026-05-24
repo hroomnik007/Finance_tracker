@@ -150,6 +150,7 @@ export interface ApiSavingsGoal {
   icon: string | null
   color: string | null
   note: string | null
+  paused: boolean
   createdAt: string
   updatedAt: string
 }
@@ -163,6 +164,7 @@ export interface SavingsGoal {
   icon?: string
   color?: string
   note?: string
+  paused?: boolean
 }
 
 export interface ApiSummary {

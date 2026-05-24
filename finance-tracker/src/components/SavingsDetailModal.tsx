@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Pencil, Pause, Plus } from 'lucide-react'
+import { X, Pencil, Pause, Play, Plus } from 'lucide-react'
 import type { SavingsGoal } from '../types'
 import { useTranslation } from '../i18n'
 
@@ -8,6 +8,8 @@ interface SavingsDetailModalProps {
   onClose: () => void
   onEdit: () => void
   onDeposit: (amount: number) => Promise<void>
+  onPause?: () => Promise<void>
+  onResume?: () => Promise<void>
   formatAmount: (n: number) => string
 }
 
@@ -30,11 +32,12 @@ function calcMonthsLeft(deadline: string | null | undefined): number {
   return Math.max(0, (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth()))
 }
 
-export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmount }: SavingsDetailModalProps) {
+export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, onPause, onResume, formatAmount }: SavingsDetailModalProps) {
   const { t } = useTranslation()
   const [depositMode, setDepositMode] = useState(false)
   const [depositInput, setDepositInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [pauseLoading, setPauseLoading] = useState(false)
   const [animated, setAnimated] = useState(false)
 
   useEffect(() => {
@@ -94,8 +97,9 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
           border: '1px solid var(--border)',
           borderRadius: '24px 24px 0 0',
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: '90svh',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           boxShadow: '0 -12px 48px rgba(0,0,0,0.5)',
         }}
         className="md:rounded-2xl md:max-w-lg"
@@ -111,7 +115,12 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
             {goal.icon ?? '🎯'}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+              <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+              {goal.paused && (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.savings.pausedBadge}</span>
+              )}
+            </div>
             {goal.note ? (
               <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.note}</p>
             ) : (
@@ -216,13 +225,24 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
             >
               <Pencil size={13} /> {t.common.edit}
             </button>
-            <button
-              style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text3)', cursor: 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.45 }}
-              title="Pozastaviť (čoskoro)"
-              disabled
-            >
-              <Pause size={14} />
-            </button>
+            {goal.paused ? (
+              <button
+                onClick={async () => { if (!onResume) return; setPauseLoading(true); try { await onResume() } finally { setPauseLoading(false) } }}
+                disabled={pauseLoading || !onResume}
+                style={{ flex: 1, height: 44, borderRadius: 12, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.35)', color: '#34d399', fontSize: 13, fontWeight: 600, cursor: pauseLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pauseLoading ? 0.7 : 1 }}
+              >
+                <Play size={13} strokeWidth={2.5} /> {t.savings.resumeBtn}
+              </button>
+            ) : (
+              <button
+                onClick={async () => { if (!onPause) return; setPauseLoading(true); try { await onPause() } finally { setPauseLoading(false) } }}
+                disabled={pauseLoading || !onPause}
+                style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: pauseLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: pauseLoading ? 0.7 : 1 }}
+                title={t.savings.pauseBtn}
+              >
+                <Pause size={14} />
+              </button>
+            )}
           </div>
         )}
 
@@ -248,7 +268,7 @@ export function SavingsDetailModal({ goal, onClose, onEdit, onDeposit, formatAmo
         </div>
 
         {/* Recent deposits */}
-        <div style={{ padding: '14px 20px 24px' }}>
+        <div style={{ padding: '14px 20px', paddingBottom: 'max(24px, calc(16px + env(safe-area-inset-bottom, 0px)))' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.savings.latestDeposits.toUpperCase()}</div>
           <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 28, opacity: 0.5 }}>🐷</span>

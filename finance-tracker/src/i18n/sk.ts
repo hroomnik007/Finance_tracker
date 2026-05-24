@@ -598,6 +598,9 @@ export const sk = {
     latestDeposits: 'Posledné vklady',
     noDeposits: 'Zatiaľ žiadne vklady',
     complete: '% splnené',
+    pauseBtn: 'Pozastaviť',
+    resumeBtn: 'Obnoviť',
+    pausedBadge: 'POZASTAVENÉ',
   },
   notifications: {
     title: 'Notifikácie',

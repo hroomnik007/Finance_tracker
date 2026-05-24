@@ -600,6 +600,9 @@ export const pl: Translations = {
     latestDeposits: 'Ostatnie wpłaty',
     noDeposits: 'Brak wpłat',
     complete: '% ukończone',
+    pauseBtn: 'Wstrzymaj',
+    resumeBtn: 'Wznów',
+    pausedBadge: 'WSTRZYMANE',
   },
   notifications: {
     title: 'Powiadomienia',

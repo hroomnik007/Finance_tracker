@@ -4,6 +4,8 @@ import {
   createSavingsGoal,
   updateSavingsGoal,
   deleteSavingsGoal,
+  pauseSavingsGoal as apiPause,
+  resumeSavingsGoal as apiResume,
 } from '../api/savings'
 import type { SavingsGoal, ApiSavingsGoal } from '../types'
 
@@ -17,6 +19,7 @@ function toSavingsGoal(g: ApiSavingsGoal): SavingsGoal {
     icon: g.icon ?? undefined,
     color: g.color ?? undefined,
     note: g.note ?? undefined,
+    paused: g.paused ?? false,
   }
 }
 
@@ -65,5 +68,15 @@ export function useSavings() {
     await load()
   }, [load])
 
-  return { goals, addGoal, updateGoal, deleteGoal, reload: load }
+  const pauseGoal = useCallback(async (id: string): Promise<void> => {
+    await apiPause(id)
+    await load()
+  }, [load])
+
+  const resumeGoal = useCallback(async (id: string): Promise<void> => {
+    await apiResume(id)
+    await load()
+  }, [load])
+
+  return { goals, addGoal, updateGoal, deleteGoal, pauseGoal, resumeGoal, reload: load }
 }

@@ -600,6 +600,9 @@ export const cs: Translations = {
     latestDeposits: 'Poslední vklady',
     noDeposits: 'Zatím žádné vklady',
     complete: '% splněno',
+    pauseBtn: 'Pozastavit',
+    resumeBtn: 'Obnovit',
+    pausedBadge: 'POZASTAVENO',
   },
   notifications: {
     title: 'Oznámení',

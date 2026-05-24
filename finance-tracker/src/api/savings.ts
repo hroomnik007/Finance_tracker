@@ -32,3 +32,13 @@ export async function updateSavingsGoal(
 export async function deleteSavingsGoal(id: string): Promise<void> {
   await apiClient.delete(`/api/savings/${id}`)
 }
+
+export async function pauseSavingsGoal(id: string): Promise<{ data: ApiSavingsGoal }> {
+  const { data } = await apiClient.patch(`/api/savings/${id}/pause`)
+  return data as { data: ApiSavingsGoal }
+}
+
+export async function resumeSavingsGoal(id: string): Promise<{ data: ApiSavingsGoal }> {
+  const { data } = await apiClient.patch(`/api/savings/${id}/resume`)
+  return data as { data: ApiSavingsGoal }
+}

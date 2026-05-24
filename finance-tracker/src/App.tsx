@@ -72,7 +72,7 @@ export type Page =
 const VALID_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'categories', 'settings', 'household', 'savings']
 
 function getPageFromHash(): Page {
-  const hash = window.location.hash.slice(1) as Page
+  const hash = window.location.hash.slice(1).split('?')[0] as Page
   return VALID_PAGES.includes(hash) ? hash : 'dashboard'
 }
 

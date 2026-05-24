@@ -600,6 +600,9 @@ export const en: Translations = {
     latestDeposits: 'Latest deposits',
     noDeposits: 'No deposits yet',
     complete: '% complete',
+    pauseBtn: 'Pause',
+    resumeBtn: 'Resume',
+    pausedBadge: 'PAUSED',
   },
   notifications: {
     title: 'Notifications',

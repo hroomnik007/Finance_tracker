@@ -47,7 +47,7 @@ function daysUntil(deadline: string): number {
 }
 
 export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
-  const { goals, addGoal, updateGoal, deleteGoal } = useSavings()
+  const { goals, addGoal, updateGoal, deleteGoal, pauseGoal, resumeGoal } = useSavings()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
 
@@ -66,6 +66,18 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   useEffect(() => {
     if (openAddTrigger) openAdd()
   }, [openAddTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (goals.length === 0) return
+    const params = window.location.hash.split('?')[1] ?? ''
+    const id = new URLSearchParams(params).get('id')
+    if (!id) return
+    const goal = goals.find(g => g.id === id)
+    if (goal && view === 'list') {
+      setSelectedGoal(goal)
+      setView('detail')
+    }
+  }, [goals]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0)
   const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0)
@@ -95,6 +107,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   function openDetail(goal: SavingsGoal) {
     setSelectedGoal(goal)
     setView('detail')
+    if (goal.id) window.location.hash = `sporenie?id=${goal.id}`
   }
 
   async function handleDeposit(amount: number) {
@@ -127,6 +140,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   function closeDetail() {
     setSelectedGoal(null)
     setView('list')
+    window.location.hash = 'sporenie'
   }
 
   const handleSave = useCallback(async () => {
@@ -162,6 +176,18 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     if (!window.confirm(t.savings.deleteConfirm)) return
     await deleteGoal(goal.id)
   }, [deleteGoal, t.savings.deleteConfirm])
+
+  const handlePause = useCallback(async () => {
+    if (!selectedGoal?.id) return
+    await pauseGoal(selectedGoal.id)
+    setSelectedGoal(prev => prev ? { ...prev, paused: true } : null)
+  }, [selectedGoal, pauseGoal])
+
+  const handleResume = useCallback(async () => {
+    if (!selectedGoal?.id) return
+    await resumeGoal(selectedGoal.id)
+    setSelectedGoal(prev => prev ? { ...prev, paused: false } : null)
+  }, [selectedGoal, resumeGoal])
 
   const form = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 0 8px' }}>
@@ -386,6 +412,8 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
         onClose={closeDetail}
         onEdit={() => { if (selectedGoal) openEdit(selectedGoal) }}
         onDeposit={handleDeposit}
+        onPause={handlePause}
+        onResume={handleResume}
         formatAmount={formatAmount}
       />
 
@@ -406,7 +434,7 @@ function GoalCard({
 }: {
   goal: SavingsGoal
   formatAmount: (n: number) => string
-  t: { of: string; completed: string; daysLeft: string; overdue: string; remaining: string }
+  t: { of: string; completed: string; daysLeft: string; overdue: string; remaining: string; pausedBadge: string }
   onClick: () => void
   onEdit: () => void
   onDelete: () => void
@@ -457,7 +485,12 @@ function GoalCard({
           {goal.icon ?? '🎯'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+            {goal.paused && (
+              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
+            )}
+          </div>
           {isCompleted ? (
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
           ) : deadlineBadge}

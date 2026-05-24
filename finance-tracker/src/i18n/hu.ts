@@ -600,6 +600,9 @@ export const hu: Translations = {
     latestDeposits: 'Legutóbbi befizetések',
     noDeposits: 'Még nincs befizetés',
     complete: '% teljesítve',
+    pauseBtn: 'Szüneteltetés',
+    resumeBtn: 'Folytatás',
+    pausedBadge: 'SZÜNETELTETVE',
   },
   notifications: {
     title: 'Értesítések',
