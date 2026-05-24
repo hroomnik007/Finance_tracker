@@ -108,7 +108,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   , [categories, variableExpenses, fixedExpenses])
 
   const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
-  const legendItems = showAllPie ? sortedPieData : sortedPieData.slice(0, 5)
   const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
 
   useEffect(() => {
@@ -405,11 +404,11 @@ const upcomingFixed = useMemo(() => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Legend */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, justifyContent: 'center' }}>
-            {legendItems.map((item, i) => {
+            {sortedPieData.map((item, i) => {
               const itemPieIdx = pieData.findIndex(d => d.name === item.name)
               const isSelected = clickedIndex !== null && clickedIndex === itemPieIdx
               const isHighlighted = pieDisplayIndex !== null && pieDisplayIndex === itemPieIdx
-              return (
+              const row = (
                 <div
                   key={i}
                   style={{
@@ -437,9 +436,16 @@ const upcomingFixed = useMemo(() => {
                   <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
                 </div>
               )
+              if (i < 5) return row
+              return (
+                <div key={i} className={!showAllPie ? 'hidden md:block' : undefined}>
+                  {row}
+                </div>
+              )
             })}
             {remainingPieCount > 0 && (
               <button
+                className="md:hidden"
                 onClick={() => setShowAllPie(p => !p)}
                 style={{ fontSize: 12, color: 'var(--violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}
               >
@@ -801,12 +807,12 @@ const upcomingFixed = useMemo(() => {
             padding: '16px 12px',
             overflowX: 'hidden',
             overflowY: 'auto',
-            maxHeight: 'calc(100vh - 120px)',
+            height: 'calc(100vh - 64px)',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
             position: 'sticky',
-            top: 20,
+            top: 0,
             alignSelf: 'flex-start',
           }}
         >
