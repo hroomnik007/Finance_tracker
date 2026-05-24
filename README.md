@@ -36,7 +36,7 @@
 |---|---|
 | URL | https://finvu.pedani.eu |
 | Email | `demo@finvu.sk` |
-| Heslo | `demo` (zobrazené po kliknutí na tlačidlo Demo) |
+| Heslo | `demo123` |
 
 Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie, domácnosť s členmi.
 
