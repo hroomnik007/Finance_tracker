@@ -616,6 +616,7 @@ export const sk = {
     reminderSub: 'Keď splnenie pod 70%',
     latestDeposits: 'Posledné vklady',
     noDeposits: 'Zatiaľ žiadne vklady',
+    selectedGoal: 'Vybraný cieľ',
     complete: '% splnené',
     pauseBtn: 'Pozastaviť',
     resumeBtn: 'Obnoviť',

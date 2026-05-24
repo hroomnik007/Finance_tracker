@@ -618,6 +618,7 @@ export const hu: Translations = {
     reminderSub: 'Ha a teljesítés 70% alatt van',
     latestDeposits: 'Legutóbbi befizetések',
     noDeposits: 'Még nincs befizetés',
+    selectedGoal: 'Kiválasztott cél',
     complete: '% teljesítve',
     pauseBtn: 'Szüneteltetés',
     resumeBtn: 'Folytatás',

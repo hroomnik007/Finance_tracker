@@ -618,6 +618,7 @@ export const cs: Translations = {
     reminderSub: 'Když splnění pod 70 %',
     latestDeposits: 'Poslední vklady',
     noDeposits: 'Zatím žádné vklady',
+    selectedGoal: 'Vybraný cíl',
     complete: '% splněno',
     pauseBtn: 'Pozastavit',
     resumeBtn: 'Obnovit',

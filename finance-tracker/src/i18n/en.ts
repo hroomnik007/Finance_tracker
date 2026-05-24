@@ -618,6 +618,7 @@ export const en: Translations = {
     reminderSub: 'When completion below 70%',
     latestDeposits: 'Latest deposits',
     noDeposits: 'No deposits yet',
+    selectedGoal: 'Selected goal',
     complete: '% complete',
     pauseBtn: 'Pause',
     resumeBtn: 'Resume',

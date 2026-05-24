@@ -618,6 +618,7 @@ export const pl: Translations = {
     reminderSub: 'Gdy realizacja poniżej 70%',
     latestDeposits: 'Ostatnie wpłaty',
     noDeposits: 'Brak wpłat',
+    selectedGoal: 'Wybrany cel',
     complete: '% ukończone',
     pauseBtn: 'Wstrzymaj',
     resumeBtn: 'Wznów',

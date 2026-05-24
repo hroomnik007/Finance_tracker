@@ -519,8 +519,8 @@ function GoalCard({
   const barColor = isCompleted ? 'var(--green)' : accent
   const monthly = goalMonthly(goal)
 
-  const pctRounded = Math.round(pct * 10) / 10
-  const pctLabel = goal.savedAmount > 0 && pctRounded === 0 ? '< 1%' : `${pctRounded}%`
+  const pctFixed = pct.toFixed(1)
+  const pctLabel = pct === 0 ? '0%' : pctFixed === '0.0' ? '< 0.1%' : pctFixed + '%'
   const ringSize = desktop ? 56 : 52
 
   let deadlineEl: React.ReactNode = null
