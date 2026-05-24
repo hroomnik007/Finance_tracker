@@ -169,7 +169,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
   useEffect(() => {
     const months = getLast12Months(t.monthsShort)
-    Promise.all(months.map(m => getTransactions({ type: 'income', month: m.key, limit: 500 })))
+    Promise.all(months.map(m => getTransactions({ type: 'income', month: m.key, limit: 200 })))
       .then(results => {
         const allData = results.flatMap(r => r.data)
         setYearlyData(months.map((m, i) => ({
