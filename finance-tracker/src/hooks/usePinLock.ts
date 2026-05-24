@@ -139,6 +139,15 @@ export function usePinLock() {
   // Sync lockMethod with server on user load — resolves cross-device desync
   useEffect(() => {
     if (!user) return
+
+    // User just authenticated (e.g. PIN login from Login page).
+    // If the session flag is already set but locked state is still true
+    // (set at mount before login completed), unlock now so PinLock never shows.
+    if (sessionStorage.getItem(PIN_SESSION_KEY) === 'true' && lockedRef.current) {
+      setLocked(false)
+      resetTimer()
+    }
+
     const serverHasPin = !!user.has_pin
     const current = lockMethodRef.current
     if (!serverHasPin && current === 'pin') {
