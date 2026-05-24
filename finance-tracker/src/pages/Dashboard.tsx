@@ -661,6 +661,8 @@ const upcomingFixed = useMemo(() => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {savingsGoals.slice(0, 3).map(goal => {
               const pct = goal.targetAmount > 0 ? Math.min((goal.savedAmount / goal.targetAmount) * 100, 100) : 0
+              const pctFixed = pct.toFixed(1)
+              const pctLabel = pct === 0 ? '0%' : pctFixed === '0.0' ? '< 0.1%' : pctFixed + '%'
               return (
                 <div key={goal.id}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -668,7 +670,7 @@ const upcomingFixed = useMemo(() => {
                       {goal.icon && <span>{goal.icon}</span>}
                       {goal.name}
                     </span>
-                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: 'var(--text3)', flexShrink: 0, marginLeft: 8 }}>{Math.round(pct)}%</span>
+                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: 'var(--text3)', flexShrink: 0, marginLeft: 8 }}>{pctLabel}</span>
                   </div>
                   <div style={{ height: 6, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: goal.color ?? 'var(--violet)', transition: 'width 0.4s' }} />
