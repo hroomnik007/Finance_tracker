@@ -230,29 +230,23 @@ export function IncomePage({ month, year }: IncomePageProps) {
             </div>
           </div>
 
-          {/* Recurring vs. one-time breakdown */}
-          {totalAmount > 0 && (
+          {/* Ročný príjem + Ročná prognóza */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
-              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>{t.income.incomeBreakdown}</div>
-              {([
-                { label: t.income.recurringLabel, amount: recurringTotal, color: '#60a5fa' },
-                { label: t.income.oneTimeLabel, amount: oneTimeTotal, color: 'var(--green)' },
-              ] as const).map(bar => (
-                <div key={bar.label} style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text2)' }}>{bar.label}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", fontWeight: 600, color: 'var(--text)' }}>{formatAmount(bar.amount)}</span>
-                      <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", minWidth: 28, textAlign: 'right' }}>{Math.round((bar.amount / totalAmount) * 100)}%</span>
-                    </div>
-                  </div>
-                  <div style={{ height: 6, borderRadius: 99, background: 'var(--bg3)' }}>
-                    <div style={{ height: '100%', borderRadius: 99, background: bar.color, width: `${(bar.amount / totalAmount) * 100}%`, transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-              ))}
+              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>📅 {t.income.yearlyIncomeTitle} {year}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
             </div>
-          )}
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
+              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>📈 {t.income.annualForecast}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--violet)', marginBottom: 4 }}>{formatAmount(yearlyProjection)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)' }}>
+                {recurringIncomes.length > 0
+                  ? t.income.recurringTimesMonths.replace('{n}', String(recurringIncomes.length))
+                  : t.income.noRecurring}
+              </div>
+            </div>
+          </div>
 
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
@@ -392,50 +386,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
           )}
         </div>
 
-        {/* Right panel — desktop only */}
-        <div
-          className="hidden lg:flex"
-          style={{ width: 280, flexShrink: 0, borderLeft: '1px solid var(--border)', background: 'var(--bg2)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20 }}
-        >
-          {rpSection(`📅 ${t.income.yearlyIncomeTitle} ${year}`, (
-            <div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
-            </div>
-          ))}
-
-          {rpSection(`🔁 ${t.income.recurringCard}`, (
-            <div>
-              {recurringIncomes.length === 0 ? (
-                <p style={{ fontSize: 12, color: 'var(--text3)' }}>{t.income.noRecurring}</p>
-              ) : (
-                <>
-                  {recurringIncomes.map(inc => (
-                    <div key={inc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => openEdit(inc)}>
-                      <span style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{inc.label}</span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, color: 'var(--green)', flexShrink: 0 }}>{formatAmount(inc.amount)}</span>
-                    </div>
-                  ))}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: '8px 10px', background: 'rgba(139,92,246,0.06)', borderRadius: 10 }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{t.income.monthly}</span>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: 'var(--green)' }}>{formatAmount(recurringMonthlyTotal)}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-
-          {rpSection(`📈 ${t.income.annualForecast}`, (
-            <div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--violet)', marginBottom: 4 }}>{formatAmount(yearlyProjection)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                {recurringIncomes.length > 0
-                  ? t.income.recurringTimesMonths.replace('{n}', String(recurringIncomes.length))
-                  : t.income.noRecurring}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* FAB — mobile only */}
