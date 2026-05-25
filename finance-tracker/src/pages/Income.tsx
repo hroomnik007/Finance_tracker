@@ -138,9 +138,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
   }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
-    const now = new Date()
-    const lastMonth = year === now.getFullYear() ? now.getMonth() + 1 : 12
-    const months = Array.from({ length: lastMonth }, (_, i) =>
+    const months = Array.from({ length: 12 }, (_, i) =>
       `${year}-${String(i + 1).padStart(2, '0')}`
     )
     Promise.all(months.map(m => getTransactions({ type: 'income', month: m, limit: 200 })))
@@ -180,9 +178,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const recurringIncomes = incomes.filter(i => i.recurring)
 
 
-
-  const recurringMonthlyTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
-  const yearlyProjection = recurringMonthlyTotal * 12
 
   const recurringTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const oneTimeTotal = totalAmount - recurringTotal
@@ -230,27 +225,16 @@ export function IncomePage({ month, year }: IncomePageProps) {
             </div>
           </div>
 
-          {/* Ročný príjem + Ročná prognóza */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>📅 {t.income.yearlyIncomeTitle} {year}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
-            </div>
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>📈 {t.income.annualForecast}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--violet)', marginBottom: 4 }}>{formatAmount(yearlyProjection)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                {recurringIncomes.length > 0
-                  ? t.income.recurringTimesMonths.replace('{n}', String(recurringIncomes.length))
-                  : t.income.noRecurring}
-              </div>
-            </div>
+          {/* Ročný príjem */}
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
+            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>📅 {t.income.yearlyIncomeTitle} {year}</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
           </div>
 
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '4px 0 8px' }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '12px 0' }}>
               <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
                 👥 Všetci
               </button>
