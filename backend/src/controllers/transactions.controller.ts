@@ -108,6 +108,7 @@ export async function listTransactions(req: AuthRequest, res: Response): Promise
         categoryName: categories.name,
         categoryColor: categories.color,
         categoryIcon: categories.icon,
+        created_by: transactions.createdBy,
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
@@ -441,6 +442,7 @@ async function fetchWithCategory(id: string) {
       categoryName: categories.name,
       categoryColor: categories.color,
       categoryIcon: categories.icon,
+      created_by: transactions.createdBy,
     })
     .from(transactions)
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
