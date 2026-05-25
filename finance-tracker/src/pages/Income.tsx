@@ -106,7 +106,7 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
 
 const pillStyle = (active: boolean): React.CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '5px 14px', borderRadius: 50, fontSize: 13,
+  padding: '6px 14px', borderRadius: 50, fontSize: 13,
   fontWeight: active ? 600 : 500, cursor: 'pointer',
   border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
   background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
@@ -234,7 +234,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '12px 0' }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
               <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
                 👥 Všetci
               </button>
