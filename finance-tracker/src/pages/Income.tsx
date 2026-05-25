@@ -234,16 +234,17 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
           {/* Member filter pills */}
           {householdEnabled && members.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-              <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
-                👥 Všetci
-              </button>
-              {members.map(m => (
-                <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
-                  <MemberAvatar userId={m.id} userName={m.name} size={16} />
-                  {m.name}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
+                  👥 Všetci
                 </button>
-              ))}
+                {members.map(m => (
+                  <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
+                    <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
