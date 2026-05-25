@@ -37,3 +37,7 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function deleteAllCategories(): Promise<void> {
   await apiClient.delete('/api/categories')
 }
+
+export async function reorderCategories(items: { id: string; order: number }[]): Promise<void> {
+  await apiClient.patch('/api/categories/reorder', { items })
+}

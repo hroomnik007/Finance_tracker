@@ -1,5 +1,24 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Plus, Pencil, Trash2, Tag, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { BottomSheet } from '../components/BottomSheet'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
@@ -8,6 +27,7 @@ import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useFormatters } from '../hooks/useFormatters'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useTranslation } from '../i18n'
+import { reorderCategories as reorderCategoriesApi } from '../api/categories'
 import type { Category } from '../types'
 
 const PRESET_COLORS = [
@@ -22,15 +42,150 @@ const PRESET_ICONS = [
   '☕', '🎬', '🛻', '🏥', '🎓', '🌿', '🧴', '💰',
 ]
 
+type BudgetStatus = { categoryId: string; spent: number; percentage: number; limit: number }
+
+interface CardProps {
+  cat: Category
+  status: BudgetStatus | undefined
+  formatAmount: (n: number) => string
+  t: ReturnType<typeof useTranslation>['t']
+  onEdit: (cat: Category) => void
+  onDelete: (id: string) => void
+}
+
+function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
+  const pct = status ? Math.min(status.percentage, 100) : 0
+  const rawPct = status?.percentage ?? 0
+  const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      onClick={() => onEdit(cat)}
+      style={{
+        background: 'var(--bg2)',
+        border: '1px solid var(--border)',
+        borderRadius: 16, padding: 16,
+        cursor: isDragging ? 'grabbing' : 'pointer',
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+        boxShadow: isDragging ? '0 0 0 2px rgba(139,92,246,0.2)' : 'var(--card-shadow)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+          {cat.icon}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+          {cat.budgetLimit != null
+            ? <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
+            : cat.autoLimit
+              ? <div style={{ fontSize: 12, color: 'var(--violet)', marginTop: 2 }}>⚡ {t.expenses.categories.autoLimit}</div>
+              : <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.noLimit}</div>
+          }
+        </div>
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          <div
+            {...listeners}
+            style={{ color: 'var(--text3)', cursor: isDragging ? 'grabbing' : 'grab', display: 'flex', alignItems: 'center', padding: '0 2px' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <GripVertical size={14} />
+          </div>
+          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
+            <button onClick={() => onEdit(cat)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={13} /></button>
+            <button onClick={() => onDelete(cat.id!)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}><Trash2 size={13} /></button>
+          </div>
+        </div>
+      </div>
+      {cat.budgetLimit != null && (
+        <>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+            -{formatAmount(status?.spent ?? 0)}
+          </div>
+          <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 6 }}>
+            <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)' }}>
+            <span>{t.expenses.categories.spent}</span>
+            <span style={{ fontWeight: 600, color: barColor }}>{Math.round(status?.percentage ?? 0)}%</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function SortableListCard(props: CardProps) {
+  const { cat, status, formatAmount, onEdit, onDelete } = props
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
+  const pct = status ? Math.min(status.percentage, 100) : 0
+  const rawPct = status?.percentage ?? 0
+  const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      onClick={() => onEdit(cat)}
+      style={{
+        background: 'var(--bg2)',
+        border: '1px solid var(--border)',
+        borderRadius: 14, padding: '12px 16px',
+        cursor: isDragging ? 'grabbing' : 'pointer',
+        transform: CSS.Transform.toString(transform),
+        transition,
+        display: 'flex', alignItems: 'center', gap: 12,
+        opacity: isDragging ? 0.4 : 1,
+        boxShadow: isDragging ? '0 0 0 2px rgba(139,92,246,0.2)' : undefined,
+      }}
+    >
+      <div
+        {...listeners}
+        style={{ color: 'var(--text3)', cursor: isDragging ? 'grabbing' : 'grab', flexShrink: 0, display: 'flex' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <GripVertical size={15} />
+      </div>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+        {cat.budgetLimit != null && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>}
+      </div>
+      {cat.budgetLimit != null && status && (
+        <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+          </div>
+        </div>
+      )}
+      {cat.budgetLimit == null && status && status.spent > 0 && (
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(status.spent)}</span>
+      )}
+      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+        <button onClick={() => onEdit(cat)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={12} /></button>
+        <button onClick={() => onDelete(cat.id!)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}><Trash2 size={12} /></button>
+      </div>
+    </div>
+  )
+}
+
 export function CategoriesPage() {
-  const { categories, addCategory, updateCategory, deleteCategory } = useCategories()
+  const { categories, addCategory, updateCategory, deleteCategory, reload } = useCategories()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
   const now = new Date()
   const { variableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
   const { fixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
 
-  // Combine variable + paid fixed expenses for accurate budget tracking
   const allExpenses = useMemo(() => [
     ...variableExpenses,
     ...fixedExpenses
@@ -53,37 +208,50 @@ export function CategoriesPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [autoLimitWarning, setAutoLimitWarning] = useState(false)
 
-  const [orderedIds, setOrderedIds] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('category_order')
-      if (saved) return JSON.parse(saved) as string[]
-    } catch {}
-    return []
-  })
-  const [dragIdx, setDragIdx] = useState<number | null>(null)
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  // Local order for optimistic drag updates
+  const [localIds, setLocalIds] = useState<string[]>([])
+  const prevCatKey = useRef('')
+
+  useEffect(() => {
+    const key = categories.map(c => c.id).join(',')
+    if (key !== prevCatKey.current) {
+      prevCatKey.current = key
+      setLocalIds(categories.map(c => c.id!))
+    }
+  }, [categories])
 
   const sortedCategories = useMemo(() => {
-    if (orderedIds.length === 0) return categories
-    const ordered = orderedIds.flatMap(id => {
-      const cat = categories.find(c => c.id === id)
-      return cat ? [cat] : []
-    })
-    const remaining = categories.filter(c => !orderedIds.includes(c.id!))
-    return [...ordered, ...remaining]
-  }, [categories, orderedIds])
+    if (localIds.length === 0) return categories
+    const map = new Map(categories.map(c => [c.id!, c]))
+    return [
+      ...localIds.flatMap(id => { const c = map.get(id); return c ? [c] : [] }),
+      ...categories.filter(c => !localIds.includes(c.id!)),
+    ]
+  }, [categories, localIds])
 
-  function handleDragStart(idx: number) { setDragIdx(idx) }
-  function handleDragOver(e: React.DragEvent, idx: number) { e.preventDefault(); setDragOverIdx(idx) }
-  function handleDragEnd() { setDragIdx(null); setDragOverIdx(null) }
-  function handleDrop(idx: number) {
-    if (dragIdx === null || dragIdx === idx) { handleDragEnd(); return }
-    const newOrder = sortedCategories.map(c => c.id!)
-    const [moved] = newOrder.splice(dragIdx, 1)
-    newOrder.splice(idx, 0, moved)
-    setOrderedIds(newOrder)
-    localStorage.setItem('category_order', JSON.stringify(newOrder))
-    handleDragEnd()
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIdx = localIds.indexOf(String(active.id))
+    const newIdx = localIds.indexOf(String(over.id))
+    if (oldIdx === -1 || newIdx === -1) return
+
+    const newIds = arrayMove(localIds, oldIdx, newIdx)
+    setLocalIds(newIds)
+
+    try {
+      await reorderCategoriesApi(newIds.map((id, i) => ({ id, order: i })))
+      reload()
+    } catch {
+      reload()
+    }
   }
 
   const [name, setName] = useState('')
@@ -101,7 +269,6 @@ export function CategoriesPage() {
   function openEdit(cat: Category) {
     setEditing(cat); setName(cat.name); setColor(cat.color); setIcon(cat.icon)
     setBudgetLimit(cat.budgetLimit != null ? String(cat.budgetLimit) : ''); setCatType(cat.type)
-    // Auto-limit toggle only relevant when category has fixed expenses
     setAutoLimit(cat.hasFixedExpenses ? (cat.autoLimit ?? true) : false)
     setSheetOpen(true)
   }
@@ -164,10 +331,8 @@ export function CategoriesPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
-      {/* Content row */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
-        {/* Main scroll area */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {/* Hero wallet card */}
@@ -253,114 +418,33 @@ export function CategoriesPage() {
                 </div>
               </div>
 
-              {/* Desktop 2-column grid */}
+              {/* Desktop — dnd-kit sortable */}
               <div className="hidden lg:block">
-                <div style={{ display: view === 'grid' ? 'grid' : 'flex', gridTemplateColumns: view === 'grid' ? 'repeat(4, 1fr)' : undefined, flexDirection: view === 'list' ? 'column' : undefined, gap: 12 }}>
-                  {sortedCategories.map((cat, i) => {
-                    const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                    const pct = status ? Math.min(status.percentage, 100) : 0
-                    const rawPct = status?.percentage ?? 0
-                    const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
-                    const isDragging = dragIdx === i
-                    const isDragOver = dragOverIdx === i && dragIdx !== i
-                    const dragProps = {
-                      draggable: true,
-                      onDragStart: () => handleDragStart(i),
-                      onDragOver: (e: React.DragEvent) => handleDragOver(e, i),
-                      onDrop: () => handleDrop(i),
-                      onDragEnd: handleDragEnd,
-                    }
-                    if (view === 'list') {
-                      return (
-                        <div key={cat.id} {...dragProps} onClick={() => openEdit(cat)} style={{
-                          background: 'var(--bg2)',
-                          border: `1px solid ${isDragOver ? 'var(--violet)' : 'var(--border)'}`,
-                          borderRadius: 14, padding: '12px 16px', cursor: isDragging ? 'grabbing' : 'pointer',
-                          transition: 'border-color 0.15s, opacity 0.15s', display: 'flex', alignItems: 'center', gap: 12,
-                          opacity: isDragging ? 0.4 : 1,
-                          boxShadow: isDragOver ? '0 0 0 2px rgba(139,92,246,0.2)' : undefined,
-                        }}>
-                          <div style={{ color: 'var(--text3)', cursor: 'grab', flexShrink: 0, display: 'flex' }}><GripVertical size={15} /></div>
-                          <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
-                            {cat.budgetLimit != null && (
-                              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
-                            )}
-                          </div>
-                          {cat.budgetLimit != null && status && (
-                            <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                              <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
-                              </div>
-                            </div>
-                          )}
-                          {cat.budgetLimit == null && status && status.spent > 0 && (
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(status.spent)}</span>
-                          )}
-                          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                            <button onClick={() => openEdit(cat)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={12} /></button>
-                            <button onClick={() => setDeleteId(cat.id!)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}><Trash2 size={12} /></button>
-                          </div>
-                        </div>
-                      )
-                    }
-                    return (
-                      <div key={cat.id} {...dragProps} onClick={() => openEdit(cat)} style={{
-                        background: 'var(--bg2)',
-                        border: `1px solid ${isDragOver ? 'var(--violet)' : 'var(--border)'}`,
-                        borderRadius: 16, padding: 16,
-                        cursor: isDragging ? 'grabbing' : 'pointer',
-                        transition: 'border-color 0.15s, opacity 0.15s',
-                        opacity: isDragging ? 0.4 : 1,
-                        boxShadow: isDragOver ? '0 0 0 2px rgba(139,92,246,0.2)' : 'var(--card-shadow)',
-                      }}>
-                        {/* Icon + name row */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                          <div style={{ width: 44, height: 44, borderRadius: 12, background: cat.color + '25',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-                            {cat.icon}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
-                            {cat.budgetLimit != null
-                              ? <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
-                              : cat.autoLimit
-                                ? <div style={{ fontSize: 12, color: 'var(--violet)', marginTop: 2 }}>⚡ {t.expenses.categories.autoLimit}</div>
-                                : <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.expenses.categories.noLimit}</div>
-                            }
-                          </div>
-                          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                            <div style={{ color: 'var(--text3)', cursor: 'grab', display: 'flex', alignItems: 'center', padding: '0 2px' }} onClick={e => e.stopPropagation()}><GripVertical size={14} /></div>
-                            <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
-                              <button onClick={() => openEdit(cat)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={13} /></button>
-                              <button onClick={() => setDeleteId(cat.id!)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}><Trash2 size={13} /></button>
-                            </div>
-                          </div>
-                        </div>
-                        {/* Spent amount + progress bar */}
-                        {cat.budgetLimit != null && (
-                          <>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
-                              -{formatAmount(status?.spent ?? 0)}
-                            </div>
-                            <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 6 }}>
-                              <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text3)' }}>
-                              <span>{t.expenses.categories.spent}</span>
-                              <span style={{ fontWeight: 600, color: barColor }}>{Math.round(status?.percentage ?? 0)}%</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={sortedCategories.map(c => c.id!)}
+                    strategy={view === 'list' ? verticalListSortingStrategy : rectSortingStrategy}
+                  >
+                    <div style={{
+                      display: view === 'grid' ? 'grid' : 'flex',
+                      gridTemplateColumns: view === 'grid' ? 'repeat(4, 1fr)' : undefined,
+                      flexDirection: view === 'list' ? 'column' : undefined,
+                      gap: 12,
+                    }}>
+                      {sortedCategories.map(cat => {
+                        const status = budgetStatuses.find(b => b.categoryId === cat.id)
+                        if (view === 'list') {
+                          return <SortableListCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                        }
+                        return <SortableGridCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               </div>
 
               {/* Mobile list with swipe-to-delete */}

@@ -6,16 +6,18 @@ import {
   updateCategory,
   deleteCategory,
   deleteAllCategories,
+  reorderCategories,
 } from "../controllers/categories.controller";
 
 const router = Router();
 
 router.use(authenticateToken);
 
-router.get("/",       listCategories);
-router.post("/",      createCategory);
-router.delete("/",    deleteAllCategories);
-router.put("/:id",    updateCategory);
-router.delete("/:id", deleteCategory);
+router.get("/",          listCategories);
+router.post("/",         createCategory);
+router.patch("/reorder", reorderCategories);
+router.delete("/",       deleteAllCategories);
+router.put("/:id",       updateCategory);
+router.delete("/:id",    deleteCategory);
 
 export default router;

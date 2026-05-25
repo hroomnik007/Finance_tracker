@@ -91,6 +91,7 @@ export const categories = pgTable(
     isDefault: boolean("is_default").default(false).notNull(),
     budgetLimit: numeric("budget_limit"),
     autoLimit: boolean("auto_limit").default(true).notNull(),
+    sortOrder: integer("sort_order"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [

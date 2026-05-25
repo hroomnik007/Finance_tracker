@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql, asc } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import { categories, transactions, users, householdMembers } from "../db/schema";
@@ -83,13 +83,13 @@ export async function listCategories(req: AuthRequest, res: Response): Promise<v
       .select()
       .from(categories)
       .where(memberIds.length > 0 ? inArray(categories.userId, memberIds) : eq(categories.userId, req.userId!))
-      .orderBy(categories.type, categories.name);
+      .orderBy(sql`sort_order NULLS LAST`, asc(categories.type), asc(categories.name));
   } else {
     rows = await db
       .select()
       .from(categories)
       .where(eq(categories.userId, req.userId!))
-      .orderBy(categories.type, categories.name);
+      .orderBy(sql`sort_order NULLS LAST`, asc(categories.type), asc(categories.name));
   }
 
   // Determine which categories have at least one fixed expense transaction
@@ -199,6 +199,37 @@ export async function updateCategory(req: AuthRequest, res: Response): Promise<v
 export async function deleteAllCategories(req: AuthRequest, res: Response): Promise<void> {
   // FK onDelete:'set null' handles transactions automatically
   await db.delete(categories).where(eq(categories.userId, req.userId!));
+  res.json({ success: true });
+}
+
+const reorderSchema = z.object({
+  items: z.array(z.object({ id: z.string().uuid(), order: z.number().int().min(0) })).min(1),
+});
+
+export async function reorderCategories(req: AuthRequest, res: Response): Promise<void> {
+  const body = reorderSchema.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Validation error" });
+    return;
+  }
+
+  const ids = body.data.items.map((i) => i.id);
+  const owned = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(and(inArray(categories.id, ids), eq(categories.userId, req.userId!)));
+
+  if (owned.length !== ids.length) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  await Promise.all(
+    body.data.items.map(({ id, order }) =>
+      db.update(categories).set({ sortOrder: order }).where(eq(categories.id, id))
+    )
+  );
+
   res.json({ success: true });
 }
 
