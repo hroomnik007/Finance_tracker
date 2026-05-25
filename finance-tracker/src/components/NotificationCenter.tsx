@@ -194,7 +194,9 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     })
   }
 
-  function clearAll() {
+  async function clearAll() {
+    await Promise.all(notifications.map(n => dismissNotifApi(n.id).catch(() => {})))
+    saveReadIdsLocal([])
     setNotifications([])
   }
 
