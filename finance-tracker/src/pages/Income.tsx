@@ -248,29 +248,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
             </div>
           )}
 
-          {/* Mobile: recurring section */}
-          {recurringIncomes.length > 0 && <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }} className="lg:hidden">
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)' }}>{t.income.recurringSection}</span>
-              <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{recurringIncomes.length}×</span>
-            </div>
-            {recurringIncomes.length === 0 ? (
-              <p style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text3)' }}>{t.income.noRecurring}</p>
-            ) : (
-              recurringIncomes.map(inc => (
-                <div key={inc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => openEdit(inc)}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(96,165,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Repeat size={14} color="#60a5fa" />
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{inc.label}</span>
-                  </div>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>{formatAmount(inc.amount)}</span>
-                </div>
-              ))
-            )}
-          </div>}
-
           {/* List / empty state */}
           {sorted.length === 0 ? (
             <div className="card">
