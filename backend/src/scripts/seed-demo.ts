@@ -14,6 +14,7 @@ import {
 const DEMO_EMAIL  = "demo@finvu.sk";
 const DEMO1_EMAIL = "lucia@finvu.sk";
 const DEMO2_EMAIL = "tomas@finvu.sk";
+const DEMO3_EMAIL = "adam@finvu.sk";
 const DEMO_PASSWORD = "demo123";
 
 function d(year: number, month: number, day: number): string {
@@ -91,9 +92,10 @@ async function main() {
 
   // ── 1. Create/get users ──────────────────────────────────────────────────
   const peter = await getOrCreateUser(DEMO_EMAIL,  "Demo");
-  const lucia = await getOrCreateUser(DEMO1_EMAIL, "Demo1");
-  const tomas = await getOrCreateUser(DEMO2_EMAIL, "Demo2");
-  console.log(`Users: Demo(${peter.id.slice(0,8)}…) Demo1(${lucia.id.slice(0,8)}…) Demo2(${tomas.id.slice(0,8)}…)`);
+  const lucia = await getOrCreateUser(DEMO1_EMAIL, "Demo 1");
+  const tomas = await getOrCreateUser(DEMO2_EMAIL, "Demo 2");
+  const adam  = await getOrCreateUser(DEMO3_EMAIL, "Demo 3");
+  console.log(`Users: Demo(${peter.id.slice(0,8)}…) Demo 1(${lucia.id.slice(0,8)}…) Demo 2(${tomas.id.slice(0,8)}…) Demo 3(${adam.id.slice(0,8)}…)`);
 
   // ── 2. Clean slate for demo user ────────────────────────────────────────
   await db.delete(notificationsDismissed).where(eq(notificationsDismissed.userId, peter.id));
@@ -111,7 +113,7 @@ async function main() {
     await db.delete(households).where(eq(households.id, hid));
     await db.update(users)
       .set({ householdId: null, householdEnabled: false })
-      .where(inArray(users.id, [peter.id, lucia.id, tomas.id]));
+      .where(inArray(users.id, [peter.id, lucia.id, tomas.id, adam.id]));
     console.log(`Deleted old household ${hid}.`);
   }
 
@@ -149,13 +151,14 @@ async function main() {
     { householdId: household.id, userId: peter.id },
     { householdId: household.id, userId: lucia.id },
     { householdId: household.id, userId: tomas.id },
+    { householdId: household.id, userId: adam.id  },
   ]);
   await db.update(users)
     .set({ householdId: household.id, householdEnabled: true, savingsEnabled: true, onboardingComplete: true })
     .where(eq(users.id, peter.id));
   await db.update(users)
     .set({ householdId: household.id, householdEnabled: true })
-    .where(inArray(users.id, [lucia.id, tomas.id]));
+    .where(inArray(users.id, [lucia.id, tomas.id, adam.id]));
   console.log(`Created household "${household.name}" (id=${household.id}).`);
 
   const hid = household.id;
@@ -185,64 +188,92 @@ async function main() {
   console.log(`Built ${fixedRows.length} fixed expense rows.`);
 
   // ── 7. Variable expenses ─────────────────────────────────────────────────
-  const P = peter.id, L = lucia.id, T = tomas.id;
+  const P = peter.id, L = lucia.id, T = tomas.id, A = adam.id;
 
-  // March — 15 transactions
+  // March — 20 transactions (5 per member)
   const march: TxRow[] = [
+    // Demo (P) — 5
     tx("Potraviny",   "expense", "42.30", "Lidl",               d(2026,3,3),  false, P),
     tx("Tankovanie",  "expense", "58.00", "Shell",              d(2026,3,5),  false, P),
+    tx("Potraviny",   "expense", "65.20", "Kaufland",           d(2026,3,10), false, P),
+    tx("Reštaurácie", "expense", "35.00", "Reštaurácia U Zlatého", d(2026,3,14), false, P),
+    tx("Zábava",      "expense", "18.00", "Kino Palace",        d(2026,3,26), false, P),
+    // Demo 1 (L) — 5
     tx("Potraviny",   "expense", "31.50", "Billa",              d(2026,3,6),  false, L),
     tx("Drogéria",    "expense", "24.80", "dm",                 d(2026,3,8),  false, L),
-    tx("Potraviny",   "expense", "65.20", "Kaufland",           d(2026,3,10), false, P),
-    tx("Káva",        "expense", "8.60",  "Caffe Nero",         d(2026,3,12), false, P),
-    tx("Reštaurácie", "expense", "35.00", "Reštaurácia U Zlatého", d(2026,3,14), false, P),
     tx("Tankovanie",  "expense", "52.40", "OMV",                d(2026,3,16), false, L),
     tx("Zdravie",     "expense", "28.60", "Lekáreň Dr.Max",     d(2026,3,18), false, L),
-    tx("Potraviny",   "expense", "78.40", "Tesco",              d(2026,3,20), false, P),
     tx("Oblečenie",   "expense", "79.00", "Zara",               d(2026,3,22), false, L),
-    tx("Oblečenie",   "expense", "45.00", "Deichmann",          d(2026,3,24), false, T),
-    tx("Zábava",      "expense", "18.00", "Kino Palace",        d(2026,3,26), false, P),
-    tx("Drogéria",    "expense", "19.40", "Rossmann",           d(2026,3,28), false, L),
-    tx("Reštaurácie", "expense", "42.50", "Sushiville",         d(2026,3,29), false, T),
+    // Demo 2 (T) — 5
+    tx("Potraviny",   "expense", "45.80", "Tesco",              d(2026,3,4),  false, T),
+    tx("Oblečenie",   "expense", "45.00", "Deichmann",          d(2026,3,11), false, T),
+    tx("Reštaurácie", "expense", "42.50", "Sushiville",         d(2026,3,17), false, T),
+    tx("Drogéria",    "expense", "19.40", "Rossmann",           d(2026,3,23), false, T),
+    tx("Zábava",      "expense", "22.00", "Escape Room",        d(2026,3,29), false, T),
+    // Demo 3 (A) — 5
+    tx("Potraviny",   "expense", "38.90", "Billa",              d(2026,3,7),  false, A),
+    tx("Tankovanie",  "expense", "54.60", "BP",                 d(2026,3,12), false, A),
+    tx("Reštaurácie", "expense", "29.50", "Pizzeria Marco",     d(2026,3,19), false, A),
+    tx("Káva",        "expense", "9.40",  "Caffe Nero",         d(2026,3,24), false, A),
+    tx("Zdravie",     "expense", "21.80", "Lekáreň Benu",       d(2026,3,27), false, A),
   ];
 
-  // April — 17 transactions
+  // April — 22 transactions (~5-6 per member)
   const april: TxRow[] = [
+    // Demo (P) — 6
     tx("Potraviny",   "expense", "55.80", "Lidl",               d(2026,4,2),  false, P),
     tx("Tankovanie",  "expense", "62.00", "Shell",              d(2026,4,3),  false, P),
-    tx("Potraviny",   "expense", "47.30", "Kaufland",           d(2026,4,5),  false, L),
-    tx("Drogéria",    "expense", "31.20", "dm",                 d(2026,4,7),  false, L),
-    tx("Potraviny",   "expense", "38.60", "Billa",              d(2026,4,9),  false, T),
-    tx("Káva",        "expense", "11.40", "Starbucks",          d(2026,4,11), false, L),
     tx("Reštaurácie", "expense", "48.00", "Bratislavský pivovar", d(2026,4,12), false, P),
     tx("Tankovanie",  "expense", "55.80", "OMV",                d(2026,4,14), false, P),
-    tx("Oblečenie",   "expense", "69.99", "Deichmann",          d(2026,4,16), false, L),
-    tx("Zdravie",     "expense", "15.40", "Lekáreň Benu",       d(2026,4,17), false, T),
     tx("Potraviny",   "expense", "82.60", "Tesco",              d(2026,4,19), false, P),
+    tx("Zábava",      "expense", "22.00", "IMAX",               d(2026,4,25), false, P),
+    // Demo 1 (L) — 6
+    tx("Potraviny",   "expense", "47.30", "Kaufland",           d(2026,4,5),  false, L),
+    tx("Drogéria",    "expense", "31.20", "dm",                 d(2026,4,7),  false, L),
+    tx("Káva",        "expense", "11.40", "Starbucks",          d(2026,4,11), false, L),
+    tx("Oblečenie",   "expense", "69.99", "Deichmann",          d(2026,4,16), false, L),
     tx("Káva",        "expense", "9.60",  "Double Tree Caffe",  d(2026,4,21), false, L),
     tx("Oblečenie",   "expense", "89.00", "Zara",               d(2026,4,23), false, L),
-    tx("Zábava",      "expense", "22.00", "IMAX",               d(2026,4,25), false, P),
-    tx("Reštaurácie", "expense", "38.70", "Freshmarket",        d(2026,4,27), false, P),
-    tx("Oblečenie",   "expense", "55.00", "CCC",                d(2026,4,28), false, T),
-    tx("Drogéria",    "expense", "22.50", "Rossmann",           d(2026,4,30), false, T),
+    // Demo 2 (T) — 5
+    tx("Potraviny",   "expense", "38.60", "Billa",              d(2026,4,4),  false, T),
+    tx("Zdravie",     "expense", "15.40", "Lekáreň Benu",       d(2026,4,9),  false, T),
+    tx("Oblečenie",   "expense", "55.00", "CCC",                d(2026,4,17), false, T),
+    tx("Drogéria",    "expense", "22.50", "Rossmann",           d(2026,4,24), false, T),
+    tx("Reštaurácie", "expense", "34.80", "Freshmarket",        d(2026,4,29), false, T),
+    // Demo 3 (A) — 5
+    tx("Potraviny",   "expense", "52.10", "Kaufland",           d(2026,4,6),  false, A),
+    tx("Káva",        "expense", "8.80",  "Costa Coffee",       d(2026,4,10), false, A),
+    tx("Zdravie",     "expense", "18.50", "Lekáreň Dr.Max",     d(2026,4,15), false, A),
+    tx("Oblečenie",   "expense", "49.99", "H&M",                d(2026,4,22), false, A),
+    tx("Tankovanie",  "expense", "61.40", "OMV",                d(2026,4,28), false, A),
   ];
 
-  // May — 14 transactions (all ≤ day 25)
+  // May — 20 transactions (all ≤ day 25, ~5 per member)
   const mayRows: TxRow[] = [
+    // Demo (P) — 5
     tx("Potraviny",   "expense", "61.40", "Kaufland",           d(2026,5,2),  false, P),
     tx("Tankovanie",  "expense", "59.50", "Shell",              d(2026,5,5),  false, P),
+    tx("Reštaurácie", "expense", "55.00", "Pho Saigon",         d(2026,5,11), false, P),
+    tx("Zdravie",     "expense", "32.10", "Lekáreň Benu",       d(2026,5,19), false, P),
+    tx("Zábava",      "expense", "20.00", "Cinemax",            d(2026,5,24), false, P),
+    // Demo 1 (L) — 5
     tx("Drogéria",    "expense", "18.90", "dm",                 d(2026,5,7),  false, L),
     tx("Potraviny",   "expense", "44.20", "Billa",              d(2026,5,9),  false, L),
-    tx("Reštaurácie", "expense", "55.00", "Pho Saigon",         d(2026,5,11), false, P),
-    tx("Káva",        "expense", "14.20", "Costa Coffee",       d(2026,5,13), false, P),
-    tx("Potraviny",   "expense", "71.80", "Tesco",              d(2026,5,15), false, T),
     tx("Oblečenie",   "expense", "42.99", "Deichmann",          d(2026,5,17), false, L),
-    tx("Zdravie",     "expense", "32.10", "Lekáreň Benu",       d(2026,5,19), false, P),
-    tx("Potraviny",   "expense", "38.40", "Lidl",               d(2026,5,21), false, P),
-    tx("Tankovanie",  "expense", "63.20", "OMV",                d(2026,5,22), false, T),
     tx("Oblečenie",   "expense", "95.00", "Zara",               d(2026,5,23), false, L),
-    tx("Zábava",      "expense", "20.00", "Cinemax",            d(2026,5,24), false, P),
     tx("Reštaurácie", "expense", "41.30", "Freshmarket",        d(2026,5,25), false, L),
+    // Demo 2 (T) — 5
+    tx("Potraviny",   "expense", "71.80", "Tesco",              d(2026,5,4),  false, T),
+    tx("Tankovanie",  "expense", "63.20", "OMV",                d(2026,5,8),  false, T),
+    tx("Drogéria",    "expense", "16.50", "Rossmann",           d(2026,5,13), false, T),
+    tx("Reštaurácie", "expense", "38.40", "Kebab Slávia",       d(2026,5,20), false, T),
+    tx("Zábava",      "expense", "15.00", "Bowling centrum",    d(2026,5,22), false, T),
+    // Demo 3 (A) — 5
+    tx("Potraviny",   "expense", "49.60", "Lidl",               d(2026,5,3),  false, A),
+    tx("Káva",        "expense", "14.20", "Starbucks",          d(2026,5,10), false, A),
+    tx("Tankovanie",  "expense", "57.80", "Shell",              d(2026,5,14), false, A),
+    tx("Zdravie",     "expense", "25.90", "Lekáreň Dr.Max",     d(2026,5,21), false, A),
+    tx("Potraviny",   "expense", "36.70", "Billa",              d(2026,5,23), false, A),
   ].filter(r => !skipFuture(5, parseInt(r.date.slice(8))));
 
   const variableRows = [...march, ...april, ...mayRows];
@@ -255,20 +286,24 @@ async function main() {
   incomeRows.push(tx("Plat",     "income", "1250", "Výplata",  d(2026,3,1),  true,  P));
   incomeRows.push(tx("Freelance","income", "350",  "Freelance",d(2026,3,20), false, P));
   incomeRows.push(tx("Plat",     "income", "980",  "Výplata",  d(2026,3,1),  true,  L));
-  incomeRows.push(tx("Plat",     "income", "150",  "Vreckové", d(2026,3,1),  true,  T));
+  incomeRows.push(tx("Plat",     "income", "850",  "Výplata",  d(2026,3,1),  true,  T));
   incomeRows.push(tx("Brigáda",  "income", "250",  "Brigáda",  d(2026,3,15), false, T));
+  incomeRows.push(tx("Plat",     "income", "920",  "Výplata",  d(2026,3,1),  true,  A));
 
   // April
   incomeRows.push(tx("Plat",     "income", "1300", "Výplata",  d(2026,4,1),  true,  P));
   incomeRows.push(tx("Freelance","income", "450",  "Freelance",d(2026,4,15), false, P));
   incomeRows.push(tx("Plat",     "income", "1050", "Výplata",  d(2026,4,1),  true,  L));
-  incomeRows.push(tx("Plat",     "income", "150",  "Vreckové", d(2026,4,1),  true,  T));
+  incomeRows.push(tx("Plat",     "income", "850",  "Výplata",  d(2026,4,1),  true,  T));
+  incomeRows.push(tx("Plat",     "income", "950",  "Výplata",  d(2026,4,1),  true,  A));
+  incomeRows.push(tx("Freelance","income", "180",  "Freelance",d(2026,4,20), false, A));
 
   // May (all ≤ day 25)
   incomeRows.push(tx("Plat",     "income", "1200", "Výplata",  d(2026,5,1),  true,  P));
   incomeRows.push(tx("Plat",     "income", "1000", "Výplata",  d(2026,5,1),  true,  L));
-  incomeRows.push(tx("Plat",     "income", "150",  "Vreckové", d(2026,5,1),  true,  T));
+  incomeRows.push(tx("Plat",     "income", "850",  "Výplata",  d(2026,5,1),  true,  T));
   incomeRows.push(tx("Brigáda",  "income", "300",  "Brigáda",  d(2026,5,10), false, T));
+  incomeRows.push(tx("Plat",     "income", "950",  "Výplata",  d(2026,5,1),  true,  A));
 
   console.log(`Built ${incomeRows.length} income rows.`);
 
