@@ -22,10 +22,6 @@ interface Notification {
 
 const NOTIF_READ_KEY = 'finvu_read_notifications'
 
-function getReadIds(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(NOTIF_READ_KEY) ?? '[]')) } catch { return new Set() }
-}
-
 function saveReadIdsLocal(ids: string[]) {
   try { localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(ids)) } catch { /* ignore */ }
 }
@@ -63,6 +59,11 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   async function generateNotifications() {
     setLoading(true)
     try {
+      // Fetch dismissed keys first — DB is source of truth, no fallback to empty
+      const dismissedRes = await getDismissedNotifications()
+      const dismissedIds = new Set(dismissedRes.data)
+      saveReadIdsLocal(dismissedRes.data)
+
       const now = new Date()
       const todayDay = now.getDate()
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -171,15 +172,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         break
       }
 
-      let readIds: Set<string>
-      try {
-        const res = await getDismissedNotifications()
-        readIds = new Set(res.data)
-        saveReadIdsLocal(res.data)
-      } catch {
-        readIds = getReadIds()
-      }
-      setNotifications(ns.map(n => readIds.has(n.id) ? { ...n, read: true } : n))
+      setNotifications(ns.map(n => dismissedIds.has(n.id) ? { ...n, read: true } : n))
     } catch { /* silently ignore fetch errors */ }
     setLoading(false)
   }
