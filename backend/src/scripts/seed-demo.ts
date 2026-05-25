@@ -36,20 +36,22 @@ type CatDef = { name: string; type: "expense" | "income"; color: string; icon: s
 
 const EXPENSE_CATS: CatDef[] = [
   // Variable categories (with budget limits)
-  { name: "Potraviny",       type: "expense", color: "#10B981", icon: "🛒", budgetLimit: "400"  },
-  { name: "Reštaurácie",     type: "expense", color: "#F97316", icon: "🍽️", budgetLimit: "150"  },
-  { name: "Tankovanie",      type: "expense", color: "#F59E0B", icon: "⛽", budgetLimit: "120"  },
-  { name: "Oblečenie",       type: "expense", color: "#EC4899", icon: "👕", budgetLimit: "100"  },
-  { name: "Zábava",          type: "expense", color: "#8B5CF6", icon: "🎭", budgetLimit: "80"   },
-  { name: "Zdravie",         type: "expense", color: "#EF4444", icon: "💊", budgetLimit: "60"   },
-  { name: "Drogéria",        type: "expense", color: "#06B6D4", icon: "🧴", budgetLimit: "50"   },
-  { name: "Káva",            type: "expense", color: "#92400E", icon: "☕", budgetLimit: "40"   },
-  // Fixed-expense categories (no limits)
-  { name: "Bývanie",         type: "expense", color: "#3B82F6", icon: "🏠", budgetLimit: null   },
-  { name: "Energie",         type: "expense", color: "#FBBF24", icon: "⚡", budgetLimit: null   },
-  { name: "Telekomunikácie", type: "expense", color: "#A78BFA", icon: "📡", budgetLimit: null   },
-  { name: "Predplatné",      type: "expense", color: "#22D3EE", icon: "📺", budgetLimit: null   },
-  { name: "Poistenie",       type: "expense", color: "#6366F1", icon: "🛡️", budgetLimit: null   },
+  { name: "Potraviny",         type: "expense", color: "#10B981", icon: "🛒", budgetLimit: "400"  },
+  { name: "Reštaurácie",       type: "expense", color: "#F97316", icon: "🍽️", budgetLimit: "150"  },
+  { name: "Tankovanie",        type: "expense", color: "#F59E0B", icon: "⛽", budgetLimit: "120"  },
+  { name: "Oblečenie",         type: "expense", color: "#EC4899", icon: "👗", budgetLimit: "100"  },
+  { name: "Zábava",            type: "expense", color: "#8B5CF6", icon: "🎉", budgetLimit: "80"   },
+  { name: "Zdravie",           type: "expense", color: "#EF4444", icon: "💊", budgetLimit: "60"   },
+  { name: "Drogéria",          type: "expense", color: "#06B6D4", icon: "🧴", budgetLimit: "50"   },
+  { name: "Káva",              type: "expense", color: "#92400E", icon: "☕", budgetLimit: "40"   },
+  // Fixed-expense categories (no limits) — each has its own icon
+  { name: "Bývanie",           type: "expense", color: "#3B82F6", icon: "🏠", budgetLimit: null   },
+  { name: "Energie",           type: "expense", color: "#FBBF24", icon: "⚡", budgetLimit: null   },
+  { name: "Telekomunikácie",   type: "expense", color: "#A78BFA", icon: "📡", budgetLimit: null   },
+  { name: "Netflix",           type: "expense", color: "#E50914", icon: "🎬", budgetLimit: null   },
+  { name: "Spotify",           type: "expense", color: "#1DB954", icon: "🎵", budgetLimit: null   },
+  { name: "Poistenie auta",    type: "expense", color: "#F59E0B", icon: "🚗", budgetLimit: null   },
+  { name: "Životné poistenie", type: "expense", color: "#6366F1", icon: "🛡️", budgetLimit: null   },
 ];
 
 const INCOME_CATS: CatDef[] = [
@@ -60,13 +62,13 @@ const INCOME_CATS: CatDef[] = [
 
 // ── Fixed expense definitions ────────────────────────────────────────────────
 const FIXED_DEFS = [
-  { desc: "Nájom",               cat: "Bývanie",         amount: "650",  day: 1  },
-  { desc: "Elektrina",           cat: "Energie",         amount: "45",   day: 14 },
-  { desc: "Internet",            cat: "Telekomunikácie", amount: "25",   day: 20 },
-  { desc: "Netflix",             cat: "Predplatné",      amount: "18",   day: 8  },
-  { desc: "Spotify",             cat: "Predplatné",      amount: "10",   day: 8  },
-  { desc: "Poistenie auta",      cat: "Poistenie",       amount: "58",   day: 15 },
-  { desc: "Životné poistenie",   cat: "Poistenie",       amount: "35",   day: 15 },
+  { desc: "Nájom",               cat: "Bývanie",           amount: "650",  day: 1  },
+  { desc: "Elektrina",           cat: "Energie",           amount: "45",   day: 14 },
+  { desc: "Internet",            cat: "Telekomunikácie",   amount: "25",   day: 20 },
+  { desc: "Netflix",             cat: "Netflix",           amount: "18",   day: 8  },
+  { desc: "Spotify",             cat: "Spotify",           amount: "10",   day: 8  },
+  { desc: "Poistenie auta",      cat: "Poistenie auta",    amount: "58",   day: 15 },
+  { desc: "Životné poistenie",   cat: "Životné poistenie", amount: "35",   day: 15 },
 ];
 
 async function getOrCreateUser(email: string, name: string): Promise<typeof users.$inferSelect> {

@@ -175,6 +175,68 @@ function SortableListCard(props: CardProps) {
   )
 }
 
+function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
+  const pct = status ? Math.min(status.percentage, 100) : 0
+  const rawPct = status?.percentage ?? 0
+  const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={() => onEdit(cat)}
+      style={{
+        background: 'var(--bg2)',
+        border: '1px solid var(--border)',
+        borderRadius: 14, padding: '12px 14px',
+        cursor: isDragging ? 'grabbing' : 'pointer',
+        transform: CSS.Transform.toString(transform),
+        transition,
+        display: 'flex', flexDirection: 'column', gap: 8,
+        opacity: isDragging ? 0.4 : 1,
+        boxShadow: isDragging ? '0 0 0 2px rgba(139,92,246,0.2)' : undefined,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+          {cat.budgetLimit != null
+            ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
+            : cat.autoLimit
+              ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
+              : null
+          }
+        </div>
+        <div
+          style={{ display: 'flex', gap: 4, flexShrink: 0 }}
+          onClick={e => e.stopPropagation()}
+          onPointerDown={e => e.stopPropagation()}
+        >
+          <button onClick={() => onEdit(cat)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={12} /></button>
+          <button onClick={() => onDelete(cat.id!)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}><Trash2 size={12} /></button>
+        </div>
+      </div>
+      {cat.budgetLimit != null && status && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+          </div>
+        </div>
+      )}
+      {cat.budgetLimit == null && status && status.spent > 0 && (
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
+      )}
+    </div>
+  )
+}
+
 export function CategoriesPage() {
   const { categories, addCategory, updateCategory, deleteCategory, reload } = useCategories()
   const { formatAmount } = useFormatters()
@@ -229,10 +291,7 @@ export function CategoriesPage() {
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
+      activationConstraint: { distance: 8 },
     }),
   )
 
@@ -462,7 +521,7 @@ export function CategoriesPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                        return <SortableListCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
                       })}
                     </div>
                   </SortableContext>
