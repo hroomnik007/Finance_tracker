@@ -9,13 +9,12 @@ import { MemberAvatar } from '../components/MemberAvatar'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
+import { useHousehold } from '../hooks/useHousehold'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
-import { getMyHousehold } from '../api/households'
-import type { HouseholdMember } from '../api/households'
 import type { VariableExpense, BudgetStatus } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 import React from 'react'
@@ -73,17 +72,11 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const [csvOpen, setCsvOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [_prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
-  const [members, setMembers] = useState<HouseholdMember[]>([])
+  const { members } = useHousehold()
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (householdEnabled && user?.household_id) {
-      getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
-    }
-  }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
     const prevMonth = month === 1 ? 12 : month - 1

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../api/categories'
 import type { Category, ApiCategory } from '../types'
 
@@ -42,18 +43,26 @@ function toCategory(c: ApiCategory, limits: Record<string, number>): Category {
   }
 }
 
+export async function fetchCategoriesData(): Promise<Category[]> {
+  try {
+    const { data } = await getCategories()
+    const limits = loadBudgetLimits()
+    return data.map(c => toCategory(c, limits))
+  } catch {
+    return []
+  }
+}
+
 export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>([])
+  const qc = useQueryClient()
 
-  const load = useCallback(async () => {
-    try {
-      const { data } = await getCategories()
-      const limits = loadBudgetLimits()
-      setCategories(data.map(c => toCategory(c, limits)))
-    } catch { /* guest or not authenticated — stay empty */ }
-  }, [])
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategoriesData,
+  })
 
-  useEffect(() => { load() }, [load])
+  const invalidate = useCallback(() =>
+    qc.invalidateQueries({ queryKey: ['categories'] }), [qc])
 
   const addCategory = useCallback(async (category: Omit<Category, 'id'>): Promise<string> => {
     const limit = category.budgetLimit && category.budgetLimit > 0 ? category.budgetLimit : undefined
@@ -71,9 +80,9 @@ export function useCategories() {
       limits[data.id] = limit
       saveBudgetLimits(limits)
     }
-    await load()
+    await invalidate()
     return data.id
-  }, [load])
+  }, [invalidate])
 
   const updateCategoryFn = useCallback(async (id: string, changes: Partial<Category>): Promise<void> => {
     const apiChanges: { name?: string; color?: string; icon?: string; budgetLimit?: number | null; autoLimit?: boolean } = {}
@@ -90,16 +99,16 @@ export function useCategories() {
       saveBudgetLimits(limits)
     }
     if (Object.keys(apiChanges).length > 0) await updateCategory(id, apiChanges)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const deleteCategoryFn = useCallback(async (id: string): Promise<void> => {
     await deleteCategory(id)
     const limits = loadBudgetLimits()
     delete limits[id]
     saveBudgetLimits(limits)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
-  return { categories, addCategory, updateCategory: updateCategoryFn, deleteCategory: deleteCategoryFn, reload: load }
+  return { categories, addCategory, updateCategory: updateCategoryFn, deleteCategory: deleteCategoryFn, reload: invalidate }
 }

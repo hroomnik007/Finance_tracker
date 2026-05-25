@@ -7,14 +7,13 @@ import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { useIncomes } from '../hooks/useIncomes'
+import { useHousehold } from '../hooks/useHousehold'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import type { Translations } from '../i18n'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
-import { getMyHousehold } from '../api/households'
-import type { HouseholdMember } from '../api/households'
 import type { Income } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 
@@ -127,15 +126,9 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
   const [yearlyIncome, setYearlyIncome] = useState(0)
-  const [members, setMembers] = useState<HouseholdMember[]>([])
+  const { members } = useHousehold()
   const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (householdEnabled && user?.household_id) {
-      getMyHousehold().then(d => setMembers(d.members)).catch(() => {})
-    }
-  }, [householdEnabled, user?.household_id])
 
   useEffect(() => {
     const months = Array.from({ length: 12 }, (_, i) =>

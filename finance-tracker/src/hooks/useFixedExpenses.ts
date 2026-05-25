@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
 import { useAuth } from '../context/AuthContext'
 import type { FixedExpense, ApiTransaction } from '../types'
@@ -35,29 +36,45 @@ function toFixedExpense(t: ApiTransaction): FixedExpense {
   }
 }
 
+export function fixedExpenseQueryKey(month: number | undefined, year: number | undefined, trackingStart: string | null | undefined) {
+  const monthStr = month !== undefined && year !== undefined
+    ? `${year}-${String(month).padStart(2, '0')}`
+    : null
+  return ['fixedExpenses', monthStr, trackingStart ?? null] as const
+}
+
+export async function fetchFixedExpenses(
+  month: number | undefined,
+  year: number | undefined,
+  trackingStart: string | null | undefined,
+): Promise<FixedExpense[]> {
+  try {
+    const monthStr = month !== undefined && year !== undefined
+      ? `${year}-${String(month).padStart(2, '0')}`
+      : undefined
+    const trackingYM = trackingStart ? trackingStart.substring(0, 7) : null
+    // If tracking_start_date is set and the viewed month is before it, show no fixed expenses
+    if (monthStr && trackingYM && monthStr < trackingYM) return []
+    const { data } = await getTransactions({ type: 'expense', isFixed: true, month: monthStr, limit: 200 })
+    return data.map(toFixedExpense)
+  } catch {
+    return []
+  }
+}
+
 export function useFixedExpenses(month?: number, year?: number) {
   const { isAuthenticated, user } = useAuth()
-  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([])
+  const qc = useQueryClient()
+  const qKey = fixedExpenseQueryKey(month, year, user?.tracking_start_date)
 
-  const load = useCallback(async () => {
-    if (!isAuthenticated) return
-    try {
-      const monthStr =
-        month !== undefined && year !== undefined
-          ? `${year}-${String(month).padStart(2, '0')}`
-          : undefined
-      const trackingYM = user?.tracking_start_date ? user.tracking_start_date.substring(0, 7) : null
-      // If tracking_start_date is set and the viewed month is before it, show no fixed expenses
-      if (monthStr && trackingYM && monthStr < trackingYM) {
-        setFixedExpenses([])
-        return
-      }
-      const { data } = await getTransactions({ type: 'expense', isFixed: true, month: monthStr, limit: 200 })
-      setFixedExpenses(data.map(toFixedExpense))
-    } catch { /* guest or not authenticated */ }
-  }, [month, year, isAuthenticated, user?.tracking_start_date])
+  const { data: fixedExpenses = [] } = useQuery({
+    queryKey: qKey,
+    queryFn: () => fetchFixedExpenses(month, year, user?.tracking_start_date),
+    enabled: isAuthenticated,
+  })
 
-  useEffect(() => { load() }, [load])
+  const invalidate = useCallback(() =>
+    qc.invalidateQueries({ queryKey: ['fixedExpenses'] }), [qc])
 
   const addFixedExpense = useCallback(async (expense: Omit<FixedExpense, 'id'>): Promise<void> => {
     const today = new Date().toISOString().split('T')[0]
@@ -69,11 +86,12 @@ export function useFixedExpenses(month?: number, year?: number) {
       isFixed: true,
       categoryId: expense.categoryId ?? null,
     })
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const updateFixedExpense = useCallback(async (id: string, changes: Partial<FixedExpense>): Promise<void> => {
-    const existing = fixedExpenses.find(e => e.id === id)
+    const current = qc.getQueryData<FixedExpense[]>(qKey) ?? []
+    const existing = current.find(e => e.id === id)
     const label = changes.label ?? existing?.label ?? ''
     const note = changes.note ?? existing?.note ?? ''
     const dayOfMonth = changes.dayOfMonth ?? existing?.dayOfMonth ?? 1
@@ -82,13 +100,13 @@ export function useFixedExpenses(month?: number, year?: number) {
       description: encodeDescription(label, note, dayOfMonth),
       categoryId: changes.categoryId !== undefined ? changes.categoryId : existing?.categoryId,
     })
-    await load()
-  }, [load, fixedExpenses])
+    await invalidate()
+  }, [qc, qKey, invalidate])
 
   const deleteFixedExpense = useCallback(async (id: string): Promise<void> => {
     await deleteTransaction(id)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   return { fixedExpenses, addFixedExpense, updateFixedExpense, deleteFixedExpense }
 }

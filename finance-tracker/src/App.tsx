@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
 import { Topbar } from './components/Topbar'
@@ -32,6 +33,12 @@ import { useVariableExpenses } from './hooks/useVariableExpenses'
 import { useIncomes } from './hooks/useIncomes'
 import { useCategories } from './hooks/useCategories'
 import { useBudgetStatus } from './hooks/useBudgetStatus'
+import { fetchIncomes, incomeQueryKey } from './hooks/useIncomes'
+import { fetchVariableExpenses, variableExpenseQueryKey } from './hooks/useVariableExpenses'
+import { fetchFixedExpenses, fixedExpenseQueryKey } from './hooks/useFixedExpenses'
+import { fetchCategoriesData } from './hooks/useCategories'
+import { fetchSavingsData } from './hooks/useSavings'
+import { fetchHouseholdData, householdQueryKey } from './hooks/useHousehold'
 import { useBudgetWarningNotifications } from './hooks/useBudgetWarningNotifications'
 import { useMonthlyReminderNotification } from './hooks/useMonthlyReminderNotification'
 import { HouseholdPage } from './pages/Household'
@@ -79,6 +86,7 @@ function getPageFromHash(): Page {
 function App() {
   const { isAuthenticated, isLoading, logout, user } = useAuth()
   const { settings } = useSettingsContext()
+  const queryClient = useQueryClient()
   const now = new Date()
   const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
@@ -156,13 +164,29 @@ function App() {
       if (sessionStorage.getItem('just_logged_in') === 'true') {
         sessionStorage.removeItem('just_logged_in')
         hasNavigated.current = true
+
+        // Fire-and-forget prefetch for all modules so cache is warm before navigation
+        const m = now.getMonth() + 1
+        const y = now.getFullYear()
+        const trackingStart = user?.tracking_start_date ?? null
+        ;[
+          queryClient.prefetchQuery({ queryKey: incomeQueryKey(m, y, trackingStart), queryFn: () => fetchIncomes(m, y, trackingStart) }),
+          queryClient.prefetchQuery({ queryKey: variableExpenseQueryKey(m, y), queryFn: () => fetchVariableExpenses(m, y) }),
+          queryClient.prefetchQuery({ queryKey: fixedExpenseQueryKey(m, y, trackingStart), queryFn: () => fetchFixedExpenses(m, y, trackingStart) }),
+          queryClient.prefetchQuery({ queryKey: ['categories'], queryFn: fetchCategoriesData }),
+          queryClient.prefetchQuery({ queryKey: ['savings'], queryFn: fetchSavingsData }),
+          ...(user?.household_enabled && user?.household_id
+            ? [queryClient.prefetchQuery({ queryKey: householdQueryKey(), queryFn: fetchHouseholdData })]
+            : []),
+        ].forEach(p => p.catch(() => {}))
+
         const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
         const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
         setPage(dest)
         window.location.hash = dest
       }
     }
-  }, [isAuthenticated, isLoading, user, settings])
+  }, [isAuthenticated, isLoading, user, settings, queryClient])
 
   useEffect(() => {
     if (isAuthenticated) window.location.hash = page

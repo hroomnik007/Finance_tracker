@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
 import { useAuth } from '../context/AuthContext'
 import type { Income, ApiTransaction } from '../types'
@@ -21,55 +22,71 @@ function toIncome(t: ApiTransaction): Income {
   }
 }
 
-export function useIncomes(month?: number, year?: number) {
-  const [incomes, setIncomes] = useState<Income[]>([])
-  const { user } = useAuth()
+export function incomeQueryKey(month: number | undefined, year: number | undefined, trackingStart: string | null | undefined) {
+  const monthStr = month !== undefined && year !== undefined
+    ? `${year}-${String(month).padStart(2, '0')}`
+    : null
+  return ['incomes', monthStr, trackingStart ?? null] as const
+}
 
-  const load = useCallback(async () => {
-    try {
-      const monthStr =
-        month !== undefined && year !== undefined
-          ? `${year}-${String(month).padStart(2, '0')}`
-          : undefined
-      const { data } = await getTransactions({ type: 'income', month: monthStr, limit: 200 })
+export async function fetchIncomes(
+  month: number | undefined,
+  year: number | undefined,
+  trackingStart: string | null | undefined,
+): Promise<Income[]> {
+  try {
+    const monthStr = month !== undefined && year !== undefined
+      ? `${year}-${String(month).padStart(2, '0')}`
+      : undefined
+    const { data } = await getTransactions({ type: 'income', month: monthStr, limit: 200 })
 
-      if (monthStr) {
-        const trackingYM = user?.tracking_start_date ? user.tracking_start_date.substring(0, 7) : null
-        // If tracking_start_date is set and the viewed month is before it, return only non-recurring incomes
-        if (trackingYM && monthStr < trackingYM) {
-          setIncomes(data.filter(t => !t.isFixed).map(toIncome))
-          return
-        }
-        // No month filter here by design: a recurring income created in any past
-        // month must appear in every subsequent month. The backend month param
-        // filters by creation date, not recurrence — adding it would hide older
-        // recurring incomes. Client-side filter on line below enforces t.date <= monthStr.
-        // TODO: paginate if a user accumulates >200 recurring income records.
-        const { data: recurring } = await getTransactions({ type: 'income', isFixed: true, limit: 200 })
-        if (recurring.length === 200) {
-          console.warn('useIncomes: recurring income limit reached, some records may be missing')
-        }
-        const existingIds = new Set(data.map(t => t.id))
-        const extra = recurring
-          .filter(t => {
-            if (existingIds.has(t.id)) return false
-            if (t.date.substring(0, 7) > monthStr) return false
-            // If tracking_start_date is set, don't project before it
-            if (trackingYM && t.date.substring(0, 7) < trackingYM) return false
-            return true
-          })
-          .map(t => t.date.substring(0, 7) !== monthStr
-            ? { ...t, date: adjustDateToMonth(t.date, month!, year!) }
-            : t
-          )
-        setIncomes([...data, ...extra].map(toIncome))
-      } else {
-        setIncomes(data.map(toIncome))
+    if (monthStr) {
+      const trackingYM = trackingStart ? trackingStart.substring(0, 7) : null
+      if (trackingYM && monthStr < trackingYM) {
+        return data.filter(t => !t.isFixed).map(toIncome)
       }
-    } catch { /* guest or not authenticated */ }
-  }, [month, year, user?.tracking_start_date])
+      // No month filter here by design: a recurring income created in any past
+      // month must appear in every subsequent month. The backend month param
+      // filters by creation date, not recurrence — adding it would hide older
+      // recurring incomes. Client-side filter on line below enforces t.date <= monthStr.
+      // TODO: paginate if a user accumulates >200 recurring income records.
+      const { data: recurring } = await getTransactions({ type: 'income', isFixed: true, limit: 200 })
+      if (recurring.length === 200) {
+        console.warn('useIncomes: recurring income limit reached, some records may be missing')
+      }
+      const existingIds = new Set(data.map(t => t.id))
+      const extra = recurring
+        .filter(t => {
+          if (existingIds.has(t.id)) return false
+          if (t.date.substring(0, 7) > monthStr) return false
+          if (trackingYM && t.date.substring(0, 7) < trackingYM) return false
+          return true
+        })
+        .map(t => t.date.substring(0, 7) !== monthStr
+          ? { ...t, date: adjustDateToMonth(t.date, month!, year!) }
+          : t
+        )
+      return [...data, ...extra].map(toIncome)
+    }
+    return data.map(toIncome)
+  } catch {
+    return []
+  }
+}
 
-  useEffect(() => { load() }, [load])
+export function useIncomes(month?: number, year?: number) {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  const qKey = incomeQueryKey(month, year, user?.tracking_start_date)
+
+  const { data: incomes = [] } = useQuery({
+    queryKey: qKey,
+    queryFn: () => fetchIncomes(month, year, user?.tracking_start_date),
+    enabled: !!user,
+  })
+
+  const invalidate = useCallback(() =>
+    qc.invalidateQueries({ queryKey: ['incomes'] }), [qc])
 
   const addIncome = useCallback(async (income: Omit<Income, 'id'>): Promise<void> => {
     await createTransaction({
@@ -79,8 +96,8 @@ export function useIncomes(month?: number, year?: number) {
       date: income.date,
       isFixed: income.recurring,
     })
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const updateIncome = useCallback(async (id: string, changes: Partial<Income>): Promise<void> => {
     await updateTransaction(id, {
@@ -89,13 +106,13 @@ export function useIncomes(month?: number, year?: number) {
       date: changes.date,
       isFixed: changes.recurring,
     })
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const deleteIncome = useCallback(async (id: string): Promise<void> => {
     await deleteTransaction(id)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   return { incomes, addIncome, updateIncome, deleteIncome }
 }

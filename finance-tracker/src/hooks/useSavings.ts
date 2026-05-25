@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getSavingsGoals,
   createSavingsGoal,
@@ -23,17 +24,25 @@ function toSavingsGoal(g: ApiSavingsGoal): SavingsGoal {
   }
 }
 
+export async function fetchSavingsData(): Promise<SavingsGoal[]> {
+  try {
+    const { data } = await getSavingsGoals()
+    return data.map(toSavingsGoal)
+  } catch {
+    return []
+  }
+}
+
 export function useSavings() {
-  const [goals, setGoals] = useState<SavingsGoal[]>([])
+  const qc = useQueryClient()
 
-  const load = useCallback(async () => {
-    try {
-      const { data } = await getSavingsGoals()
-      setGoals(data.map(toSavingsGoal))
-    } catch { /* guest or not authenticated */ }
-  }, [])
+  const { data: goals = [] } = useQuery({
+    queryKey: ['savings'],
+    queryFn: fetchSavingsData,
+  })
 
-  useEffect(() => { load() }, [load])
+  const invalidate = useCallback(() =>
+    qc.invalidateQueries({ queryKey: ['savings'] }), [qc])
 
   const addGoal = useCallback(async (goal: Omit<SavingsGoal, 'id'>): Promise<void> => {
     await createSavingsGoal({
@@ -45,8 +54,8 @@ export function useSavings() {
       color: goal.color,
       note: goal.note ?? null,
     })
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const updateGoal = useCallback(async (id: string, changes: Partial<SavingsGoal>): Promise<void> => {
     const payload: Record<string, unknown> = {}
@@ -60,23 +69,23 @@ export function useSavings() {
     if (Object.keys(payload).length > 0) {
       await updateSavingsGoal(id, payload as Parameters<typeof updateSavingsGoal>[1])
     }
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const deleteGoal = useCallback(async (id: string): Promise<void> => {
     await deleteSavingsGoal(id)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const pauseGoal = useCallback(async (id: string): Promise<void> => {
     await apiPause(id)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
   const resumeGoal = useCallback(async (id: string): Promise<void> => {
     await apiResume(id)
-    await load()
-  }, [load])
+    await invalidate()
+  }, [invalidate])
 
-  return { goals, addGoal, updateGoal, deleteGoal, pauseGoal, resumeGoal, reload: load }
+  return { goals, addGoal, updateGoal, deleteGoal, pauseGoal, resumeGoal, reload: invalidate }
 }
