@@ -177,20 +177,27 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     })
   }, [filteredSorted, searchQuery, getCategoryById])
 
-  const hasAnyNote = useMemo(() =>
-    searchFiltered.some(e => e.note && e.note.trim() !== '')
+  const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
+  const SK_MONTHS_LC = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
+  const dayGroups = useMemo(() =>
+    searchFiltered.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: VariableExpense[]; dayTotal: number }>>((acc, e) => {
+      const last = acc[acc.length - 1]
+      if (last?.date === e.date) {
+        last.items.push(e)
+        last.dayTotal += e.amount
+      } else {
+        const d = new Date(e.date + 'T00:00:00')
+        acc.push({ date: e.date, dayNum: d.getDate(), dayName: SK_DAYS[d.getDay()], monthName: SK_MONTHS_LC[d.getMonth()], items: [e], dayTotal: e.amount })
+      }
+      return acc
+    }, [])
   , [searchFiltered])
-
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
       {children}
     </div>
-  )
-
-  const hdrCell = (label: string, align: 'left' | 'right' | 'center' = 'left') => (
-    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", textAlign: align }}>{label}</div>
   )
 
   return (
@@ -303,103 +310,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             </div>
           )}
 
-          {/* Desktop grouped-by-date list */}
-          <div className="hidden lg:block">
-            {searchFiltered.length === 0 ? (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
-                <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>💸</span>
-                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
-                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? `Skús iný výraz` : t.expenses.variable.noExpensesSubtitle}</p>
-              </div>
-            ) : (() => {
-              const groupedByDate = searchFiltered.reduce<Record<string, VariableExpense[]>>((acc, e) => {
-                if (!acc[e.date]) acc[e.date] = []
-                acc[e.date].push(e)
-                return acc
-              }, {})
-              const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a))
-              const groupCols = [
-                ...(householdEnabled ? ['32px'] : []),
-                '1fr',
-                ...(hasAnyNote ? ['1fr'] : []),
-                '100px',
-                '70px',
-              ].join(' ')
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {sortedDates.map(date => {
-                    const dayExpenses = groupedByDate[date]
-                    const dayTotal = dayExpenses.reduce((s, e) => s + e.amount, 0)
-                    return (
-                      <div key={date}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', marginBottom: 6 }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>
-                            {formatDate(date)}
-                          </span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>
-                            -{formatAmount(dayTotal)}
-                          </span>
-                        </div>
-                        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--card-shadow)', marginBottom: 16 }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: groupCols, gap: 0, padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', alignItems: 'center' }}>
-                            {householdEnabled && <div />}
-                            {hdrCell(t.expenses.variable.category_col)}
-                            {hasAnyNote && hdrCell(t.expenses.variable.note_col)}
-                            {hdrCell(t.expenses.variable.amount_col, 'right')}
-                            {hdrCell(t.expenses.variable.actions_col, 'center')}
-                          </div>
-                          {dayExpenses.map((e: VariableExpense) => {
-                            const cat = getCategoryById(e.categoryId)
-                            const bs = cat?.id ? getBudgetForCat(cat.id) : null
-                            const creator = members.find(m => m.id === e.created_by)
-                            return (
-                              <div
-                                key={e.id}
-                                style={{ display: 'grid', gridTemplateColumns: groupCols, gap: 0, padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s', alignItems: 'center' }}
-                                onClick={() => openEdit(e)}
-                                onMouseEnter={el => { (el.currentTarget as HTMLElement).style.background = 'var(--bg3)' }}
-                                onMouseLeave={el => { (el.currentTarget as HTMLElement).style.background = 'transparent' }}
-                              >
-                                {householdEnabled && (
-                                  <div>{e.created_by && <MemberAvatar userId={e.created_by} userName={creator?.name ?? '?'} size={24} />}</div>
-                                )}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <div style={{ width: 28, height: 28, borderRadius: 8, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
-                                    {cat?.icon ?? '📦'}
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>{cat?.name ?? '—'}</div>
-                                    {bs && (
-                                      <div style={{ width: 48, height: 3, borderRadius: 2, background: 'var(--bg4)', marginTop: 3, overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', borderRadius: 2, width: `${Math.min(bs.percentage, 100)}%`, background: getBudgetBarColor(bs.percentage, cat?.autoLimit ?? false) }} />
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                {hasAnyNote && <div style={{ fontSize: 13, color: e.note ? 'var(--text2)' : 'var(--text3)' }}>{e.note || '—'}</div>}
-                                <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={ev => ev.stopPropagation()}>
-                                  <button onClick={() => openEdit(e)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Edit2 size={13} />
-                                  </button>
-                                  <button onClick={() => setConfirmId(e.id!)} style={{ width: 28, height: 28, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })()}
-          </div>
-
-          {/* Mobile: flat rows */}
-          <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+          {/* Mobile: day-grouped flat rows */}
+          <div className="lg:hidden" style={{ paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
             {searchFiltered.length === 0 ? (
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '48px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
                 <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>💸</span>
@@ -407,30 +319,105 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
               </div>
             ) : (
-              searchFiltered.map((e: VariableExpense) => {
-                const cat = getCategoryById(e.categoryId)
+              dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => {
                 return (
-                  <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
-
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
-                    onClick={() => openEdit(e)}
-                  >
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-                      {cat?.icon ?? '📦'}
+                  <div key={date} style={{ marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <span style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: 'var(--text)', letterSpacing: '-1.5px', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', lineHeight: 1.3 }}>{dayName}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{monthName}</span>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.note || cat?.name || t.expenses.variable.defaultExpense}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1, fontFamily: "'DM Mono', monospace" }}>{formatDate(e.date)}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={ev => ev.stopPropagation()}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)', fontFamily: "'DM Mono', monospace" }}>-{formatAmount(e.amount)}</span>
-                      <button onClick={() => setConfirmId(e.id!)} style={{ width: 32, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
-                    </div>
+                    <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
+                    {items.map((e, idx) => {
+                      const cat = getCategoryById(e.categoryId)
+                      const name = e.note || cat?.name || t.expenses.variable.defaultExpense
+                      const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
+                      return (
+                        <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
+                          <div
+                            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none' }}
+                            onClick={() => openEdit(e)}
+                          >
+                            <div style={{ width: 38, height: 38, borderRadius: 10, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                              {cat?.icon ?? '📦'}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
+                              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
+                            </div>
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(e.amount)}</span>
+                          </div>
+                        </SwipeableRow>
+                      )
+                    })}
                   </div>
-                  </SwipeableRow>
                 )
               })
+            )}
+          </div>
+
+          {/* Desktop: day-grouped flat rows */}
+          <div className="hidden lg:block">
+            {searchFiltered.length === 0 ? (
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
+                <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>💸</span>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
+                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
+              </div>
+            ) : (
+              dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
+                <div key={date} style={{ marginBottom: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <span style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: 'var(--text)', letterSpacing: '-1.5px', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', lineHeight: 1.3 }}>{dayName}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{monthName}</span>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
+                  </div>
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
+                  {items.map((e, idx) => {
+                    const cat = getCategoryById(e.categoryId)
+                    const creator = members.find(m => m.id === e.created_by)
+                    const name = e.note || cat?.name || t.expenses.variable.defaultExpense
+                    const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
+                    return (
+                      <div
+                        key={e.id}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 8px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none', borderRadius: 10, transition: 'background 0.1s' }}
+                        onClick={() => openEdit(e)}
+                        onMouseEnter={el => { (el.currentTarget as HTMLElement).style.background = 'var(--bg3)' }}
+                        onMouseLeave={el => { (el.currentTarget as HTMLElement).style.background = 'transparent' }}
+                      >
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                          {cat?.icon ?? '📦'}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
+                          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
+                        </div>
+                        {householdEnabled && (
+                          <div style={{ flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
+                            {e.created_by && <MemberAvatar userId={e.created_by} userName={creator?.name ?? '?'} size={24} />}
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)', marginRight: 8 }}>-{formatAmount(e.amount)}</span>
+                          <button onClick={() => openEdit(e)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>
+                          <button onClick={() => setConfirmId(e.id!)} className="btn-icon" style={{ color: 'var(--text3)' }}><Trash2 size={13} /></button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))
             )}
           </div>
 

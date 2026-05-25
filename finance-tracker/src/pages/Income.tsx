@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Repeat, Edit2, Trash2, Minus, Calendar, Plus, TrendingUp } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Calendar, Plus, TrendingUp } from 'lucide-react'
 
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -177,6 +177,20 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December']
   const MONTH_NAME = MONTH_NAMES[month - 1] ?? ''
 
+  const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
+  const SK_MONTHS_LC = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
+  const dayGroups = sorted.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: Income[]; dayTotal: number }>>((acc, income) => {
+    const last = acc[acc.length - 1]
+    if (last?.date === income.date) {
+      last.items.push(income)
+      last.dayTotal += income.amount
+    } else {
+      const d = new Date(income.date + 'T00:00:00')
+      acc.push({ date: income.date, dayNum: d.getDate(), dayName: SK_DAYS[d.getDay()], monthName: SK_MONTHS_LC[d.getMonth()], items: [income], dayTotal: income.amount })
+    }
+    return acc
+  }, [])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
@@ -252,88 +266,98 @@ export function IncomePage({ month, year }: IncomePageProps) {
             </div>
           ) : (
             <>
-              {/* Mobile: flat rows */}
-              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
-                {sorted.map(income => (
-                  <SwipeableRow key={income.id} onDelete={() => deleteIncome(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
-
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', minHeight: 56 }}
-                    onClick={() => openEdit(income)}
-                  >
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Calendar size={16} color="var(--green)" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={e => e.stopPropagation()}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--green)' }}>{formatAmount(income.amount)}</span>
-                        {income.recurring && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap' }}>
-                            <Repeat size={8} /> {t.income.recurringBadge}
-                          </span>
-                        )}
+              {/* Mobile: day-grouped flat rows */}
+              <div className="lg:hidden" style={{ paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+                {dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
+                  <div key={date} style={{ marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <span style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: 'var(--text)', letterSpacing: '-1.5px', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', lineHeight: 1.3 }}>{dayName}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{monthName}</span>
+                        </div>
                       </div>
-                      <button onClick={() => setConfirmId(income.id!)} style={{ width: 32, height: 44, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
+                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · +{formatAmount(dayTotal)}</span>
                     </div>
+                    <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
+                    {items.map((income, idx) => (
+                      <SwipeableRow key={income.id} onDelete={() => deleteIncome(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none' }}
+                          onClick={() => openEdit(income)}
+                        >
+                          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Calendar size={17} color="var(--green)" />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</span>
+                              {income.recurring && (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                  <Repeat size={8} /> {t.income.recurringBadge}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
+                          </div>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--green)', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
+                        </div>
+                      </SwipeableRow>
+                    ))}
                   </div>
-                  </SwipeableRow>
                 ))}
               </div>
 
-              {/* Desktop: grid table */}
-              <div className="hidden lg:block" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-                {/* Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: householdEnabled ? '110px 1fr 130px 100px 32px 70px' : '110px 1fr 130px 100px 70px', gap: 8, padding: '10px 16px', fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", borderBottom: '1px solid var(--border)' }}>
-                  <span>{t.income.date_col}</span>
-                  <span>{t.income.desc_col}</span>
-                  <span style={{ textAlign: 'right' }}>{t.income.amount_col}</span>
-                  <span style={{ textAlign: 'center' }}>{t.income.recurring_col}</span>
-                  {householdEnabled && <span />}
-                  <span style={{ textAlign: 'center' }}>{t.income.actions_col}</span>
-                </div>
-                {/* Rows */}
-                {sorted.map(income => (
-                  <div
-                    key={income.id}
-                    style={{ display: 'grid', gridTemplateColumns: householdEnabled ? '110px 1fr 130px 100px 32px 70px' : '110px 1fr 130px 100px 70px', gap: 8, padding: '12px 16px', alignItems: 'center', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s' }}
-                    onClick={() => openEdit(income)}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg3)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                  >
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'var(--text3)' }}>{formatDate(income.date)}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Calendar size={13} color="var(--green)" />
+              {/* Desktop: day-grouped flat rows */}
+              <div className="hidden lg:block">
+                {dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
+                  <div key={date} style={{ marginBottom: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <span style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: 'var(--text)', letterSpacing: '-1.5px', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', lineHeight: 1.3 }}>{dayName}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{monthName}</span>
+                        </div>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{income.label}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · +{formatAmount(dayTotal)}</span>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: 13, color: 'var(--green)' }}>{formatAmount(income.amount)}</span>
-                    </div>
-                    <div style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                      {income.recurring ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap' }}>
-                          <Repeat size={9} /> {t.income.recurringBadge}
-                        </span>
-                      ) : (
-                        <Minus size={13} color="var(--text3)" />
-                      )}
-                    </div>
-                    {householdEnabled && (
-                      <div style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                        {income.created_by && (
-                          <MemberAvatar userId={income.created_by} userName={members.find(m => m.id === income.created_by)?.name ?? '?'} size={24} />
+                    <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
+                    {items.map((income, idx) => (
+                      <div
+                        key={income.id}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 8px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none', borderRadius: 10, transition: 'background 0.1s' }}
+                        onClick={() => openEdit(income)}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg3)'}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                      >
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Calendar size={17} color="var(--green)" />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</span>
+                            {income.recurring && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                <Repeat size={8} /> {t.income.recurringBadge}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
+                        </div>
+                        {householdEnabled && (
+                          <div style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                            {income.created_by && <MemberAvatar userId={income.created_by} userName={members.find(m => m.id === income.created_by)?.name ?? '?'} size={24} />}
+                          </div>
                         )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--green)', marginRight: 8 }}>+{formatAmount(income.amount)}</span>
+                          <button onClick={() => openEdit(income)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>
+                          <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ color: 'var(--text3)' }}><Trash2 size={13} /></button>
+                        </div>
                       </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
-                      <button onClick={() => openEdit(income)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>
-                      <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ color: 'var(--text3)' }}><Trash2 size={13} /></button>
-                    </div>
+                    ))}
                   </div>
                 ))}
               </div>
