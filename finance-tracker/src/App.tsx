@@ -165,11 +165,11 @@ function App() {
         sessionStorage.removeItem('just_logged_in')
         hasNavigated.current = true
 
-        // Fire-and-forget prefetch for all modules so cache is warm before navigation
+        // Await all prefetches before navigating so components mount with warm cache
         const m = now.getMonth() + 1
         const y = now.getFullYear()
         const trackingStart = user?.tracking_start_date ?? null
-        ;[
+        const prefetches = [
           queryClient.prefetchQuery({ queryKey: incomeQueryKey(m, y, trackingStart), queryFn: () => fetchIncomes(m, y, trackingStart) }),
           queryClient.prefetchQuery({ queryKey: variableExpenseQueryKey(m, y), queryFn: () => fetchVariableExpenses(m, y) }),
           queryClient.prefetchQuery({ queryKey: fixedExpenseQueryKey(m, y, trackingStart), queryFn: () => fetchFixedExpenses(m, y, trackingStart) }),
@@ -178,12 +178,14 @@ function App() {
           ...(user?.household_enabled && user?.household_id
             ? [queryClient.prefetchQuery({ queryKey: householdQueryKey(), queryFn: fetchHouseholdData })]
             : []),
-        ].forEach(p => p.catch(() => {}))
+        ]
 
-        const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
-        const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
-        setPage(dest)
-        window.location.hash = dest
+        Promise.all(prefetches.map(p => p.catch(() => {}))).then(() => {
+          const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
+          const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
+          setPage(dest)
+          window.location.hash = dest
+        })
       }
     }
   }, [isAuthenticated, isLoading, user, settings, queryClient])
