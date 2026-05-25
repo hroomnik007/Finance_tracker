@@ -181,24 +181,60 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
   const rawPct = status?.percentage ?? 0
   const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
 
+  const touchStartX = useRef<number>(0)
+  const [swiped, setSwiped] = useState(false)
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0]?.clientX ?? 0
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (isDragging) return
+    const endX = e.changedTouches[0]?.clientX ?? touchStartX.current
+    const dx = endX - touchStartX.current
+    if (dx < -60) setSwiped(true)
+    else if (dx > 20) setSwiped(false)
+  }
+
   return (
     <div
       ref={setNodeRef}
       {...attributes}
-      {...listeners}
-      onClick={() => onEdit(cat)}
+      {...(swiped ? {} : listeners)}
+      onClick={() => { if (swiped) { setSwiped(false); return } onEdit(cat) }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
+        position: 'relative',
         background: 'var(--bg2)',
-        border: '1px solid var(--border)',
+        border: isDragging ? '2px solid var(--violet)' : '1px solid var(--border)',
         borderRadius: 14, padding: '12px 14px',
         cursor: isDragging ? 'grabbing' : 'pointer',
-        transform: CSS.Transform.toString(transform),
+        transform: isDragging
+          ? `${CSS.Transform.toString(transform) || ''} scale(1.03)`.trim()
+          : (CSS.Transform.toString(transform) || undefined),
         transition,
         display: 'flex', flexDirection: 'column', gap: 8,
-        opacity: isDragging ? 0.4 : 1,
-        boxShadow: isDragging ? '0 0 0 2px rgba(139,92,246,0.2)' : undefined,
+        opacity: isDragging ? 0.9 : 1,
+        boxShadow: isDragging
+          ? '0 0 0 4px rgba(124,58,237,0.3), 0 8px 24px rgba(124,58,237,0.2)'
+          : undefined,
+        overflow: 'hidden',
       }}
     >
+      {swiped && (
+        <div
+          style={{
+            position: 'absolute', right: 0, top: 0, bottom: 0, width: 72,
+            background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: '0 12px 12px 0', zIndex: 10,
+          }}
+          onClick={(e) => { e.stopPropagation(); setSwiped(false); onDelete(cat.id!) }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Trash2 size={20} color="white" />
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -291,7 +327,7 @@ export function CategoriesPage() {
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { delay: 400, tolerance: 8 },
     }),
   )
 
