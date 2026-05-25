@@ -18,7 +18,6 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { BottomSheet } from '../components/BottomSheet'
-import { SwipeableRow } from '../components/SwipeableRow'
 import { useCategories } from '../hooks/useCategories'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -449,64 +448,25 @@ export function CategoriesPage() {
                 </DndContext>
               </div>
 
-              {/* Mobile list with swipe-to-delete */}
-              <div className="lg:hidden flex flex-col" style={{ gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
-                {sortedCategories.map(cat => (
-                  <SwipeableRow
-                    key={cat.id}
-                    onDelete={() => handleDelete(cat.id!)}
+              {/* Mobile list with drag & drop */}
+              <div className="lg:hidden">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={sortedCategories.map(c => c.id!)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <div
-                      style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
-                        borderRadius: 16, cursor: 'pointer',
-                        background: 'var(--bg2)', border: `1px solid ${cat.color}30`,
-                        minHeight: 64,
-                      }}
-                      onClick={() => openEdit(cat)}
-                    >
-                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: cat.color + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-                        {cat.icon}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{cat.name}</div>
-                        {cat.budgetLimit != null ? (
-                          <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-                              <span style={{ fontSize: 12, fontWeight: 600, color: cat.color }}>Limit: {formatAmount(cat.budgetLimit)}</span>
-                              {(() => {
-                                const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                                const rawPct = status?.percentage ?? 0
-                                const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
-                                return (
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>{Math.round(rawPct)}%</span>
-                                )
-                              })()}
-                            </div>
-                            {(() => {
-                              const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                              const pct = status ? Math.min(status.percentage, 100) : 0
-                              const rawPct = status?.percentage ?? 0
-                              const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
-                              return (
-                                <>
-                                  <div style={{ height: 3, borderRadius: 99, background: 'var(--bg4)', marginTop: 4, overflow: 'hidden' }}>
-                                    <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-                                  </div>
-                                  <span style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, display: 'block' }}>{t.expenses.categories.spent}: {formatAmount(status?.spent ?? 0)}</span>
-                                </>
-                              )
-                            })()}
-                          </>
-                        ) : cat.autoLimit ? (
-                          <span style={{ fontSize: 12, color: 'var(--violet)' }}>⚡ {t.expenses.categories.autoLimit}</span>
-                        ) : (
-                          <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.expenses.categories.noLimit}</span>
-                        )}
-                      </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+                      {sortedCategories.map(cat => {
+                        const status = budgetStatuses.find(b => b.categoryId === cat.id)
+                        return <SortableListCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                      })}
                     </div>
-                  </SwipeableRow>
-                ))}
+                  </SortableContext>
+                </DndContext>
               </div>
             </>
           )}
