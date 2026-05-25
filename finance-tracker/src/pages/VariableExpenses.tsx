@@ -322,13 +322,10 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => {
                 return (
                   <div key={date} style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <span style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: 'var(--text)', letterSpacing: '-1.5px', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', lineHeight: 1.3 }}>{dayName}</span>
-                          <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{monthName}</span>
-                        </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{dayName}, {monthName}</span>
                       </div>
                       <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
                     </div>
@@ -372,13 +369,10 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             ) : (
               dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
                 <div key={date} style={{ marginBottom: 24 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <span style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, color: 'var(--text)', letterSpacing: '-1.5px', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', lineHeight: 1.3 }}>{dayName}</span>
-                        <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{monthName}</span>
-                      </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text3)' }}>{dayName}, {monthName}</span>
                     </div>
                     <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
                   </div>
