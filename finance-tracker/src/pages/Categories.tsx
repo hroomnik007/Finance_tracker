@@ -3,8 +3,7 @@ import { Plus, Pencil, Trash2, Tag, GripVertical } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -12,7 +11,6 @@ import {
 } from '@dnd-kit/core'
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   rectSortingStrategy,
   useSortable,
@@ -230,9 +228,13 @@ export function CategoriesPage() {
   }, [categories, localIds])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
   )
 
   async function handleDragEnd(event: DragEndEvent) {
