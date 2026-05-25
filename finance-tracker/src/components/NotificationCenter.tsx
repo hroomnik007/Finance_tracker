@@ -3,6 +3,7 @@ import type { Page } from '../App'
 import { getCategories } from '../api/categories'
 import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
+import { getDismissedNotifications, dismissNotification as dismissNotifApi } from '../api/notifications'
 import { useFormatters } from '../hooks/useFormatters'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n'
@@ -25,8 +26,8 @@ function getReadIds(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(NOTIF_READ_KEY) ?? '[]')) } catch { return new Set() }
 }
 
-function saveReadIds(ids: Set<string>) {
-  try { localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...ids])) } catch { /* ignore */ }
+function saveReadIdsLocal(ids: string[]) {
+  try { localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(ids)) } catch { /* ignore */ }
 }
 
 interface NotificationCenterProps {
@@ -77,7 +78,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
       const ns: Notification[] = []
 
-      // Budget warnings (≥ 90%)
+      // Budget warnings (≥ 80%)
       const spentByCategory: Record<string, number> = {}
       for (const tx of varRes.data) {
         if (tx.categoryId) spentByCategory[tx.categoryId] = (spentByCategory[tx.categoryId] ?? 0) + tx.amount
@@ -87,7 +88,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         if (!limit || limit <= 0) continue
         const spent = spentByCategory[cat.id] ?? 0
         const pct = (spent / limit) * 100
-        if (pct < 90) continue
+        if (pct < 80) continue
         ns.push({
           id: `budget-${cat.id}`,
           icon: pct >= 100 ? '🚨' : '⚠️',
@@ -170,7 +171,14 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         break
       }
 
-      const readIds = getReadIds()
+      let readIds: Set<string>
+      try {
+        const res = await getDismissedNotifications()
+        readIds = new Set(res.data)
+        saveReadIdsLocal(res.data)
+      } catch {
+        readIds = getReadIds()
+      }
       setNotifications(ns.map(n => readIds.has(n.id) ? { ...n, read: true } : n))
     } catch { /* silently ignore fetch errors */ }
     setLoading(false)
@@ -178,8 +186,10 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
   function markAllRead() {
     setNotifications(ns => {
+      const toMark = ns.filter(n => !n.read)
       const updated = ns.map(n => ({ ...n, read: true }))
-      saveReadIds(new Set(updated.map(n => n.id)))
+      toMark.forEach(n => dismissNotifApi(n.id).catch(() => {}))
+      saveReadIdsLocal(updated.map(n => n.id))
       return updated
     })
   }
@@ -191,7 +201,10 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   function handleItemClick(n: Notification) {
     setNotifications(ns => {
       const updated = ns.map(x => x.id === n.id ? { ...x, read: true } : x)
-      saveReadIds(new Set(updated.filter(x => x.read).map(x => x.id)))
+      if (!n.read) {
+        dismissNotifApi(n.id).catch(() => {})
+        saveReadIdsLocal(updated.filter(x => x.read).map(x => x.id))
+      }
       return updated
     })
     if (n.target && onNavigate) {

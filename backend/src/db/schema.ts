@@ -222,3 +222,14 @@ export const userSessions = pgTable("user_sessions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type UserSession = typeof userSessions.$inferSelect;
+
+export const notificationsDismissed = pgTable("notifications_dismissed", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  notificationKey: varchar("notification_key", { length: 255 }).notNull(),
+  dismissedAt: timestamp("dismissed_at").notNull().defaultNow(),
+}, (t) => [
+  unique("notifications_dismissed_unq").on(t.userId, t.notificationKey),
+  index("notifications_dismissed_user_id_idx").on(t.userId),
+]);
+export type NotificationDismissed = typeof notificationsDismissed.$inferSelect;
