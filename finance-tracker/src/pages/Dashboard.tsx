@@ -386,7 +386,7 @@ const upcomingFixed = useMemo(() => {
       {pieData.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ position: 'relative', width: 190, height: 190 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width={190} height={190}>
               <PieChart>
                 <Pie
                   data={[{ value: 1 }]}
@@ -466,7 +466,7 @@ const upcomingFixed = useMemo(() => {
             style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }}
             onClick={e => e.stopPropagation()}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width={190} height={190}>
               <PieChart>
                 <Pie
                   data={pieData}
