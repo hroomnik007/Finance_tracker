@@ -146,13 +146,13 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const MONTH_NAMES_VAR = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December']
   const MONTH_NAME_VAR = MONTH_NAMES_VAR[month - 1] ?? ''
 
-  const totalAmount = useMemo(() => variableExpenses.reduce((sum, e) => sum + e.amount, 0), [variableExpenses])
   const filteredTotal = useMemo(() =>
-    activeCategory
-      ? variableExpenses.filter(e => e.categoryId === activeCategory).reduce((sum, e) => sum + e.amount, 0)
-      : totalAmount
-  , [variableExpenses, activeCategory, totalAmount])
-  const count = variableExpenses.length
+    (activeCategory
+      ? variableExpenses.filter(e => e.categoryId === activeCategory)
+      : variableExpenses
+    ).filter(e => memberFilter === 'all' || e.created_by === memberFilter || (memberFilter === user?.id && !e.created_by))
+     .reduce((sum, e) => sum + e.amount, 0)
+  , [variableExpenses, activeCategory, memberFilter, user?.id])
 
   const categoriesWithExpenses = useMemo(
     () => categories.filter(c => variableExpenses.some(e => e.categoryId === c.id)),
@@ -243,7 +243,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 fontFamily: "'DM Mono',monospace",
               }}>
                 <span>≡</span>
-                <span>{activeCategory ? filteredSorted.length : count} transakcií tento mesiac</span>
+                <span>{filteredSorted.length} transakcií tento mesiac</span>
               </span>
             </div>
           </div>

@@ -446,7 +446,7 @@ const upcomingFixed = useMemo(() => {
                     fontWeight: isHighlighted ? 700 : 400,
                     transition: 'font-weight 0.1s, color 0.1s',
                   }}>{item.name}</span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalVariable > 0 ? Math.round((item.value / totalVariable) * 100) : 0}%</span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalExpenses > 0 ? Math.round((item.value / totalExpenses) * 100) : 0}%</span>
                 </div>
               )
               if (i < 5) return row
@@ -505,12 +505,12 @@ const upcomingFixed = useMemo(() => {
                     <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
                     <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
                     <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalVariable) * 100)}%</p>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalExpenses) * 100)}%</p>
                   </>
                 )
               })() : (
                 <>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalVariable)}</p>
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalExpenses)}</p>
                   <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
                 </>
               )}

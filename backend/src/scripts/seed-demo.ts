@@ -179,14 +179,10 @@ async function main() {
   const skipFuture = (month: number, day: number) =>
     month === TODAY_MONTH && day > TODAY_DAY;
 
-  // ── 6. Fixed expenses ────────────────────────────────────────────────────
-  const fixedRows: TxRow[] = [];
-  for (const m of MONTHS) {
-    for (const f of FIXED_DEFS) {
-      if (m.year === TODAY_YEAR && m.month === TODAY_MONTH && f.day > TODAY_DAY) continue;
-      fixedRows.push(tx(f.cat, "expense", f.amount, f.desc, d(m.year, m.month, f.day), true));
-    }
-  }
+  // ── 6. Fixed expenses (one template per expense) ─────────────────────────
+  const fixedRows: TxRow[] = FIXED_DEFS.map(f =>
+    tx(f.cat, "expense", f.amount, JSON.stringify({ l: f.desc, n: "", d: f.day }), d(TODAY_YEAR, TODAY_MONTH, 1), true)
+  );
   console.log(`Built ${fixedRows.length} fixed expense rows.`);
 
   // ── 7. Variable expenses ─────────────────────────────────────────────────
