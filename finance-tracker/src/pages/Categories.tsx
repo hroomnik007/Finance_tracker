@@ -181,94 +181,104 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
   const rawPct = status?.percentage ?? 0
   const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
 
-  const touchStartX = useRef<number>(0)
-  const [swiped, setSwiped] = useState(false)
+  const touchStartX = useRef(0)
+  const touchStartTime = useRef(0)
+  const [swipeOffset, setSwipeOffset] = useState(0)
 
   function handleTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0]?.clientX ?? 0
+    touchStartX.current = e.touches[0].clientX
+    touchStartTime.current = Date.now()
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (isDragging) return
+    const dx = e.touches[0].clientX - touchStartX.current
+    setSwipeOffset(dx < 0 ? Math.max(dx, -120) : 0)
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
-    if (isDragging) return
-    const endX = e.changedTouches[0]?.clientX ?? touchStartX.current
-    const dx = endX - touchStartX.current
-    if (dx < -60) setSwiped(true)
-    else if (dx > 20) setSwiped(false)
+    if (isDragging) { setSwipeOffset(0); return }
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current
+    const duration = Date.now() - touchStartTime.current
+    setSwipeOffset(0)
+    if (Math.abs(deltaX) < 10 && duration < 400) {
+      onEdit(cat)
+    } else if (deltaX < -60) {
+      onDelete(cat.id!)
+    }
   }
+
+  const outerTransform = [
+    CSS.Transform.toString(transform),
+    isDragging ? 'scale(1.03)' : '',
+  ].filter(Boolean).join(' ') || undefined
+
+  const deleteOpacity = swipeOffset < -20 ? Math.min((-swipeOffset - 20) / 40, 1) : 0
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
-      {...(swiped ? {} : listeners)}
-      onClick={() => { if (swiped) { setSwiped(false); return } onEdit(cat) }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      {...listeners}
       style={{
-        position: 'relative',
-        background: 'var(--bg2)',
-        border: isDragging ? '2px solid var(--violet)' : '1px solid var(--border)',
-        borderRadius: 14, padding: '12px 14px',
-        cursor: isDragging ? 'grabbing' : 'pointer',
-        transform: isDragging
-          ? `${CSS.Transform.toString(transform) || ''} scale(1.03)`.trim()
-          : (CSS.Transform.toString(transform) || undefined),
-        transition,
-        display: 'flex', flexDirection: 'column', gap: 8,
-        opacity: isDragging ? 0.9 : 1,
-        boxShadow: isDragging
-          ? '0 0 0 4px rgba(124,58,237,0.3), 0 8px 24px rgba(124,58,237,0.2)'
-          : undefined,
-        overflow: 'hidden',
+        position: 'relative', borderRadius: 14, overflow: 'hidden',
+        transform: outerTransform, transition,
+        opacity: isDragging ? 0.85 : 1,
+        boxShadow: isDragging ? '0 0 0 4px rgba(124,58,237,0.3), 0 8px 24px rgba(124,58,237,0.2)' : undefined,
+        touchAction: 'none',
       }}
     >
-      {swiped && (
-        <div
-          style={{
-            position: 'absolute', right: 0, top: 0, bottom: 0, width: 72,
-            background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: '0 12px 12px 0', zIndex: 10,
-          }}
-          onClick={(e) => { e.stopPropagation(); setSwiped(false); onDelete(cat.id!) }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <Trash2 size={20} color="white" />
-        </div>
-      )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
-          {cat.budgetLimit != null
-            ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
-            : cat.autoLimit
-              ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
-              : null
-          }
-        </div>
-        <div
-          style={{ display: 'flex', gap: 4, flexShrink: 0 }}
-          onClick={e => e.stopPropagation()}
-          onPointerDown={e => e.stopPropagation()}
-        >
-          <button onClick={() => onEdit(cat)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)' }}><Pencil size={12} /></button>
-          <button onClick={() => onDelete(cat.id!)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171' }}><Trash2 size={12} /></button>
-        </div>
+      {/* Red delete background revealed by swipe */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, background: '#ef4444', borderRadius: 14,
+        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 20,
+        opacity: deleteOpacity, pointerEvents: 'none',
+      }}>
+        <Trash2 size={20} color="white" />
       </div>
-      {cat.budgetLimit != null && status && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+      {/* Card content — slides on swipe, touch handlers bubble up to dnd-kit listeners */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          position: 'relative', background: 'var(--bg2)',
+          border: isDragging ? '2px solid var(--violet)' : '1px solid var(--border)',
+          borderRadius: 14, padding: '12px 14px',
+          display: 'flex', flexDirection: 'column', gap: 8,
+          transform: isDragging ? undefined : `translateX(${swipeOffset}px)`,
+          transition: swipeOffset !== 0 ? 'none' : 'transform 0.2s ease',
+          userSelect: 'none',
+          WebkitUserSelect: 'none' as React.CSSProperties['WebkitUserSelect'],
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+            {cat.budgetLimit != null
+              ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
+              : cat.autoLimit
+                ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
+                : null
+            }
           </div>
         </div>
-      )}
-      {cat.budgetLimit == null && status && status.spent > 0 && (
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
-      )}
+        {cat.budgetLimit != null && status && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+            </div>
+          </div>
+        )}
+        {cat.budgetLimit == null && status && status.spent > 0 && (
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
+        )}
+      </div>
     </div>
   )
 }
@@ -557,7 +567,7 @@ export function CategoriesPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={handleDelete} />
                       })}
                     </div>
                   </SortableContext>
