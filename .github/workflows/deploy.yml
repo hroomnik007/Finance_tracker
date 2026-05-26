@@ -71,6 +71,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd /var/www/finance-tracker-repo/backend
+            rm -rf node_modules && npm cache clean --force
             npm ci --prefer-offline
             # Add DATABASE_URL to GitHub repo Settings → Secrets and variables → Actions
             DATABASE_URL=${{ secrets.DATABASE_URL }} npm run db:migrate
