@@ -629,7 +629,7 @@ export const en: Translations = {
     markAll: 'Mark all',
     clear: 'Clear',
     loading: 'Loading...',
-    emptyTitle: 'All caught up',
+    emptyTitle: 'No new notifications',
     emptyBody: 'No new notifications.',
     openLink: 'Open →',
     newBadge: 'new',

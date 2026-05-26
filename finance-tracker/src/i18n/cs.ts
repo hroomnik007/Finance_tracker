@@ -629,7 +629,7 @@ export const cs: Translations = {
     markAll: 'Označit vše',
     clear: 'Vyčistit',
     loading: 'Načítám...',
-    emptyTitle: 'Vše stíháte',
+    emptyTitle: 'Žádné nové notifikace',
     emptyBody: 'Žádná nová oznámení.',
     openLink: 'Otevřít →',
     newBadge: 'nové',

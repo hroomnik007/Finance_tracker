@@ -629,7 +629,7 @@ export const pl: Translations = {
     markAll: 'Oznacz wszystkie',
     clear: 'Wyczyść',
     loading: 'Ładowanie...',
-    emptyTitle: 'Wszystko pod kontrolą',
+    emptyTitle: 'Brak nowych powiadomień',
     emptyBody: 'Brak nowych powiadomień.',
     openLink: 'Otwórz →',
     newBadge: 'nowe',

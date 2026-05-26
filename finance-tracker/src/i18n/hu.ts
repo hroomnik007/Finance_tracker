@@ -629,7 +629,7 @@ export const hu: Translations = {
     markAll: 'Összes megjelölése',
     clear: 'Törlés',
     loading: 'Betöltés...',
-    emptyTitle: 'Minden rendben',
+    emptyTitle: 'Nincsenek új értesítések',
     emptyBody: 'Nincsenek új értesítések.',
     openLink: 'Megnyitás →',
     newBadge: 'új',

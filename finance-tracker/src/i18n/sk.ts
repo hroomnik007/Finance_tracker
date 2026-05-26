@@ -627,7 +627,7 @@ export const sk = {
     markAll: 'Označiť všetky',
     clear: 'Vyčistiť',
     loading: 'Načítavam...',
-    emptyTitle: 'Všetko stíhate',
+    emptyTitle: 'Žiadne nové notifikácie',
     emptyBody: 'Žiadne nové upozornenia.',
     openLink: 'Otvoriť →',
     newBadge: 'nové',

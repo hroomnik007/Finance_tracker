@@ -276,9 +276,8 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
             </div>
           ) : notifications.length === 0 ? (
             <div style={{ padding: '40px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.7 }}>🔕</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>{t.notifications.emptyTitle}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text3)' }}>{t.notifications.emptyBody}</div>
+              <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.7 }}>✅</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t.notifications.emptyTitle}</div>
             </div>
           ) : (
             <div style={{ maxHeight: 420, overflowY: 'auto' }}>
