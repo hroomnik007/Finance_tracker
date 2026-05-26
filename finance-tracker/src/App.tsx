@@ -27,20 +27,14 @@ import { PinLockProvider, usePinLockContext } from './context/PinLockContext'
 import { useToast } from './hooks/useToast'
 import { useAuth } from './context/AuthContext'
 import { useSettingsContext } from './context/SettingsContext'
-import { useFixedExpenses } from './hooks/useFixedExpenses'
-import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
 import { useVariableExpenses } from './hooks/useVariableExpenses'
 import { useIncomes } from './hooks/useIncomes'
-import { useCategories } from './hooks/useCategories'
-import { useBudgetStatus } from './hooks/useBudgetStatus'
 import { fetchIncomes, incomeQueryKey } from './hooks/useIncomes'
 import { fetchVariableExpenses, variableExpenseQueryKey } from './hooks/useVariableExpenses'
 import { fetchFixedExpenses, fixedExpenseQueryKey } from './hooks/useFixedExpenses'
 import { fetchCategoriesData } from './hooks/useCategories'
 import { fetchSavingsData } from './hooks/useSavings'
 import { fetchHouseholdData, householdQueryKey } from './hooks/useHousehold'
-import { useBudgetWarningNotifications } from './hooks/useBudgetWarningNotifications'
-import { useMonthlyReminderNotification } from './hooks/useMonthlyReminderNotification'
 import { HouseholdPage } from './pages/Household'
 import { SavingsPage } from './pages/Savings'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
@@ -88,14 +82,8 @@ function App() {
   const { settings } = useSettingsContext()
   const queryClient = useQueryClient()
   const now = new Date()
-  const { fixedExpenses: allFixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
   const { incomes: allIncomes } = useIncomes(now.getMonth() + 1, now.getFullYear())
-  const { categories } = useCategories()
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses })
-  useFixedExpenseNotifications(allFixedExpenses, isAuthenticated)
-  useBudgetWarningNotifications(budgetStatuses, isAuthenticated)
-  useMonthlyReminderNotification(isAuthenticated)
   const [page, setPage] = useState<Page>(getPageFromHash)
   type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
 

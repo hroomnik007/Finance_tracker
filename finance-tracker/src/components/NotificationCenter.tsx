@@ -172,7 +172,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         break
       }
 
-      setNotifications(ns.map(n => dismissedIds.has(n.id) ? { ...n, read: true } : n))
+      setNotifications(ns.filter(n => !dismissedIds.has(n.id)))
     } catch { /* silently ignore fetch errors */ }
     setLoading(false)
   }
