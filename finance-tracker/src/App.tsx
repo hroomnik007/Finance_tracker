@@ -40,7 +40,7 @@ import { SavingsPage } from './pages/Savings'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { TrackingDateOnboarding } from './components/TrackingDateOnboarding'
 import { CommandPalette } from './components/CommandPalette'
-import { updateUserSettings } from './api/auth'
+import { updateUserSettings, sessionCheck } from './api/auth'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -153,31 +153,46 @@ function App() {
         sessionStorage.removeItem('just_logged_in')
         hasNavigated.current = true
 
-        // Await all prefetches before navigating so components mount with warm cache
         const m = now.getMonth() + 1
         const y = now.getFullYear()
         const trackingStart = user?.tracking_start_date ?? null
 
-        // Flush pre-auth empty cache (queries fired before login cached [] as success)
-        queryClient.invalidateQueries()
-
-        const prefetches = [
-          queryClient.prefetchQuery({ queryKey: incomeQueryKey(m, y, trackingStart), queryFn: () => fetchIncomes(m, y, trackingStart) }),
-          queryClient.prefetchQuery({ queryKey: variableExpenseQueryKey(m, y), queryFn: () => fetchVariableExpenses(m, y) }),
-          queryClient.prefetchQuery({ queryKey: fixedExpenseQueryKey(m, y, trackingStart), queryFn: () => fetchFixedExpenses(m, y, trackingStart) }),
-          queryClient.prefetchQuery({ queryKey: ['categories'], queryFn: fetchCategoriesData }),
-          queryClient.prefetchQuery({ queryKey: ['savings'], queryFn: fetchSavingsData }),
-          ...(user?.household_enabled && user?.household_id
-            ? [queryClient.prefetchQuery({ queryKey: householdQueryKey(), queryFn: fetchHouseholdData })]
-            : []),
-        ]
-
-        Promise.all(prefetches.map(p => p.catch(() => {}))).then(() => {
+        const doNavigate = () => {
           const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
           const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
           setPage(dest)
           window.location.hash = dest
-        })
+        }
+
+        const runPrefetch = async () => {
+          // Verify session cookie is established before prefetching
+          try {
+            const { valid } = await sessionCheck()
+            if (!valid) { doNavigate(); return }
+          } catch {
+            doNavigate()
+            return
+          }
+
+          // Flush pre-auth empty cache (queries fired before login cached [] as success)
+          queryClient.invalidateQueries()
+
+          const prefetches = [
+            queryClient.prefetchQuery({ queryKey: incomeQueryKey(m, y, trackingStart), queryFn: () => fetchIncomes(m, y, trackingStart) }),
+            queryClient.prefetchQuery({ queryKey: variableExpenseQueryKey(m, y), queryFn: () => fetchVariableExpenses(m, y) }),
+            queryClient.prefetchQuery({ queryKey: fixedExpenseQueryKey(m, y, trackingStart), queryFn: () => fetchFixedExpenses(m, y, trackingStart) }),
+            queryClient.prefetchQuery({ queryKey: ['categories'], queryFn: fetchCategoriesData }),
+            queryClient.prefetchQuery({ queryKey: ['savings'], queryFn: fetchSavingsData }),
+            ...(user?.household_enabled && user?.household_id
+              ? [queryClient.prefetchQuery({ queryKey: householdQueryKey(), queryFn: fetchHouseholdData })]
+              : []),
+          ]
+
+          await Promise.all(prefetches.map(p => p.catch(() => {})))
+          doNavigate()
+        }
+
+        runPrefetch()
       }
     }
   }, [isAuthenticated, isLoading, user, settings, queryClient])
