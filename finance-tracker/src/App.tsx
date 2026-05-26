@@ -169,6 +169,10 @@ function App() {
         const m = now.getMonth() + 1
         const y = now.getFullYear()
         const trackingStart = user?.tracking_start_date ?? null
+
+        // Flush pre-auth empty cache (queries fired before login cached [] as success)
+        queryClient.invalidateQueries()
+
         const prefetches = [
           queryClient.prefetchQuery({ queryKey: incomeQueryKey(m, y, trackingStart), queryFn: () => fetchIncomes(m, y, trackingStart) }),
           queryClient.prefetchQuery({ queryKey: variableExpenseQueryKey(m, y), queryFn: () => fetchVariableExpenses(m, y) }),

@@ -61,6 +61,9 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
   const [trackingSaving, setTrackingSaving] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
@@ -385,24 +388,26 @@ const upcomingFixed = useMemo(() => {
       <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
       {pieData.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div style={{ position: 'relative', width: 190, height: 190 }}>
-            <ResponsiveContainer width={190} height={190}>
-              <PieChart>
-                <Pie
-                  data={[{ value: 1 }]}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
-                  isAnimationActive={false}
-                >
-                  <Cell fill="var(--bg3)" />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+          <div style={{ position: 'relative', width: 190, height: 190, minHeight: 190 }}>
+            {mounted && (
+              <ResponsiveContainer width={190} height={190}>
+                <PieChart>
+                  <Pie
+                    data={[{ value: 1 }]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={-270}
+                    isAnimationActive={false}
+                  >
+                    <Cell fill="var(--bg3)" />
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
               <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>{t.dashboard.noExpenses}</p>
             </div>
@@ -463,10 +468,10 @@ const upcomingFixed = useMemo(() => {
           </div>
           {/* Donut */}
           <div
-            style={{ position: 'relative', flexShrink: 0, width: 190, height: 190 }}
+            style={{ position: 'relative', flexShrink: 0, width: 190, height: 190, minHeight: 190 }}
             onClick={e => e.stopPropagation()}
           >
-            <ResponsiveContainer width={190} height={190}>
+            {mounted && <ResponsiveContainer width={190} height={190}>
               <PieChart>
                 <Pie
                   data={pieData}
@@ -490,7 +495,7 @@ const upcomingFixed = useMemo(() => {
                   {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
                 </Pie>
               </PieChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer>}
             {/* Center label */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
               {pieDisplayIndex !== null && pieData[pieDisplayIndex] ? (() => {

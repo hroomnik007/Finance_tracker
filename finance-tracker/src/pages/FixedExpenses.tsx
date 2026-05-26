@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Pencil, Trash2, Plus, Lock } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
@@ -41,6 +41,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const { categories } = useCategories()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   const expenseCategories = useMemo(
     () => categories.filter(c => c.type === 'expense'),
@@ -213,26 +215,28 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
   const vsContent = (total > 0 || variableTotal > 0) ? (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <div style={{ width: 100, height: 100, flexShrink: 0 }}>
-        <ResponsiveContainer width={100} height={100}>
-          <PieChart>
-            <Pie
-              data={[
-                { name: t.nav.fixed, value: total > 0 ? total : 0.001 },
-                { name: t.nav.variable, value: variableTotal > 0 ? variableTotal : 0.001 },
-              ]}
-              cx="50%" cy="50%" innerRadius={28} outerRadius={46}
-              paddingAngle={2} dataKey="value" startAngle={90} endAngle={-270}
-            >
-              <Cell fill="#f97316" />
-              <Cell fill="#7c3aed" />
-            </Pie>
-            <Tooltip
-              formatter={(v: number) => [formatAmount(v)]}
-              contentStyle={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      <div style={{ width: 100, height: 100, flexShrink: 0, minHeight: 100 }}>
+        {mounted && (
+          <ResponsiveContainer width={100} height={100}>
+            <PieChart>
+              <Pie
+                data={[
+                  { name: t.nav.fixed, value: total > 0 ? total : 0.001 },
+                  { name: t.nav.variable, value: variableTotal > 0 ? variableTotal : 0.001 },
+                ]}
+                cx="50%" cy="50%" innerRadius={28} outerRadius={46}
+                paddingAngle={2} dataKey="value" startAngle={90} endAngle={-270}
+              >
+                <Cell fill="#f97316" />
+                <Cell fill="#7c3aed" />
+              </Pie>
+              <Tooltip
+                formatter={(v: number) => [formatAmount(v)]}
+                contentStyle={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
