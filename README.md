@@ -1,4 +1,4 @@
-# Finvu — Financie pod kontrolou
+# Finvu — Finances under control
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <strong>Moderná PWA aplikácia na správu rodinných financií</strong><br/>
-  Sledujte príjmy, výdavky, sporenie a rozpočet pre celú domácnosť na jednom mieste.
+  <strong>A modern PWA app for managing household finances</strong><br/>
+  Track income, expenses, savings and budget for your entire household in one place.
 </p>
 
 <p align="center">
@@ -17,16 +17,16 @@
 
 ---
 
-## Funkcie
+## Features
 
-- **Dashboard** — prehľad príjmov, výdavkov a zostatku s heatmapou a donut grafom
-- **Variabilné výdavky** — kategorizácia, import z banky (Revolut, Tatra banka, SLSP, mBank, 365.bank)
-- **Fixné výdavky** — opakujúce sa platby s upozorneniami pred splatnosťou
-- **Sporenie** — ciele s progress trackingom, pozastavenie/obnovenie, deep link
-- **Domácnosť** — zdieľané financie, prehľad podľa členov domácnosti
-- **Rozpočet** — limity na kategórie, auto-limit z fixných výdavkov, vizuálny progress
-- **5 jazykov** — SK, CS, PL, HU, EN s automatickou detekciou jazyka prehliadača
-- **PWA** — inštalovateľné na mobile aj desktop, offline podpora
+- **Dashboard** — overview of income, expenses and balance with a heatmap and donut chart
+- **Variable expenses** — categorisation, bank import (Revolut, Tatra banka, SLSP, mBank, 365.bank)
+- **Fixed expenses** — recurring payments with due-date reminders
+- **Savings** — goals with progress tracking, pause/resume, deep link
+- **Household** — shared finances, per-member breakdown
+- **Budget** — category limits, auto-limit from fixed expenses, visual progress
+- **5 languages** — SK, CS, PL, HU, EN with automatic browser language detection
+- **PWA** — installable on mobile and desktop, offline support
 - **Dark / Light mode**
 - **Export** — PDF, XLSX, CSV
 
@@ -38,9 +38,9 @@
 |---|---|
 | URL | https://finvu.pedani.eu |
 | Email | `demo@finvu.sk` |
-| Heslo | `demo123` |
+| Password | `demo123` |
 
-Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie, domácnosť s členmi.
+The demo account is pre-filled with realistic data: income, expenses, savings, and household members.
 
 ---
 
@@ -49,28 +49,28 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 ### Frontend
 - **React 19** + **TypeScript 5.7** + **Vite 8**
 - **Tailwind CSS 4**
-- **i18n** — vlastný typovaný systém (5 jazykov, 413 kľúčov)
-- **Recharts** — grafy
+- **i18n** — custom typed system (5 languages, 413 keys)
+- **Recharts** — charts
 - **PWA** — Vite PWA Plugin + Workbox (Service Worker)
 - **Export** — jsPDF, xlsx, papaparse
 
 ### Backend
 - **Node.js** + **Express** + **TypeScript**
 - **PostgreSQL** + **Drizzle ORM**
-- **JWT** (access token v pamäti) + **httpOnly cookie** (refresh token)
+- **JWT** (access token in memory) + **httpOnly cookie** (refresh token)
 - **WebAuthn** Google OAuth, PIN login
 
-### Infraštruktúra
+### Infrastructure
 - **Docker** + **Docker Compose** (backend + PostgreSQL)
-- **GitHub Actions** — automatický CI/CD deploy na každý push na `main`
+- **GitHub Actions** — automatic CI/CD deploy on every push to `main`
 - **VPS server** (backend API)
 - Frontend: https://finvu.pedani.eu
 
 ---
 
-## Lokálny vývoj
+## Local development
 
-### Požiadavky
+### Requirements
 
 - Node.js 22+
 - Docker + Docker Compose
@@ -79,7 +79,7 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 
 ```bash
 cd finance-tracker
-cp .env.example .env          # nastaviť VITE_API_URL=http://localhost:3001
+cp .env.example .env          # set VITE_API_URL=http://localhost:3001
 npm install
 npm run dev                   # → http://localhost:5173
 ```
@@ -88,52 +88,52 @@ npm run dev                   # → http://localhost:5173
 
 ```bash
 cd backend
-cp .env.example .env          # nastaviť DATABASE_URL, JWT_SECRET, atď.
-docker compose up -d postgres # spustiť iba databázu
+cp .env.example .env          # set DATABASE_URL, JWT_SECRET, etc.
+docker compose up -d postgres # start database only
 npm install
-npm run migrate               # spustiť migrácie
+npm run migrate               # run migrations
 npm run dev                   # → http://localhost:3001
 ```
 
-### Databázové migrácie
+### Database migrations
 
 ```bash
-# Lokálne
+# Local
 npm run migrate
 
-# Produkcia (v Docker kontajneri)
+# Production (inside Docker container)
 docker exec <backend-container> node dist/scripts/migrate.js
 ```
 
-Migrácie sú číslované SQL súbory v `backend/migrations/` a spúšťajú sa automaticky pri deployi.
+Migrations are numbered SQL files in `backend/migrations/` and run automatically on deploy.
 
 ---
 
 ## Deployment
 
-Každý push na `main` spustí automatický build a deploy.
+Every push to `main` triggers an automatic build and deploy.
 
 ---
 
 ## Self-hosting
 
-### Požiadavky
+### Requirements
 
-- VPS s min. **2 GB RAM** (odporúčané 4 GB)
+- VPS with min. **2 GB RAM** (4 GB recommended)
 - **Docker** + **Docker Compose** (v2)
-- **Nginx** ako reverse proxy
-- Vlastná doména a SSL certifikát (Certbot)
+- **Nginx** as reverse proxy
+- Own domain and SSL certificate (Certbot)
 
-### Inštalácia krok za krokom
+### Step-by-step setup
 
-**1. Klonovanie repozitára**
+**1. Clone the repository**
 
 ```bash
 git clone https://github.com/hroomnik/finvu.git
 cd finvu
 ```
 
-**2. Konfigurácia prostredí**
+**2. Configure environment files**
 
 ```bash
 # Backend
@@ -142,28 +142,28 @@ nano backend/.env
 
 # Frontend
 cp finance-tracker/.env.example finance-tracker/.env
-nano finance-tracker/.env   # nastaviť VITE_API_URL=https://api.vasadomena.sk
+nano finance-tracker/.env   # set VITE_API_URL=https://api.yourdomain.com
 ```
 
-**3. Spustenie kontajnerov**
+**3. Start containers**
 
 ```bash
 docker compose up -d
 ```
 
-**4. Spustenie databázových migrácií**
+**4. Run database migrations**
 
 ```bash
 docker exec finvu-backend-1 node dist/scripts/migrate.js
 ```
 
-**5. Nginx — príklad konfigurácie**
+**5. Nginx — example configuration**
 
 ```nginx
-# /etc/nginx/sites-available/api.vasadomena.sk
+# /etc/nginx/sites-available/api.yourdomain.com
 server {
     listen 443 ssl;
-    server_name api.vasadomena.sk;
+    server_name api.yourdomain.com;
 
     client_max_body_size 20M;
 
@@ -177,66 +177,67 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
-    ssl_certificate /etc/letsencrypt/live/api.vasadomena.sk/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.vasadomena.sk/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/api.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.yourdomain.com/privkey.pem;
 }
 ```
 
-**6. SSL certifikát (Certbot)**
+**6. SSL certificate (Certbot)**
 
 ```bash
-certbot --nginx -d api.vasadomena.sk -d vasadomena.sk
+certbot --nginx -d api.yourdomain.com -d yourdomain.com
 ```
 
-### Premenné prostredia
+### Environment variables
 
 #### Backend (`backend/.env`)
 
-| Premenná | Povinná | Popis |
+| Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | ✅ | PostgreSQL connection string (`postgresql://user:pass@postgres:5432/db`) |
-| `JWT_ACCESS_SECRET` | ✅ | Tajný kľúč pre access tokeny (min. 32 znakov) |
-| `JWT_REFRESH_SECRET` | ✅ | Tajný kľúč pre refresh tokeny (min. 32 znakov) |
-| `JWT_ADMIN_SECRET` | ✅ | Tajný kľúč pre admin tokeny (min. 32 znakov) |
-| `ADMIN_USERNAME` | ✅ | Meno admin účtu |
-| `ADMIN_PASSWORD` | ✅ | Heslo admin účtu (min. 12 znakov) |
-| `PORT` | — | Port backendu (predvolene `3001`) |
-| `NODE_ENV` | — | `production` alebo `development` |
-| `BCRYPT_ROUNDS` | — | Počet bcrypt kôl (predvolene `12`) |
-| `APP_URL` | — | URL frontendu (predvolene `https://finvu.pedani.eu`) |
-| `SMTP_HOST` | — | SMTP server pre e-maily |
-| `SMTP_PORT` | — | SMTP port (predvolene `587`) |
-| `SMTP_USER` | — | SMTP prihlasovacie meno |
-| `SMTP_PASS` | — | SMTP heslo |
-| `SMTP_FROM` | — | Odosielateľ e-mailov |
-| `GOOGLE_CLIENT_ID` | — | Google OAuth Client ID (ak chcete Google login) |
-| `WEBAUTHN_ORIGIN` | — | WebAuthn origin (`https://vasadomena.sk`) |
-| `WEBAUTHN_RP_ID` | — | WebAuthn relying party ID (`vasadomena.sk`) |
+| `JWT_ACCESS_SECRET` | ✅ | Secret key for access tokens (min. 32 characters) |
+| `JWT_REFRESH_SECRET` | ✅ | Secret key for refresh tokens (min. 32 characters) |
+| `JWT_ADMIN_SECRET` | ✅ | Secret key for admin tokens (min. 32 characters) |
+| `ADMIN_USERNAME` | ✅ | Admin account username |
+| `ADMIN_PASSWORD` | ✅ | Admin account password (min. 12 characters) |
+| `PORT` | — | Backend port (default `3001`) |
+| `NODE_ENV` | — | `production` or `development` |
+| `BCRYPT_ROUNDS` | — | Number of bcrypt rounds (default `12`) |
+| `APP_URL` | — | Frontend URL (default `https://finvu.pedani.eu`) |
+| `SMTP_HOST` | — | SMTP server for emails |
+| `SMTP_PORT` | — | SMTP port (default `587`) |
+| `SMTP_USER` | — | SMTP username |
+| `SMTP_PASS` | — | SMTP password |
+| `SMTP_FROM` | — | Email sender address |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth Client ID (if you want Google login) |
+| `WEBAUTHN_ORIGIN` | — | WebAuthn origin (`https://yourdomain.com`) |
+| `WEBAUTHN_RP_ID` | — | WebAuthn relying party ID (`yourdomain.com`) |
 
 #### Frontend (`finance-tracker/.env`)
 
-| Premenná | Povinná | Popis |
+| Variable | Required | Description |
 |---|---|---|
-| `VITE_API_URL` | ✅ | URL backendu (`https://api.vasadomena.sk`) |
+| `VITE_API_URL` | ✅ | Backend URL (`https://api.yourdomain.com`) |
 
-### Poznámka k licencii (AGPL-3.0)
+### License note (AGPL-3.0)
 
-Tento projekt je licencovaný pod **GNU AGPL v3**. Ak prevádzkujete upravenú verziu ako sieťovú službu, **ste povinní zverejniť zdrojový kód** svojich úprav za rovnakých podmienok. Pozrite [LICENSE](LICENSE) pre detaily.
+This project is licensed under **GNU AGPL v3**. If you run a modified version as a network service, **you are required to publish the source code** of your modifications under the same terms. See [LICENSE](LICENSE) for details.
 
 ---
 
-## Autentifikácia
+## Authentication
 
-Podporované metódy:
+Supported methods:
 
-| Metóda | Popis |
+| Method | Description |
 |---|---|
-| Email + heslo | Štandardná registrácia |
-| Google OAuth | Prihlásenie cez Google účet |
-| PIN | Rýchle prihlásenie PIN kódom |
-| Demo | Testovací účet bez registrácie |
+| Email + password | Standard registration |
+| Google OAuth | Sign in with Google account |
+| PIN | Quick PIN login |
+| Demo | Test account without registration |
 
 ---
+
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 — see the [LICENSE](LICENSE) file for details.
