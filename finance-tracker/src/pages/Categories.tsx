@@ -185,6 +185,10 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
   const touchStartTime = useRef(0)
   const [swipeOffset, setSwipeOffset] = useState(0)
 
+  useEffect(() => {
+    if (isDragging) setSwipeOffset(0)
+  }, [isDragging])
+
   function handleTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX
     touchStartTime.current = Date.now()
@@ -567,7 +571,7 @@ export function CategoriesPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={handleDelete} />
+                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={(id) => setDeleteId(id)} />
                       })}
                     </div>
                   </SortableContext>

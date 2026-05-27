@@ -181,7 +181,7 @@ async function main() {
 
   // ── 6. Fixed expenses (one template per expense) ─────────────────────────
   const fixedRows: TxRow[] = FIXED_DEFS.map(f =>
-    tx(f.cat, "expense", f.amount, JSON.stringify({ l: f.desc, n: "", d: f.day }), d(TODAY_YEAR, TODAY_MONTH, 1), true)
+    tx(f.cat, "expense", f.amount, JSON.stringify({ l: f.desc, n: "", d: f.day }), d(TODAY_YEAR, TODAY_MONTH, f.day), true)
   );
   console.log(`Built ${fixedRows.length} fixed expense rows.`);
 

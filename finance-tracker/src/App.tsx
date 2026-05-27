@@ -156,8 +156,10 @@ function App() {
         const m = now.getMonth() + 1
         const y = now.getFullYear()
         const trackingStart = user?.tracking_start_date ?? null
+        let cancelled = false
 
         const doNavigate = () => {
+          if (cancelled) return
           const target = (user?.defaultPage ?? settings.defaultPage ?? 'dashboard') as Page
           const dest = VALID_PAGES.includes(target) ? target : 'dashboard'
           setPage(dest)
@@ -165,6 +167,9 @@ function App() {
         }
 
         const runPrefetch = async () => {
+          // Flush pre-auth empty cache before anything else so stale [] responses are gone
+          queryClient.invalidateQueries()
+
           // Verify session cookie is established before prefetching
           try {
             const { valid } = await sessionCheck()
@@ -173,9 +178,6 @@ function App() {
             doNavigate()
             return
           }
-
-          // Flush pre-auth empty cache (queries fired before login cached [] as success)
-          queryClient.invalidateQueries()
 
           const prefetches = [
             queryClient.prefetchQuery({ queryKey: incomeQueryKey(m, y, trackingStart), queryFn: () => fetchIncomes(m, y, trackingStart) }),
@@ -193,6 +195,7 @@ function App() {
         }
 
         runPrefetch()
+        return () => { cancelled = true }
       }
     }
   }, [isAuthenticated, isLoading, user, settings, queryClient])

@@ -505,7 +505,7 @@ const upcomingFixed = useMemo(() => {
                     <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
                     <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
                     <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{Math.round((slice.value / totalExpenses) * 100)}%</p>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{totalExpenses > 0 ? Math.round((slice.value / totalExpenses) * 100) : 0}%</p>
                   </>
                 )
               })() : (
