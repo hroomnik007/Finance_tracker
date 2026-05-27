@@ -109,12 +109,6 @@ Migrations are numbered SQL files in `backend/migrations/` and run automatically
 
 ---
 
-## Deployment
-
-Every push to `main` triggers an automatic build and deploy.
-
----
-
 ## Self-hosting
 
 ### Requirements
@@ -219,9 +213,9 @@ certbot --nginx -d api.yourdomain.com -d yourdomain.com
 |---|---|---|
 | `VITE_API_URL` | ✅ | Backend URL (`https://api.yourdomain.com`) |
 
-### License note (AGPL-3.0)
+### Automated deployment (CI/CD)
 
-This project is licensed under **GNU AGPL v3**. If you run a modified version as a network service, **you are required to publish the source code** of your modifications under the same terms. See [LICENSE](LICENSE) for details.
+If you fork this repository, GitHub Actions will automatically build and deploy the app on every push to `main`. No manual steps are required after the initial server setup.
 
 ---
 
