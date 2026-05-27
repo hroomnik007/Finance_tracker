@@ -1,5 +1,7 @@
 # Finvu — Financie pod kontrolou
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 <p align="center">
   <img src="finance-tracker/public/logo.svg" alt="Finvu logo" width="80" height="80" />
 </p>
@@ -125,7 +127,6 @@ Podporované metódy:
 | Demo | Testovací účet bez registrácie |
 
 ---
+## License
 
-## Licencia
-
-Súkromný projekt. Všetky práva vyhradené.
+This project is licensed under the GNU Affero General Public License v3.0 — see the [LICENSE](LICENSE) file for details.
