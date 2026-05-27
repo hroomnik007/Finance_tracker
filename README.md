@@ -115,6 +115,116 @@ Každý push na `main` spustí automatický build a deploy.
 
 ---
 
+## Self-hosting
+
+### Požiadavky
+
+- VPS s min. **2 GB RAM** (odporúčané 4 GB)
+- **Docker** + **Docker Compose** (v2)
+- **Nginx** ako reverse proxy
+- Vlastná doména a SSL certifikát (Certbot)
+
+### Inštalácia krok za krokom
+
+**1. Klonovanie repozitára**
+
+```bash
+git clone https://github.com/hroomnik/finvu.git
+cd finvu
+```
+
+**2. Konfigurácia prostredí**
+
+```bash
+# Backend
+cp backend/.env.example backend/.env
+nano backend/.env
+
+# Frontend
+cp finance-tracker/.env.example finance-tracker/.env
+nano finance-tracker/.env   # nastaviť VITE_API_URL=https://api.vasadomena.sk
+```
+
+**3. Spustenie kontajnerov**
+
+```bash
+docker compose up -d
+```
+
+**4. Spustenie databázových migrácií**
+
+```bash
+docker exec finvu-backend-1 node dist/scripts/migrate.js
+```
+
+**5. Nginx — príklad konfigurácie**
+
+```nginx
+# /etc/nginx/sites-available/api.vasadomena.sk
+server {
+    listen 443 ssl;
+    server_name api.vasadomena.sk;
+
+    client_max_body_size 20M;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    ssl_certificate /etc/letsencrypt/live/api.vasadomena.sk/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.vasadomena.sk/privkey.pem;
+}
+```
+
+**6. SSL certifikát (Certbot)**
+
+```bash
+certbot --nginx -d api.vasadomena.sk -d vasadomena.sk
+```
+
+### Premenné prostredia
+
+#### Backend (`backend/.env`)
+
+| Premenná | Povinná | Popis |
+|---|---|---|
+| `DATABASE_URL` | ✅ | PostgreSQL connection string (`postgresql://user:pass@postgres:5432/db`) |
+| `JWT_ACCESS_SECRET` | ✅ | Tajný kľúč pre access tokeny (min. 32 znakov) |
+| `JWT_REFRESH_SECRET` | ✅ | Tajný kľúč pre refresh tokeny (min. 32 znakov) |
+| `JWT_ADMIN_SECRET` | ✅ | Tajný kľúč pre admin tokeny (min. 32 znakov) |
+| `ADMIN_USERNAME` | ✅ | Meno admin účtu |
+| `ADMIN_PASSWORD` | ✅ | Heslo admin účtu (min. 12 znakov) |
+| `PORT` | — | Port backendu (predvolene `3001`) |
+| `NODE_ENV` | — | `production` alebo `development` |
+| `BCRYPT_ROUNDS` | — | Počet bcrypt kôl (predvolene `12`) |
+| `APP_URL` | — | URL frontendu (predvolene `https://finvu.pedani.eu`) |
+| `SMTP_HOST` | — | SMTP server pre e-maily |
+| `SMTP_PORT` | — | SMTP port (predvolene `587`) |
+| `SMTP_USER` | — | SMTP prihlasovacie meno |
+| `SMTP_PASS` | — | SMTP heslo |
+| `SMTP_FROM` | — | Odosielateľ e-mailov |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth Client ID (ak chcete Google login) |
+| `WEBAUTHN_ORIGIN` | — | WebAuthn origin (`https://vasadomena.sk`) |
+| `WEBAUTHN_RP_ID` | — | WebAuthn relying party ID (`vasadomena.sk`) |
+
+#### Frontend (`finance-tracker/.env`)
+
+| Premenná | Povinná | Popis |
+|---|---|---|
+| `VITE_API_URL` | ✅ | URL backendu (`https://api.vasadomena.sk`) |
+
+### Poznámka k licencii (AGPL-3.0)
+
+Tento projekt je licencovaný pod **GNU AGPL v3**. Ak prevádzkujete upravenú verziu ako sieťovú službu, **ste povinní zverejniť zdrojový kód** svojich úprav za rovnakých podmienok. Pozrite [LICENSE](LICENSE) pre detaily.
+
+---
+
 ## Autentifikácia
 
 Podporované metódy:
