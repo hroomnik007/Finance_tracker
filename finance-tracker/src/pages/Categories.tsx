@@ -229,7 +229,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
         transform: outerTransform, transition,
         opacity: isDragging ? 0.85 : 1,
         boxShadow: isDragging ? '0 0 0 4px rgba(124,58,237,0.3), 0 8px 24px rgba(124,58,237,0.2)' : undefined,
-        touchAction: 'none',
+        touchAction: 'pan-y',
       }}
     >
       {/* Red delete background revealed by swipe */}
@@ -439,11 +439,11 @@ export function CategoriesPage() {
   const heroCatCount = categories.length
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
 
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 1, overflowY: 'auto', touchAction: 'pan-y', padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {/* Hero wallet card */}
           <div style={{
