@@ -210,7 +210,6 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
     touchStartTime.current = Date.now()
-    listeners?.['onTouchStart']?.(e)
   }
 
   function handleTouchMove(e: React.TouchEvent) {
@@ -242,7 +241,6 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     <div
       ref={setNodeRef}
       {...attributes}
-      {...listeners}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -261,6 +259,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
           position: 'absolute', inset: 0, background: '#ef4444', borderRadius: 14,
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 24,
           pointerEvents: showDelete ? 'auto' : 'none', cursor: 'pointer',
+          zIndex: 1,
         }}
       >
         <Trash2 size={22} color="white" />
@@ -276,8 +275,10 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
           display: 'flex', flexDirection: 'column', gap: 8,
           userSelect: 'none',
           WebkitUserSelect: 'none' as React.CSSProperties['WebkitUserSelect'],
+          zIndex: 2,
         }}
       >
+        <div {...listeners} style={{ position: 'absolute', inset: 0, zIndex: 0, touchAction: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
