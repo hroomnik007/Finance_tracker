@@ -335,7 +335,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                       const name = e.note || cat?.name || t.expenses.variable.defaultExpense
                       const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
                       return (
-                        <SwipeableRow key={e.id} onDelete={() => deleteVariableExpense(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
+                        <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
                           <div
                             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none' }}
                             onClick={() => openEdit(e)}

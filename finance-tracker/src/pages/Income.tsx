@@ -279,7 +279,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
                     </div>
                     <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
                     {items.map((income, idx) => (
-                      <SwipeableRow key={income.id} onDelete={() => deleteIncome(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
+                      <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
                         <div
                           style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none' }}
                           onClick={() => openEdit(income)}
