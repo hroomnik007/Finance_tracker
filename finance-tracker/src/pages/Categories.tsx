@@ -187,30 +187,22 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
   const touchStartY = useRef(0)
   const touchStartTime = useRef(0)
   const translateX = useRef(0)
-  const isOpen = useRef(false)
-  const isScrolling = useRef(false)
+  const [showDelete, setShowDelete] = useState(false)
   const cardInnerRef = useRef<HTMLDivElement>(null)
-  const deleteOverlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isDragging) {
       translateX.current = 0
-      isOpen.current = false
+      setShowDelete(false)
       if (cardInnerRef.current) { cardInnerRef.current.style.transition = 'none'; cardInnerRef.current.style.transform = '' }
-      if (deleteOverlayRef.current) { deleteOverlayRef.current.style.opacity = '0'; deleteOverlayRef.current.style.pointerEvents = 'none' }
     }
   }, [isDragging])
 
-  function applyTranslate(x: number, animated: boolean) {
+  function setCardTransform(x: number, animated: boolean) {
     translateX.current = x
     if (cardInnerRef.current) {
       cardInnerRef.current.style.transition = animated ? 'transform 0.2s ease' : 'none'
-      cardInnerRef.current.style.transform = `translateX(${x}px)`
-    }
-    if (deleteOverlayRef.current) {
-      const opacity = x < -20 ? Math.min((-x - 20) / 40, 1) : 0
-      deleteOverlayRef.current.style.opacity = String(opacity)
-      deleteOverlayRef.current.style.pointerEvents = isOpen.current ? 'auto' : 'none'
+      cardInnerRef.current.style.transform = x === 0 ? '' : `translateX(${x}px)`
     }
   }
 
@@ -218,42 +210,27 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
     touchStartTime.current = Date.now()
-    isScrolling.current = false
-    // Forward to dnd-kit's TouchSensor so long-press drag still activates
     listeners?.['onTouchStart']?.(e)
   }
 
   function handleTouchMove(e: React.TouchEvent) {
-    if (isDragging || isScrolling.current) return
-    const dx = e.touches[0].clientX - touchStartX.current
-    const dy = e.touches[0].clientY - touchStartY.current
-    if (Math.abs(dy) > 15) { isScrolling.current = true; return }
-    const base = isOpen.current ? -OPEN_OFFSET : 0
-    applyTranslate(Math.max(-120, Math.min(0, base + dx)), false)
+    if (isDragging) return
+    const deltaX = e.touches[0].clientX - touchStartX.current
+    const deltaY = e.touches[0].clientY - touchStartY.current
+    if (Math.abs(deltaY) > 15) return
+    if (deltaX < 0) setCardTransform(Math.max(deltaX, -120), false)
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
     if (isDragging) return
-    if (isScrolling.current) { isScrolling.current = false; return }
     const deltaX = e.changedTouches[0].clientX - touchStartX.current
     const deltaY = e.changedTouches[0].clientY - touchStartY.current
     const duration = Date.now() - touchStartTime.current
-    // TAP
-    if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10 && duration < 400) {
-      if (isOpen.current) { isOpen.current = false; applyTranslate(0, true) } else { onEdit(cat) }
-      return
-    }
-    // SWIPE LEFT → show delete
-    if (deltaX < -60 && Math.abs(deltaY) < 30) {
-      isOpen.current = true
-      applyTranslate(-OPEN_OFFSET, true)
-      if (deleteOverlayRef.current) deleteOverlayRef.current.style.pointerEvents = 'auto'
-      return
-    }
-    // SWIPE RIGHT → close delete
-    if (deltaX > 20 && isOpen.current) { isOpen.current = false; applyTranslate(0, true); return }
-    // Snap to state
-    applyTranslate(isOpen.current ? -OPEN_OFFSET : 0, true)
+    if (Math.abs(deltaY) > 15) { setCardTransform(0, false); return }
+    if (deltaX < -60) { setCardTransform(-OPEN_OFFSET, true); setShowDelete(true); return }
+    if (deltaX > 20 && showDelete) { setCardTransform(0, true); setShowDelete(false); return }
+    if (Math.abs(deltaX) < 10 && duration < 400 && !showDelete) { onEdit(cat); return }
+    setCardTransform(0, true)
   }
 
   const outerTransform = [
@@ -277,28 +254,19 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
         touchAction: 'pan-y',
       }}
     >
-      {/* Red delete strip — revealed by swipe left, tappable when open */}
+      {/* Red delete background — always rendered behind card, revealed as card slides left */}
       <div
-        ref={deleteOverlayRef}
-        onTouchStart={(e) => { if (isOpen.current) e.stopPropagation() }}
-        onTouchEnd={(e) => {
-          if (isOpen.current) {
-            e.stopPropagation()
-            isOpen.current = false
-            applyTranslate(0, true)
-            onDelete(cat.id!)
-          }
-        }}
+        onClick={(e) => { e.stopPropagation(); onDelete(cat.id!) }}
         style={{
           position: 'absolute', inset: 0, background: '#ef4444', borderRadius: 14,
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 24,
-          opacity: 0, pointerEvents: 'none', cursor: 'pointer',
+          pointerEvents: showDelete ? 'auto' : 'none', cursor: 'pointer',
         }}
       >
         <Trash2 size={22} color="white" />
       </div>
 
-      {/* Card content — position controlled via direct DOM transform */}
+      {/* Card content — slides via direct DOM transform */}
       <div
         ref={cardInnerRef}
         style={{
