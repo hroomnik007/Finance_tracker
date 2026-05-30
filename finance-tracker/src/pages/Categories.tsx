@@ -186,32 +186,50 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const touchStartTime = useRef(0)
+  const translateX = useRef(0)
+  const isOpen = useRef(false)
   const isScrolling = useRef(false)
-  const [swipeOffset, setSwipeOffset] = useState(0)
-  const [isOpen, setIsOpen] = useState(false)
+  const cardInnerRef = useRef<HTMLDivElement>(null)
+  const deleteOverlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (isDragging) { setSwipeOffset(0); setIsOpen(false) }
+    if (isDragging) {
+      translateX.current = 0
+      isOpen.current = false
+      if (cardInnerRef.current) { cardInnerRef.current.style.transition = 'none'; cardInnerRef.current.style.transform = '' }
+      if (deleteOverlayRef.current) { deleteOverlayRef.current.style.opacity = '0'; deleteOverlayRef.current.style.pointerEvents = 'none' }
+    }
   }, [isDragging])
+
+  function applyTranslate(x: number, animated: boolean) {
+    translateX.current = x
+    if (cardInnerRef.current) {
+      cardInnerRef.current.style.transition = animated ? 'transform 0.2s ease' : 'none'
+      cardInnerRef.current.style.transform = `translateX(${x}px)`
+    }
+    if (deleteOverlayRef.current) {
+      const opacity = x < -20 ? Math.min((-x - 20) / 40, 1) : 0
+      deleteOverlayRef.current.style.opacity = String(opacity)
+      deleteOverlayRef.current.style.pointerEvents = isOpen.current ? 'auto' : 'none'
+    }
+  }
 
   function handleTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
     touchStartTime.current = Date.now()
     isScrolling.current = false
+    // Forward to dnd-kit's TouchSensor so long-press drag still activates
+    listeners?.['onTouchStart']?.(e)
   }
 
   function handleTouchMove(e: React.TouchEvent) {
     if (isDragging || isScrolling.current) return
     const dx = e.touches[0].clientX - touchStartX.current
     const dy = e.touches[0].clientY - touchStartY.current
-    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
-      isScrolling.current = true
-      setSwipeOffset(isOpen ? -OPEN_OFFSET : 0)
-      return
-    }
-    const base = isOpen ? -OPEN_OFFSET : 0
-    setSwipeOffset(Math.max(-120, Math.min(0, base + dx)))
+    if (Math.abs(dy) > 15) { isScrolling.current = true; return }
+    const base = isOpen.current ? -OPEN_OFFSET : 0
+    applyTranslate(Math.max(-120, Math.min(0, base + dx)), false)
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
@@ -220,16 +238,22 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     const deltaX = e.changedTouches[0].clientX - touchStartX.current
     const deltaY = e.changedTouches[0].clientY - touchStartY.current
     const duration = Date.now() - touchStartTime.current
+    // TAP
     if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10 && duration < 400) {
-      if (isOpen) { setIsOpen(false); setSwipeOffset(0) } else {
-        console.log('opening edit for', cat.name)
-        onEdit(cat)
-      }
+      if (isOpen.current) { isOpen.current = false; applyTranslate(0, true) } else { onEdit(cat) }
       return
     }
-    if (deltaX < -60) { setIsOpen(true); setSwipeOffset(-OPEN_OFFSET); return }
-    if (deltaX > 20 && isOpen) { setIsOpen(false); setSwipeOffset(0); return }
-    setSwipeOffset(isOpen ? -OPEN_OFFSET : 0)
+    // SWIPE LEFT → show delete
+    if (deltaX < -60 && Math.abs(deltaY) < 30) {
+      isOpen.current = true
+      applyTranslate(-OPEN_OFFSET, true)
+      if (deleteOverlayRef.current) deleteOverlayRef.current.style.pointerEvents = 'auto'
+      return
+    }
+    // SWIPE RIGHT → close delete
+    if (deltaX > 20 && isOpen.current) { isOpen.current = false; applyTranslate(0, true); return }
+    // Snap to state
+    applyTranslate(isOpen.current ? -OPEN_OFFSET : 0, true)
   }
 
   const outerTransform = [
@@ -237,12 +261,14 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     isDragging ? 'scale(1.03)' : '',
   ].filter(Boolean).join(' ') || undefined
 
-  const deleteOpacity = swipeOffset < -20 ? Math.min((-swipeOffset - 20) / 40, 1) : 0
-
   return (
     <div
       ref={setNodeRef}
       {...attributes}
+      {...listeners}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         position: 'relative', borderRadius: 14, overflow: 'hidden',
         transform: outerTransform, transition,
@@ -251,80 +277,65 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
         touchAction: 'pan-y',
       }}
     >
-      {/* Red delete strip — tappable when card is swiped open */}
+      {/* Red delete strip — revealed by swipe left, tappable when open */}
       <div
-        aria-hidden={!isOpen}
-        onTouchStart={(e) => { if (isOpen) e.stopPropagation() }}
-        onTouchEnd={(e) => { if (isOpen) { e.stopPropagation(); setIsOpen(false); setSwipeOffset(0); onDelete(cat.id!) } }}
+        ref={deleteOverlayRef}
+        onTouchStart={(e) => { if (isOpen.current) e.stopPropagation() }}
+        onTouchEnd={(e) => {
+          if (isOpen.current) {
+            e.stopPropagation()
+            isOpen.current = false
+            applyTranslate(0, true)
+            onDelete(cat.id!)
+          }
+        }}
         style={{
           position: 'absolute', inset: 0, background: '#ef4444', borderRadius: 14,
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 24,
-          opacity: deleteOpacity, pointerEvents: isOpen ? 'auto' : 'none', cursor: 'pointer',
+          opacity: 0, pointerEvents: 'none', cursor: 'pointer',
         }}
       >
         <Trash2 size={22} color="white" />
       </div>
 
-      {/* Card row — slides on swipe */}
+      {/* Card content — position controlled via direct DOM transform */}
       <div
+        ref={cardInnerRef}
         style={{
-          position: 'relative', display: 'flex', flexDirection: 'row', alignItems: 'center',
-          background: 'var(--bg2)',
+          position: 'relative', background: 'var(--bg2)',
           border: isDragging ? '2px solid var(--violet)' : '1px solid var(--border)',
-          borderRadius: 14,
-          transform: isDragging ? undefined : `translateX(${swipeOffset}px)`,
-          transition: (swipeOffset !== 0 && swipeOffset !== -OPEN_OFFSET) ? 'none' : 'transform 0.2s ease',
+          borderRadius: 14, padding: '12px 14px',
+          display: 'flex', flexDirection: 'column', gap: 8,
           userSelect: 'none',
           WebkitUserSelect: 'none' as React.CSSProperties['WebkitUserSelect'],
         }}
       >
-        {/* Drag handle — only this has dnd-kit listeners; touchAction:none lets long-press activate drag */}
-        <div
-          {...listeners}
-          style={{
-            touchAction: 'none',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            padding: '12px 6px 12px 14px',
-            color: 'var(--text3)', flexShrink: 0, display: 'flex', alignItems: 'center',
-          }}
-        >
-          <GripVertical size={16} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+            {cat.budgetLimit != null
+              ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
+              : cat.autoLimit
+                ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
+                : null
+            }
+          </div>
         </div>
-
-        {/* Content area — handles tap (edit) and swipe (delete reveal); no dnd-kit interference */}
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px 12px 0' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
-              {cat.budgetLimit != null
-                ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
-                : cat.autoLimit
-                  ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
-                  : null
-              }
+        {cat.budgetLimit != null && status && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
             </div>
           </div>
-          {cat.budgetLimit != null && status && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
-              </div>
-            </div>
-          )}
-          {cat.budgetLimit == null && status && status.spent > 0 && (
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
-          )}
-        </div>
+        )}
+        {cat.budgetLimit == null && status && status.spent > 0 && (
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
+        )}
       </div>
     </div>
   )
