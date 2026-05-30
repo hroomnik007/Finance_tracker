@@ -175,6 +175,8 @@ function SortableListCard(props: CardProps) {
   )
 }
 
+const OPEN_OFFSET = 80
+
 function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
   const pct = status ? Math.min(status.percentage, 100) : 0
@@ -182,34 +184,49 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
   const barColor = cat.autoLimit ? '#22c55e' : rawPct >= 100 ? '#ef4444' : rawPct >= 70 ? '#FBBF24' : cat.color
 
   const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
   const touchStartTime = useRef(0)
+  const isScrolling = useRef(false)
   const [swipeOffset, setSwipeOffset] = useState(0)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    if (isDragging) setSwipeOffset(0)
+    if (isDragging) { setSwipeOffset(0); setIsOpen(false) }
   }, [isDragging])
 
   function handleTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
     touchStartTime.current = Date.now()
+    isScrolling.current = false
   }
 
   function handleTouchMove(e: React.TouchEvent) {
-    if (isDragging) return
+    if (isDragging || isScrolling.current) return
     const dx = e.touches[0].clientX - touchStartX.current
-    setSwipeOffset(dx < 0 ? Math.max(dx, -120) : 0)
+    const dy = e.touches[0].clientY - touchStartY.current
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+      isScrolling.current = true
+      setSwipeOffset(isOpen ? -OPEN_OFFSET : 0)
+      return
+    }
+    const base = isOpen ? -OPEN_OFFSET : 0
+    setSwipeOffset(Math.max(-120, Math.min(0, base + dx)))
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
-    if (isDragging) { setSwipeOffset(0); return }
+    if (isDragging) return
+    if (isScrolling.current) { isScrolling.current = false; return }
     const deltaX = e.changedTouches[0].clientX - touchStartX.current
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current
     const duration = Date.now() - touchStartTime.current
-    setSwipeOffset(0)
-    if (Math.abs(deltaX) < 10 && duration < 400) {
-      onEdit(cat)
-    } else if (deltaX < -60) {
-      onDelete(cat.id!)
+    if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10 && duration < 400) {
+      if (isOpen) { setIsOpen(false); setSwipeOffset(0) } else { onEdit(cat) }
+      return
     }
+    if (deltaX < -60) { setIsOpen(true); setSwipeOffset(-OPEN_OFFSET); return }
+    if (deltaX > 20 && isOpen) { setIsOpen(false); setSwipeOffset(0); return }
+    setSwipeOffset(isOpen ? -OPEN_OFFSET : 0)
   }
 
   const outerTransform = [
@@ -232,15 +249,20 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
         touchAction: 'pan-y',
       }}
     >
-      {/* Red delete background revealed by swipe */}
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0, background: '#ef4444', borderRadius: 14,
-        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 20,
-        opacity: deleteOpacity, pointerEvents: 'none',
-      }}>
-        <Trash2 size={20} color="white" />
+      {/* Red delete strip revealed by swipe — tappable when open */}
+      <div
+        aria-hidden={!isOpen}
+        onTouchStart={(e) => { if (isOpen) e.stopPropagation() }}
+        onTouchEnd={(e) => { if (isOpen) { e.stopPropagation(); setIsOpen(false); setSwipeOffset(0); onDelete(cat.id!) } }}
+        style={{
+          position: 'absolute', inset: 0, background: '#ef4444', borderRadius: 14,
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 24,
+          opacity: deleteOpacity, pointerEvents: isOpen ? 'auto' : 'none', cursor: 'pointer',
+        }}
+      >
+        <Trash2 size={22} color="white" />
       </div>
-      {/* Card content — slides on swipe, touch handlers bubble up to dnd-kit listeners */}
+      {/* Card content — slides on swipe */}
       <div
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -251,7 +273,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
           borderRadius: 14, padding: '12px 14px',
           display: 'flex', flexDirection: 'column', gap: 8,
           transform: isDragging ? undefined : `translateX(${swipeOffset}px)`,
-          transition: swipeOffset !== 0 ? 'none' : 'transform 0.2s ease',
+          transition: (swipeOffset !== 0 && swipeOffset !== -OPEN_OFFSET) ? 'none' : 'transform 0.2s ease',
           userSelect: 'none',
           WebkitUserSelect: 'none' as React.CSSProperties['WebkitUserSelect'],
         }}
