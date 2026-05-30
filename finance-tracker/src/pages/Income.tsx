@@ -396,7 +396,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
         open={confirmId !== null}
         message={t.income.deleteConfirm}
         onConfirm={handleDelete}
-        onCancel={() => setConfirmId(null)}
+        onCancel={() => { setConfirmId(null); setOpenSwipeId(null) }}
       />
     </div>
   )

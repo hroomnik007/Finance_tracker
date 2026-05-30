@@ -24,8 +24,6 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
   const [offset, setOffset] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [tracking, setTracking] = useState(false)
-  const [deleteState, setDeleteState] = useState<'idle' | 'measure' | 'collapse'>('idle')
-  const [collapseH, setCollapseH] = useState<number | undefined>()
 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -43,23 +41,6 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
   }, [isOpen])
 
   const getW = () => wrapRef.current?.offsetWidth ?? 320
-
-  useEffect(() => {
-    if (deleteState === 'measure') {
-      const h = wrapRef.current?.offsetHeight ?? 64
-      setCollapseH(h)
-      requestAnimationFrame(() => setDeleteState('collapse'))
-    }
-    if (deleteState === 'collapse') {
-      const t = setTimeout(() => onDeleteRef.current(), 200)
-      return () => clearTimeout(t)
-    }
-  }, [deleteState])
-
-  function triggerFullDelete() {
-    navigator.vibrate?.(50)
-    setDeleteState('measure')
-  }
 
   function handleTouchStart(e: React.TouchEvent) {
     if (disabled) return
@@ -119,7 +100,11 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
       isSwiping.current &&
       (offset < -(w * FULL_SWIPE_RATIO) || swipeVel.current < -VELOCITY_THRESHOLD)
     ) {
-      triggerFullDelete()
+      navigator.vibrate?.(50)
+      setOffset(-REVEAL_PX)
+      setRevealed(true)
+      isSwiping.current = false
+      onDeleteRef.current()
       return
     }
 
@@ -134,7 +119,6 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
   }
 
   const pastHalf = fullSwipeDelete && offset < -(getW() * FULL_SWIPE_RATIO)
-  const isCollapsing = deleteState === 'collapse'
 
   return (
     <div
@@ -146,9 +130,6 @@ export function SwipeableRow({ onDelete, children, disabled, fullSwipeDelete = t
         width: '100%',
         WebkitTransform: 'translateZ(0)',
         transform: 'translateZ(0)',
-        height: isCollapsing ? 0 : collapseH,
-        transition: isCollapsing ? 'height 0.2s ease, margin-bottom 0.2s ease' : undefined,
-        marginBottom: isCollapsing ? 0 : undefined,
       }}
       onClick={() => { if (revealed) { setOffset(0); setRevealed(false) } }}
     >

@@ -18,6 +18,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { BottomSheet } from '../components/BottomSheet'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useCategories } from '../hooks/useCategories'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -175,8 +176,6 @@ function SortableListCard(props: CardProps) {
   )
 }
 
-const OPEN_OFFSET = 80
-
 function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
   const pct = status ? Math.min(status.percentage, 100) : 0
@@ -226,7 +225,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     const deltaY = e.changedTouches[0].clientY - touchStartY.current
     const duration = Date.now() - touchStartTime.current
     if (Math.abs(deltaY) > 15) { setCardTransform(0, false); return }
-    if (deltaX < -60) { setCardTransform(-OPEN_OFFSET, true); setShowDelete(true); return }
+    if (deltaX < -60) { setCardTransform(0, true); onDelete(cat.id!); return }
     if (deltaX > 20 && showDelete) { setCardTransform(0, true); setShowDelete(false); return }
     if (Math.abs(deltaX) < 10 && duration < 400 && !showDelete) { onEdit(cat); return }
     setCardTransform(0, true)
@@ -822,30 +821,12 @@ export function CategoriesPage() {
         </p>
       </BottomSheet>
 
-      {/* Delete confirm sheet */}
-      <BottomSheet
+      <ConfirmDialog
         open={deleteId !== null}
-        onClose={() => setDeleteId(null)}
-        title={t.expenses.categories.removeTitle}
-        footer={
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={() => setDeleteId(null)}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'transparent', color: '#9D84D4', fontSize: '14px', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              {t.common.cancel}
-            </button>
-            <button
-              onClick={() => deleteId !== null && handleDelete(deleteId)}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', fontSize: '16px', fontWeight: 600, color: 'white', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {t.expenses.categories.remove}
-            </button>
-          </div>
-        }
-      >
-        <p className="text-sm text-[#B8A3E8] leading-relaxed">{t.expenses.categories.removeMessage}</p>
-      </BottomSheet>
+        message={t.expenses.categories.removeMessage}
+        onConfirm={() => { if (deleteId !== null) handleDelete(deleteId) }}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   )
 }

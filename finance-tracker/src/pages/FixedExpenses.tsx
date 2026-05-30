@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Pencil, Trash2, Plus, Lock } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -602,33 +603,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         </div>
       </BottomSheet>
 
-      <BottomSheet
+      <ConfirmDialog
         open={deleteId !== null}
-        onClose={() => setDeleteId(null)}
-        title={t.expenses.fixed.removeTitle}
-        footer={
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              type="button"
-              onClick={() => setDeleteId(null)}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'transparent', color: '#9D84D4', fontSize: '14px', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              {t.common.cancel}
-            </button>
-            <button
-              type="button"
-              onClick={() => deleteId !== null && handleDelete(deleteId)}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', fontSize: '16px', fontWeight: 600, color: 'white', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {t.expenses.fixed.remove}
-            </button>
-          </div>
-        }
-      >
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--text3)' }}>
-          {t.expenses.fixed.removeMessage}
-        </p>
-      </BottomSheet>
+        message={t.expenses.fixed.removeMessage}
+        onConfirm={async () => { if (deleteId !== null) await handleDelete(deleteId) }}
+        onCancel={() => { setDeleteId(null); setOpenSwipeId(null) }}
+      />
 
     </div>
   )

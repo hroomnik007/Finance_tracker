@@ -602,7 +602,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         open={confirmId !== null}
         message={t.expenses.variable.deleteConfirm}
         onConfirm={async () => { if (confirmId !== null) { await deleteVariableExpense(confirmId); setConfirmId(null) } }}
-        onCancel={() => setConfirmId(null)}
+        onCancel={() => { setConfirmId(null); setOpenSwipeId(null) }}
       />
     </div>
   )
