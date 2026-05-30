@@ -221,7 +221,10 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     const deltaY = e.changedTouches[0].clientY - touchStartY.current
     const duration = Date.now() - touchStartTime.current
     if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10 && duration < 400) {
-      if (isOpen) { setIsOpen(false); setSwipeOffset(0) } else { onEdit(cat) }
+      if (isOpen) { setIsOpen(false); setSwipeOffset(0) } else {
+        console.log('opening edit for', cat.name)
+        onEdit(cat)
+      }
       return
     }
     if (deltaX < -60) { setIsOpen(true); setSwipeOffset(-OPEN_OFFSET); return }
@@ -240,7 +243,6 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     <div
       ref={setNodeRef}
       {...attributes}
-      {...listeners}
       style={{
         position: 'relative', borderRadius: 14, overflow: 'hidden',
         transform: outerTransform, transition,
@@ -249,7 +251,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
         touchAction: 'pan-y',
       }}
     >
-      {/* Red delete strip revealed by swipe — tappable when open */}
+      {/* Red delete strip — tappable when card is swiped open */}
       <div
         aria-hidden={!isOpen}
         onTouchStart={(e) => { if (isOpen) e.stopPropagation() }}
@@ -262,48 +264,67 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
       >
         <Trash2 size={22} color="white" />
       </div>
-      {/* Card content — slides on swipe */}
+
+      {/* Card row — slides on swipe */}
       <div
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         style={{
-          position: 'relative', background: 'var(--bg2)',
+          position: 'relative', display: 'flex', flexDirection: 'row', alignItems: 'center',
+          background: 'var(--bg2)',
           border: isDragging ? '2px solid var(--violet)' : '1px solid var(--border)',
-          borderRadius: 14, padding: '12px 14px',
-          display: 'flex', flexDirection: 'column', gap: 8,
+          borderRadius: 14,
           transform: isDragging ? undefined : `translateX(${swipeOffset}px)`,
           transition: (swipeOffset !== 0 && swipeOffset !== -OPEN_OFFSET) ? 'none' : 'transform 0.2s ease',
           userSelect: 'none',
           WebkitUserSelect: 'none' as React.CSSProperties['WebkitUserSelect'],
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
-            {cat.budgetLimit != null
-              ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
-              : cat.autoLimit
-                ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
-                : null
-            }
-          </div>
+        {/* Drag handle — only this has dnd-kit listeners; touchAction:none lets long-press activate drag */}
+        <div
+          {...listeners}
+          style={{
+            touchAction: 'none',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            padding: '12px 6px 12px 14px',
+            color: 'var(--text3)', flexShrink: 0, display: 'flex', alignItems: 'center',
+          }}
+        >
+          <GripVertical size={16} />
         </div>
-        {cat.budgetLimit != null && status && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+
+        {/* Content area — handles tap (edit) and swipe (delete reveal); no dnd-kit interference */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px 12px 0' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+              {cat.budgetLimit != null
+                ? <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>
+                : cat.autoLimit
+                  ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
+                  : null
+              }
             </div>
           </div>
-        )}
-        {cat.budgetLimit == null && status && status.spent > 0 && (
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
-        )}
+          {cat.budgetLimit != null && status && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ height: 5, borderRadius: 3, background: 'var(--bg4)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{status.spent > 0 ? `-${formatAmount(status.spent)}` : '—'}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: barColor, background: barColor + '18', padding: '1px 6px', borderRadius: 20 }}>{Math.round(status.percentage)}%</span>
+              </div>
+            </div>
+          )}
+          {cat.budgetLimit == null && status && status.spent > 0 && (
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>-{formatAmount(status.spent)}</span>
+          )}
+        </div>
       </div>
     </div>
   )
