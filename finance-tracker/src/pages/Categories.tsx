@@ -241,6 +241,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     <div
       ref={setNodeRef}
       {...attributes}
+      onClick={() => { if (!showDelete) onEdit(cat) }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -278,7 +279,6 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
           zIndex: 2,
         }}
       >
-        <div {...listeners} style={{ position: 'absolute', inset: 0, zIndex: 0, touchAction: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -289,6 +289,14 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
                 ? <div style={{ fontSize: 11, color: 'var(--violet)', marginTop: 1 }}>⚡ {t.expenses.categories.autoLimit}</div>
                 : null
             }
+          </div>
+          <div
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
+          >
+            <GripVertical size={14} color="var(--text3)" />
           </div>
         </div>
         {cat.budgetLimit != null && status && (
