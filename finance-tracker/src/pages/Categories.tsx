@@ -534,7 +534,7 @@ export function CategoriesPage() {
                     items={sortedCategories.map(c => c.id!)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
                         return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={(id) => setDeleteId(id)} isSwipeOpen={openSwipeId === cat.id} onSwipeOpen={() => setOpenSwipeId(cat.id!)} />
