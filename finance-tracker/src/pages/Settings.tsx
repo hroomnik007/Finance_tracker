@@ -973,6 +973,7 @@ export function SettingsPage() {
                       style={{ opacity: (!hasPin) ? 0.4 : 1 }}
                     >
                       <option value="never">{t.settings.autoLockNever}</option>
+                      <option value="0">Ihneď</option>
                       <option value="1">{t.settings.autoLock1min}</option>
                       <option value="5">{t.settings.autoLock5min}</option>
                       <option value="15">{t.settings.autoLock15min}</option>

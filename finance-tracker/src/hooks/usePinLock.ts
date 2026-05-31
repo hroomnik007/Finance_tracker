@@ -28,7 +28,7 @@ export function usePinLock() {
   const lockedRef = useRef(locked)
   lockedRef.current = locked
 
-  const autoLockMs = (user?.auto_lock_minutes ?? 5) * 60 * 1000
+  const autoLockMs = user?.auto_lock_minutes != null ? user.auto_lock_minutes * 60 * 1000 : null
 
   // Always clear the session flag when locking so hard-refresh also shows PIN.
   const lockAndClearSession = useCallback(() => {
@@ -39,6 +39,7 @@ export function usePinLock() {
   const resetTimer = useCallback(() => {
     if (!lockMethod) return
     if (timerRef.current) clearTimeout(timerRef.current)
+    if (autoLockMs === null || autoLockMs === 0) return
     timerRef.current = setTimeout(lockAndClearSession, autoLockMs)
   }, [lockMethod, lockAndClearSession, autoLockMs])
 
@@ -54,23 +55,6 @@ export function usePinLock() {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [lockMethod, locked, resetTimer])
-
-  useEffect(() => {
-    if (!lockMethod) return
-    let hiddenAt: number | null = null
-    const handler = () => {
-      if (document.hidden) {
-        hiddenAt = Date.now()
-      } else {
-        if (hiddenAt !== null && Date.now() - hiddenAt > autoLockMs) {
-          lockAndClearSession()
-        }
-        hiddenAt = null
-      }
-    }
-    document.addEventListener('visibilitychange', handler)
-    return () => document.removeEventListener('visibilitychange', handler)
-  }, [lockMethod, lockAndClearSession])
 
   useEffect(() => {
     const handler = (e: StorageEvent) => {
@@ -99,7 +83,7 @@ export function usePinLock() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Server-side session timeout check
+  // Unified visibilitychange handler: auto-lock (time-based + Ihneď) + server session check + ping
   useEffect(() => {
     if (!lockMethod || !user) return
 
@@ -113,29 +97,33 @@ export function usePinLock() {
       } catch { /* network errors must not lock user out */ }
     }
 
-    let hiddenSince: number | null = null
+    let hiddenAt: number | null = null
 
-    const onVisibility = () => {
+    const handler = () => {
       if (document.visibilityState === 'hidden') {
-        hiddenSince = Date.now()
+        hiddenAt = Date.now()
       } else if (document.visibilityState === 'visible') {
-        const hiddenMs = hiddenSince !== null ? Date.now() - hiddenSince : 0
-        hiddenSince = null
+        if (hiddenAt === null) return
+        const hiddenMs = Date.now() - hiddenAt
+        hiddenAt = null
+        if (autoLockMs !== null && hiddenMs > autoLockMs) {
+          lockAndClearSession()
+          return
+        }
         if (hiddenMs > 4 * 60 * 1000) checkSession()
       }
     }
-    document.addEventListener('visibilitychange', onVisibility)
+    document.addEventListener('visibilitychange', handler)
 
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') pingSession().catch(() => {})
     }, 60_000)
 
     return () => {
-      document.removeEventListener('visibilitychange', onVisibility)
+      document.removeEventListener('visibilitychange', handler)
       clearInterval(intervalId)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lockMethod, user])
+  }, [lockMethod, user, lockAndClearSession, autoLockMs])
 
   // Sync lockMethod with server on user load — resolves cross-device desync
   useEffect(() => {

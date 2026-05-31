@@ -216,6 +216,9 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     const deltaX = e.touches[0].clientX - touchStartX.current
     const deltaY = e.touches[0].clientY - touchStartY.current
     if (Math.abs(deltaY) > 15) return
+    if (Math.abs(deltaX) > 20 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.stopPropagation()
+    }
     if (deltaX < 0) setCardTransform(Math.max(deltaX, -120), false)
   }
 
@@ -225,7 +228,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
     const deltaY = e.changedTouches[0].clientY - touchStartY.current
     const duration = Date.now() - touchStartTime.current
     if (Math.abs(deltaY) > 15) { setCardTransform(0, false); return }
-    if (deltaX < -60) { setCardTransform(0, true); onDelete(cat.id!); return }
+    if (deltaX < -60) { setShowDelete(true); setCardTransform(-80, true); return }
     if (deltaX > 20 && showDelete) { setCardTransform(0, true); setShowDelete(false); return }
     if (Math.abs(deltaX) < 10 && duration < 400 && !showDelete) { onEdit(cat); return }
     setCardTransform(0, true)
