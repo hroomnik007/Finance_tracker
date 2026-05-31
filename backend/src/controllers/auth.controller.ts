@@ -509,7 +509,7 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
     update.trackingStartDate = trackingStartDate ?? null;
   }
   if (typeof onboardingBannerDismissed === 'boolean') update.onboardingBannerDismissed = onboardingBannerDismissed;
-  if (autoLockMinutes === null || (typeof autoLockMinutes === 'number' && [1, 5, 15].includes(autoLockMinutes))) {
+  if (autoLockMinutes === null || (typeof autoLockMinutes === 'number' && [0, 1, 5, 15].includes(autoLockMinutes))) {
     update.autoLockMinutes = autoLockMinutes;
   }
   await db.update(users).set(update).where(eq(users.id, userId));
@@ -659,6 +659,10 @@ export async function sessionCheck(req: AuthRequest, res: Response): Promise<voi
 
   if (row.autoLockMinutes === null) {
     res.json({ valid: true });
+    return;
+  }
+  if (row.autoLockMinutes === 0) {
+    res.json({ valid: false, reason: "timeout" });
     return;
   }
   const TIMEOUT_MS = row.autoLockMinutes * 60 * 1000;
