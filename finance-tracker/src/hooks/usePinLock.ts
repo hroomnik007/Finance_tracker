@@ -18,6 +18,8 @@ export function usePinLock() {
   const [locked, setLocked] = useState(() => {
     const v = localStorage.getItem(LOCK_METHOD_KEY)
     if (v !== 'pin') return false
+    const autoLockMinutes = localStorage.getItem('auto_lock_minutes')
+    if (autoLockMinutes === 'null' || autoLockMinutes === null) return false
     return sessionStorage.getItem(PIN_SESSION_KEY) !== 'true'
   })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
