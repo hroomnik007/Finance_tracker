@@ -20,12 +20,7 @@ export function usePinLock() {
     if (v !== 'pin') return false
     const autoLockMinutes = localStorage.getItem('auto_lock_minutes')
     if (autoLockMinutes === 'null' || autoLockMinutes === null) return false
-    const minutes = Number(autoLockMinutes)
-    if (minutes === 0) return true  // Ihneď — always lock on cold open
-    const lastHidden = localStorage.getItem('app_hidden_at')
-    if (!lastHidden) return false
-    const hiddenMs = Date.now() - Number(lastHidden)
-    return hiddenMs > minutes * 60 * 1000
+    return sessionStorage.getItem(PIN_SESSION_KEY) !== 'true'
   })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lockMethodRef = useRef(lockMethod)
@@ -109,9 +104,7 @@ export function usePinLock() {
     const handler = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt = Date.now()
-        localStorage.setItem('app_hidden_at', String(hiddenAt))
       } else if (document.visibilityState === 'visible') {
-        localStorage.removeItem('app_hidden_at')
         if (hiddenAt === null) return
         const hiddenMs = Date.now() - hiddenAt
         hiddenAt = null
