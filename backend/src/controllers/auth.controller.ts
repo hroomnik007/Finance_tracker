@@ -657,8 +657,11 @@ export async function sessionCheck(req: AuthRequest, res: Response): Promise<voi
 
   if (!row) { res.status(404).json({ error: "User not found" }); return; }
 
-  const minutes = row.autoLockMinutes ?? 5;
-  const TIMEOUT_MS = minutes * 60 * 1000;
+  if (row.autoLockMinutes === null) {
+    res.json({ valid: true });
+    return;
+  }
+  const TIMEOUT_MS = row.autoLockMinutes * 60 * 1000;
   if (row.lastActiveAt && Date.now() - row.lastActiveAt.getTime() > TIMEOUT_MS) {
     res.json({ valid: false, reason: "timeout" });
   } else {
