@@ -27,7 +27,7 @@ export function verificationEmailHtml(token: string): string {
       <a href="${link}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;margin:16px 0">
         Overiť email
       </a>
-      <p style="color:#666;font-size:13px">Odkaz je platný bez časového obmedzenia. Ak ste sa nezaregistrovali, ignorujte tento email.</p>
+      <p style="color:#666;font-size:13px">Odkaz je platný na jedno použitie. Ak ste sa nezaregistrovali, ignorujte tento email.</p>
     </div>
   `;
 }
