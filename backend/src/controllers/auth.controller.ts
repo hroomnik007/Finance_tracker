@@ -291,6 +291,8 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       householdId: users.householdId, householdEnabled: users.householdEnabled,
       savingsEnabled: users.savingsEnabled,
       theme: users.theme,
+      language: users.language,
+      autoLockMinutes: users.autoLockMinutes,
       trackingStartDate: users.trackingStartDate,
       onboardingBannerDismissed: users.onboardingBannerDismissed,
       pinHash: users.pinHash,
@@ -311,6 +313,7 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
     if (h) householdInfo = { id: h.id, name: h.name, invite_code: h.inviteCode };
   }
 
+  res.set('Cache-Control', 'no-store');
   res.json({
     user: {
       ...userPublic(user),
