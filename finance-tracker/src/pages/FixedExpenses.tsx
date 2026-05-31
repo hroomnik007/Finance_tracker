@@ -459,8 +459,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               )
             }
 
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+            const listInner = (
+              <>
                 {upcomingList.length > 0 && (
                   <>
                     {calendarToday > 0 && (
@@ -479,7 +479,17 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                     {pastList.map(e => renderCard(e, true))}
                   </>
                 )}
-              </div>
+              </>
+            )
+            return (
+              <>
+                <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+                  {listInner}
+                </div>
+                <div className="hidden lg:block" style={{ display: 'flex', flexDirection: 'column', gap: 8 }} onClick={() => setOpenSwipeId(null)}>
+                  {listInner}
+                </div>
+              </>
             )
           })()}
 
