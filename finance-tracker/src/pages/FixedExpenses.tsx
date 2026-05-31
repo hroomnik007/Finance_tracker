@@ -283,7 +283,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
 
         {/* Main scroll area */}
-        <div style={{ flex: 1, overflowY: 'auto', paddingTop: 20, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ flex: 1, overflowY: 'auto', paddingTop: 20, paddingLeft: 20, paddingRight: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Hero wallet card */}
           <div style={{
