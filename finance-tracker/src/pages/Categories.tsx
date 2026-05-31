@@ -50,6 +50,8 @@ interface CardProps {
   t: ReturnType<typeof useTranslation>['t']
   onEdit: (cat: Category) => void
   onDelete: (id: string) => void
+  isSwipeOpen?: boolean
+  onSwipeOpen?: () => void
 }
 
 function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
@@ -177,7 +179,7 @@ function SortableListCard(props: CardProps) {
   )
 }
 
-function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
+function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete, isSwipeOpen, onSwipeOpen }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
   const pct = status ? Math.min(status.percentage, 100) : 0
   const rawPct = status?.percentage ?? 0
@@ -198,7 +200,7 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete }: 
         boxShadow: isDragging ? '0 0 0 4px rgba(124,58,237,0.3), 0 8px 24px rgba(124,58,237,0.2)' : undefined,
       }}
     >
-      <SwipeableRow onDelete={() => onDelete(cat.id!)} isOpen={isDragging ? false : undefined}>
+      <SwipeableRow onDelete={() => onDelete(cat.id!)} isOpen={isDragging ? false : isSwipeOpen} onOpen={onSwipeOpen}>
         <div
           onClick={() => onEdit(cat)}
           style={{
@@ -277,6 +279,7 @@ export function CategoriesPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [autoLimitWarning, setAutoLimitWarning] = useState(false)
 
@@ -534,7 +537,7 @@ export function CategoriesPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={(id) => setDeleteId(id)} />
+                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={(id) => setDeleteId(id)} isSwipeOpen={openSwipeId === cat.id} onSwipeOpen={() => setOpenSwipeId(cat.id!)} />
                       })}
                     </div>
                   </SortableContext>
@@ -758,7 +761,7 @@ export function CategoriesPage() {
         open={deleteId !== null}
         message={t.expenses.categories.removeMessage}
         onConfirm={() => { if (deleteId !== null) handleDelete(deleteId) }}
-        onCancel={() => setDeleteId(null)}
+        onCancel={() => { setDeleteId(null); setOpenSwipeId(null) }}
       />
     </div>
   )
