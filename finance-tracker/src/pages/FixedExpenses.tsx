@@ -460,7 +460,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             }
 
             return (
-              <div className="pb-[180px] lg:pb-0" style={{ display: 'flex', flexDirection: 'column', gap: 8 }} onClick={() => setOpenSwipeId(null)}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
                 {upcomingList.length > 0 && (
                   <>
                     {calendarToday > 0 && (
