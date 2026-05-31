@@ -24,10 +24,18 @@ const registerLimiter = rateLimit({
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Príliš veľa pokusov. Skúste neskôr." },
+});
+
+const pinLoginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Príliš veľa pokusov PIN. Skúste za 5 minút." },
 });
 
 const generalLimiter = rateLimit({
@@ -74,7 +82,7 @@ router.patch("/settings",       authenticateToken, updateUserSettings);
 router.post("/demo-login",      registerLimiter, demoLogin);
 router.post("/admin-login",     loginLimiter, adminLogin);
 router.post("/google",          loginLimiter, googleAuth);
-router.post("/pin-login",       loginLimiter, pinLogin);
+router.post("/pin-login",       pinLoginLimiter, pinLogin);
 router.patch("/pin",            authenticateToken, updatePin);
 router.delete("/pin",           authenticateToken, removePin);
 router.patch("/password",       authenticateToken, changePassword);
