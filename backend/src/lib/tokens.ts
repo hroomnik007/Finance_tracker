@@ -57,7 +57,7 @@ export const REFRESH_COOKIE = "refreshToken";
 export const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === "production",
-  sameSite: "none" as const,
+  sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
   maxAge: 30 * 24 * 60 * 60 * 1000,
   path: "/api/auth",
 };
