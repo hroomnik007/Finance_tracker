@@ -81,7 +81,9 @@ export function AppShell() {
             >
               Watchlist
               {watchlistCount > 0 && (
-                <span className="nav-badge">{watchlistCount}</span>
+                <span style={{background:'var(--accent)',color:'var(--bg)',borderRadius:'99px',padding:'1px 7px',fontSize:'10px',fontWeight:700,marginLeft:'4px'}}>
+                  {watchlistCount}
+                </span>
               )}
             </NavLink>
           </div>
