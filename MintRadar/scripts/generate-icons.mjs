@@ -1,37 +1,20 @@
 import sharp from 'sharp'
-import { resolve, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { readFileSync, mkdirSync } from 'fs'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const publicDir = resolve(__dirname, '../public')
+const sizes = [72, 96, 128, 152, 192, 384, 512]
+const input = 'public/logo-original.png'
 
-const input = process.argv[2]
-if (!input) {
-  console.error('Usage: node scripts/generate-icons.mjs <path-to-logo>')
-  process.exit(1)
-}
+mkdirSync('public/icons', { recursive: true })
 
-const sizes = [
-  { file: 'icons/icon-72.png',   size: 72  },
-  { file: 'icons/icon-96.png',   size: 96  },
-  { file: 'icons/icon-128.png',  size: 128 },
-  { file: 'icons/icon-144.png',  size: 144 },
-  { file: 'icons/icon-152.png',  size: 152 },
-  { file: 'icons/icon-192.png',  size: 192 },
-  { file: 'icons/icon-384.png',  size: 384 },
-  { file: 'icons/icon-512.png',  size: 512 },
-  { file: 'apple-touch-icon.png', size: 180 },
-  { file: 'favicon-32x32.png',    size: 32  },
-  { file: 'favicon-16x16.png',    size: 16  },
-]
-
-for (const { file, size } of sizes) {
-  const out = resolve(publicDir, file)
+for (const size of sizes) {
   await sharp(input)
-    .resize(size, size, { fit: 'cover', position: 'centre' })
+    .resize(size, size, { fit: 'contain', background: { r: 10, g: 10, b: 10, alpha: 1 } })
     .png()
-    .toFile(out)
-  console.log(`✓ ${file} (${size}×${size})`)
+    .toFile(`public/icons/icon-${size}x${size}.png`)
+  console.log(`Generated icon-${size}x${size}.png`)
 }
 
-console.log('\nAll icons generated.')
+await sharp(input).resize(32, 32).png().toFile('public/favicon-32x32.png')
+await sharp(input).resize(16, 16).png().toFile('public/favicon-16x16.png')
+await sharp(input).resize(180, 180).png().toFile('public/apple-touch-icon.png')
+console.log('Done.')

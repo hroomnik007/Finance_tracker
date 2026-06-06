@@ -1,0 +1,143 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.navbar-brand:hover {
+  text-decoration: none;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.nav-logo img {
+  height: 28px;
+  width: 28px;
+  border-radius: 6px;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navbar-links .nav-link {
+  font-family: var(--font-display);
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: color var(--transition), background var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.navbar-links .nav-link:hover {
+  background: var(--bg3);
+  text-decoration: none;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navbar-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-auth-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition);
+  white-space: nowrap;
+}
+
+.navbar-auth-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.navbar-auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.navbar-auth-btn--secondary {
+  color: var(--text2);
+  background: var(--bg3);
+}
+
+.navbar-npub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.nav-badge {
+  background: var(--accent);
+  color: white;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.navbar-install-link {
+  font-size: 13px;
+  color: var(--text3);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.navbar-install-link:hover {
+  color: var(--accent);
+}

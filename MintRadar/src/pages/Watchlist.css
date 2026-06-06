@@ -1,0 +1,137 @@
+.watchlist {
+  padding: 24px 20px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.watchlist-header {
+  margin-bottom: 24px;
+}
+
+.watchlist-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.watchlist-subtitle {
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.watchlist-add {
+  margin-bottom: 24px;
+}
+
+.watchlist-add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.watchlist-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.watchlist-input::placeholder {
+  color: var(--text3);
+}
+
+.watchlist-input:focus {
+  border-color: var(--accent);
+}
+
+.watchlist-add-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.watchlist-add-btn:hover {
+  opacity: 0.85;
+}
+
+.watchlist-error {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--red);
+}
+
+.watchlist-empty {
+  font-size: 14px;
+  color: var(--text3);
+  margin-top: 8px;
+}
+
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .watchlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.watchlist .skeleton-card {
+  background: var(--bg3);
+  min-height: 120px;
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.watchlist-export-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  color: var(--text2);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.watchlist-export-btn:hover {
+  color: var(--text);
+  border-color: var(--text3);
+}
+
+.watchlist-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.watchlist-gate-message {
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.watchlist-gate-error {
+  font-size: 13px;
+  color: var(--red);
+}

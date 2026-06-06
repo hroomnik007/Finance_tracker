@@ -5,7 +5,32 @@ on:
     branches: [main]
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      mintradar: ${{ steps.filter.outputs.mintradar }}
+      mintradar-backend: ${{ steps.filter.outputs.mintradar-backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            mintradar:
+              - 'src/**'
+              - 'public/**'
+              - 'index.html'
+              - 'vite.config.ts'
+              - 'package.json'
+            mintradar-backend:
+              - 'backend/src/**'
+              - 'backend/package.json'
+              - 'backend/Dockerfile'
+              - 'docker-compose.yml'
+
   build-and-deploy:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mintradar == 'true'
     name: Build & Deploy to Hetzner
     runs-on: ubuntu-latest
 
@@ -32,3 +57,24 @@ jobs:
           remote_host: ${{ secrets.HETZNER_HOST }}
           remote_user: ${{ secrets.HETZNER_USER }}
           remote_key: ${{ secrets.HETZNER_SSH_KEY }}
+
+  deploy-mintradar-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mintradar-backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /var/www/mintradar-repo
+            git reset --hard origin/main
+            git pull origin main
+            cd backend
+            npm ci
+            npm run build
+            cd ..
+            docker compose build backend
+            docker compose up -d --no-deps backend
