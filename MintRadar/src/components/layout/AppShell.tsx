@@ -5,9 +5,6 @@ import { useWatchlistStore } from '@/stores/watchlist.store'
 import { NavLogo } from './NavLogo'
 import './AppShell.css'
 
-function truncateNpub(npub: string): string {
-  return `${npub.slice(0, 8)}...${npub.slice(-4)}`
-}
 
 export function AppShell() {
   const profile = useAuthStore(state => state.profile)
@@ -15,6 +12,11 @@ export function AppShell() {
   const logout = useAuthStore(state => state.logout)
   const isLoading = useAuthStore(state => state.isLoading)
   const watchlistCount = useWatchlistStore(state => state.mints.length)
+
+  async function handleLogout() {
+    await useWatchlistStore.getState().clearWatchlist()
+    logout()
+  }
 
   const [nip07Available, setNip07Available] = useState(false)
 
@@ -30,63 +32,52 @@ export function AppShell() {
       <nav className="navbar">
         <NavLink to="/" className="navbar-brand nav-logo">
           <NavLogo />
-          <span>MintRadar</span>
+          <span>Mint<span style={{color:'var(--accent)'}}>Radar</span></span>
         </NavLink>
-        <div className="navbar-right">
-          <div className="navbar-auth">
-            {!nip07Available ? (
-              <a
-                href="https://getalby.com"
-                target="_blank"
-                rel="noreferrer"
-                className="navbar-install-link"
-              >
-                Install Nostr extension
-              </a>
-            ) : profile === null ? (
-              <button
-                type="button"
-                className="navbar-auth-btn"
-                onClick={() => { void login() }}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Connecting...' : 'Login with Nostr'}
-              </button>
-            ) : (
-              <>
-                <span className="navbar-npub">{truncateNpub(profile.npub)}</span>
-                <button
-                  type="button"
-                  className="navbar-auth-btn navbar-auth-btn--secondary"
-                  onClick={logout}
-                >
-                  Disconnect
-                </button>
-              </>
+
+        <div style={{flex:1}}/>
+
+        {/* Tab segment group */}
+        <div className="navbar-tabs">
+          <NavLink to="/" end className={({isActive}) => `nav-tab${isActive ? ' active' : ''}`}>
+            Dashboard
+          </NavLink>
+          <NavLink to="/watchlist" className={({isActive}) => `nav-tab${isActive ? ' active' : ''}`}>
+            Watchlist
+            {watchlistCount > 0 && (
+              <span className="nav-tab-badge">{watchlistCount}</span>
             )}
-          </div>
-          <div className="navbar-links">
-            <NavLink
-              to="/"
-              end
-              className="nav-link"
-              style={({ isActive }) => ({ color: isActive ? 'var(--accent)' : 'var(--text2)' })}
-            >
-              Dashboard
-            </NavLink>
-            <NavLink
-              to="/watchlist"
-              className="nav-link"
-              style={({ isActive }) => ({ color: isActive ? 'var(--accent)' : 'var(--text2)' })}
-            >
-              Watchlist
-              {watchlistCount > 0 && (
-                <span style={{background:'var(--accent)',color:'var(--bg)',borderRadius:'99px',padding:'1px 7px',fontSize:'10px',fontWeight:700,marginLeft:'4px'}}>
-                  {watchlistCount}
+          </NavLink>
+        </div>
+
+        {/* Auth */}
+        <div className="navbar-auth">
+          {!nip07Available ? (
+            <a href="https://getalby.com" target="_blank" rel="noreferrer" className="navbar-install-link">
+              Install Nostr extension
+            </a>
+          ) : profile === null ? (
+            <button type="button" className="navbar-auth-btn" onClick={() => { void login() }} disabled={isLoading}>
+              {isLoading ? 'Connecting...' : 'Login with Nostr'}
+            </button>
+          ) : (
+            <>
+              <div className="navbar-profile">
+                {profile.picture !== undefined && (
+                  <img src={profile.picture} alt=""
+                    className="navbar-avatar"
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  />
+                )}
+                <span className="navbar-username">
+                  {profile.name ?? `${profile.pubkey.slice(0,8)}...`}
                 </span>
-              )}
-            </NavLink>
-          </div>
+              </div>
+              <button type="button" className="navbar-disconnect-btn" onClick={() => { void handleLogout() }}>
+                Disconnect
+              </button>
+            </>
+          )}
         </div>
       </nav>
       <main className="app-content">

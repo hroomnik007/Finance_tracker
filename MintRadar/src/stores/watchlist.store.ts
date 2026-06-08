@@ -8,6 +8,7 @@ interface WatchlistState {
   loadFromDb: () => Promise<void>
   addMint: (url: string) => Promise<void>
   removeMint: (url: string) => Promise<void>
+  clearWatchlist: () => Promise<void>
   isWatching: (url: string) => boolean
 }
 
@@ -45,6 +46,14 @@ export const useWatchlistStore = create<WatchlistState>()(
       await db.watchlist.delete(url)
       set(state => {
         state.mints = state.mints.filter(m => m !== url)
+      })
+    },
+
+    clearWatchlist: async () => {
+      await db.watchlist.clear()
+      set(state => {
+        state.mints = []
+        state.isLoaded = false
       })
     },
 

@@ -1,8 +1,16 @@
 import { nip19 } from 'nostr-tools'
+import { SimplePool } from 'nostr-tools/pool'
 
 declare global {
   interface Window {
-    nostr?: { getPublicKey(): Promise<string> }
+    nostr?: {
+      getPublicKey(): Promise<string>
+      signEvent(event: object): Promise<object>
+      nip04?: {
+        encrypt(pubkey: string, plaintext: string): Promise<string>
+        decrypt(pubkey: string, ciphertext: string): Promise<string>
+      }
+    }
   }
 }
 
@@ -13,6 +21,27 @@ export interface NostrProfile {
   picture?: string
 }
 
+const META_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://purplepag.es']
+
+async function fetchNostrProfile(pubkey: string): Promise<{ name?: string; picture?: string }> {
+  const pool = new SimplePool()
+  try {
+    const events = await Promise.race([
+      pool.querySync(META_RELAYS, { kinds: [0], authors: [pubkey], limit: 1 }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+    ])
+    const event = events[0]
+    if (!event) return {}
+    const meta = JSON.parse(event.content) as { display_name?: string; name?: string; picture?: string }
+    const result: { name?: string; picture?: string } = {}
+    const nameVal = meta.display_name ?? meta.name
+    if (nameVal !== undefined) result.name = nameVal
+    if (meta.picture !== undefined) result.picture = meta.picture
+    return result
+  } catch { return {} }
+  finally { pool.destroy() }
+}
+
 export function isNip07Available(): boolean {
   return typeof window !== 'undefined' && window.nostr !== undefined
 }
@@ -21,8 +50,11 @@ export async function loginWithNip07(): Promise<NostrProfile> {
   if (!isNip07Available()) {
     throw new Error('NIP-07 extension not available')
   }
-  // window.nostr is defined — checked above
   const pubkey = await window.nostr!.getPublicKey()
   const npub = nip19.npubEncode(pubkey)
-  return { pubkey, npub }
+  const meta = await fetchNostrProfile(pubkey)
+  const profile: NostrProfile = { pubkey, npub }
+  if (meta.name !== undefined) profile.name = meta.name
+  if (meta.picture !== undefined) profile.picture = meta.picture
+  return profile
 }

@@ -7,11 +7,11 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png'],
+            includeAssets: ['favicon.ico', 'favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png'],
             manifest: {
                 name: 'MintRadar',
                 short_name: 'MintRadar',
-                description: 'Privacy-first Nostr client',
+                description: 'Privacy-first Cashu mint monitoring',
                 theme_color: '#0A0A0A',
                 background_color: '#0A0A0A',
                 display: 'standalone',

@@ -10,6 +10,7 @@ export interface MintInfo {
   urls?: string[]
   time?: number
   tos_url?: string
+  icon_url?: string
 }
 
 export interface MintKeyset {

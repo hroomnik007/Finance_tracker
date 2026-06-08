@@ -40,6 +40,13 @@ export async function probeMintToDb(url: string): Promise<void> {
     } else if (res.ok) {
       online = true
       latencyMs = Date.now() - start
+      try {
+        const raw = await res.json() as Record<string, unknown>
+        const iconUrl = typeof raw['icon_url'] === 'string' ? raw['icon_url'] : null
+        if (iconUrl) {
+          await pool.query('UPDATE mints SET icon_url = $1 WHERE url = $2', [iconUrl, url])
+        }
+      } catch { /* ignore parse errors */ }
     }
   } catch {
     // mint unreachable
@@ -60,7 +67,7 @@ export async function pruneOldHistory(): Promise<void> {
 }
 
 export async function getKnownMints(): Promise<string[]> {
-  const res = await pool.query('SELECT url FROM mints WHERE is_known = TRUE')
+  const res = await pool.query('SELECT url FROM mints')
   return res.rows.map(r => r.url as string)
 }
 

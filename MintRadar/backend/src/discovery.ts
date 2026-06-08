@@ -6,8 +6,11 @@ import { pool } from './db.js'
 const DISCOVERY_RELAYS = [
   'wss://relay.damus.io',
   'wss://nos.lol',
-  'wss://relay.nostr.band',
+  'wss://purplepag.es',
+  'wss://relay.snort.social',
   'wss://relay.primal.net',
+  'wss://relay.cashumints.space',
+  'wss://relay.azzamo.net',
 ]
 
 const DISCOVERY_TIMEOUT_MS = 15_000
@@ -23,7 +26,7 @@ export async function discoverMintsFromNostr(): Promise<number> {
 
   try {
     const events = await Promise.race([
-      nostrPool.querySync(DISCOVERY_RELAYS, { kinds: [38172], limit: 500 } as Filter),
+      nostrPool.querySync(DISCOVERY_RELAYS, { kinds: [38172], limit: 1000 } as Filter),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('timeout')), DISCOVERY_TIMEOUT_MS)
       ),
@@ -54,7 +57,7 @@ export async function discoverMintsFromNostr(): Promise<number> {
   let added = 0
   for (const url of discovered) {
     const result = await pool.query(
-      'INSERT INTO mints (url) VALUES ($1) ON CONFLICT (url) DO NOTHING',
+      'INSERT INTO mints (url, is_known) VALUES ($1, true) ON CONFLICT (url) DO NOTHING',
       [url]
     )
     if ((result.rowCount ?? 0) > 0) added++

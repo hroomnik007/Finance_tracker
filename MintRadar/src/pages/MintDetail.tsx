@@ -1,155 +1,182 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { MintFavicon } from '@/components/mint/MintFavicon'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { useMintProbe } from '@/hooks/useMintProbe'
-import { useMintHistory, type MintHistoryRecord } from '@/hooks/useMintHistory'
-import type { MintStatus } from '@core/mint/api'
+import { useMintHistory } from '@/hooks/useMintHistory'
+import { useMintReviews } from '@/hooks/useMintReviews'
+import { submitMintReview } from '@/hooks/useSubmitReview'
+import { useWatchlistStore } from '@/stores/watchlist.store'
+import { useAuthStore } from '@/stores/auth.store'
 import './MintDetail.css'
 
-const NUT_DESCRIPTIONS: Record<string, string> = {
-  '0': 'Cryptography and models — core protocol primitives',
-  '1': 'Mint public keys — key rotation and discovery',
-  '2': 'Keysets — keyset management and fees',
-  '3': 'Swap tokens — atomic token exchange',
-  '4': 'Mint tokens — create new ecash via Lightning',
-  '5': 'Melt tokens — redeem ecash via Lightning',
-  '6': 'Mint info — metadata and capability discovery',
-  '7': 'Token state check — verify if token is spent',
-  '8': 'Lightning fee return — overpayment handling',
-  '9': 'Restore signatures — wallet recovery',
-  '10': 'Spending conditions — programmable ecash',
-  '11': 'Pay-to-Public-Key (P2PK) — lock tokens to pubkey',
-  '12': 'DLEQ proofs — cryptographic proof of validity',
-  '13': 'Deterministic secrets — seed-based wallet backup',
-  '14': 'HTLC — Hash Time Locked Contracts',
-  '15': 'Multi-path payments — split Lightning payments',
-  '17': 'WebSocket subscriptions — real-time updates',
-  '18': 'Payment requests — structured payment metadata',
+const NUT_DESCRIPTIONS: Record<string, { short: string; desc: string; features: string[]; useCase: string }> = {
+  'NUT-00': { short: 'Token format', desc: 'Basic Cashu token format and encoding specification.', features: ['Base64url encoding', 'Token versioning', 'Multi-mint tokens'], useCase: 'Foundation for all Cashu token operations.' },
+  'NUT-01': { short: 'Mint keys', desc: 'Retrieving public keys from the mint for each amount.', features: ['Amount-specific keypairs', 'Key retrieval API', 'Key validation'], useCase: 'Clients use mint keys to verify token signatures.' },
+  'NUT-02': { short: 'Keysets', desc: 'Multiple keysets support for key rotation and currencies.', features: ['Keyset IDs', 'Multiple currencies', 'Key rotation'], useCase: 'Allows mints to rotate keys and support multiple currencies.' },
+  'NUT-03': { short: 'Swap', desc: 'Swapping proofs for new ones of equal value.', features: ['Proof exchange', 'Change splitting', 'Privacy improvement'], useCase: 'Core operation for splitting and combining tokens.' },
+  'NUT-04': { short: 'Mint tokens', desc: 'Minting new Cashu tokens against a Lightning invoice.', features: ['Lightning invoice creation', 'Token issuance', 'Amount verification'], useCase: 'Entry point for getting Cashu tokens from Lightning.' },
+  'NUT-05': { short: 'Melt tokens', desc: 'Melting Cashu tokens to pay a Lightning invoice.', features: ['Invoice payment', 'Fee estimation', 'Change return'], useCase: 'Exit point for spending Cashu tokens via Lightning.' },
+  'NUT-06': { short: 'Mint info', desc: 'Retrieving mint metadata, capabilities and contact info.', features: ['Version info', 'Supported NUTs', 'Contact details', 'MOTD'], useCase: 'Clients discover mint capabilities before interacting.' },
+  'NUT-07': { short: 'Token state', desc: 'Checking whether a proof has been spent or is still valid.', features: ['Spent proof detection', 'Pending state', 'Batch checking'], useCase: 'Verify token validity without redeeming it.' },
+  'NUT-08': { short: 'Overpay melt', desc: 'Overpaying melt fees and receiving change back.', features: ['Fee overpayment', 'Change tokens', 'Fee estimation'], useCase: 'Handle variable Lightning routing fees gracefully.' },
+  'NUT-09': { short: 'Restore', desc: 'Restoring blinded signatures from mint backup data.', features: ['Signature restoration', 'Backup validation', 'Deterministic secrets'], useCase: 'Recover tokens from backup without double-spend risk.' },
+  'NUT-10': { short: 'Spending cond.', desc: 'Spending conditions that must be met to use a proof.', features: ['Conditional spending', 'Script conditions', 'Extensible'], useCase: 'Base for advanced features like P2PK and HTLCs.' },
+  'NUT-11': { short: 'Pay-to-PK', desc: 'Lock tokens to a specific public key for secure transfers.', features: ['Public key locking', 'Signature verification', 'Selective unlock'], useCase: 'Send tokens that only a specific recipient can spend.' },
+  'NUT-12': { short: 'DLEQ proofs', desc: 'Discrete Log Equality proofs for verifiable blind signatures.', features: ['Cryptographic proofs', 'Signature verification', 'Privacy preserving'], useCase: 'Clients verify mint honesty without revealing token data.' },
+  'NUT-14': { short: 'HTLCs', desc: 'Hash Time Locked Contracts for atomic swaps.', features: ['Hash preimage', 'Timelock expiry', 'Atomic swaps'], useCase: 'Enable trustless cross-mint or cross-chain swaps.' },
+  'NUT-15': { short: 'Multipart melt', desc: 'Split a melt payment across multiple Lightning invoices.', features: ['Multi-invoice payment', 'Amount splitting', 'Partial melt'], useCase: 'Pay invoices larger than a single proof allows.' },
+  'NUT-17': { short: 'WebSocket', desc: 'Real-time mint updates via WebSocket subscription.', features: ['Live updates', 'Event subscription', 'Low latency'], useCase: 'Receive instant confirmation without polling.' },
+  'NUT-20': { short: 'Mint quote sig', desc: 'Mint signs quote requests for authenticity.', features: ['Quote signatures', 'Request authentication', 'Replay protection'], useCase: 'Prevent quote tampering between client and mint.' },
 }
 
-const NUTS: Array<{ id: string; label: string; name: string }> = [
-  { id: '0',  label: 'NUT-00', name: 'Notation and models' },
-  { id: '1',  label: 'NUT-01', name: 'Mint public keys' },
-  { id: '2',  label: 'NUT-02', name: 'Keysets' },
-  { id: '3',  label: 'NUT-03', name: 'Swap tokens' },
-  { id: '4',  label: 'NUT-04', name: 'Mint tokens' },
-  { id: '5',  label: 'NUT-05', name: 'Melt tokens' },
-  { id: '6',  label: 'NUT-06', name: 'Mint info' },
-  { id: '7',  label: 'NUT-07', name: 'Token state check' },
-  { id: '8',  label: 'NUT-08', name: 'Lightning fee return' },
-  { id: '9',  label: 'NUT-09', name: 'Restore signatures' },
-  { id: '10', label: 'NUT-10', name: 'Spending conditions' },
-  { id: '11', label: 'NUT-11', name: 'Pay-to-Public-Key (P2PK)' },
-  { id: '12', label: 'NUT-12', name: 'DLEQ proofs' },
-  { id: '13', label: 'NUT-13', name: 'Deterministic secrets' },
-  { id: '14', label: 'NUT-14', name: 'HTLC' },
-  { id: '15', label: 'NUT-15', name: 'Multi-path payments' },
-  { id: '17', label: 'NUT-17', name: 'WebSocket subscriptions' },
-  { id: '18', label: 'NUT-18', name: 'Payment requests' },
+const ALL_NUTS = [
+  'NUT-00', 'NUT-01', 'NUT-02', 'NUT-03', 'NUT-04', 'NUT-05', 'NUT-06',
+  'NUT-07', 'NUT-08', 'NUT-09', 'NUT-10', 'NUT-11', 'NUT-12', 'NUT-14',
+  'NUT-15', 'NUT-17', 'NUT-20',
 ]
 
-function getDisplayName(status: MintStatus): string {
-  if (status.info?.name) return status.info.name
-  try {
-    return new URL(status.url).hostname
-  } catch {
-    return status.url
-  }
+function latencyColor(ms: number | null | undefined): string {
+  if (!ms || ms <= 0) return 'var(--text)'
+  if (ms < 150) return 'var(--accent)'
+  if (ms < 400) return 'var(--yellow)'
+  return 'var(--red)'
+}
+
+function uptimeColor(pct: number | null | undefined): string {
+  if (pct === null || pct === undefined) return 'var(--text3)'
+  if (pct >= 90) return 'var(--accent)'
+  if (pct >= 70) return 'var(--yellow)'
+  return 'var(--red)'
+}
+
+function computeTrustScore(uptimePct: number, nutCount: number, latencyMs: number): number {
+  const uptimeScore = uptimePct
+  const nutScore = Math.min(nutCount / 17 * 100, 100)
+  const latencyScore = latencyMs <= 0 ? 0 : Math.max(0, 100 - (latencyMs / 10))
+  return Math.round(uptimeScore * 0.5 + nutScore * 0.3 + latencyScore * 0.2)
 }
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-function NutMatrix({ status }: { status: MintStatus }) {
-  return (
-    <div className="nut-matrix">
-      {NUTS.map(({ id, label, name }) => {
-        let icon: string
-        let cls: string
-        if (!status.online) {
-          icon = '?'
-          cls = 'nut-cell--offline'
-        } else if (status.info !== null && status.info.nuts[id] !== undefined) {
-          icon = '✓'
-          cls = 'nut-cell--supported'
-        } else {
-          icon = '–'
-          cls = 'nut-cell--unsupported'
-        }
-        return (
-          <div
-            key={id}
-            className={`nut-cell ${cls}`}
-            title={`NUT-${id}: ${NUT_DESCRIPTIONS[id] ?? ''}`}
-            style={NUT_DESCRIPTIONS[id] !== undefined ? { cursor: 'help' } : undefined}
-          >
-            <span className="nut-icon">{icon}</span>
-            <span className="nut-label">{label}</span>
-            <span className="nut-name">{name}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function UptimeBar({ records }: { records: MintHistoryRecord[] }) {
-  const last48 = records.slice(-48)
-  const padding = new Array<null>(Math.max(0, 48 - last48.length)).fill(null)
-  const padded: (MintHistoryRecord | null)[] = [...padding, ...last48]
-
-  return (
-    <div className="uptime-bar-wrap">
-      <div className="uptime-bar-row">
-        {padded.map((r, i) => (
-          <span
-            key={i}
-            className={
-              r === null
-                ? 'uptime-sq uptime-sq--empty'
-                : r.online
-                  ? 'uptime-sq uptime-sq--online'
-                  : 'uptime-sq uptime-sq--offline'
-            }
-            title={
-              r === null
-                ? 'No data'
-                : `${r.online ? 'Online' : 'Offline'} at ${r.checkedAt.toLocaleString()}`
-            }
-          />
-        ))}
-      </div>
-      <span className="uptime-bar-label">Last 48 checks</span>
-    </div>
-  )
-}
-
 function MintDetailContent({ url }: { url: string }) {
+  const navigate = useNavigate()
   const { data, isLoading } = useMintProbe(url)
   const { records, uptimePercent, avgLatencyMs } = useMintHistory(url)
+  const watchlistMints = useWatchlistStore(state => state.mints)
+  const addMint = useWatchlistStore(state => state.addMint)
+  const removeMint = useWatchlistStore(state => state.removeMint)
+  const loadFromDb = useWatchlistStore(state => state.loadFromDb)
+  const profile = useAuthStore(state => state.profile)
+  const isLoggedIn = profile !== null
+  const { reviews, loading: reviewsLoading } = useMintReviews(url)
+  const [selectedNut, setSelectedNut] = useState<string | null>(null)
+  const [copiedContact, setCopiedContact] = useState<string | null>(null)
+  const [copiedUrl, setCopiedUrl] = useState(false)
+  const [showQr, setShowQr] = useState(false)
+  const [showTrustBreakdown, setShowTrustBreakdown] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
+  const [reviewSuccess, setReviewSuccess] = useState(false)
+
+  useEffect(() => { void loadFromDb() }, [loadFromDb])
+
+  useEffect(() => {
+    if (!selectedNut) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedNut(null) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selectedNut])
+
+  useEffect(() => {
+    if (!showReviewModal) return
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowReviewModal(false) }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [showReviewModal])
+
+  useEffect(() => {
+    if (!showTrustBreakdown) return
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowTrustBreakdown(false) }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [showTrustBreakdown])
 
   if (isLoading || data === undefined) {
     return (
       <div className="mint-detail">
-        <Link to="/" className="mint-detail-back">← Dashboard</Link>
-        <div className="mint-detail-skeleton" aria-busy="true" />
+        <div className="md-header">
+          <button className="md-back" onClick={() => navigate(-1)}>← Back</button>
+        </div>
       </div>
     )
   }
 
-  const displayName = getDisplayName(data)
+  const hostname = (() => { try { return new URL(url).hostname } catch { return url } })()
+  const displayName = data.info?.name ?? hostname
+  const isOnline = data.online
+  const latency = data.latencyMs
+  const version = data.info?.version
+  const nutCount = data.info !== null ? Object.keys(data.info.nuts).length : 0
+  const motd = data.info?.motd
+  const description = data.info?.description
+  const pubkey = data.info?.pubkey
+  const name = data.info?.name
 
-  const uptimeColor =
-    records.length === 0
-      ? 'var(--text3)'
-      : uptimePercent >= 99
-        ? 'var(--accent)'
-        : uptimePercent >= 95
-          ? 'var(--yellow, #f5a623)'
-          : 'var(--red)'
+  const email = data.info?.contact?.find(c => c.method === 'email')?.info
+  const twitter = data.info?.contact?.find(c => c.method === 'twitter')?.info
+  const nostr = data.info?.contact?.find(c => c.method === 'nostr')?.info
+  const urls = data.info?.urls
+
+  const uptimePct = records.length > 0 ? uptimePercent : 0
+  const onlineChecks = records.filter(r => r.online).length
+  const totalChecks = records.length
+  const avgLatency = avgLatencyMs ?? 0
+
+  const isWatching = watchlistMints.includes(url)
+  const toggleWatch = () => { void (isWatching ? removeMint(url) : addMint(url)) }
+
+  const supportedNutNumbers = new Set([
+    ...(data.info !== null ? Object.keys(data.info.nuts) : []),
+    ...(isOnline ? ['0', '1', '2', '3', '6'] : []),
+  ])
+  const supportedNuts = ALL_NUTS.filter(nut =>
+    supportedNutNumbers.has(String(parseInt(nut.slice(4), 10)))
+  )
+
+  const trustScore = computeTrustScore(uptimePct, nutCount, latency ?? 0)
+
+  const avgRating = reviews.length > 0
+    ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
+    : null
+
+  const historySlice = records.slice(-20)
+  const historyPoints = historySlice.length < 2 ? '' :
+    historySlice.map((r, i) => {
+      const x = (i / (historySlice.length - 1)) * 220
+      return `${x.toFixed(1)},${r.online ? 10 : 40}`
+    }).join(' ')
+
+  const latencySlice = records.filter(r => r.latencyMs !== undefined).slice(-20)
+  const latencyPoints = latencySlice.length < 2 ? '' : (() => {
+    const lats = latencySlice.map(r => r.latencyMs as number)
+    const minL = Math.min(...lats)
+    const maxL = Math.max(...lats)
+    const range = maxL - minL
+    return latencySlice.map((r, i) => {
+      const x = (i / (latencySlice.length - 1)) * 220
+      const y = range === 0 ? 25 : 10 + ((r.latencyMs as number) - minL) / range * 30
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ')
+  })()
 
   const chartData = records
     .filter(r => r.online && r.latencyMs !== undefined)
@@ -157,153 +184,648 @@ function MintDetailContent({ url }: { url: string }) {
 
   return (
     <div className="mint-detail">
-      <div className="mint-detail-header">
-        <Link to="/" className="mint-detail-back">← Dashboard</Link>
-        <div className="mint-detail-title-row">
-          <h1 className="mint-detail-name">{displayName}</h1>
-          <span
-            className="status-dot"
-            style={{ background: data.online ? 'var(--accent)' : 'var(--red)' }}
-            title={data.online ? 'Online' : 'Offline'}
-          />
+      <div className="md-header">
+        <button className="md-back" onClick={() => navigate(-1)}>← Back</button>
+        <MintFavicon url={url} iconUrl={data?.info?.icon_url ?? null} size={32} />
+        <div className="md-namebox">
+          <div className="md-name">{displayName}</div>
+          <div className="md-url">{url}</div>
         </div>
-        <p className="mint-detail-url">{data.url}</p>
+        <div className={`md-online-badge ${isOnline ? '' : 'offline'}`}>
+          <div className={`status-dot ${isOnline ? '' : 'offline'}`} />
+          {isOnline ? 'Online' : 'Offline'}
+        </div>
+        {isLoggedIn
+          ? (
+            <button className={`md-watch-btn ${isWatching ? 'watching' : ''}`} onClick={toggleWatch}>
+              {isWatching ? '✓ Watching' : '+ Add to Watchlist'}
+            </button>
+          ) : (
+            <button
+              className="md-watch-btn"
+              style={{ color: 'var(--text3)', cursor: 'default' }}
+              onClick={e => e.preventDefault()}
+              title="Login with Nostr to add to watchlist"
+            >
+              + Add to Watchlist
+            </button>
+          )
+        }
       </div>
 
-      <div className="mint-detail-stats">
-        <div className="stat-card">
-          <span className="stat-label">Latency</span>
-          <span className="stat-value">{data.latencyMs !== null ? `${data.latencyMs}ms` : '—'}</span>
+      <div className="md-summary">
+        <div className="md-sc">
+          <div className="md-sc-label">Latency</div>
+          <div className="md-sc-value" style={{color: latencyColor(latency)}}>{latency !== null ? `${latency} ms` : '—'}</div>
+          <div className="md-sc-sub">last check</div>
         </div>
-        <div className="stat-card">
-          <span className="stat-label">Version</span>
-          <span className="stat-value">{data.info?.version ?? '—'}</span>
+        <div className={`md-sc ${uptimePct === 100 ? 'uptime' : ''}`}>
+          <div className="md-sc-label">Uptime 24h</div>
+          <div className="md-sc-value" style={{color: uptimeColor(uptimePct)}}>{uptimePct}%</div>
+          <div className="md-sc-sub">{onlineChecks} / {totalChecks} checks</div>
         </div>
-        <div className="stat-card">
-          <span className="stat-label">Checked at</span>
-          <span className="stat-value">{data.checkedAt.toLocaleString()}</span>
+        <div className="md-sc">
+          <div className="md-sc-label">Version</div>
+          <div className="md-sc-value sm">{version ?? '—'}</div>
+          <div className="md-sc-sub">software</div>
         </div>
-        <div className="stat-card">
-          <span className="stat-label">NUTs</span>
-          <span className="stat-value">{data.info !== null ? Object.keys(data.info.nuts).length : '—'}</span>
+        <div className="md-sc">
+          <div className="md-sc-label">NUTs</div>
+          <div className="md-sc-value">{nutCount}</div>
+          <div className="md-sc-sub">supported</div>
         </div>
-        <div className="stat-card">
-          <span className="stat-label">Uptime</span>
-          <span className="stat-value" style={{ color: uptimeColor }}>
-            {records.length === 0 ? '—' : `${uptimePercent}%`}
-          </span>
-        </div>
-        {avgLatencyMs !== null && (
-          <div className="stat-card">
-            <span className="stat-label">Avg</span>
-            <span className="stat-value">{avgLatencyMs}ms</span>
-          </div>
-        )}
       </div>
 
-      <section className="mint-detail-section">
-        <h2 className="mint-detail-section-title">NUT Compatibility</h2>
-        <NutMatrix status={data} />
-      </section>
+      <div className="md-body">
+        <div className="md-left">
 
-      <section className="mint-detail-section">
-        <h2 className="mint-detail-section-title">History</h2>
-        {records.length === 0 ? (
-          <p className="mint-history-empty">No history yet — check back after a few minutes</p>
-        ) : (
-          <>
-            <UptimeBar records={records} />
-            {chartData.length > 0 && (
-              <div className="mint-chart-wrap">
-                <span className="mint-chart-title">Latency (ms)</span>
-                <ResponsiveContainer width="100%" height={120}>
-                  <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="time"
-                      tick={{ fontSize: 10, fill: 'var(--text3)' }}
-                      axisLine={false}
-                      tickLine={false}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      tick={{ fontSize: 10, fill: 'var(--text3)' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={40}
-                    />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || payload == null || payload.length === 0) return null
-                        const entry = payload[0]
-                        return (
-                          <div className="chart-tooltip">
-                            <div className="chart-tooltip-time">{String(label)}</div>
-                            <div className="chart-tooltip-value">
-                              {entry?.value !== undefined ? `${String(entry.value)}ms` : '—'}
-                            </div>
-                          </div>
-                        )
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="latency"
-                      stroke="var(--accent)"
-                      fill="var(--accent)"
-                      fillOpacity={0.15}
-                      dot={false}
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+          <div className="md-panel">
+            <div className="md-panel-title">Mint info</div>
+            {motd && (
+              <div className="md-motd">
+                <div className="md-motd-label">Message of the Day</div>
+                <div className="md-motd-text">{motd}</div>
               </div>
             )}
-          </>
-        )}
-      </section>
+            <div className="md-info-row">
+              <span className="md-info-label">Name</span>
+              <span className="md-info-value">{name ?? '—'}</span>
+            </div>
+            {description && (
+              <div className="md-info-row">
+                <span className="md-info-label">Description</span>
+                <span className="md-info-value" style={{ color: 'var(--text2)' }}>{description}</span>
+              </div>
+            )}
+            <div className="md-info-row">
+              <span className="md-info-label">Version</span>
+              <span className="md-info-value">{version ?? '—'}</span>
+            </div>
+            {pubkey && (
+              <div className="md-info-row">
+                <span className="md-info-label">Public key</span>
+                <span className="md-info-value trunc">{pubkey}</span>
+              </div>
+            )}
+            <div className="md-info-row">
+              <span className="md-info-label">Discovered</span>
+              <span className="md-info-value">NIP-87</span>
+            </div>
+            {urls && urls.length > 1 && (
+              <div className="md-info-row" style={{flexDirection:'column', alignItems:'flex-start', gap:4}}>
+                <span className="md-info-label">URLs</span>
+                <div style={{display:'flex', flexDirection:'column', gap:3, width:'100%'}}>
+                  {urls.map((u: string) => {
+                    const isActive = u === url
+                    return (
+                      <div key={u} style={{display:'flex', alignItems:'center', gap:6, justifyContent:'space-between'}}>
+                        <span style={{
+                          fontSize:10, color: isActive ? 'var(--accent)' : 'var(--text3)',
+                          fontFamily:'var(--font-mono)', wordBreak:'break-all', flex:1
+                        }}>
+                          {isActive ? '● ' : '○ '}{u}
+                        </span>
+                        <button
+                          onClick={() => {
+                            void navigator.clipboard.writeText(u)
+                            setCopiedUrl(true)
+                            setTimeout(() => setCopiedUrl(false), 2000)
+                          }}
+                          style={{
+                            background:'none', border:'none', cursor:'pointer',
+                            color:'var(--text3)', fontSize:12, padding:'2px 4px',
+                            flexShrink:0,
+                          }}
+                          title="Copy URL"
+                        >
+                          ⎘
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
-      {data.info?.motd !== undefined && (
-        <section className="mint-detail-section">
-          <h2 className="mint-detail-section-title">Message of the Day</h2>
-          <div className="mint-motd">{data.info.motd}</div>
-        </section>
-      )}
+          {(email || twitter || nostr) && (
+            <div className="md-panel">
+              <div className="md-panel-title">Get in Touch</div>
+              <div className="md-contact-grid">
+                {email && (
+                  <div className="md-contact-card">
+                    <div>
+                      <div className="md-contact-type">Email</div>
+                      <div className="md-contact-val">{email}</div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void navigator.clipboard.writeText(email)
+                        setCopiedContact('email')
+                        setTimeout(() => setCopiedContact(null), 2000)
+                      }}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: copiedContact === 'email' ? 'var(--accent)' : 'var(--text3)',
+                        fontSize: 13, padding: '2px 4px', marginLeft: 'auto',
+                        flexShrink: 0,
+                      }}
+                      title="Copy"
+                    >
+                      {copiedContact === 'email' ? '✓' : '⎘'}
+                    </button>
+                  </div>
+                )}
+                {twitter && (
+                  <div className="md-contact-card">
+                    <div>
+                      <div className="md-contact-type">Twitter</div>
+                      <div className="md-contact-val">{twitter}</div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void navigator.clipboard.writeText(twitter)
+                        setCopiedContact('twitter')
+                        setTimeout(() => setCopiedContact(null), 2000)
+                      }}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: copiedContact === 'twitter' ? 'var(--accent)' : 'var(--text3)',
+                        fontSize: 13, padding: '2px 4px', marginLeft: 'auto',
+                        flexShrink: 0,
+                      }}
+                      title="Copy"
+                    >
+                      {copiedContact === 'twitter' ? '✓' : '⎘'}
+                    </button>
+                  </div>
+                )}
+                {nostr && (
+                  <div className="md-contact-card">
+                    <div>
+                      <div className="md-contact-type">Nostr</div>
+                      <div className="md-contact-val">{nostr.slice(0, 16)}…</div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void navigator.clipboard.writeText(nostr)
+                        setCopiedContact('nostr')
+                        setTimeout(() => setCopiedContact(null), 2000)
+                      }}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: copiedContact === 'nostr' ? 'var(--accent)' : 'var(--text3)',
+                        fontSize: 13, padding: '2px 4px', marginLeft: 'auto',
+                        flexShrink: 0,
+                      }}
+                      title="Copy"
+                    >
+                      {copiedContact === 'nostr' ? '✓' : '⎘'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-      {data.info?.contact !== undefined && data.info.contact.length > 0 && (
-        <section className="mint-detail-section">
-          <h2 className="mint-detail-section-title">Contact</h2>
-          <ul className="mint-contact-list">
-            {data.info.contact.map(c => (
-              <li key={`${c.method}-${c.info}`} className="mint-contact-item">
-                <span className="mint-contact-method">{c.method}</span>
-                <span className="mint-contact-info">{c.info}</span>
-              </li>
+          <div className="md-panel">
+            <div className="md-panel-title">NUT Compatibility</div>
+            <div className="nut-grid">
+              {ALL_NUTS.map(nut => {
+                const supported = supportedNuts.includes(nut)
+                const meta = NUT_DESCRIPTIONS[nut]
+                return (
+                  <div key={nut} className={`nut-card ${supported ? 'supported' : 'unsupported'}`} onClick={() => setSelectedNut(nut)}>
+                    <div className={`nut-icon ${supported ? 'supported' : 'unsupported'}`}>
+                      {supported ? '●' : '○'}
+                    </div>
+                    <div className="nut-info">
+                      <div className="nut-name">{nut}</div>
+                      <div className="nut-desc">{meta?.short ?? ''}</div>
+                    </div>
+                    <span className="nut-check" style={{ color: supported ? 'var(--accent)' : 'var(--text3)' }}>
+                      {supported ? '✓' : '✗'}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="md-panel">
+            <div className="md-panel-title">Latency (ms) — last 24h</div>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={120}>
+                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="time"
+                    tick={{ fontSize: 10, fill: 'var(--text3)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: 'var(--text3)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || payload == null || payload.length === 0) return null
+                      const entry = payload[0]
+                      return (
+                        <div className="chart-tooltip">
+                          <div className="chart-tooltip-time">{String(label)}</div>
+                          <div className="chart-tooltip-value">
+                            {entry?.value !== undefined ? `${String(entry.value)}ms` : '—'}
+                          </div>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="latency"
+                    stroke="var(--accent)"
+                    fill="var(--accent)"
+                    fillOpacity={0.15}
+                    dot={false}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ fontSize: '12px', color: 'var(--text3)', margin: 0 }}>No latency data yet.</p>
+            )}
+          </div>
+
+        </div>
+
+        <div className="md-right">
+
+          <div className="md-panel">
+            <div className="md-panel-title">Mint History</div>
+            <div className="mh-row">
+              <div className="mh-label">
+                <span className="mh-name">Uptime</span>
+                <span className={`mh-badge ${uptimePct >= 90 ? 'green' : 'yellow'}`}>{uptimePct}%</span>
+              </div>
+              <div className="md-mini-chart">
+                <svg viewBox="0 0 220 44" preserveAspectRatio="none">
+                  <polyline fill="none" stroke="var(--accent)" strokeWidth="1.5" points={historyPoints} />
+                </svg>
+              </div>
+            </div>
+            <div className="mh-row">
+              <div className="mh-label">
+                <span className="mh-name">Avg. latency</span>
+                <span className="mh-badge yellow">{avgLatency > 0 ? `${avgLatency} ms` : '—'}</span>
+              </div>
+              <div className="md-mini-chart">
+                <svg viewBox="0 0 220 44" preserveAspectRatio="none">
+                  <polyline fill="none" stroke="var(--yellow)" strokeWidth="1.5" points={latencyPoints} />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="md-panel">
+            <div className="md-panel-title">Trust Score</div>
+            <div className="trust-wrap" style={{cursor:'pointer'}} onClick={() => setShowTrustBreakdown(true)} title="Click for breakdown">
+              <div className="gauge-wrap">
+                <svg viewBox="0 0 72 72">
+                  <circle cx="36" cy="36" r="27" fill="none" stroke="var(--bg3)" strokeWidth="7" />
+                  <circle cx="36" cy="36" r="27" fill="none" stroke="var(--accent)" strokeWidth="7"
+                    strokeDasharray={`${(trustScore * 1.696).toFixed(1)} 169.6`}
+                    strokeDashoffset="42.4"
+                    strokeLinecap="round"
+                    transform="rotate(-90 36 36)" />
+                </svg>
+                <div className="gauge-num">{trustScore}%</div>
+                <div style={{fontSize:9,color:'var(--text3)',textAlign:'center',marginTop:2}}>tap for details</div>
+              </div>
+              <div className="trust-info">
+                <div className="trust-row">
+                  <span className="trust-label">Uptime</span>
+                  <span className={`trust-value ${uptimePct === 100 ? 'green' : ''}`}>{uptimePct}%</span>
+                </div>
+                <div className="trust-row">
+                  <span className="trust-label">NUTs</span>
+                  <span className="trust-value">{nutCount}/17</span>
+                </div>
+                <div className="trust-row">
+                  <span className="trust-label">Latency</span>
+                  <span className="trust-value">{latency !== null ? `${latency}ms` : '—'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="md-panel">
+            <div className="md-panel-title">Add to Wallet</div>
+            <p style={{fontSize:12, color:'var(--text3)', marginBottom:12, lineHeight:1.5}}>
+              Copy the mint URL to add it to your Cashu wallet app.
+            </p>
+            <button
+              onClick={() => {
+                void navigator.clipboard.writeText(url)
+                setCopiedUrl(true)
+                setTimeout(() => setCopiedUrl(false), 2000)
+              }}
+              style={{
+                width: '100%', background: copiedUrl ? '#0d2018' : 'var(--accent)',
+                color: copiedUrl ? 'var(--accent)' : 'var(--bg)',
+                border: copiedUrl ? '0.5px solid #1a3a28' : 'none',
+                borderRadius: 8, padding: '10px 16px',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'var(--font-body)', marginBottom: 8,
+                transition: 'all 150ms ease',
+              }}
+            >
+              {copiedUrl ? '✓ Copied!' : '⎘ Copy Mint URL'}
+            </button>
+            <button
+              onClick={() => setShowQr(!showQr)}
+              style={{
+                width: '100%', background: 'transparent',
+                border: '0.5px solid var(--border)',
+                borderRadius: 8, padding: '8px 16px',
+                fontSize: 13, color: 'var(--text2)', cursor: 'pointer',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {showQr ? '✕ Hide QR Code' : '▦ Show QR Code'}
+            </button>
+            {showQr && (
+              <div style={{marginTop: 12, display: 'flex', justifyContent: 'center'}}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}&bgcolor=111111&color=00E676&qzone=2`}
+                  alt="QR Code"
+                  style={{borderRadius: 8, width: 160, height: 160}}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="md-panel">
+            <div className="md-panel-title">Reviews</div>
+
+            <div className="reviews-header">
+              <div>
+                {avgRating !== null ? (
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span className="reviews-avg">{avgRating}</span>
+                    <span className="reviews-stars">
+                      {'★'.repeat(Math.round(avgRating))}{'☆'.repeat(5-Math.round(avgRating))}
+                    </span>
+                  </div>
+                ) : (
+                  <span style={{fontSize:12,color:'var(--text3)'}}>No reviews yet</span>
+                )}
+                {reviews.length > 0 && (
+                  <span className="reviews-count">{reviews.length} review{reviews.length !== 1 ? 's' : ''} · via NIP-87</span>
+                )}
+              </div>
+              {isLoggedIn && (
+                <button className="reviews-write-btn" onClick={() => setShowReviewModal(true)}>
+                  Write review
+                </button>
+              )}
+            </div>
+
+            {reviewsLoading ? (
+              <div style={{fontSize:11,color:'var(--text3)',marginTop:8}}>Loading reviews...</div>
+            ) : reviews.length > 0 ? (
+              <div style={{marginTop:10,display:'flex',flexDirection:'column',gap:8}}>
+                {reviews.slice(0,5).map(r => (
+                  <div key={r.id} style={{background:'var(--bg3)',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 10px'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+                      <span style={{color:'var(--yellow)',fontSize:12}}>{'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}</span>
+                      <span style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>
+                        {r.pubkey.slice(0,8)}…
+                      </span>
+                    </div>
+                    {r.comment && <p style={{fontSize:11,color:'var(--text2)',lineHeight:1.5,margin:0}}>{r.comment}</p>}
+                  </div>
+                ))}
+                {reviews.length > 5 && (
+                  <div style={{fontSize:11,color:'var(--text3)',textAlign:'center'}}>{reviews.length - 5} more reviews</div>
+                )}
+              </div>
+            ) : (
+              <div style={{fontSize:11,color:'var(--text3)',marginTop:8}}>
+                No reviews yet. {isLoggedIn ? 'Be the first!' : 'Login with Nostr to write one.'}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {showTrustBreakdown && (
+        <div style={{position:'fixed',inset:0,zIndex:100,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}
+          onClick={() => setShowTrustBreakdown(false)}>
+          <div style={{background:'var(--bg2)',border:'0.5px solid var(--border2)',borderRadius:14,padding:'24px',maxWidth:380,width:'100%'}}
+            onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div style={{fontSize:16,fontWeight:600,color:'var(--text)'}}>Trust Score Breakdown</div>
+              <button onClick={() => setShowTrustBreakdown(false)} style={{background:'none',border:'none',color:'var(--text3)',fontSize:18,cursor:'pointer'}}>×</button>
+            </div>
+            <div style={{textAlign:'center',marginBottom:20}}>
+              <div style={{fontSize:48,fontWeight:700,color:'var(--accent)',lineHeight:1}}>{trustScore}%</div>
+              <div style={{fontSize:11,color:'var(--text3)',marginTop:4}}>
+                {trustScore >= 80 ? '✓ Highly trusted' : trustScore >= 60 ? '~ Moderate trust' : '⚠ Low trust'}
+              </div>
+            </div>
+            {[
+              { label:'Uptime (50%)', display:`${uptimePct}%`, score:Math.round((uptimePct)*0.5), max:50, color:uptimeColor(uptimePct) },
+              { label:'NUT Support (30%)', display:`${nutCount} / 17 NUTs`, score:Math.round(Math.min((nutCount)/17*100,100)*0.3), max:30, color:nutCount>=12?'var(--accent)':nutCount>=8?'var(--yellow)':'var(--red)' },
+              { label:'Latency (20%)', display:latency !== null ? `${latency} ms` : '—', score:Math.round(Math.max(0,100-((latency??0)/10))*0.2), max:20, color:latencyColor(latency) },
+            ].map(row => (
+              <div key={row.label} style={{marginBottom:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                  <span style={{fontSize:12,color:'var(--text2)'}}>{row.label}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:11,color:'var(--text3)'}}>{row.display}</span>
+                    <span style={{fontSize:13,fontWeight:600,color:row.color}}>{row.score}/{row.max}</span>
+                  </div>
+                </div>
+                <div style={{height:4,background:'var(--bg3)',borderRadius:2,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${(row.score/row.max)*100}%`,background:row.color,borderRadius:2,transition:'width 0.3s ease'}}/>
+                </div>
+              </div>
             ))}
-          </ul>
-        </section>
+            <div style={{borderTop:'0.5px solid var(--border)',paddingTop:12,marginTop:4,fontSize:10,color:'var(--text3)',lineHeight:1.6}}>
+              Score = Uptime×50% + NUT support×30% + Latency score×20%
+            </div>
+          </div>
+        </div>
       )}
 
-      {(() => {
-        if (data.info?.tos_url === undefined) return null
-        try {
-          const u = new URL(data.info.tos_url)
-          if (u.protocol !== 'https:' && u.protocol !== 'http:') return null
-          return (
-            <section className="mint-detail-section">
+      {showReviewModal && (
+        <div style={{position:'fixed',inset:0,zIndex:100,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}
+          onClick={() => setShowReviewModal(false)}>
+          <div style={{background:'var(--bg2)',border:'0.5px solid var(--border2)',borderRadius:14,padding:'24px',maxWidth:400,width:'100%'}}
+            onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div style={{fontSize:16,fontWeight:600,color:'var(--text)'}}>Write a review</div>
+              <button onClick={() => setShowReviewModal(false)} style={{background:'none',border:'none',color:'var(--text3)',fontSize:18,cursor:'pointer'}}>×</button>
+            </div>
+
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:10,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>Rating</div>
+              <div style={{display:'flex',gap:6}}>
+                {[1,2,3,4,5].map(star => (
+                  <button key={star} onClick={() => setReviewRating(star)}
+                    style={{background:'none',border:'none',cursor:'pointer',fontSize:24,color: star <= reviewRating ? 'var(--yellow)' : 'var(--border2)',padding:'0 2px'}}>
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:10,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>Comment (optional)</div>
+              <textarea
+                value={reviewComment}
+                onChange={e => setReviewComment(e.target.value)}
+                placeholder="Share your experience with this mint..."
+                maxLength={500}
+                rows={3}
+                style={{width:'100%',background:'var(--bg3)',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 12px',color:'var(--text)',fontSize:12,outline:'none',fontFamily:'var(--font-body)',resize:'vertical',boxSizing:'border-box'}}
+              />
+            </div>
+
+            {reviewError !== null && <div style={{fontSize:11,color:'var(--red)',marginBottom:10}}>{reviewError}</div>}
+            {reviewSuccess && <div style={{fontSize:11,color:'var(--accent)',marginBottom:10}}>✓ Review published!</div>}
+
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+              <button onClick={() => setShowReviewModal(false)}
+                style={{background:'transparent',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 16px',color:'var(--text3)',fontSize:13,cursor:'pointer',fontFamily:'var(--font-body)'}}>
+                Cancel
+              </button>
+              <button
+                disabled={reviewSubmitting}
+                onClick={() => {
+                  void (async () => {
+                    setReviewSubmitting(true)
+                    setReviewError(null)
+                    try {
+                      await submitMintReview(url, reviewRating, reviewComment)
+                      setReviewSuccess(true)
+                      setTimeout(() => { setShowReviewModal(false); setReviewSuccess(false); setReviewComment(''); setReviewRating(5) }, 1500)
+                    } catch (err) {
+                      setReviewError(err instanceof Error ? err.message : 'Failed to publish review')
+                    } finally {
+                      setReviewSubmitting(false)
+                    }
+                  })()
+                }}
+                style={{background:'var(--accent)',color:'var(--bg)',border:'none',borderRadius:8,padding:'8px 18px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'var(--font-body)',opacity:reviewSubmitting ? 0.6 : 1}}>
+                {reviewSubmitting ? 'Publishing...' : 'Publish review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedNut && (() => {
+        const meta = NUT_DESCRIPTIONS[selectedNut]
+        const supported = supportedNuts.includes(selectedNut)
+        return (
+          <div
+            style={{
+              position: 'fixed', inset: 0, zIndex: 100,
+              background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '20px',
+            }}
+            onClick={() => setSelectedNut(null)}
+          >
+            <div
+              style={{
+                background: 'var(--bg2)', border: '0.5px solid var(--border2)',
+                borderRadius: 14, padding: '24px', maxWidth: 420, width: '100%',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 16}}>
+                <div>
+                  <div style={{fontSize: 18, fontWeight: 600, color: supported ? 'var(--accent)' : 'var(--text2)'}}>
+                    {meta?.short ?? selectedNut}
+                  </div>
+                  <div style={{fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginTop: 2}}>
+                    {selectedNut}
+                  </div>
+                </div>
+                <div style={{display:'flex', alignItems:'center', gap: 8}}>
+                  <span style={{
+                    fontSize: 11, padding: '3px 10px', borderRadius: 6,
+                    background: supported ? '#0d2018' : 'var(--bg3)',
+                    color: supported ? 'var(--accent)' : 'var(--text3)',
+                    border: `0.5px solid ${supported ? '#1a3a28' : 'var(--border)'}`,
+                    fontFamily: 'var(--font-mono)',
+                  }}>
+                    {supported ? '✓ Supported' : '✗ Not supported'}
+                  </span>
+                  <button
+                    onClick={() => setSelectedNut(null)}
+                    style={{background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer', lineHeight:1}}
+                  >×</button>
+                </div>
+              </div>
+
+              <p style={{fontSize: 13, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.6}}>
+                {meta?.desc}
+              </p>
+
+              {meta?.features && (
+                <div style={{marginBottom: 14}}>
+                  <div style={{fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8}}>Features</div>
+                  <div style={{display: 'flex', flexWrap: 'wrap', gap: 6}}>
+                    {meta.features.map(f => (
+                      <span key={f} style={{
+                        fontSize: 11, padding: '3px 9px', borderRadius: 6,
+                        background: 'var(--bg3)', border: '0.5px solid var(--border)',
+                        color: 'var(--text2)',
+                      }}>
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {meta?.useCase && (
+                <div style={{
+                  borderTop: '0.5px solid var(--border)', paddingTop: 12, marginTop: 4,
+                }}>
+                  <div style={{fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6}}>Use case</div>
+                  <p style={{fontSize: 12, color: 'var(--text3)', lineHeight: 1.5}}>{meta.useCase}</p>
+                </div>
+              )}
+
               <a
-                href={u.toString()}
+                href={`https://github.com/cashubtc/nuts/blob/main/${parseInt(selectedNut.replace('NUT-', ''), 10).toString().padStart(2, '0')}.md`}
                 target="_blank"
-                rel="noreferrer"
-                className="mint-tos-link"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  marginTop: 16, fontSize: 11, color: 'var(--accent)',
+                  textDecoration: 'none',
+                }}
               >
-                Terms of Service ↗
+                ↗ View NUT spec on GitHub
               </a>
-            </section>
-          )
-        } catch {
-          return null
-        }
+            </div>
+          </div>
+        )
       })()}
     </div>
   )
@@ -312,12 +834,15 @@ function MintDetailContent({ url }: { url: string }) {
 export default function MintDetail() {
   const params = useParams<{ url: string }>()
   const rawUrl = params['url']
+  const navigate = useNavigate()
 
   if (rawUrl === undefined) {
     return (
       <div className="mint-detail">
-        <p className="mint-detail-error">Invalid mint URL.</p>
-        <Link to="/" className="mint-detail-back">← Dashboard</Link>
+        <div className="md-header">
+          <button className="md-back" onClick={() => navigate(-1)}>← Back</button>
+        </div>
+        <p style={{ color: 'var(--red)', padding: '24px', fontSize: '14px' }}>Invalid mint URL.</p>
       </div>
     )
   }
