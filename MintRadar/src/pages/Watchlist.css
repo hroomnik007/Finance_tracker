@@ -1,6 +1,8 @@
 .watchlist-page {
   background: transparent;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Header ─────────────────────────────────────────────────── */
@@ -101,10 +103,12 @@
 
 /* ── Card grid ──────────────────────────────────────────────── */
 .wl-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
   gap: 9px;
   padding: 16px 18px;
+  align-content: start;
 }
 
 .skeleton-card {
@@ -290,6 +294,7 @@
 
 /* ── Empty state ────────────────────────────────────────────── */
 .wl-empty {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
