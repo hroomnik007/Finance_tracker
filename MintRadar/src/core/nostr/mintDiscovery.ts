@@ -14,6 +14,7 @@ const DISCOVERY_RELAYS: string[] = [
   'wss://nostr.wine',
   'wss://nostr-pub.wellorder.net',
   'wss://relay.snort.social',
+  'wss://relay.primal.net',
   'wss://nos.lol',
 ]
 

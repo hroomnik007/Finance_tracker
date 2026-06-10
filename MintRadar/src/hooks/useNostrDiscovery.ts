@@ -8,6 +8,7 @@ const DISCOVERY_RELAYS = [
   'wss://nos.lol',
   'wss://purplepag.es',
   'wss://relay.snort.social',
+  'wss://relay.primal.net',
   'wss://relay.cashumints.space',
   'wss://relay.azzamo.net',
 ]

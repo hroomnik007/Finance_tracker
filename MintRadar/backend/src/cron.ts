@@ -1,6 +1,6 @@
 import cron from 'node-cron'
 import { getKnownMints, probeMintToDb, pruneOldHistory } from './prober.js'
-import { discoverMintsFromNostr } from './discovery.js'
+import { discoverMintsFromNostr, discoverMintsFromApi } from './discovery.js'
 
 const KNOWN_MINTS = [
   'https://mint.minibits.cash/Bitcoin',
@@ -55,11 +55,13 @@ export function startCron(): void {
 
   // Discovery: run once after 10s, then every 6h
   setTimeout(async () => {
-    console.log('[cron] running initial NIP-87 discovery...')
+    console.log('[cron] running initial discovery...')
     await discoverMintsFromNostr()
+    await discoverMintsFromApi()
   }, 10_000)
   setInterval(async () => {
-    console.log('[cron] running scheduled NIP-87 discovery...')
+    console.log('[cron] running scheduled discovery...')
     await discoverMintsFromNostr()
+    await discoverMintsFromApi()
   }, 6 * 60 * 60 * 1000)
 }
