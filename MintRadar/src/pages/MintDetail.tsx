@@ -189,6 +189,7 @@ function MintDetailContent({ url }: { url: string }) {
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSuccess, setReviewSuccess] = useState(false)
+  const [auditTooltip, setAuditTooltip] = useState<'mints' | 'melts' | 'errors' | null>(null)
 
   useEffect(() => { void loadFromDb() }, [loadFromDb])
 
@@ -377,10 +378,10 @@ function MintDetailContent({ url }: { url: string }) {
               <span className="md-info-value">{version ?? '—'}</span>
             </div>
             {pubkey && (
-              <div className="md-info-row">
+              <div className="md-info-row" style={{alignItems: 'center'}}>
                 <span className="md-info-label">Public key</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span className="md-info-value" style={{ fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pubkey.slice(0, 16)}…</span>
+                <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
+                  <span style={{fontSize: 11, color: 'var(--text)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap'}}>{pubkey.slice(0, 16)}…</span>
                   <button
                     onClick={() => {
                       void navigator.clipboard.writeText(pubkey)
@@ -390,7 +391,7 @@ function MintDetailContent({ url }: { url: string }) {
                     style={{
                       background: 'none', border: 'none', cursor: 'pointer',
                       color: copiedContact === 'pubkey' ? 'var(--accent)' : 'var(--text3)',
-                      fontSize: 12, padding: '2px 4px', flexShrink: 0,
+                      fontSize: 13, padding: '2px 4px', flexShrink: 0,
                     }}
                     title="Copy full public key"
                   >
@@ -677,15 +678,42 @@ function MintDetailContent({ url }: { url: string }) {
                 <span style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>· via audit.8333.space</span>
               </div>
               <div className="audit-stats-grid">
-                <div className="audit-stat-card">
+                <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
+                  onMouseEnter={() => setAuditTooltip('mints')}
+                  onMouseLeave={() => setAuditTooltip(null)}
+                  onClick={() => setAuditTooltip(auditTooltip === 'mints' ? null : 'mints')}
+                >
+                  {auditTooltip === 'mints' && (
+                    <div className="audit-tooltip" style={{left:0,transform:'none'}}>
+                      Number of successful ecash minting operations. The auditor actively creates ecash tokens to verify the mint works correctly.
+                    </div>
+                  )}
                   <div className="audit-stat-value" style={{color:'#00E676'}}>{knownMint.auditNMints.toLocaleString()}</div>
                   <div className="audit-stat-label">Mint ops</div>
                 </div>
-                <div className="audit-stat-card">
+                <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
+                  onMouseEnter={() => setAuditTooltip('melts')}
+                  onMouseLeave={() => setAuditTooltip(null)}
+                  onClick={() => setAuditTooltip(auditTooltip === 'melts' ? null : 'melts')}
+                >
+                  {auditTooltip === 'melts' && (
+                    <div className="audit-tooltip">
+                      Number of successful ecash melting operations. The auditor redeems ecash back to Lightning to verify withdrawals work.
+                    </div>
+                  )}
                   <div className="audit-stat-value" style={{color:'#00E676'}}>{(knownMint.auditNMelts ?? 0).toLocaleString()}</div>
                   <div className="audit-stat-label">Melt ops</div>
                 </div>
-                <div className="audit-stat-card">
+                <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
+                  onMouseEnter={() => setAuditTooltip('errors')}
+                  onMouseLeave={() => setAuditTooltip(null)}
+                  onClick={() => setAuditTooltip(auditTooltip === 'errors' ? null : 'errors')}
+                >
+                  {auditTooltip === 'errors' && (
+                    <div className="audit-tooltip" style={{left:'auto',right:0,transform:'none'}}>
+                      Number of failed mint or melt operations detected by the auditor. Higher error count indicates reliability issues.
+                    </div>
+                  )}
                   <div className="audit-stat-value" style={{color: (knownMint.auditNErrors ?? 0) > 0 ? '#ff4d4d' : '#00E676'}}>{(knownMint.auditNErrors ?? 0).toLocaleString()}</div>
                   <div className="audit-stat-label">Errors</div>
                 </div>
