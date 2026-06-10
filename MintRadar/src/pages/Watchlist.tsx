@@ -24,13 +24,6 @@ const IcEye = () => (
   </svg>
 )
 
-const IcPlus = () => (
-  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-    <line x1="6" y1="1.5" x2="6" y2="10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    <line x1="1.5" y1="6" x2="10.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-  </svg>
-)
-
 function latencyColor(ms: number | null | undefined): string {
   if (!ms || ms <= 0) return 'var(--text)'
   if (ms < 800) return '#00E676'
@@ -129,13 +122,9 @@ function WatchlistCard({
 }
 
 export default function Watchlist() {
-  const [inputUrl, setInputUrl] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'name' | 'latency' | 'trust' | 'status'>('name')
-  const [showAdd, setShowAdd] = useState(false)
 
   const mints = useWatchlistStore(state => state.mints)
-  const addMint = useWatchlistStore(state => state.addMint)
   const loadFromDb = useWatchlistStore(state => state.loadFromDb)
 
   const profile = useAuthStore(state => state.profile)
@@ -149,13 +138,6 @@ export default function Watchlist() {
   useEffect(() => {
     void loadFromDb()
   }, [loadFromDb])
-
-  useEffect(() => {
-    if (!showAdd) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowAdd(false) }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [showAdd])
 
   function handleExport() {
     const payload = JSON.stringify({ exportedAt: new Date().toISOString(), mints }, null, 2)
@@ -192,17 +174,6 @@ export default function Watchlist() {
     a.download = 'mintradar-watchlist.csv'
     a.click()
     URL.revokeObjectURL(objectUrl)
-  }
-
-  function handleAdd(e: React.FormEvent) {
-    e.preventDefault()
-    const trimmed = inputUrl.trim()
-    if (trimmed.length > 500) { setError('URL must be 500 characters or fewer.'); return }
-    if (!trimmed.startsWith('https://')) { setError('URL must start with https://'); return }
-    setError(null)
-    void addMint(trimmed)
-    setInputUrl('')
-    setShowAdd(false)
   }
 
   if (profile === null) {
@@ -248,13 +219,6 @@ export default function Watchlist() {
             <span className="wl-export-link" onClick={handleExportCsv}>↓ CSV</span>
           </div>
         )}
-        <button
-          type="button"
-          className="submit-btn"
-          onClick={() => { setShowAdd(true); setError(null); setInputUrl('') }}
-        >
-          <IcPlus /> Add mint
-        </button>
       </div>
 
       {mints.length === 0 ? (
@@ -287,32 +251,6 @@ export default function Watchlist() {
       )}
 
       <div className="wl-footer">Watchlist data is stored locally in your browser only. Never sent to the server.</div>
-
-      {showAdd && (
-        <div className="submit-modal-overlay" onClick={() => setShowAdd(false)}>
-          <div className="submit-modal" onClick={e => e.stopPropagation()}>
-            <div className="submit-modal-title">Add a mint to watchlist</div>
-            <div className="submit-modal-desc">
-              Enter a Cashu mint URL to watch. It will be tracked locally in your browser only.
-            </div>
-            <form onSubmit={handleAdd}>
-              <input
-                className="submit-modal-input"
-                type="text"
-                value={inputUrl}
-                onChange={e => setInputUrl(e.target.value)}
-                placeholder="https://yourmint.cash"
-                autoFocus
-              />
-              {error !== null && <div className="submit-result error">{error}</div>}
-              <div className="submit-modal-actions">
-                <button type="button" className="submit-cancel-btn" onClick={() => setShowAdd(false)}>Cancel</button>
-                <button type="submit" className="submit-ok-btn">Add</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
