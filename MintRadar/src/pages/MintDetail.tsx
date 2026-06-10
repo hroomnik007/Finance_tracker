@@ -94,6 +94,18 @@ function contactInfoScore(email?: string, twitter?: string, nostr?: string, webs
   return Math.round((count / 4) * 5)
 }
 
+function auditReliabilityScore(nMints: number | null, nMelts: number | null, nErrors: number | null): number {
+  if (nMints === null) return 2.5
+  const total = nMints + (nMelts ?? 0) + (nErrors ?? 0)
+  if (total === 0) return 5
+  const errorRate = (nErrors ?? 0) / total
+  if (errorRate === 0) return 5
+  if (errorRate < 0.01) return 4
+  if (errorRate < 0.05) return 3
+  if (errorRate < 0.15) return 2
+  return 1
+}
+
 function latencyScoreOf(latencyMs: number): number {
   if (latencyMs <= 0) return 0
   if (latencyMs < 150) return 20
@@ -110,14 +122,18 @@ function computeTrustScore(
   email?: string,
   twitter?: string,
   nostr?: string,
-  website?: string
+  website?: string,
+  auditNMints?: number | null,
+  auditNMelts?: number | null,
+  auditNErrors?: number | null,
 ): number {
-  const uptimeScore = Math.round(uptimePct * 0.4)
+  const uptimeScore = Math.round(uptimePct * 0.35)
   const nutScore = Math.round(Math.min(nutCount / ALL_NUTS.length, 1) * 25)
   const latScore = latencyScoreOf(latencyMs)
   const verScore = versionFreshnessScore(versionStr)
   const cScore = contactInfoScore(email, twitter, nostr, website)
-  return Math.min(100, uptimeScore + nutScore + latScore + verScore + cScore)
+  const aScore = auditReliabilityScore(auditNMints ?? null, auditNMelts ?? null, auditNErrors ?? null)
+  return Math.round(Math.min(100, uptimeScore + nutScore + latScore + verScore + cScore + aScore))
 }
 
 const WARNING_KEYWORDS = ['rug', 'shutdown', 'warning', 'beware', 'risk', 'danger', 'caution', 'maintenance']
@@ -241,7 +257,7 @@ function MintDetailContent({ url }: { url: string }) {
     supportedNutNumbers.has(String(parseInt(nut.slice(4), 10)))
   )
 
-  const trustScore = computeTrustScore(uptimePct, supportedNuts.length, latency ?? 0, version, email, twitter, nostr, website)
+  const trustScore = computeTrustScore(uptimePct, supportedNuts.length, latency ?? 0, version, email, twitter, nostr, website, knownMint?.auditNMints ?? null, knownMint?.auditNMelts ?? null, knownMint?.auditNErrors ?? null)
 
   const avgRating = reviews.length > 0
     ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
@@ -830,19 +846,26 @@ function MintDetailContent({ url }: { url: string }) {
               </div>
             </div>
             {(() => {
-              const uScore = Math.round(uptimePct * 0.4)
+              const uScore = Math.round(uptimePct * 0.35)
               const nScore = Math.round(Math.min(supportedNuts.length / ALL_NUTS.length, 1) * 25)
               const lScore = latencyScoreOf(latency ?? 0)
               const vScore = versionFreshnessScore(version)
               const contactFields = [email, twitter, nostr, website].filter(Boolean)
               const cScore = Math.round((contactFields.length / 4) * 5)
               const contactDisplay = contactFields.length === 0 ? 'None' : (email ? 'Email' : '') + (twitter ? (email ? ' + Twitter' : 'Twitter') : '') + (nostr ? ((email || twitter) ? ' + Nostr' : 'Nostr') : '') + (website ? ((email || twitter || nostr) ? ' + Web' : 'Web') : '')
+              const auditNMints = knownMint?.auditNMints ?? null
+              const auditNMelts = knownMint?.auditNMelts ?? null
+              const auditNErrors = knownMint?.auditNErrors ?? null
+              const aScore = auditReliabilityScore(auditNMints, auditNMelts, auditNErrors)
+              const auditTotal = (auditNMints ?? 0) + (auditNMelts ?? 0) + (auditNErrors ?? 0)
+              const auditDisplay = auditNMints === null ? '—' : auditTotal === 0 ? '0%' : `${((auditNErrors ?? 0) / auditTotal * 100).toFixed(1)}% err`
               const rows = [
-                { label: 'Uptime (40%)', display: `${uptimePct}%`, score: uScore, max: 40, color: uptimeColor(uptimePct) },
+                { label: 'Uptime (35%)', display: `${uptimePct}%`, score: uScore, max: 35, color: uptimeColor(uptimePct) },
                 { label: 'NUT Support (25%)', display: `${supportedNuts.length} / ${ALL_NUTS.length} NUTs`, score: nScore, max: 25, color: supportedNuts.length >= 12 ? '#00E676' : supportedNuts.length >= 8 ? '#ffa500' : '#ff4d4d' },
                 { label: 'Latency (20%)', display: latency !== null ? `${latency} ms` : '—', score: lScore, max: 20, color: latencyColor(latency) },
                 { label: 'Version (10%)', display: version ?? 'Unknown', score: vScore, max: 10, color: vScore >= 8 ? '#00E676' : vScore >= 4 ? '#ffa500' : '#ff4d4d' },
                 { label: 'Contact (5%)', display: contactDisplay, score: cScore, max: 5, color: cScore >= 4 ? '#00E676' : cScore >= 2 ? '#ffa500' : '#ff4d4d' },
+                { label: 'Audit reliability (5%)', display: auditDisplay, score: aScore, max: 5, color: aScore >= 4 ? '#00E676' : aScore >= 3 ? '#ffa500' : '#ff4d4d' },
               ]
               return rows.map(row => (
                 <div key={row.label} style={{marginBottom:14}}>
@@ -860,7 +883,7 @@ function MintDetailContent({ url }: { url: string }) {
               ))
             })()}
             <div style={{borderTop:'0.5px solid var(--border)',paddingTop:12,marginTop:4,fontSize:10,color:'var(--text3)',lineHeight:1.6}}>
-              Score = Uptime×40% + NUT support×25% + Latency×20% + Version×10% + Contact×5%
+              Score = Uptime×35% + NUT support×25% + Latency×20% + Version×10% + Contact×5% + Audit×5%
             </div>
           </div>
         </div>
