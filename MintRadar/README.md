@@ -1,56 +1,96 @@
-# MintRadar 🔭
+# MintRadar ⚡
 
-Privacy-first Cashu mint monitoring PWA.
+> A modern, responsive web application for discovering and monitoring Cashu mints.
 
-## What is MintRadar?
+---
 
-MintRadar tracks the health and availability of [Cashu](https://cashu.space) ecash mints — decentralized, privacy-preserving Bitcoin payment infrastructure.
+## 🌟 Overview
 
-## Why MintRadar?
+**MintRadar** monitors Cashu ecash mints in real-time. It automatically discovers mints via **Nostr NIP-87**, tracks their availability, latency, supported NUTs, and software version — all **without tracking users**.
 
-- **Zero tracking** — no accounts, no emails, no server-side user data
-- **Local-first** — your personal watchlist lives in your browser only
-- **Nostr-native** — login with your Nostr identity (NIP-07), get notified via DMs
-- **Open source** — MIT license, self-hostable
+**Live Demo:** [https://mintradar.pedani.eu](https://mintradar.pedani.eu)
 
-## Features
+---
 
-- 📡 Live status monitoring of public Cashu mints
-- ⚡ Latency tracking and uptime history
-- 🔍 NUT compatibility matrix per mint
-- 👁 Personal watchlist (stored locally in IndexedDB)
-- 🔐 Nostr login via NIP-07 browser extension
-- 📊 Historical latency graphs (Recharts)
-- 🔎 Search and sort mints by status, latency, name
-- 📥 Export watchlist as JSON
+## ✨ Features
 
-## Stack
+### 🟢 Live Monitoring
+- Tests all known mints every 5 minutes
+- Real online/offline status with color indicators
+- Latency tracking (green <150ms / yellow <400ms / red)
 
-- React 18 + TypeScript + Vite 5
-- Zustand + Dexie (IndexedDB) — personal data never leaves your browser
-- nostr-tools — NIP-07 login, NIP-87 mint discovery
-- TanStack Query v5 + Recharts
-- Node.js/Express backend proxy (CORS, SSRF protection)
-- PostgreSQL — public mint history only
-- vite-plugin-pwa — installable PWA
+### 📊 Uptime & History
+- 24-hour uptime percentage
+- Latency sparklines and historical charts
+- Automatically hides mints that have been offline for more than 24 hours
 
-## Architecture
-```
-Browser                          Server (Hetzner)
-───────────────────────────────  ──────────────────────────────
-Personal watchlist → IndexedDB   Public mint history → PostgreSQL
-Nostr login → NIP-07 extension   Cron every 5min → probe mints
-Mint probing → /api/mint/probe   Express proxy → bypass CORS
-```
+### 🔍 NUT Compatibility
+- Clear overview of all Cashu NUTs (NUT-00 to NUT-20)
+- Click to see description and specification link
 
-## Privacy
+### 🏆 Trust Score
+- Comprehensive trust score (Uptime 50% + NUTs 30% + Latency 20%)
+- Interactive gauge with detailed breakdown
 
-Personal watchlist data is stored **exclusively in your browser** (IndexedDB). The server only stores public mint URLs and their uptime history — no user data, no tracking, no analytics.
+### 👁 Watchlist
+- Local favorite mint tracking (IndexedDB)
+- Requires Nostr login
+- Export/import as JSON
 
-## Live
+### 🔔 Nostr DM Notifications
+- Notifications on mint downtime or recovery
+- Sent directly from the browser (NIP-07) — server never sees your keys
 
-[mintradar.pedani.eu](https://mintradar.pedani.eu)
+### ⚡ Mint Discovery
+- Automatic discovery of new mints via Nostr (kind 38172)
+- Manual mint addition available
 
-## License
+### ✍️ Reviews
+- Decentralized mint reviews via Nostr (kind 38000)
 
-MIT
+---
+
+## 🔒 Privacy First
+
+| Feature          | How it works                                |
+|------------------|---------------------------------------------|
+| Watchlist        | Stored only in browser (IndexedDB)          |
+| Nostr keys       | NIP-07 extension — server never sees them  |
+| Analytics        | None                                        |
+| Cookies          | None                                        |
+| Fonts            | Self-hosted (DM Sans)                       |
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend:** React 18 + TypeScript + Vite
+- **State:** TanStack Query + Zustand + Dexie
+- **Charts:** Recharts
+- **Backend:** Node.js + Express + TypeScript
+- **Database:** PostgreSQL
+- **Nostr:** nostr-tools
+- **Deployment:** Docker + Nginx
+
+---
+
+## 📥 Browser Extension Support
+
+To write reviews you need a Nostr browser extension:
+
+- **[Alby](https://getalby.com/alby-extension)** — recommended (Lightning + Nostr)
+- **[nos2x](https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp)** — Chrome / Edge
+- **[nos2x-fox](https://addons.mozilla.org/en-US/firefox/addon/nos2x-fox/)** — Firefox
+
+---
+
+## 🔗 Useful Links
+
+- [Live Demo](https://mintradar.pedani.eu)
+- [Cashu Protocol](https://cashu.space)
+- [Nostr Protocol](https://nostr.com)
+- [NIP-87 — Mint Discovery](https://github.com/nostr-protocol/nips/blob/master/87.md)
+
+---
+
+**Built with ⚡ for the Cashu & Nostr community**
