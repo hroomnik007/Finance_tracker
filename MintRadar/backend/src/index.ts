@@ -502,7 +502,8 @@ const server = app.listen(PORT, () => {
     .then(() => seedKnownMints(upsertMint))
     .then(() => { startCron() })
     .catch((err: unknown) => {
-      if (IS_DEV) console.error('[startup] DB init failed:', err)
+      console.error('[startup] DB init failed — exiting:', err)
+      process.exit(1)
     })
 })
 

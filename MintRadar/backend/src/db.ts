@@ -8,6 +8,7 @@ export const pool = new Pool({
 })
 
 export async function initDb(): Promise<void> {
+  // Core tables — single batch (ordered by dependency)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS mints (
       url TEXT PRIMARY KEY,
@@ -27,17 +28,6 @@ export async function initDb(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_mint_history_url_checked
       ON mint_history(url, checked_at DESC);
 
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS icon_url TEXT;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS version TEXT;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS nut_count INTEGER;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS tos_url TEXT;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS description_long TEXT;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS nuts_limits JSONB;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_n_mints INTEGER;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_n_melts INTEGER;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_n_errors INTEGER;
-    ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_checked_at TIMESTAMPTZ;
-
     CREATE TABLE IF NOT EXISTS mint_version_history (
       id BIGSERIAL PRIMARY KEY,
       url TEXT NOT NULL REFERENCES mints(url) ON DELETE CASCADE,
@@ -51,4 +41,22 @@ export async function initDb(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_mint_version_history_url_date
       ON mint_version_history(url, first_seen_at DESC);
   `)
+
+  // Column migrations — each in its own query so a failure in one doesn't block others
+  const migrations = [
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS icon_url TEXT',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS version TEXT',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS nut_count INTEGER',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS tos_url TEXT',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS description_long TEXT',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS nuts_limits JSONB',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_n_mints INTEGER',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_n_melts INTEGER',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_n_errors INTEGER',
+    'ALTER TABLE mints ADD COLUMN IF NOT EXISTS audit_checked_at TIMESTAMPTZ',
+  ]
+
+  for (const sql of migrations) {
+    await pool.query(sql)
+  }
 }

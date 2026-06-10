@@ -56,12 +56,17 @@ wss://purplepag.es, wss://relay.snort.social
 - Nostr: NIP-07 login, profile fetch (kind:0), reviews (kind:38000), DM notifications (kind:4)
 
 ## Deploy workflow (ALWAYS do all steps)
-1. Build backend if changed: cd /var/www/mintradar-repo/backend && npm run build
-2. Restart backend if changed: cd /var/www/mintradar-repo && docker compose restart backend
-3. Build frontend: npm run typecheck && npm run build
-4. Deploy: rsync -avz --delete dist/ deploy@178.104.169.40:/var/www/mintradar/dist/
-5. Reload nginx: ssh deploy@178.104.169.40 "sudo systemctl reload nginx"
-6. Commit: git add -A && git commit -m "type: description" && git push origin main
+Backend (only if backend changed):
+1. Commit + push local changes: git add -A && git commit -m "..." && git push origin main
+2. On server pull + build: ssh deploy@178.104.169.40 "cd /var/www/mintradar-repo && git pull origin main && cd backend && npm run build"
+3. Rebuild + restart Docker image: ssh deploy@178.104.169.40 "cd /var/www/mintradar-repo && docker compose build backend && docker compose up -d backend"
+   NOTE: `docker compose restart` does NOT pick up code changes — always use `build` + `up -d`
+
+Frontend:
+4. Build frontend: npm run typecheck && npm run build
+5. Deploy: rsync -avz --delete dist/ deploy@178.104.169.40:/var/www/mintradar/dist/
+6. Reload nginx: ssh deploy@178.104.169.40 "sudo systemctl reload nginx"
+7. Commit: git add -A && git commit -m "type: description" && git push origin main
 
 ## Key rules
 - NEVER modify anything not explicitly requested
