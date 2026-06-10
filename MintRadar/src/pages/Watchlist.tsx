@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MintFavicon } from '@/components/mint/MintFavicon'
-import { useMintProbe } from '@/hooks/useMintProbe'
 import { useMintHistory } from '@/hooks/useMintHistory'
+import { useKnownMints, type KnownMint } from '@/hooks/useKnownMints'
 import { useWatchlistStore } from '@/stores/watchlist.store'
 import { useAuthStore } from '@/stores/auth.store'
-import type { MintStatus } from '@core/mint/api'
 import './Watchlist.css'
 
 const IcRadar = () => (
@@ -25,18 +24,32 @@ const IcEye = () => (
   </svg>
 )
 
+const IcPlus = () => (
+  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+    <line x1="6" y1="1.5" x2="6" y2="10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="1.5" y1="6" x2="10.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+)
+
 function latencyColor(ms: number | null | undefined): string {
   if (!ms || ms <= 0) return 'var(--text)'
-  if (ms < 150) return 'var(--accent)'
-  if (ms < 600) return 'var(--yellow)'
-  return 'var(--red)'
+  if (ms < 800) return '#00E676'
+  if (ms < 1500) return '#ffa500'
+  return '#ff4d4d'
 }
 
 function uptimeColor(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return 'var(--text3)'
-  if (pct >= 90) return 'var(--accent)'
-  if (pct >= 70) return 'var(--yellow)'
-  return 'var(--red)'
+  if (pct >= 80) return '#00E676'
+  if (pct >= 50) return '#ffa500'
+  return '#ff4d4d'
+}
+
+function listTrustScore(mint: KnownMint | null): number {
+  if (!mint || mint.online !== true) return 0
+  const nutScore = mint.nutCount !== null ? Math.min(mint.nutCount / 14, 1) * 60 : 0
+  const latScore = mint.latencyMs !== null ? Math.max(0, 1 - mint.latencyMs / 2000) * 40 : 0
+  return Math.round(nutScore + latScore)
 }
 
 function getHostname(url: string): string {
@@ -45,28 +58,24 @@ function getHostname(url: string): string {
 
 function WatchlistCard({
   url,
-  onData,
+  knownMint,
 }: {
   url: string
-  onData: (url: string, data: MintStatus | undefined) => void
+  knownMint: KnownMint | null
 }) {
   const navigate = useNavigate()
-  const { data } = useMintProbe(url)
   const { records, uptimePercent } = useMintHistory(url)
   const removeMint = useWatchlistStore(state => state.removeMint)
 
-  useEffect(() => { onData(url, data) }, [url, data, onData])
-
-  if (data === undefined) return <div className="skeleton-card" />
-
   const hostname = getHostname(url)
-  const isOnline = data.online
-  const displayName = data.info?.name ?? hostname
-  const version = data.info?.version
-  const nutCount = data.info ? Object.keys(data.info.nuts).length : 0
-  const latency = data.latencyMs
+  const isOnline = knownMint?.online ?? false
+  const displayName = knownMint?.name ?? hostname
+  const version = knownMint?.version ?? undefined
+  const nutCount = knownMint?.nutCount ?? null
+  const latency = knownMint?.latencyMs ?? null
+  const iconUrl = knownMint?.iconUrl ?? null
   const lc = latencyColor(latency)
-  const sc = isOnline ? 'var(--accent)' : 'var(--red)'
+  const sc = isOnline ? 'var(--accent)' : '#ff4d4d'
   const uc = uptimeColor(records.length > 0 ? uptimePercent : undefined)
   const pulse = isOnline ? 'pulse-green 2.6s ease-in-out infinite' : 'none'
 
@@ -77,7 +86,7 @@ function WatchlistCard({
     >
       <div className="wl-card-top">
         <div className="wl-card-identity">
-          <MintFavicon url={url} iconUrl={data.info?.icon_url ?? null} size={28} />
+          <MintFavicon url={url} iconUrl={iconUrl} size={28} />
           <div>
             <div className="wl-card-name">{displayName}</div>
             <div className="wl-card-host">{hostname}</div>
@@ -94,7 +103,7 @@ function WatchlistCard({
 
       <div className="wl-card-badges">
         {version !== undefined && <span className="wl-badge">{version}</span>}
-        {data.info !== null && <span className="wl-badge">{nutCount} NUTs</span>}
+        {nutCount !== null && <span className="wl-badge">{nutCount} NUTs</span>}
         {records.length > 0 && (
           <div className="wl-uptime-bar-wrap">
             <div className="wl-uptime-bar-track">
@@ -122,7 +131,8 @@ function WatchlistCard({
 export default function Watchlist() {
   const [inputUrl, setInputUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [probeData, setProbeData] = useState<Map<string, MintStatus | undefined>>(new Map())
+  const [sortBy, setSortBy] = useState<'name' | 'latency' | 'trust' | 'status'>('name')
+  const [showAdd, setShowAdd] = useState(false)
 
   const mints = useWatchlistStore(state => state.mints)
   const addMint = useWatchlistStore(state => state.addMint)
@@ -133,27 +143,19 @@ export default function Watchlist() {
   const authIsLoading = useAuthStore(state => state.isLoading)
   const authError = useAuthStore(state => state.error)
 
+  const { data: knownMintsData } = useKnownMints()
+  const knownMintsMap = new Map(knownMintsData?.map(m => [m.url, m]) ?? [])
+
   useEffect(() => {
     void loadFromDb()
   }, [loadFromDb])
 
-  const onData = useCallback((url: string, data: MintStatus | undefined) => {
-    setProbeData(prev => {
-      if (prev.get(url) === data) return prev
-      const next = new Map(prev)
-      next.set(url, data)
-      return next
-    })
-  }, [])
-
-  const onlineLatencies = mints
-    .map(url => probeData.get(url))
-    .filter((d): d is MintStatus => d !== undefined && d.online && d.latencyMs !== null)
-    .map(d => d.latencyMs as number)
-  const avgLatency = onlineLatencies.length > 0
-    ? Math.round(onlineLatencies.reduce((a, b) => a + b, 0) / onlineLatencies.length)
-    : 0
-  const allOnline = mints.length > 0 && mints.every(url => probeData.get(url)?.online === true)
+  useEffect(() => {
+    if (!showAdd) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowAdd(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [showAdd])
 
   function handleExport() {
     const payload = JSON.stringify({ exportedAt: new Date().toISOString(), mints }, null, 2)
@@ -166,22 +168,41 @@ export default function Watchlist() {
     URL.revokeObjectURL(url)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleExportCsv() {
+    const header = ['Name', 'URL', 'Latency (ms)', 'Uptime (%)', 'Version', 'NUT Count', 'Online']
+    const rows = mints.map(url => {
+      const m = knownMintsMap.get(url)
+      return [
+        m?.name ?? getHostname(url),
+        url,
+        m?.latencyMs !== null && m?.latencyMs !== undefined ? String(m.latencyMs) : '',
+        '',
+        m?.version ?? '',
+        m?.nutCount !== null && m?.nutCount !== undefined ? String(m.nutCount) : '',
+        m?.online === true ? 'true' : m?.online === false ? 'false' : '',
+      ]
+    })
+    const csv = [header, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = 'mintradar-watchlist.csv'
+    a.click()
+    URL.revokeObjectURL(objectUrl)
+  }
+
+  function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = inputUrl.trim()
-
-    if (trimmed.length > 500) {
-      setError('URL must be 500 characters or fewer.')
-      return
-    }
-    if (!trimmed.startsWith('https://')) {
-      setError('URL must start with https://')
-      return
-    }
-
+    if (trimmed.length > 500) { setError('URL must be 500 characters or fewer.'); return }
+    if (!trimmed.startsWith('https://')) { setError('URL must start with https://'); return }
     setError(null)
     void addMint(trimmed)
     setInputUrl('')
+    setShowAdd(false)
   }
 
   if (profile === null) {
@@ -206,41 +227,35 @@ export default function Watchlist() {
 
   return (
     <div className="watchlist-page">
-      <div className="wl-header">
-        <div className="wl-title">My Watchlist</div>
-        <div className="wl-stats">
-          <div className="wl-stat">
-            <div className="wl-stat-label">Total watched</div>
-            <div className="wl-stat-value">{mints.length}</div>
-          </div>
-          <div className="wl-stat">
-            <div className="wl-stat-label">Avg. latency</div>
-            <div className="wl-stat-value">{avgLatency > 0 ? `${avgLatency} ms` : '—'}</div>
-          </div>
-          <div className="wl-stat">
-            <div className="wl-stat-label">All online</div>
-            <div className={`wl-stat-value ${allOnline ? 'green' : 'red'}`}>{allOnline ? '✓ Yes' : '✗ No'}</div>
-          </div>
-          <div className="wl-stat" onClick={handleExport} style={{ cursor: 'pointer' }}>
-            <div className="wl-stat-label">Export</div>
-            <div className="wl-stat-value link">↓ JSON</div>
-          </div>
+      <div className="wl-controls">
+        <div className="wl-page-title">My Watchlist</div>
+        <div className="sort-segment">
+          {(['status', 'latency', 'name', 'trust'] as const).map(s => (
+            <button
+              key={s}
+              type="button"
+              className={`sort-btn${sortBy === s ? ' active' : ''}`}
+              onClick={() => setSortBy(s)}
+            >
+              {s === 'trust' ? 'Trust Score' : s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
         </div>
+        {mints.length > 0 && (
+          <div className="wl-export-links">
+            <span className="wl-export-link" onClick={handleExport}>↓ JSON</span>
+            <span className="wl-export-sep">·</span>
+            <span className="wl-export-link" onClick={handleExportCsv}>↓ CSV</span>
+          </div>
+        )}
+        <button
+          type="button"
+          className="submit-btn"
+          onClick={() => { setShowAdd(true); setError(null); setInputUrl('') }}
+        >
+          <IcPlus /> Add mint
+        </button>
       </div>
-
-      <form className="wl-search-row" onSubmit={handleSubmit}>
-        <input
-          className="wl-input"
-          type="text"
-          value={inputUrl}
-          onChange={e => { setInputUrl(e.target.value) }}
-          placeholder="https://yourmint.cash"
-          aria-label="Mint URL"
-        />
-        <button type="submit" className="wl-add-btn">+ Add mint</button>
-      </form>
-
-      {error !== null && <p style={{ color: 'var(--red)', fontSize: '13px', padding: '4px 24px 0' }}>{error}</p>}
 
       {mints.length === 0 ? (
         <div className="wl-empty">
@@ -250,13 +265,54 @@ export default function Watchlist() {
         </div>
       ) : (
         <div className="wl-grid">
-          {mints.map(url => (
-            <WatchlistCard key={url} url={url} onData={onData} />
+          {[...mints].sort((a, b) => {
+            const ma = knownMintsMap.get(a) ?? null
+            const mb = knownMintsMap.get(b) ?? null
+            if (sortBy === 'status') {
+              return (mb?.online === true ? 1 : 0) - (ma?.online === true ? 1 : 0)
+            }
+            if (sortBy === 'latency') {
+              const la = ma?.online === true && ma.latencyMs != null ? ma.latencyMs : Infinity
+              const lb = mb?.online === true && mb.latencyMs != null ? mb.latencyMs : Infinity
+              return la - lb
+            }
+            if (sortBy === 'trust') {
+              return listTrustScore(mb) - listTrustScore(ma)
+            }
+            return getHostname(a).localeCompare(getHostname(b))
+          }).map(url => (
+            <WatchlistCard key={url} url={url} knownMint={knownMintsMap.get(url) ?? null} />
           ))}
         </div>
       )}
 
       <div className="wl-footer">Watchlist data is stored locally in your browser only. Never sent to the server.</div>
+
+      {showAdd && (
+        <div className="submit-modal-overlay" onClick={() => setShowAdd(false)}>
+          <div className="submit-modal" onClick={e => e.stopPropagation()}>
+            <div className="submit-modal-title">Add a mint to watchlist</div>
+            <div className="submit-modal-desc">
+              Enter a Cashu mint URL to watch. It will be tracked locally in your browser only.
+            </div>
+            <form onSubmit={handleAdd}>
+              <input
+                className="submit-modal-input"
+                type="text"
+                value={inputUrl}
+                onChange={e => setInputUrl(e.target.value)}
+                placeholder="https://yourmint.cash"
+                autoFocus
+              />
+              {error !== null && <div className="submit-result error">{error}</div>}
+              <div className="submit-modal-actions">
+                <button type="button" className="submit-cancel-btn" onClick={() => setShowAdd(false)}>Cancel</button>
+                <button type="submit" className="submit-ok-btn">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
