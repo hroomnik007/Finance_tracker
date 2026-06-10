@@ -5,6 +5,8 @@
 .dashboard {
   background: transparent;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Stats Bar ──────────────────────────────────────────────── */
@@ -178,7 +180,7 @@
 
 /* ── Mint Card ──────────────────────────────────────────────── */
 .mint-card {
-  background: var(--bg2);
+  background: #161b22;
   border: 1px solid var(--border);
   border-radius: var(--card-radius);
   padding: 14px 16px;
@@ -196,10 +198,14 @@
 }
 
 .mint-card.online  { border-left-color: var(--accent); }
-.mint-card.offline { border-left-color: var(--red); }
+.mint-card.offline {
+  border-left-color: var(--red);
+  background: #150f0f;
+  border-color: rgba(255,77,77,0.15);
+}
 .mint-card:hover { border-color: var(--border-hi); box-shadow: 0 4px 24px rgba(0,0,0,0.35); }
 .mint-card.online:hover  { border-left-color: var(--accent); }
-.mint-card.offline:hover { border-left-color: var(--red); }
+.mint-card.offline:hover { border-left-color: var(--red); border-color: rgba(255,77,77,0.25); }
 
 .card-top {
   display: flex;
@@ -234,8 +240,8 @@
 }
 
 .card-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--text);
   line-height: 1.2;
   white-space: nowrap;
@@ -344,7 +350,7 @@
 }
 
 .latency-value {
-  font-size: 33px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
@@ -422,6 +428,7 @@
   border-top: 1px solid var(--border);
   font-family: var(--font-mono);
   letter-spacing: 0.03em;
+  margin-top: auto;
 }
 
 /* ── Submit Modal ───────────────────────────────────────────── */
@@ -454,10 +461,15 @@
   width: 100%; background: var(--bg3); border: 1px solid var(--border);
   border-radius: 8px; padding: 10px 12px; color: var(--text);
   font-size: 12px; outline: none; font-family: var(--font-mono);
-  margin-bottom: 12px; box-sizing: border-box;
+  margin-bottom: 5px; box-sizing: border-box;
   transition: border-color var(--transition);
 }
 .submit-modal-input:focus { border-color: var(--accent); }
+
+.submit-input-hint {
+  font-size: 10px; color: var(--text3); font-family: var(--font-mono);
+  margin-bottom: 10px; letter-spacing: 0.01em;
+}
 
 .submit-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
@@ -490,6 +502,44 @@
 .submit-result.error {
   background: rgba(255, 61, 107, 0.08); color: var(--red);
   border: 1px solid rgba(255, 61, 107, 0.2);
+}
+
+.submit-probe-loading {
+  font-size: 11px; color: var(--text3);
+  font-family: var(--font-mono);
+  margin-bottom: 10px; padding: 6px 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.submit-probe-preview {
+  margin-bottom: 10px; padding: 10px 12px;
+  background: rgba(23, 232, 127, 0.06);
+  border: 1px solid rgba(23, 232, 127, 0.2);
+  border-radius: 8px;
+}
+
+.submit-probe-name {
+  font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;
+}
+
+.submit-probe-meta {
+  display: flex; gap: 6px; font-size: 11px;
+  color: var(--text3); font-family: var(--font-mono); align-items: center;
+}
+
+.submit-probe-error {
+  font-size: 11px; color: var(--red);
+  background: rgba(255, 61, 107, 0.08);
+  border: 1px solid rgba(255, 61, 107, 0.2);
+  border-radius: 6px; padding: 6px 10px;
+  margin-bottom: 10px; font-family: var(--font-mono);
+}
+
+.submit-no-account {
+  font-size: 10px; color: var(--text3);
+  text-align: center; margin-top: 8px;
+  font-family: var(--font-mono);
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */

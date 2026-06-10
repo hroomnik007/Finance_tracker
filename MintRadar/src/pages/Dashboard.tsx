@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { nip19 } from 'nostr-tools'
+import { SimplePool } from 'nostr-tools/pool'
+import type { NostrEvent } from 'nostr-tools'
 import { useNostrDiscovery } from '@/hooks/useNostrDiscovery'
 import { useWatchlistNotifications } from '@/hooks/useWatchlistNotifications'
 import { MintFavicon } from '@/components/mint/MintFavicon'
@@ -217,11 +220,14 @@ export default function Dashboard() {
   const [, setTick] = useState(0)
   const [showDegraded, setShowDegraded] = useState(false)
   const [showSubmit, setShowSubmit] = useState(false)
+  const [submitInput, setSubmitInput] = useState('')
   const [submitUrl, setSubmitUrl] = useState('')
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [submitMsg, setSubmitMsg] = useState('')
   const [probeState, setProbeState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [probeResult, setProbeResult] = useState<{ name: string | null; version: string | null; nutCount: number; latencyMs: number | null } | null>(null)
+  const [nostrLookupState, setNostrLookupState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [nostrLookupMsg, setNostrLookupMsg] = useState('')
   const queryClient = useQueryClient()
   useNostrDiscovery()
   const { mints: nostrMints } = useNostrMints()
@@ -272,6 +278,71 @@ export default function Dashboard() {
     const timer = setTimeout(() => setShowSubmit(false), 3000)
     return () => clearTimeout(timer)
   }, [submitState])
+
+  const NOSTR_LOOKUP_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band']
+
+  function handleSubmitInputChange(value: string) {
+    setSubmitInput(value)
+    const trimmed = value.trim()
+    if (trimmed.startsWith('https://')) {
+      setSubmitUrl(trimmed)
+      setNostrLookupState('idle')
+      setNostrLookupMsg('')
+    } else {
+      setSubmitUrl('')
+    }
+  }
+
+  useEffect(() => {
+    if (!showSubmit) return
+    const input = submitInput.trim()
+    const isNpub = input.startsWith('npub1')
+    const isHex = /^[0-9a-f]{64}$/i.test(input)
+    if (!isNpub && !isHex) {
+      setNostrLookupState('idle')
+      setNostrLookupMsg('')
+      return
+    }
+    setNostrLookupState('loading')
+    setNostrLookupMsg('')
+    const timer = setTimeout(() => {
+      void (async () => {
+        const pool = new SimplePool()
+        try {
+          let pubkey = input
+          if (isNpub) {
+            const decoded = nip19.decode(input)
+            if (decoded.type !== 'npub') {
+              setNostrLookupState('error')
+              setNostrLookupMsg('Invalid npub format')
+              return
+            }
+            pubkey = decoded.data as string
+          }
+          const events = await Promise.race([
+            pool.querySync(NOSTR_LOOKUP_RELAYS, { kinds: [38172], authors: [pubkey], limit: 5 }),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+          ]) as NostrEvent[]
+          const mintUrl = events
+            .flatMap(e => e.tags)
+            .find(t => t[0] === 'u' && t[1])?.[1]
+          if (!mintUrl) {
+            setNostrLookupState('error')
+            setNostrLookupMsg('No mint announcement found for this Nostr key')
+            return
+          }
+          setNostrLookupState('idle')
+          setSubmitUrl(mintUrl)
+        } catch {
+          setNostrLookupState('error')
+          setNostrLookupMsg('Failed to reach Nostr relays. Try again.')
+        } finally {
+          pool.destroy()
+        }
+      })()
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [submitInput, showSubmit])
 
   useEffect(() => {
     if (!showSubmit) return
@@ -400,7 +471,7 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
-        <button type="button" className="submit-btn" onClick={() => { setShowSubmit(true); setSubmitState('idle'); setSubmitUrl(''); setProbeState('idle'); setProbeResult(null) }}>
+        <button type="button" className="submit-btn" onClick={() => { setShowSubmit(true); setSubmitState('idle'); setSubmitInput(''); setSubmitUrl(''); setProbeState('idle'); setProbeResult(null); setNostrLookupState('idle'); setNostrLookupMsg('') }}>
           <IcPlus /> Submit mint
         </button>
         <button type="button" className="refresh-btn" onClick={() => void queryClient.invalidateQueries({ queryKey: ['mints-known'] })}>
@@ -443,12 +514,19 @@ export default function Dashboard() {
                 <input
                   className="submit-modal-input"
                   type="text"
-                  placeholder="https://yourmint.cash/Bitcoin"
-                  value={submitUrl}
-                  onChange={e => setSubmitUrl(e.target.value)}
+                  placeholder="https://yourmint.cash or npub1..."
+                  value={submitInput}
+                  onChange={e => handleSubmitInputChange(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && probeState === 'success') handleSubmitMint() }}
                   autoFocus
                 />
+                <div className="submit-input-hint">Enter a mint URL or the mint operator's Nostr public key</div>
+                {nostrLookupState === 'loading' && (
+                  <div className="submit-probe-loading">Looking up mint on Nostr…</div>
+                )}
+                {nostrLookupState === 'error' && (
+                  <div className="submit-probe-error">{nostrLookupMsg}</div>
+                )}
                 {probeState === 'loading' && submitUrl.startsWith('https://') && (
                   <div className="submit-probe-loading">Checking mint…</div>
                 )}
@@ -468,7 +546,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-                {probeState === 'error' && submitUrl.startsWith('https://') && (
+                {probeState === 'error' && submitUrl.startsWith('https://') && nostrLookupState === 'idle' && (
                   <div className="submit-probe-error">Mint unreachable or invalid</div>
                 )}
                 {submitState === 'error' && (
