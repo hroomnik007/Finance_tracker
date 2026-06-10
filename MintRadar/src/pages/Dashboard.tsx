@@ -1,12 +1,11 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNostrDiscovery } from '@/hooks/useNostrDiscovery'
 import { useWatchlistNotifications } from '@/hooks/useWatchlistNotifications'
 import { MintFavicon } from '@/components/mint/MintFavicon'
-import { useMintProbe } from '@/hooks/useMintProbe'
 import { useNostrMints } from '@/hooks/useNostrMints'
-import { useKnownMints } from '@/hooks/useKnownMints'
+import { useKnownMints, type KnownMint } from '@/hooks/useKnownMints'
 import { useMintHistory } from '@/hooks/useMintHistory'
 import { useWatchlistStore } from '@/stores/watchlist.store'
 import { useAuthStore } from '@/stores/auth.store'
@@ -68,24 +67,27 @@ const IcEye = () => (
 
 function latencyColor(ms: number | null | undefined): string {
   if (!ms || ms <= 0) return 'var(--text)'
-  if (ms < 150) return 'var(--accent)'
-  if (ms < 400) return 'var(--yellow)'
-  return 'var(--red)'
+  if (ms < 800) return '#00E676'
+  if (ms < 1500) return '#ffa500'
+  return '#ff4d4d'
 }
 
 function uptimeColor(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return 'var(--text3)'
-  if (pct >= 90) return 'var(--accent)'
-  if (pct >= 70) return 'var(--yellow)'
-  return 'var(--red)'
+  if (pct >= 80) return '#00E676'
+  if (pct >= 50) return '#ffa500'
+  return '#ff4d4d'
+}
+
+function listTrustScore(mint: KnownMint): number {
+  if (mint.online !== true) return 0
+  const nutScore = mint.nutCount !== null ? Math.min(mint.nutCount / 14, 1) * 60 : 0
+  const latScore = mint.latencyMs !== null ? Math.max(0, 1 - mint.latencyMs / 2000) * 40 : 0
+  return Math.round(nutScore + latScore)
 }
 
 function getHostname(url: string): string {
   try { return new URL(url).hostname } catch { return url }
-}
-
-function getDisplayName(url: string, data: MintStatus | undefined): string {
-  return data?.info?.name ?? getHostname(url)
 }
 
 function formatTimeAgo(date: Date | null): string {
@@ -98,60 +100,41 @@ function formatTimeAgo(date: Date | null): string {
   return `${hours}h ago`
 }
 
-function MintProber({
-  url,
-  onData,
-}: {
-  url: string
-  onData: (url: string, data: MintStatus | undefined) => void
-}) {
-  const { data } = useMintProbe(url)
-  useEffect(() => { onData(url, data) }, [url, data, onData])
-  return null
-}
-
-function MintCardDisplay({ url, data, isDegraded = false }: { url: string; data: MintStatus | undefined; isDegraded?: boolean }) {
+function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegraded?: boolean }) {
   const navigate = useNavigate()
   const mints = useWatchlistStore(state => state.mints)
   const addMint = useWatchlistStore(state => state.addMint)
   const removeMint = useWatchlistStore(state => state.removeMint)
-  const isWatched = mints.includes(url)
+  const isWatched = mints.includes(mint.url)
   const profile = useAuthStore(state => state.profile)
   const isLoggedIn = profile !== null
-  const { records, uptimePercent } = useMintHistory(url)
-
-  if (data === undefined) {
-    return <div className="skeleton-card" />
-  }
+  const { records, uptimePercent } = useMintHistory(mint.url)
 
   const cardStyle = isDegraded ? { opacity: 0.45 } : undefined
-
-  const hostname = getHostname(url)
-const isOnline = data.online
-  const displayName = getDisplayName(url, data)
-  const version = data.info?.version
-  const nutCount = data.info ? Object.keys(data.info.nuts).length : 0
+  const hostname = getHostname(mint.url)
+  const isOnline = mint.online === true
+  const displayName = mint.name ?? hostname
 
   return (
     <div
-      className={`mint-card ${isOnline ? 'online' : 'offline'}`}
+      className={`mint-card ${mint.online === true ? 'online' : mint.online === false ? 'offline' : ''}`}
       style={cardStyle}
-      onClick={() => { navigate(`/mint/${encodeURIComponent(url)}`) }}
+      onClick={() => { navigate(`/mint/${encodeURIComponent(mint.url)}`) }}
     >
       <div className="card-top">
         <div className="card-name-row">
-          <MintFavicon url={url} iconUrl={data?.info?.icon_url ?? null} size={22} />
+          <MintFavicon url={mint.url} iconUrl={mint.iconUrl ?? null} size={22} />
           <div>
             <div className="card-name">{displayName}</div>
             <div className="card-host">{hostname}</div>
           </div>
         </div>
-        <div className="status-dot" style={{background: !data ? 'var(--text3)' : data.online ? 'var(--accent)' : 'var(--red)'}} />
+        <div className="status-dot" style={{background: isOnline ? 'var(--accent)' : '#ff4d4d'}} />
       </div>
 
       <div className="card-badges">
-        {version !== undefined && <span className="badge">{version}</span>}
-        {data.info !== null && <span className="badge">{nutCount} NUTs</span>}
+        {mint.version !== null && <span className="badge">{mint.version}</span>}
+        {mint.nutCount !== null && <span className="badge">{mint.nutCount} NUTs</span>}
         {records.length > 0 && (
           <div className="uptime-bar-wrap">
             <div className="uptime-bar-track">
@@ -160,22 +143,22 @@ const isOnline = data.online
             <span className="uptime-pct" style={{ color: uptimeColor(uptimePercent) }}>{uptimePercent}%</span>
           </div>
         )}
-        {!isOnline && <span className="badge unreachable">Unreachable</span>}
+        {!isOnline && mint.online !== null && <span className="badge unreachable">Unreachable</span>}
       </div>
 
       <div className="card-bottom">
         <div className="latency-block">
           <div className="latency-label">Latency</div>
-          <div className="latency-value" style={{color: latencyColor(data.latencyMs)}}>
-            {data.latencyMs !== null ? data.latencyMs : '—'}
-            {data.latencyMs !== null && <span className="latency-unit">ms</span>}
+          <div className="latency-value" style={{color: isOnline ? latencyColor(mint.latencyMs) : 'var(--red)'}}>
+            {!isOnline ? (mint.online === null ? '—' : 'offline') : mint.latencyMs !== null ? mint.latencyMs : '—'}
+            {isOnline && mint.latencyMs !== null && <span className="latency-unit">ms</span>}
           </div>
         </div>
         {isLoggedIn && (
           <button
             type="button"
             className={`watch-btn${isWatched ? ' watching' : ''}`}
-            onClick={e => { e.stopPropagation(); void (isWatched ? removeMint(url) : addMint(url)) }}
+            onClick={e => { e.stopPropagation(); void (isWatched ? removeMint(mint.url) : addMint(mint.url)) }}
           >
             {isWatched ? <><IcEye /><span>Watching</span></> : <><IcPlus /><span>Watch</span></>}
           </button>
@@ -186,62 +169,50 @@ const isOnline = data.online
 }
 
 function MintGrid({
-  urls,
+  mints,
   search,
   sortBy,
-  probeData,
-  onData,
-  degradedSet,
 }: {
-  urls: string[]
+  mints: KnownMint[]
   search: string
-  sortBy: 'name' | 'latency' | 'status'
-  probeData: Map<string, MintStatus | undefined>
-  onData: (url: string, data: MintStatus | undefined) => void
-  degradedSet: Set<string>
+  sortBy: 'name' | 'latency' | 'status' | 'trust'
 }) {
   const sortedFiltered = useMemo(() => {
     const q = search.toLowerCase()
-    const filtered = urls.filter(url => {
+    const filtered = mints.filter(mint => {
       if (!q) return true
-      const d = probeData.get(url)
-      const name = getDisplayName(url, d).toLowerCase()
-      return getHostname(url).toLowerCase().includes(q) || name.includes(q)
+      const name = (mint.name ?? getHostname(mint.url)).toLowerCase()
+      return getHostname(mint.url).toLowerCase().includes(q) || name.includes(q)
     })
 
     return [...filtered].sort((a, b) => {
-      const da = probeData.get(a)
-      const db = probeData.get(b)
       if (sortBy === 'status') {
-        return (db?.online ? 1 : 0) - (da?.online ? 1 : 0)
+        return (b.online === true ? 1 : 0) - (a.online === true ? 1 : 0)
       }
       if (sortBy === 'latency') {
-        const la = da?.online && da.latencyMs !== null ? da.latencyMs : Infinity
-        const lb = db?.online && db.latencyMs !== null ? db.latencyMs : Infinity
+        const la = a.online === true && a.latencyMs != null ? a.latencyMs : Infinity
+        const lb = b.online === true && b.latencyMs != null ? b.latencyMs : Infinity
         return la - lb
       }
-      return getDisplayName(a, da).localeCompare(getDisplayName(b, db))
+      if (sortBy === 'trust') {
+        return listTrustScore(b) - listTrustScore(a)
+      }
+      return (a.name ?? getHostname(a.url)).localeCompare(b.name ?? getHostname(b.url))
     })
-  }, [urls, search, sortBy, probeData])
+  }, [mints, search, sortBy])
 
   return (
-    <>
-      {urls.map(url => (
-        <MintProber key={url} url={url} onData={onData} />
+    <div className="mint-grid">
+      {sortedFiltered.map(mint => (
+        <MintCardDisplay key={mint.url} mint={mint} isDegraded={mint.degraded} />
       ))}
-      <div className="mint-grid">
-        {sortedFiltered.map(url => (
-          <MintCardDisplay key={url} url={url} data={probeData.get(url)} isDegraded={degradedSet.has(url)} />
-        ))}
-      </div>
-    </>
+    </div>
   )
 }
 
 export default function Dashboard() {
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'name' | 'latency' | 'status'>('status')
-  const [probeData, setProbeData] = useState<Map<string, MintStatus | undefined>>(new Map())
+  const [sortBy, setSortBy] = useState<'name' | 'latency' | 'status' | 'trust'>('name')
   const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null)
   const [, setTick] = useState(0)
   const [showDegraded, setShowDegraded] = useState(false)
@@ -249,39 +220,40 @@ export default function Dashboard() {
   const [submitUrl, setSubmitUrl] = useState('')
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [submitMsg, setSubmitMsg] = useState('')
+  const [probeState, setProbeState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [probeResult, setProbeResult] = useState<{ name: string | null; version: string | null; nutCount: number; latencyMs: number | null } | null>(null)
   const queryClient = useQueryClient()
   useNostrDiscovery()
-  useWatchlistNotifications(Object.fromEntries(probeData))
   const { mints: nostrMints } = useNostrMints()
   const { data: knownMintsData, isLoading: knownLoading, error: knownError } = useKnownMints()
 
-  const knownMints = knownMintsData?.filter(m => showDegraded ? true : (!m.degraded && probeData.get(m.url)?.online !== false)).map(m => m.url) ?? []
+  const statusRecord = useMemo(() => {
+    if (!knownMintsData) return {}
+    return Object.fromEntries(
+      knownMintsData
+        .filter(m => m.online != null)
+        .map(m => [m.url, { online: m.online as boolean, latencyMs: m.latencyMs ?? null }])
+    )
+  }, [knownMintsData])
+  useWatchlistNotifications(statusRecord)
+
   const degradedUrls = knownMintsData?.filter(m => m.degraded).map(m => m.url) ?? []
   const degradedCount = degradedUrls.length
-  const knownSet = new Set(knownMints)
   const degradedSet = new Set(degradedUrls)
-  const allMints = [...new Set([
-    ...knownMints,
-    ...nostrMints.filter(m => !knownSet.has(m.url) && (showDegraded || (!degradedSet.has(m.url) && probeData.get(m.url)?.online !== false))).map(m => m.url),
-  ])]
+  const knownMintUrlSet = new Set(knownMintsData?.map(m => m.url) ?? [])
 
-  const onData = useCallback((url: string, data: MintStatus | undefined) => {
-    setProbeData(prev => {
-      if (prev.get(url) === data) return prev
-      const next = new Map(prev)
-      next.set(url, data)
-      return next
-    })
-  }, [])
+  const allMints: KnownMint[] = [
+    ...(knownMintsData?.filter(m => showDegraded ? true : (!m.degraded && m.online !== false)) ?? []),
+    ...nostrMints
+      .filter(m => !knownMintUrlSet.has(m.url) && (showDegraded || !degradedSet.has(m.url)))
+      .map((m): KnownMint => ({ url: m.url, name: null, iconUrl: null, degraded: false, online: null, latencyMs: null, version: null, nutCount: null, tosUrl: null, descriptionLong: null, nutsLimits: null })),
+  ]
 
   useEffect(() => {
-    for (const d of probeData.values()) {
-      if (d !== undefined) {
-        setLastCheckTime(new Date())
-        break
-      }
+    if (knownMintsData && knownMintsData.length > 0) {
+      setLastCheckTime(new Date())
     }
-  }, [probeData])
+  }, [knownMintsData])
 
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 30_000)
@@ -294,6 +266,45 @@ export default function Dashboard() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [showSubmit])
+
+  useEffect(() => {
+    if (submitState !== 'success') return
+    const timer = setTimeout(() => setShowSubmit(false), 3000)
+    return () => clearTimeout(timer)
+  }, [submitState])
+
+  useEffect(() => {
+    if (!showSubmit) return
+    if (!submitUrl.startsWith('https://')) {
+      setProbeState('idle')
+      setProbeResult(null)
+      return
+    }
+    setProbeState('loading')
+    const timer = setTimeout(() => {
+      fetch(`/api/mint/probe?url=${encodeURIComponent(submitUrl)}`)
+        .then(res => { if (!res.ok) throw new Error(); return res.json() as Promise<MintStatus> })
+        .then(data => {
+          if (data.online && data.info) {
+            setProbeState('success')
+            setProbeResult({
+              name: data.info.name ?? null,
+              version: data.info.version ?? null,
+              nutCount: Object.keys(data.info.nuts).length,
+              latencyMs: data.latencyMs,
+            })
+          } else {
+            setProbeState('error')
+            setProbeResult(null)
+          }
+        })
+        .catch(() => {
+          setProbeState('error')
+          setProbeResult(null)
+        })
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [submitUrl, showSubmit])
 
   function handleSubmitMint() {
     if (!submitUrl.startsWith('https://')) {
@@ -314,7 +325,7 @@ export default function Dashboard() {
           setSubmitMsg((data.error) ?? 'Submission failed')
         } else {
           setSubmitState('success')
-          setSubmitMsg('✓ Mint added! It will appear after next check.')
+          setSubmitMsg('Mint submitted! It will appear on the dashboard after the next probe cycle (~5 min).')
           void queryClient.invalidateQueries({ queryKey: ['mints-known'] })
         }
       })
@@ -325,11 +336,10 @@ export default function Dashboard() {
   }
 
   const totalCount = allMints.length
-  const onlineCount = allMints.filter(url => probeData.get(url)?.online === true).length
+  const onlineCount = allMints.filter(m => m.online === true).length
   const onlineLatencies = allMints
-    .map(url => probeData.get(url))
-    .filter((d): d is MintStatus => d !== undefined && d.online && d.latencyMs !== null)
-    .map(d => d.latencyMs as number)
+    .filter(m => m.online === true && m.latencyMs != null)
+    .map(m => m.latencyMs as number)
   const avgLatency = onlineLatencies.length > 0
     ? Math.round(onlineLatencies.reduce((a, b) => a + b, 0) / onlineLatencies.length)
     : 0
@@ -379,18 +389,18 @@ export default function Dashboard() {
           />
         </div>
         <div className="sort-segment">
-          {(['status', 'latency', 'name'] as const).map(s => (
+          {(['status', 'latency', 'name', 'trust'] as const).map(s => (
             <button
               key={s}
               type="button"
               className={`sort-btn${sortBy === s ? ' active' : ''}`}
               onClick={() => setSortBy(s)}
             >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+              {s === 'trust' ? 'Trust Score' : s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
         </div>
-        <button type="button" className="submit-btn" onClick={() => { setShowSubmit(true); setSubmitState('idle'); setSubmitUrl('') }}>
+        <button type="button" className="submit-btn" onClick={() => { setShowSubmit(true); setSubmitState('idle'); setSubmitUrl(''); setProbeState('idle'); setProbeResult(null) }}>
           <IcPlus /> Submit mint
         </button>
         <button type="button" className="refresh-btn" onClick={() => void queryClient.invalidateQueries({ queryKey: ['mints-known'] })}>
@@ -408,7 +418,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          <MintGrid urls={allMints} search={search} sortBy={sortBy} probeData={probeData} onData={onData} degradedSet={degradedSet} />
+          <MintGrid mints={allMints} search={search} sortBy={sortBy} />
           {degradedCount > 0 && (
             <p className="degraded-note">
               {degradedCount} mints skrytých (offline 24h+){' '}
@@ -432,11 +442,6 @@ export default function Dashboard() {
             <div className="submit-modal-desc">
               Submit a Cashu mint URL to be listed. The mint must be reachable and respond to <code>/v1/info</code>.
             </div>
-            {submitState !== 'idle' && (
-              <div className={`submit-result ${submitState === 'success' ? 'success' : submitState === 'error' ? 'error' : ''}`}>
-                {submitState === 'loading' ? 'Checking mint…' : submitMsg}
-              </div>
-            )}
             {submitState !== 'success' && (
               <>
                 <input
@@ -445,21 +450,50 @@ export default function Dashboard() {
                   placeholder="https://yourmint.cash/Bitcoin"
                   value={submitUrl}
                   onChange={e => setSubmitUrl(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSubmitMint() }}
+                  onKeyDown={e => { if (e.key === 'Enter' && probeState === 'success') handleSubmitMint() }}
                   autoFocus
                 />
+                {probeState === 'loading' && submitUrl.startsWith('https://') && (
+                  <div className="submit-probe-loading">Checking mint…</div>
+                )}
+                {probeState === 'success' && probeResult !== null && (
+                  <div className="submit-probe-preview">
+                    <div className="submit-probe-name">{probeResult.name ?? 'Unknown mint'}</div>
+                    <div className="submit-probe-meta">
+                      <span>v{probeResult.version ?? '?'}</span>
+                      <span>·</span>
+                      <span>{probeResult.nutCount} NUTs</span>
+                      {probeResult.latencyMs !== null && (
+                        <>
+                          <span>·</span>
+                          <span style={{ color: latencyColor(probeResult.latencyMs) }}>{probeResult.latencyMs} ms</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {probeState === 'error' && submitUrl.startsWith('https://') && (
+                  <div className="submit-probe-error">Mint unreachable or invalid</div>
+                )}
+                {submitState === 'error' && (
+                  <div className="submit-result error">{submitMsg}</div>
+                )}
                 <div className="submit-modal-actions">
                   <button className="submit-cancel-btn" onClick={() => setShowSubmit(false)}>Cancel</button>
-                  <button className="submit-ok-btn" onClick={handleSubmitMint} disabled={submitState === 'loading'}>
-                    {submitState === 'loading' ? 'Checking…' : 'Submit'}
+                  <button className="submit-ok-btn" onClick={handleSubmitMint} disabled={probeState !== 'success' || submitState === 'loading'}>
+                    {submitState === 'loading' ? 'Submitting…' : 'Submit'}
                   </button>
                 </div>
+                <div className="submit-no-account">No account required.</div>
               </>
             )}
             {submitState === 'success' && (
-              <div className="submit-modal-actions">
-                <button className="submit-ok-btn" onClick={() => setShowSubmit(false)}>Close</button>
-              </div>
+              <>
+                <div className="submit-result success">{submitMsg}</div>
+                <div className="submit-modal-actions">
+                  <button className="submit-ok-btn" onClick={() => setShowSubmit(false)}>Close</button>
+                </div>
+              </>
             )}
           </div>
         </div>
