@@ -4,6 +4,14 @@ import WebSocket from 'ws'
 import { pool } from './db.js'
 import { probeMintToDb } from './prober.js'
 
+// Fast string-based pre-filter. isSafeUrl() in probeMintToDb is the authoritative SSRF
+// gate (ipaddr.js + full DNS resolution). This just avoids inserting obvious junk into DB.
+function isObviouslyPrivate(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '::1' || hostname === '0.0.0.0') return true
+  // loopback, private, link-local (169.254/16), CGNAT (100.64/10)
+  return /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\.)/u.test(hostname)
+}
+
 const DISCOVERY_RELAYS = [
   'wss://relay.damus.io',
   'wss://nos.lol',
@@ -40,10 +48,9 @@ export async function discoverMintsFromNostr(): Promise<number> {
       if (!raw.startsWith('https://')) continue
       try {
         const parsed = new URL(raw)
-        // Block obvious private hostnames — full SSRF DNS check runs in probeMintToDb
-        const h = parsed.hostname
-        if (h === 'localhost') continue
-        if (/^(127|10|192\.168|172\.(1[6-9]|2\d|3[01]))\./u.test(h)) continue
+        // Fast pre-filter; isSafeUrl() in probeMintToDb is the authoritative SSRF gate
+        const h = parsed.hostname.toLowerCase().replace(/\.$/, '')
+        if (isObviouslyPrivate(h)) continue
         discovered.add(raw)
       } catch { continue }
     }
@@ -90,9 +97,8 @@ export async function discoverMintsFromApi(): Promise<number> {
         if (!trimmed.startsWith('https://')) continue
         try {
           const parsed = new URL(trimmed)
-          const h = parsed.hostname
-          if (h === 'localhost') continue
-          if (/^(127|10|192\.168|172\.(1[6-9]|2\d|3[01]))\./u.test(h)) continue
+          const h = parsed.hostname.toLowerCase().replace(/\.$/, '')
+          if (isObviouslyPrivate(h)) continue
           discovered.add(trimmed)
         } catch { continue }
       }
