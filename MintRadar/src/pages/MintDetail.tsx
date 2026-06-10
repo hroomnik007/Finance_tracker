@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { MintFavicon } from '@/components/mint/MintFavicon'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -7,11 +8,24 @@ import {
 } from 'recharts'
 import { useMintProbe } from '@/hooks/useMintProbe'
 import { useMintHistory } from '@/hooks/useMintHistory'
+import { useKnownMints } from '@/hooks/useKnownMints'
 import { useMintReviews } from '@/hooks/useMintReviews'
 import { submitMintReview } from '@/hooks/useSubmitReview'
 import { useWatchlistStore } from '@/stores/watchlist.store'
 import { useAuthStore } from '@/stores/auth.store'
 import './MintDetail.css'
+
+interface NutMethod {
+  method: string
+  unit: string
+  min_amount?: number
+  max_amount?: number
+}
+
+interface NutConfig {
+  disabled?: boolean
+  methods?: NutMethod[]
+}
 
 const NUT_DESCRIPTIONS: Record<string, { short: string; desc: string; features: string[]; useCase: string }> = {
   'NUT-00': { short: 'Token format', desc: 'Basic Cashu token format and encoding specification.', features: ['Base64url encoding', 'Token versioning', 'Multi-mint tokens'], useCase: 'Foundation for all Cashu token operations.' },
@@ -30,34 +44,86 @@ const NUT_DESCRIPTIONS: Record<string, { short: string; desc: string; features: 
   'NUT-14': { short: 'HTLCs', desc: 'Hash Time Locked Contracts for atomic swaps.', features: ['Hash preimage', 'Timelock expiry', 'Atomic swaps'], useCase: 'Enable trustless cross-mint or cross-chain swaps.' },
   'NUT-15': { short: 'Multipart melt', desc: 'Split a melt payment across multiple Lightning invoices.', features: ['Multi-invoice payment', 'Amount splitting', 'Partial melt'], useCase: 'Pay invoices larger than a single proof allows.' },
   'NUT-17': { short: 'WebSocket', desc: 'Real-time mint updates via WebSocket subscription.', features: ['Live updates', 'Event subscription', 'Low latency'], useCase: 'Receive instant confirmation without polling.' },
+  'NUT-19': { short: 'Cached responses', desc: 'Mints cache successful responses for critical operations so wallets can replay after a network error.', features: ['Response caching', 'Network recovery', 'Idempotent replay'], useCase: 'Prevents loss of funds when a network interruption occurs during mint/swap/melt.' },
   'NUT-20': { short: 'Mint quote sig', desc: 'Mint signs quote requests for authenticity.', features: ['Quote signatures', 'Request authentication', 'Replay protection'], useCase: 'Prevent quote tampering between client and mint.' },
+  'NUT-29': { short: 'Batched minting', desc: 'Wallets can mint tokens for multiple quotes in a single atomic request.', features: ['Multi-quote batch', 'Atomic operation', 'Efficiency'], useCase: 'Reduces round-trips when minting from multiple paid invoices at once.' },
 }
 
 const ALL_NUTS = [
-  'NUT-00', 'NUT-01', 'NUT-02', 'NUT-03', 'NUT-04', 'NUT-05', 'NUT-06',
-  'NUT-07', 'NUT-08', 'NUT-09', 'NUT-10', 'NUT-11', 'NUT-12', 'NUT-14',
-  'NUT-15', 'NUT-17', 'NUT-20',
+  'NUT-04', 'NUT-05', 'NUT-07', 'NUT-08', 'NUT-09', 'NUT-10', 'NUT-11',
+  'NUT-12', 'NUT-14', 'NUT-15', 'NUT-17', 'NUT-19', 'NUT-20', 'NUT-29',
 ]
 
 function latencyColor(ms: number | null | undefined): string {
   if (!ms || ms <= 0) return 'var(--text)'
-  if (ms < 150) return 'var(--accent)'
-  if (ms < 400) return 'var(--yellow)'
-  return 'var(--red)'
+  if (ms < 800) return '#00E676'
+  if (ms < 1500) return '#ffa500'
+  return '#ff4d4d'
 }
 
 function uptimeColor(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return 'var(--text3)'
-  if (pct >= 90) return 'var(--accent)'
-  if (pct >= 70) return 'var(--yellow)'
-  return 'var(--red)'
+  if (pct >= 80) return '#00E676'
+  if (pct >= 50) return '#ffa500'
+  return '#ff4d4d'
 }
 
-function computeTrustScore(uptimePct: number, nutCount: number, latencyMs: number): number {
-  const uptimeScore = uptimePct
-  const nutScore = Math.min(nutCount / 17 * 100, 100)
-  const latencyScore = latencyMs <= 0 ? 0 : Math.max(0, 100 - (latencyMs / 10))
-  return Math.round(uptimeScore * 0.5 + nutScore * 0.3 + latencyScore * 0.2)
+function trustScoreColor(score: number): string {
+  if (score >= 75) return '#00E676'
+  if (score >= 50) return '#ffa500'
+  return '#ff4d4d'
+}
+
+const NUTSHELL_VERSIONS: [number, number][] = [
+  [0, 21], [0, 20], [0, 19], [0, 18], [0, 17], [0, 16], [0, 15],
+]
+
+function versionFreshnessScore(versionStr: string | null | undefined): number {
+  if (!versionStr) return 0
+  const match = versionStr.match(/(\d+)\.(\d+)/)
+  if (!match || match[1] === undefined || match[2] === undefined) return 3
+  const major = parseInt(match[1], 10)
+  const minor = parseInt(match[2], 10)
+  const idx = NUTSHELL_VERSIONS.findIndex(([mj, mn]) => major > mj || (major === mj && minor >= mn))
+  if (idx === -1) return 0
+  return Math.max(0, 10 - idx * 2)
+}
+
+function contactInfoScore(email?: string, twitter?: string, nostr?: string, website?: string): number {
+  const count = [email, twitter, nostr, website].filter(Boolean).length
+  return Math.round((count / 4) * 5)
+}
+
+function latencyScoreOf(latencyMs: number): number {
+  if (latencyMs <= 0) return 0
+  if (latencyMs < 150) return 20
+  if (latencyMs < 400) return Math.round(20 - (latencyMs - 150) / 250 * 10)
+  if (latencyMs < 2000) return Math.round(10 - (latencyMs - 400) / 1600 * 10)
+  return 0
+}
+
+function computeTrustScore(
+  uptimePct: number,
+  nutCount: number,
+  latencyMs: number,
+  versionStr: string | null | undefined,
+  email?: string,
+  twitter?: string,
+  nostr?: string,
+  website?: string
+): number {
+  const uptimeScore = Math.round(uptimePct * 0.4)
+  const nutScore = Math.round(Math.min(nutCount / ALL_NUTS.length, 1) * 25)
+  const latScore = latencyScoreOf(latencyMs)
+  const verScore = versionFreshnessScore(versionStr)
+  const cScore = contactInfoScore(email, twitter, nostr, website)
+  return Math.min(100, uptimeScore + nutScore + latScore + verScore + cScore)
+}
+
+const WARNING_KEYWORDS = ['rug', 'shutdown', 'warning', 'beware', 'risk', 'danger', 'caution', 'maintenance']
+function isWarningMotd(text: string): boolean {
+  const lower = text.toLowerCase()
+  return WARNING_KEYWORDS.some(kw => lower.includes(kw))
 }
 
 function formatTime(date: Date): string {
@@ -68,6 +134,27 @@ function MintDetailContent({ url }: { url: string }) {
   const navigate = useNavigate()
   const { data, isLoading } = useMintProbe(url)
   const { records, uptimePercent, avgLatencyMs } = useMintHistory(url)
+  const { data: knownMintsData } = useKnownMints()
+  const knownMint = knownMintsData?.find(m => m.url === url) ?? null
+  const { data: apiHistoryRaw } = useQuery({
+    queryKey: ['mint', 'history-api', url],
+    queryFn: async () => {
+      const res = await fetch(`/api/mints/history?url=${encodeURIComponent(url)}`)
+      if (!res.ok) throw new Error('Failed to fetch history')
+      return (await res.json() as { history: Array<{ online: boolean; latencyMs: number | null; checkedAt: string }> }).history
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  })
+  const { data: versionHistory } = useQuery({
+    queryKey: ['mint', 'version-history', url],
+    queryFn: async () => {
+      const res = await fetch(`/api/mints/version-history?url=${encodeURIComponent(url)}`)
+      if (!res.ok) throw new Error('Failed to fetch version history')
+      return (await res.json() as { history: Array<{ version: string; firstSeenAt: string }> }).history
+    },
+    staleTime: 10 * 60 * 1000,
+  })
   const watchlistMints = useWatchlistStore(state => state.mints)
   const addMint = useWatchlistStore(state => state.addMint)
   const removeMint = useWatchlistStore(state => state.removeMint)
@@ -123,7 +210,7 @@ function MintDetailContent({ url }: { url: string }) {
   const hostname = (() => { try { return new URL(url).hostname } catch { return url } })()
   const displayName = data.info?.name ?? hostname
   const isOnline = data.online
-  const latency = data.latencyMs
+  const latency = knownMint?.latencyMs ?? null
   const version = data.info?.version
   const nutCount = data.info !== null ? Object.keys(data.info.nuts).length : 0
   const motd = data.info?.motd
@@ -131,9 +218,14 @@ function MintDetailContent({ url }: { url: string }) {
   const pubkey = data.info?.pubkey
   const name = data.info?.name
 
+  const tosUrl = data.info?.tos_url
+  const descriptionLong = data.info?.description_long
+  const mintTime = data.info?.time
+
   const email = data.info?.contact?.find(c => c.method === 'email')?.info
   const twitter = data.info?.contact?.find(c => c.method === 'twitter')?.info
   const nostr = data.info?.contact?.find(c => c.method === 'nostr')?.info
+  const website = data.info?.contact?.find(c => c.method === 'website')?.info
   const urls = data.info?.urls
 
   const uptimePct = records.length > 0 ? uptimePercent : 0
@@ -144,15 +236,12 @@ function MintDetailContent({ url }: { url: string }) {
   const isWatching = watchlistMints.includes(url)
   const toggleWatch = () => { void (isWatching ? removeMint(url) : addMint(url)) }
 
-  const supportedNutNumbers = new Set([
-    ...(data.info !== null ? Object.keys(data.info.nuts) : []),
-    ...(isOnline ? ['0', '1', '2', '3', '6'] : []),
-  ])
+  const supportedNutNumbers = new Set(data.info !== null ? Object.keys(data.info.nuts) : [])
   const supportedNuts = ALL_NUTS.filter(nut =>
     supportedNutNumbers.has(String(parseInt(nut.slice(4), 10)))
   )
 
-  const trustScore = computeTrustScore(uptimePct, nutCount, latency ?? 0)
+  const trustScore = computeTrustScore(uptimePct, supportedNuts.length, latency ?? 0, version, email, twitter, nostr, website)
 
   const avgRating = reviews.length > 0
     ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
@@ -173,14 +262,16 @@ function MintDetailContent({ url }: { url: string }) {
     const range = maxL - minL
     return latencySlice.map((r, i) => {
       const x = (i / (latencySlice.length - 1)) * 220
-      const y = range === 0 ? 25 : 10 + ((r.latencyMs as number) - minL) / range * 30
+      const y = range === 0 ? 25 : 40 - ((r.latencyMs as number) - minL) / range * 30
       return `${x.toFixed(1)},${y.toFixed(1)}`
     }).join(' ')
   })()
 
-  const chartData = records
-    .filter(r => r.online && r.latencyMs !== undefined)
-    .map(r => ({ time: formatTime(r.checkedAt), latency: r.latencyMs as number }))
+  const chartData = (apiHistoryRaw ?? [])
+    .slice()
+    .reverse()
+    .filter(r => r.online && r.latencyMs !== null)
+    .map(r => ({ time: formatTime(new Date(r.checkedAt)), latency: r.latencyMs as number }))
 
   return (
     <div className="mint-detail">
@@ -222,7 +313,7 @@ function MintDetailContent({ url }: { url: string }) {
         <div className={`md-sc ${uptimePct === 100 ? 'uptime' : ''}`}>
           <div className="md-sc-label">Uptime 24h</div>
           <div className="md-sc-value" style={{color: uptimeColor(uptimePct)}}>{uptimePct}%</div>
-          <div className="md-sc-sub">{onlineChecks} / {totalChecks} checks</div>
+          <div className="md-sc-sub">{totalChecks === 1 ? `${onlineChecks} check` : `${onlineChecks} / ${totalChecks} checks`}</div>
         </div>
         <div className="md-sc">
           <div className="md-sc-label">Version</div>
@@ -242,19 +333,27 @@ function MintDetailContent({ url }: { url: string }) {
           <div className="md-panel">
             <div className="md-panel-title">Mint info</div>
             {motd && (
-              <div className="md-motd">
+              <div className={`md-motd${isWarningMotd(motd) ? ' warning' : ''}`}>
                 <div className="md-motd-label">Message of the Day</div>
                 <div className="md-motd-text">{motd}</div>
               </div>
             )}
             <div className="md-info-row">
-              <span className="md-info-label">Name</span>
-              <span className="md-info-value">{name ?? '—'}</span>
+              <span className="md-info-label" style={{ fontWeight: 600 }}>Name</span>
+              <span className="md-info-value green">{name ?? '—'}</span>
             </div>
             {description && (
               <div className="md-info-row">
                 <span className="md-info-label">Description</span>
                 <span className="md-info-value" style={{ color: 'var(--text2)' }}>{description}</span>
+              </div>
+            )}
+            {descriptionLong && (
+              <div className="md-info-row" style={{flexDirection:'column', alignItems:'flex-start', gap:4}}>
+                <span className="md-info-label">Full description</span>
+                <span style={{fontSize:11, color:'var(--text2)', lineHeight:1.5, fontFamily:'var(--font-mono)'}}>
+                  {descriptionLong}
+                </span>
               </div>
             )}
             <div className="md-info-row">
@@ -264,13 +363,51 @@ function MintDetailContent({ url }: { url: string }) {
             {pubkey && (
               <div className="md-info-row">
                 <span className="md-info-label">Public key</span>
-                <span className="md-info-value trunc">{pubkey}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                  <span className="md-info-value" style={{ fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>{pubkey.slice(0, 16)}…</span>
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(pubkey)
+                      setCopiedContact('pubkey')
+                      setTimeout(() => setCopiedContact(null), 2000)
+                    }}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: copiedContact === 'pubkey' ? 'var(--accent)' : 'var(--text3)',
+                      fontSize: 12, padding: '2px 4px', flexShrink: 0,
+                    }}
+                    title="Copy full public key"
+                  >
+                    {copiedContact === 'pubkey' ? '✓' : '⎘'}
+                  </button>
+                </div>
               </div>
             )}
             <div className="md-info-row">
               <span className="md-info-label">Discovered</span>
               <span className="md-info-value">NIP-87</span>
             </div>
+            {mintTime && (
+              <div className="md-info-row">
+                <span className="md-info-label">Server time</span>
+                <span className="md-info-value">{formatTime(new Date(mintTime * 1000))}</span>
+              </div>
+            )}
+            {tosUrl && (tosUrl.startsWith('https://') || tosUrl.startsWith('http://')) && (
+              <div className="md-info-row">
+                <span className="md-info-label">Terms of Service</span>
+                <a
+                  href={tosUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="md-info-value"
+                  style={{color:'var(--accent)', textDecoration:'none'}}
+                  onClick={e => e.stopPropagation()}
+                >
+                  View ToS ↗
+                </a>
+              </div>
+            )}
             {urls && urls.length > 1 && (
               <div className="md-info-row" style={{flexDirection:'column', alignItems:'flex-start', gap:4}}>
                 <span className="md-info-label">URLs</span>
@@ -407,7 +544,7 @@ function MintDetailContent({ url }: { url: string }) {
                       <div className="nut-desc">{meta?.short ?? ''}</div>
                     </div>
                     <span className="nut-check" style={{ color: supported ? 'var(--accent)' : 'var(--text3)' }}>
-                      {supported ? '✓' : '✗'}
+                      {supported ? '✓' : '–'}
                     </span>
                   </div>
                 )
@@ -415,11 +552,31 @@ function MintDetailContent({ url }: { url: string }) {
             </div>
           </div>
 
+          {versionHistory && versionHistory.length > 0 && (
+            <div className="md-panel">
+              <div className="md-panel-title">Version history</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {versionHistory.map((vh, i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '5px 0',
+                    borderBottom: i < versionHistory.length - 1 ? '0.5px solid var(--border)' : 'none',
+                  }}>
+                    <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{vh.version}</span>
+                    <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                      {new Date(vh.firstSeenAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="md-panel">
             <div className="md-panel-title">Latency (ms) — last 24h</div>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={120}>
-                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 10, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
                   <XAxis
                     dataKey="time"
@@ -432,7 +589,10 @@ function MintDetailContent({ url }: { url: string }) {
                     tick={{ fontSize: 10, fill: 'var(--text3)' }}
                     axisLine={false}
                     tickLine={false}
-                    width={40}
+                    width={70}
+                    domain={[0, 'auto']}
+                    tickCount={4}
+                    tickFormatter={(v: number) => `${v} ms`}
                   />
                   <Tooltip
                     content={({ active, payload, label }) => {
@@ -453,7 +613,7 @@ function MintDetailContent({ url }: { url: string }) {
                     dataKey="latency"
                     stroke="var(--accent)"
                     fill="var(--accent)"
-                    fillOpacity={0.15}
+                    fillOpacity={0.08}
                     dot={false}
                     strokeWidth={2}
                   />
@@ -484,7 +644,7 @@ function MintDetailContent({ url }: { url: string }) {
             <div className="mh-row">
               <div className="mh-label">
                 <span className="mh-name">Avg. latency</span>
-                <span className="mh-badge yellow">{avgLatency > 0 ? `${avgLatency} ms` : '—'}</span>
+                <span className={`mh-badge ${avgLatency > 0 && avgLatency < 150 ? 'green' : 'yellow'}`}>{avgLatency > 0 ? `${avgLatency} ms` : '—'}</span>
               </div>
               <div className="md-mini-chart">
                 <svg viewBox="0 0 220 44" preserveAspectRatio="none">
@@ -494,35 +654,63 @@ function MintDetailContent({ url }: { url: string }) {
             </div>
           </div>
 
+          {knownMint !== null && knownMint.auditNMints !== null && (
+            <div className="md-panel">
+              <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:12}}>
+                <div className="md-panel-title" style={{marginBottom:0}}>Audit stats</div>
+                <span style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>· via audit.8333.space</span>
+              </div>
+              <div className="audit-stats-grid">
+                <div className="audit-stat-card">
+                  <div className="audit-stat-value" style={{color:'#00E676'}}>{knownMint.auditNMints.toLocaleString()}</div>
+                  <div className="audit-stat-label">Mint ops</div>
+                </div>
+                <div className="audit-stat-card">
+                  <div className="audit-stat-value" style={{color:'#00E676'}}>{(knownMint.auditNMelts ?? 0).toLocaleString()}</div>
+                  <div className="audit-stat-label">Melt ops</div>
+                </div>
+                <div className="audit-stat-card">
+                  <div className="audit-stat-value" style={{color: (knownMint.auditNErrors ?? 0) > 0 ? '#ff4d4d' : '#00E676'}}>{(knownMint.auditNErrors ?? 0).toLocaleString()}</div>
+                  <div className="audit-stat-label">Errors</div>
+                </div>
+              </div>
+              {knownMint.auditCheckedAt !== null && (
+                <div style={{fontSize:9,color:'var(--text3)',marginTop:10,fontFamily:'var(--font-mono)'}}>
+                  Last checked {new Date(knownMint.auditCheckedAt).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="md-panel">
             <div className="md-panel-title">Trust Score</div>
             <div className="trust-wrap" style={{cursor:'pointer'}} onClick={() => setShowTrustBreakdown(true)} title="Click for breakdown">
               <div className="gauge-wrap">
                 <svg viewBox="0 0 72 72">
                   <circle cx="36" cy="36" r="27" fill="none" stroke="var(--bg3)" strokeWidth="7" />
-                  <circle cx="36" cy="36" r="27" fill="none" stroke="var(--accent)" strokeWidth="7"
+                  <circle cx="36" cy="36" r="27" fill="none" stroke={trustScoreColor(trustScore)} strokeWidth="7"
                     strokeDasharray={`${(trustScore * 1.696).toFixed(1)} 169.6`}
                     strokeDashoffset="42.4"
                     strokeLinecap="round"
                     transform="rotate(-90 36 36)" />
                 </svg>
-                <div className="gauge-num">{trustScore}%</div>
-                <div style={{fontSize:9,color:'var(--text3)',textAlign:'center',marginTop:2}}>tap for details</div>
+                <div className="gauge-num" style={{ color: trustScoreColor(trustScore) }}>{trustScore}%</div>
               </div>
               <div className="trust-info">
                 <div className="trust-row">
                   <span className="trust-label">Uptime</span>
-                  <span className={`trust-value ${uptimePct === 100 ? 'green' : ''}`}>{uptimePct}%</span>
+                  <span className="trust-value" style={{ color: uptimeColor(uptimePct) }}>{uptimePct}%</span>
                 </div>
                 <div className="trust-row">
                   <span className="trust-label">NUTs</span>
-                  <span className="trust-value">{nutCount}/17</span>
+                  <span className="trust-value">{supportedNuts.length}/{ALL_NUTS.length}</span>
                 </div>
                 <div className="trust-row">
                   <span className="trust-label">Latency</span>
-                  <span className="trust-value">{latency !== null ? `${latency}ms` : '—'}</span>
+                  <span className="trust-value" style={{ color: latency !== null ? latencyColor(latency) : 'var(--text3)' }}>{latency !== null ? `${latency}ms` : '—'}</span>
                 </div>
               </div>
+              <div style={{fontSize:9,color:'var(--text3)',textAlign:'center'}}>tap for details</div>
             </div>
           </div>
 
@@ -552,14 +740,13 @@ function MintDetailContent({ url }: { url: string }) {
             <button
               onClick={() => setShowQr(!showQr)}
               style={{
-                width: '100%', background: 'transparent',
-                border: '0.5px solid var(--border)',
-                borderRadius: 8, padding: '8px 16px',
-                fontSize: 13, color: 'var(--text2)', cursor: 'pointer',
-                fontFamily: 'var(--font-body)',
+                background: 'none', border: 'none', padding: '4px 0',
+                cursor: 'pointer', color: 'var(--text3)', fontSize: 12,
+                textDecoration: 'underline', fontFamily: 'var(--font-body)',
+                display: 'block', width: '100%', textAlign: 'center',
               }}
             >
-              {showQr ? '✕ Hide QR Code' : '▦ Show QR Code'}
+              {showQr ? 'Hide QR Code' : 'Show QR Code'}
             </button>
             {showQr && (
               <div style={{marginTop: 12, display: 'flex', justifyContent: 'center'}}>
@@ -619,7 +806,7 @@ function MintDetailContent({ url }: { url: string }) {
               </div>
             ) : (
               <div style={{fontSize:11,color:'var(--text3)',marginTop:8}}>
-                No reviews yet. {isLoggedIn ? 'Be the first!' : 'Login with Nostr to write one.'}
+                No reviews yet. Login with Nostr to write one.
               </div>
             )}
           </div>
@@ -637,31 +824,43 @@ function MintDetailContent({ url }: { url: string }) {
               <button onClick={() => setShowTrustBreakdown(false)} style={{background:'none',border:'none',color:'var(--text3)',fontSize:18,cursor:'pointer'}}>×</button>
             </div>
             <div style={{textAlign:'center',marginBottom:20}}>
-              <div style={{fontSize:48,fontWeight:700,color:'var(--accent)',lineHeight:1}}>{trustScore}%</div>
+              <div style={{fontSize:48,fontWeight:700,color:trustScoreColor(trustScore),lineHeight:1}}>{trustScore}%</div>
               <div style={{fontSize:11,color:'var(--text3)',marginTop:4}}>
-                {trustScore >= 80 ? '✓ Highly trusted' : trustScore >= 60 ? '~ Moderate trust' : '⚠ Low trust'}
+                {trustScore >= 75 ? '✓ Highly trusted' : trustScore >= 50 ? '~ Moderate trust' : '⚠ Low trust'}
               </div>
             </div>
-            {[
-              { label:'Uptime (50%)', display:`${uptimePct}%`, score:Math.round((uptimePct)*0.5), max:50, color:uptimeColor(uptimePct) },
-              { label:'NUT Support (30%)', display:`${nutCount} / 17 NUTs`, score:Math.round(Math.min((nutCount)/17*100,100)*0.3), max:30, color:nutCount>=12?'var(--accent)':nutCount>=8?'var(--yellow)':'var(--red)' },
-              { label:'Latency (20%)', display:latency !== null ? `${latency} ms` : '—', score:Math.round(Math.max(0,100-((latency??0)/10))*0.2), max:20, color:latencyColor(latency) },
-            ].map(row => (
-              <div key={row.label} style={{marginBottom:14}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                  <span style={{fontSize:12,color:'var(--text2)'}}>{row.label}</span>
-                  <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{fontSize:11,color:'var(--text3)'}}>{row.display}</span>
-                    <span style={{fontSize:13,fontWeight:600,color:row.color}}>{row.score}/{row.max}</span>
+            {(() => {
+              const uScore = Math.round(uptimePct * 0.4)
+              const nScore = Math.round(Math.min(supportedNuts.length / ALL_NUTS.length, 1) * 25)
+              const lScore = latencyScoreOf(latency ?? 0)
+              const vScore = versionFreshnessScore(version)
+              const contactFields = [email, twitter, nostr, website].filter(Boolean)
+              const cScore = Math.round((contactFields.length / 4) * 5)
+              const contactDisplay = contactFields.length === 0 ? 'None' : (email ? 'Email' : '') + (twitter ? (email ? ' + Twitter' : 'Twitter') : '') + (nostr ? ((email || twitter) ? ' + Nostr' : 'Nostr') : '') + (website ? ((email || twitter || nostr) ? ' + Web' : 'Web') : '')
+              const rows = [
+                { label: 'Uptime (40%)', display: `${uptimePct}%`, score: uScore, max: 40, color: uptimeColor(uptimePct) },
+                { label: 'NUT Support (25%)', display: `${supportedNuts.length} / ${ALL_NUTS.length} NUTs`, score: nScore, max: 25, color: supportedNuts.length >= 12 ? '#00E676' : supportedNuts.length >= 8 ? '#ffa500' : '#ff4d4d' },
+                { label: 'Latency (20%)', display: latency !== null ? `${latency} ms` : '—', score: lScore, max: 20, color: latencyColor(latency) },
+                { label: 'Version (10%)', display: version ?? 'Unknown', score: vScore, max: 10, color: vScore >= 8 ? '#00E676' : vScore >= 4 ? '#ffa500' : '#ff4d4d' },
+                { label: 'Contact (5%)', display: contactDisplay, score: cScore, max: 5, color: cScore >= 4 ? '#00E676' : cScore >= 2 ? '#ffa500' : '#ff4d4d' },
+              ]
+              return rows.map(row => (
+                <div key={row.label} style={{marginBottom:14}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                    <span style={{fontSize:12,color:'var(--text2)'}}>{row.label}</span>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--font-mono)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{row.display}</span>
+                      <span style={{fontSize:13,fontWeight:600,color:row.color}}>{row.score}/{row.max}</span>
+                    </div>
+                  </div>
+                  <div style={{height:4,background:'var(--bg3)',borderRadius:2,overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${(row.score/row.max)*100}%`,background:row.color,borderRadius:2,transition:'width 0.3s ease'}}/>
                   </div>
                 </div>
-                <div style={{height:4,background:'var(--bg3)',borderRadius:2,overflow:'hidden'}}>
-                  <div style={{height:'100%',width:`${(row.score/row.max)*100}%`,background:row.color,borderRadius:2,transition:'width 0.3s ease'}}/>
-                </div>
-              </div>
-            ))}
+              ))
+            })()}
             <div style={{borderTop:'0.5px solid var(--border)',paddingTop:12,marginTop:4,fontSize:10,color:'var(--text3)',lineHeight:1.6}}>
-              Score = Uptime×50% + NUT support×30% + Latency score×20%
+              Score = Uptime×40% + NUT support×25% + Latency×20% + Version×10% + Contact×5%
             </div>
           </div>
         </div>
@@ -737,6 +936,9 @@ function MintDetailContent({ url }: { url: string }) {
       {selectedNut && (() => {
         const meta = NUT_DESCRIPTIONS[selectedNut]
         const supported = supportedNuts.includes(selectedNut)
+        const nutKey = parseInt(selectedNut.slice(4), 10).toString()
+        const rawNutConfig = data.info?.nuts?.[nutKey] ?? knownMint?.nutsLimits?.[nutKey]
+        const nutConfig = (rawNutConfig !== null && typeof rawNutConfig === 'object') ? rawNutConfig as NutConfig : null
         return (
           <div
             style={{
@@ -772,7 +974,7 @@ function MintDetailContent({ url }: { url: string }) {
                     border: `0.5px solid ${supported ? '#1a3a28' : 'var(--border)'}`,
                     fontFamily: 'var(--font-mono)',
                   }}>
-                    {supported ? '✓ Supported' : '✗ Not supported'}
+                    {supported ? '✓ Supported' : '– Not supported'}
                   </span>
                   <button
                     onClick={() => setSelectedNut(null)}
@@ -808,6 +1010,24 @@ function MintDetailContent({ url }: { url: string }) {
                 }}>
                   <div style={{fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6}}>Use case</div>
                   <p style={{fontSize: 12, color: 'var(--text3)', lineHeight: 1.5}}>{meta.useCase}</p>
+                </div>
+              )}
+
+              {nutConfig?.methods && nutConfig.methods.length > 0 && (
+                <div style={{borderTop: '0.5px solid var(--border)', paddingTop: 12, marginTop: 4}}>
+                  <div style={{fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8}}>Limits</div>
+                  {nutConfig.methods.map((m, i) => (
+                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:5}}>
+                      <span style={{fontSize:11, color:'var(--text2)', fontFamily:'var(--font-mono)'}}>
+                        {m.method} / {m.unit}
+                      </span>
+                      <span style={{fontSize:11, color:'var(--text3)', fontFamily:'var(--font-mono)'}}>
+                        {m.min_amount != null ? m.min_amount.toLocaleString() : '—'}
+                        {' – '}
+                        {m.max_amount != null ? m.max_amount.toLocaleString() : '—'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
 

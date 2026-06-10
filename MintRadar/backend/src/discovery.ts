@@ -79,8 +79,16 @@ const AUDIT_API_BASE = 'https://api.audit.8333.space/mints/'
 const AUDIT_PAGE_SIZE = 100
 const AUDIT_MAX_RECORDS = 10_000
 
+interface AuditRecord {
+  url: string
+  n_mints?: number | null
+  n_melts?: number | null
+  n_errors?: number | null
+  updated_at?: string | null
+}
+
 export async function discoverMintsFromApi(): Promise<number> {
-  const discovered: Set<string> = new Set()
+  const records: AuditRecord[] = []
 
   for (let skip = 0; skip < AUDIT_MAX_RECORDS; skip += AUDIT_PAGE_SIZE) {
     try {
@@ -91,7 +99,8 @@ export async function discoverMintsFromApi(): Promise<number> {
       if (!Array.isArray(data) || data.length === 0) break
       for (const record of data) {
         if (typeof record !== 'object' || record === null) continue
-        const rawUrl = (record as Record<string, unknown>)['url']
+        const r = record as Record<string, unknown>
+        const rawUrl = r['url']
         if (typeof rawUrl !== 'string') continue
         const trimmed = rawUrl.trim()
         if (!trimmed.startsWith('https://')) continue
@@ -99,7 +108,13 @@ export async function discoverMintsFromApi(): Promise<number> {
           const parsed = new URL(trimmed)
           const h = parsed.hostname.toLowerCase().replace(/\.$/, '')
           if (isObviouslyPrivate(h)) continue
-          discovered.add(trimmed)
+          records.push({
+            url: trimmed,
+            n_mints: typeof r['n_mints'] === 'number' ? r['n_mints'] : null,
+            n_melts: typeof r['n_melts'] === 'number' ? r['n_melts'] : null,
+            n_errors: typeof r['n_errors'] === 'number' ? r['n_errors'] : null,
+            updated_at: typeof r['updated_at'] === 'string' ? r['updated_at'] : null,
+          })
         } catch { continue }
       }
       if (data.length < AUDIT_PAGE_SIZE) break
@@ -109,26 +124,36 @@ export async function discoverMintsFromApi(): Promise<number> {
     }
   }
 
-  if (discovered.size === 0) return 0
+  if (records.length === 0) return 0
 
   let added = 0
   const toProbe: string[] = []
 
-  for (const url of discovered) {
-    const result = await pool.query(
+  for (const rec of records) {
+    // Insert if new, then update audit stats for all records
+    const insertResult = await pool.query(
       'INSERT INTO mints (url, is_known) VALUES ($1, true) ON CONFLICT (url) DO NOTHING',
-      [url]
+      [rec.url]
     )
-    if ((result.rowCount ?? 0) > 0) {
+    if ((insertResult.rowCount ?? 0) > 0) {
       added++
-      toProbe.push(url)
+      toProbe.push(rec.url)
     }
+    await pool.query(
+      `UPDATE mints SET
+        audit_n_mints = $1,
+        audit_n_melts = $2,
+        audit_n_errors = $3,
+        audit_checked_at = $4
+       WHERE url = $5`,
+      [rec.n_mints, rec.n_melts, rec.n_errors, rec.updated_at, rec.url]
+    )
   }
 
   if (toProbe.length > 0) {
     await Promise.allSettled(toProbe.map(url => probeMintToDb(url)))
   }
 
-  console.log(`[discovery] audit.8333.space found ${discovered.size} mints, added ${added} new`)
+  console.log(`[discovery] audit.8333.space found ${records.length} mints, added ${added} new`)
   return added
 }

@@ -2,7 +2,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors'
 import { pool, initDb } from './db.js'
 import { isSafeUrl } from './ssrf.js'
-import { upsertMint } from './prober.js'
+import { upsertMint, probeMintToDb } from './prober.js'
 import { seedKnownMints, startCron } from './cron.js'
 
 let knownMintsCache: { data: unknown; expiresAt: number } | null = null
@@ -30,6 +30,8 @@ interface MintInfo {
   name: string
   version?: string
   description?: string
+  description_long?: string
+  tos_url?: string
   nuts: Record<string, unknown>
 }
 
@@ -294,6 +296,52 @@ app.get('/api/mints/history', (req: Request, res: Response): void => {
     })
 })
 
+app.get('/api/mints/version-history', (req: Request, res: Response): void => {
+  const url = req.query['url']
+
+  if (typeof url !== 'string' || url.length === 0) {
+    res.status(400).json({ error: 'Missing required query parameter: url' })
+    return
+  }
+
+  if (!url.startsWith('https://')) {
+    res.status(400).json({ error: 'url must start with https://' })
+    return
+  }
+
+  if (url.length > MAX_URL_LENGTH) {
+    res.status(400).json({ error: `url exceeds maximum length of ${MAX_URL_LENGTH} characters` })
+    return
+  }
+
+  isSafeUrl(url)
+    .then(safe => {
+      if (!safe) {
+        res.status(400).json({ error: 'Invalid url' })
+        return
+      }
+      return pool
+        .query(
+          `SELECT version, first_seen_at FROM mint_version_history
+           WHERE url = $1 ORDER BY first_seen_at DESC LIMIT 50`,
+          [url]
+        )
+        .then(result => {
+          res.json({
+            url,
+            history: result.rows.map(r => ({
+              version: r.version as string,
+              firstSeenAt: r.first_seen_at as string,
+            })),
+          })
+        })
+    })
+    .catch((err: unknown) => {
+      if (IS_DEV) console.error('[/api/mints/version-history]', err)
+      res.status(500).json({ error: 'Internal server error' })
+    })
+})
+
 app.get('/api/mints/known', (_req: Request, res: Response): void => {
   if (knownMintsCache && Date.now() < knownMintsCache.expiresAt) {
     res.json(knownMintsCache.data)
@@ -301,12 +349,23 @@ app.get('/api/mints/known', (_req: Request, res: Response): void => {
   }
   pool
     .query(`
-      SELECT m.url, m.name, m.icon_url,
+      SELECT m.url, m.name, m.icon_url, m.version, m.nut_count,
+        m.tos_url, m.description_long, m.nuts_limits,
+        m.audit_n_mints, m.audit_n_melts, m.audit_n_errors, m.audit_checked_at,
         COUNT(h.online) AS total,
-        COALESCE(SUM(CASE WHEN h.online THEN 1 ELSE 0 END), 0) AS online_count
+        COALESCE(SUM(CASE WHEN h.online THEN 1 ELSE 0 END), 0) AS online_count,
+        latest.online AS latest_online,
+        latest.latency_ms AS latest_latency_ms
       FROM mints m
       LEFT JOIN mint_history h ON h.url = m.url AND h.checked_at > NOW() - INTERVAL '24 hours'
-      GROUP BY m.url, m.name, m.icon_url
+      LEFT JOIN LATERAL (
+        SELECT online, latency_ms FROM mint_history
+        WHERE url = m.url ORDER BY checked_at DESC, id DESC LIMIT 1
+      ) latest ON true
+      GROUP BY m.url, m.name, m.icon_url, m.version, m.nut_count,
+        m.tos_url, m.description_long, m.nuts_limits,
+        m.audit_n_mints, m.audit_n_melts, m.audit_n_errors, m.audit_checked_at,
+        latest.online, latest.latency_ms
     `)
     .then(result => {
       const data = result.rows.map(r => {
@@ -317,6 +376,17 @@ app.get('/api/mints/known', (_req: Request, res: Response): void => {
           name: r.name as string | null,
           iconUrl: (r.icon_url as string | null) ?? null,
           degraded: total >= 4 && onlineCount === 0,
+          online: r.latest_online as boolean | null,
+          latencyMs: r.latest_latency_ms as number | null,
+          version: r.version as string | null,
+          nutCount: r.nut_count as number | null,
+          tosUrl: (r.tos_url as string | null) ?? null,
+          descriptionLong: (r.description_long as string | null) ?? null,
+          nutsLimits: (r.nuts_limits as Record<string, unknown> | null) ?? null,
+          auditNMints: (r.audit_n_mints as number | null) ?? null,
+          auditNMelts: (r.audit_n_melts as number | null) ?? null,
+          auditNErrors: (r.audit_n_errors as number | null) ?? null,
+          auditCheckedAt: (r.audit_checked_at as string | null) ?? null,
         }
       })
       knownMintsCache = { data, expiresAt: Date.now() + KNOWN_MINTS_CACHE_TTL }
@@ -370,7 +440,12 @@ app.post('/api/mint/submit', (req: Request, res: Response): void => {
           [url]
         )
         const isNew = (result.rowCount ?? 0) > 0
-        if (isNew) knownMintsCache = null
+        try {
+          await probeMintToDb(url)
+        } catch (probeErr) {
+          if (IS_DEV) console.error('[submit] post-insert probe failed:', probeErr)
+        }
+        knownMintsCache = null
         res.json({ success: true, isNew, name: status.info?.name ?? null })
       })
     })

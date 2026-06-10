@@ -1,6 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 
-export interface KnownMint { url: string; name?: string; iconUrl?: string | null; degraded?: boolean }
+export interface KnownMint {
+  url: string
+  name: string | null
+  iconUrl: string | null
+  degraded: boolean
+  online: boolean | null
+  latencyMs: number | null
+  version: string | null
+  nutCount: number | null
+  tosUrl: string | null
+  descriptionLong: string | null
+  nutsLimits: Record<string, unknown> | null
+  auditNMints: number | null
+  auditNMelts: number | null
+  auditNErrors: number | null
+  auditCheckedAt: string | null
+}
 
 async function fetchKnownMints(): Promise<KnownMint[]> {
   const res = await fetch('/api/mints/known')

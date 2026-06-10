@@ -252,7 +252,7 @@ export default function Dashboard() {
     ...(knownMintsData?.filter(m => showDegraded ? true : (!m.degraded && m.online !== false)) ?? []),
     ...nostrMints
       .filter(m => !knownMintUrlSet.has(m.url) && (showDegraded || !degradedSet.has(m.url)))
-      .map((m): KnownMint => ({ url: m.url, name: null, iconUrl: null, degraded: false, online: null, latencyMs: null, version: null, nutCount: null, tosUrl: null, descriptionLong: null, nutsLimits: null })),
+      .map((m): KnownMint => ({ url: m.url, name: null, iconUrl: null, degraded: false, online: null, latencyMs: null, version: null, nutCount: null, tosUrl: null, descriptionLong: null, nutsLimits: null, auditNMints: null, auditNMelts: null, auditNErrors: null, auditCheckedAt: null })),
   ]
 
   useEffect(() => {
