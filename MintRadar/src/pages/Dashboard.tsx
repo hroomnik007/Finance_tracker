@@ -431,10 +431,6 @@ export default function Dashboard() {
         </>
       )}
 
-      <div className="dashboard-footer">
-        Personal watchlist data is stored locally in your browser only.
-      </div>
-
       {showSubmit && (
         <div className="submit-modal-overlay" onClick={() => setShowSubmit(false)}>
           <div className="submit-modal" onClick={e => e.stopPropagation()}>
