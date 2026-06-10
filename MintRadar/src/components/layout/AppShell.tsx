@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWatchlistStore } from '@/stores/watchlist.store'
+import { useWatchlistSync } from '@/hooks/useWatchlistSync'
 import { NavLogo } from './NavLogo'
 import './AppShell.css'
 
 
 export function AppShell() {
+  useWatchlistSync()
   const profile = useAuthStore(state => state.profile)
   const login = useAuthStore(state => state.login)
   const logout = useAuthStore(state => state.logout)

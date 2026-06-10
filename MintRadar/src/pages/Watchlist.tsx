@@ -250,7 +250,7 @@ export default function Watchlist() {
         </div>
       )}
 
-      <div className="wl-footer">Watchlist data is stored locally in your browser only. Never sent to the server.</div>
+      <div className="wl-footer">Watchlist is stored locally in your browser. When logged in with Nostr, it is also synced as an encrypted event (NIP-44) to Nostr relays for cross-device access. Mint URLs are included in encrypted alert DMs when a watched mint goes offline.</div>
     </div>
   )
 }
