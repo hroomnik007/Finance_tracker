@@ -1,7 +1,7 @@
 import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import { pool, initDb } from './db.js'
-import { isSafeUrl } from './ssrf.js'
+import { isSafeUrl, safeFetch } from './ssrf.js'
 import { upsertMint, probeMintToDb } from './prober.js'
 import { seedKnownMints, startCron } from './cron.js'
 
@@ -11,8 +11,14 @@ const KNOWN_MINTS_CACHE_TTL = 60_000 // 60 seconds
 const PORT = parseInt(process.env['PORT'] ?? '3002', 10)
 const IS_DEV = process.env['NODE_ENV'] !== 'production'
 
+// In production the fallback never includes localhost — only the live origin.
+// Dev fallback includes the Vite dev server. Override via ALLOWED_ORIGINS env.
+const DEFAULT_ORIGINS = IS_DEV
+  ? 'https://mintradar.pedani.eu,http://localhost:5173'
+  : 'https://mintradar.pedani.eu'
+
 const ALLOWED_ORIGINS = (
-  process.env['ALLOWED_ORIGINS'] ?? 'https://mintradar.pedani.eu,http://localhost:5173'
+  process.env['ALLOWED_ORIGINS'] ?? DEFAULT_ORIGINS
 ).split(',').map(o => o.trim())
 
 const MAX_URL_LENGTH = 500
@@ -83,9 +89,11 @@ setInterval(() => {
 async function probeMint(url: string): Promise<MintStatus> {
   const start = Date.now()
 
-  const [infoResult, keysetsResult] = await Promise.allSettled([
-    fetch(`${url}/v1/info`, { signal: AbortSignal.timeout(10_000) }),
-    fetch(`${url}/v1/keysets`, { signal: AbortSignal.timeout(10_000) }),
+  // safeFetch validates the URL and every redirect hop against isSafeUrl()
+  // and pins DNS at connect time (SSRF + rebinding protection).
+  const [infoRes, keysetsRes] = await Promise.all([
+    safeFetch(`${url}/v1/info`),
+    safeFetch(`${url}/v1/keysets`),
   ])
 
   const latencyMs = Date.now() - start
@@ -93,24 +101,23 @@ async function probeMint(url: string): Promise<MintStatus> {
   let info: MintInfo | null = null
   let online = false
 
-  if (infoResult.status === 'fulfilled' && infoResult.value.ok) {
+  if (infoRes && infoRes.ok) {
     try {
-      const raw: unknown = await infoResult.value.json()
+      const raw: unknown = await infoRes.json()
       if (typeof raw === 'object' && raw !== null && 'nuts' in raw) {
         info = raw as MintInfo
         online = true
       }
     } catch { /* invalid JSON — treat as offline */ }
   } else if (IS_DEV) {
-    const reason = infoResult.status === 'rejected' ? infoResult.reason : `HTTP ${infoResult.value.status}`
-    console.error('[probeMint] info fetch failed:', reason)
+    console.error('[probeMint] info fetch failed or blocked:', url)
   }
 
   let keysets: MintKeyset[] | null = null
 
-  if (keysetsResult.status === 'fulfilled' && keysetsResult.value.ok) {
+  if (keysetsRes && keysetsRes.ok) {
     try {
-      const raw: unknown = await keysetsResult.value.json()
+      const raw: unknown = await keysetsRes.json()
       if (
         typeof raw === 'object' &&
         raw !== null &&
@@ -170,29 +177,48 @@ app.use(express.json())
 // Rate limiting — exempt public read-only endpoints that sit behind Cache-Control
 const RATE_LIMIT_EXEMPT = new Set(['/health', '/api/mints/known'])
 
-// Separate rate limiter for submit endpoint: 500 req/IP/hour
-const submitRateLimitStore = new Map<string, RateLimitEntry>()
-const SUBMIT_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000
-const SUBMIT_RATE_LIMIT_MAX = 500
+// Stricter limiters for write endpoints that trigger outbound fetches /
+// DNS resolution. Each submit performs 2+ outbound probes; each discovered
+// URL performs a DNS lookup — so these are kept deliberately low to prevent
+// the server being abused as an SSRF/DNS-amplification proxy.
+const HOUR_MS = 60 * 60 * 1000
 
-function checkSubmitRateLimit(ip: string): boolean {
+// Submit: 20 req/IP/hour (each triggers probeMint + probeMintToDb).
+const submitRateLimitStore = new Map<string, RateLimitEntry>()
+const SUBMIT_RATE_LIMIT_MAX = 20
+
+// Discover: 10 req/IP/hour (each accepts a batch of up to MAX_DISCOVER_BATCH).
+const discoverRateLimitStore = new Map<string, RateLimitEntry>()
+const DISCOVER_RATE_LIMIT_MAX = 10
+
+function checkWindowedLimit(store: Map<string, RateLimitEntry>, max: number, ip: string): boolean {
   const now = Date.now()
-  const entry = submitRateLimitStore.get(ip)
+  const entry = store.get(ip)
   if (entry === undefined || now >= entry.resetAt) {
-    submitRateLimitStore.set(ip, { count: 1, resetAt: now + SUBMIT_RATE_LIMIT_WINDOW_MS })
+    store.set(ip, { count: 1, resetAt: now + HOUR_MS })
     return true
   }
-  if (entry.count >= SUBMIT_RATE_LIMIT_MAX) return false
+  if (entry.count >= max) return false
   entry.count++
   return true
 }
 
+function checkSubmitRateLimit(ip: string): boolean {
+  return checkWindowedLimit(submitRateLimitStore, SUBMIT_RATE_LIMIT_MAX, ip)
+}
+
+function checkDiscoverRateLimit(ip: string): boolean {
+  return checkWindowedLimit(discoverRateLimitStore, DISCOVER_RATE_LIMIT_MAX, ip)
+}
+
 setInterval(() => {
   const now = Date.now()
-  for (const [ip, entry] of submitRateLimitStore) {
-    if (now >= entry.resetAt) submitRateLimitStore.delete(ip)
+  for (const store of [submitRateLimitStore, discoverRateLimitStore]) {
+    for (const [ip, entry] of store) {
+      if (now >= entry.resetAt) store.delete(ip)
+    }
   }
-}, SUBMIT_RATE_LIMIT_WINDOW_MS)
+}, HOUR_MS)
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (RATE_LIMIT_EXEMPT.has(req.path)) {
@@ -455,11 +481,11 @@ app.post('/api/mint/submit', (req: Request, res: Response): void => {
     })
 })
 
-const MAX_DISCOVER_BATCH = 500
+const MAX_DISCOVER_BATCH = 100
 
 app.post('/api/mints/discover', async (req: Request, res: Response): Promise<void> => {
   const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown'
-  if (!checkSubmitRateLimit(ip)) {
+  if (!checkDiscoverRateLimit(ip)) {
     res.status(429).json({ error: 'Too many requests. Try again later.' })
     return
   }

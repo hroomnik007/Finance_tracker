@@ -1,5 +1,5 @@
 import { pool } from './db.js'
-import { isSafeUrl } from './ssrf.js'
+import { isSafeUrl, safeFetch } from './ssrf.js'
 
 const PROBE_TIMEOUT_MS = 10000
 const RETENTION_DAYS = 30
@@ -17,27 +17,11 @@ export async function probeMintToDb(url: string): Promise<void> {
   let latencyMs: number | null = null
 
   try {
-    const res = await fetch(`${url}/v1/info`, {
-      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-      credentials: 'omit',
-      redirect: 'manual',
-    })
+    // safeFetch follows redirects internally, re-validating each hop with
+    // isSafeUrl() and pinning DNS at connect time (SSRF + rebinding safe).
+    const res = await safeFetch(`${url}/v1/info`, { timeoutMs: PROBE_TIMEOUT_MS })
 
-    if (res.status >= 300 && res.status < 400) {
-      // Follow redirect only if location is also safe
-      const location = res.headers.get('location')
-      if (location && await isSafeUrl(location)) {
-        const res2 = await fetch(location, {
-          signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-          credentials: 'omit',
-          redirect: 'manual',
-        })
-        if (res2.ok) {
-          online = true
-          latencyMs = Date.now() - start
-        }
-      }
-    } else if (res.ok) {
+    if (res && res.ok) {
       online = true
       latencyMs = Date.now() - start
       try {
