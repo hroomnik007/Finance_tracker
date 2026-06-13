@@ -17,23 +17,10 @@ const IcRadar = () => (
   </svg>
 )
 
-const IcEye = () => (
-  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-    <path d="M1 7s2.4-4 6-4 6 4 6 4-2.4 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.3"/>
-    <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.3"/>
-  </svg>
-)
-
-function latencyColor(ms: number | null | undefined): string {
-  if (!ms || ms <= 0) return 'var(--text)'
-  if (ms < 800) return '#00E676'
-  if (ms < 1500) return '#ffa500'
-  return '#ff4d4d'
-}
 
 function uptimeColor(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return 'var(--text3)'
-  if (pct >= 80) return '#00E676'
+  if (pct >= 80) return '#4ade80'
   if (pct >= 50) return '#ffa500'
   return '#ff4d4d'
 }
@@ -49,6 +36,8 @@ function getHostname(url: string): string {
   try { return new URL(url).hostname } catch { return url }
 }
 
+const DEFAULT_SORT_DIRS: Record<'name' | 'latency' | 'status' | 'trust', 'asc' | 'desc'> = { status: 'desc', latency: 'asc', trust: 'desc', name: 'asc' }
+
 function WatchlistCard({
   url,
   knownMint,
@@ -61,61 +50,57 @@ function WatchlistCard({
   const removeMint = useWatchlistStore(state => state.removeMint)
 
   const hostname = getHostname(url)
-  const isOnline = knownMint?.online ?? false
+  const isOnline = knownMint?.online === true
   const displayName = knownMint?.name ?? hostname
-  const version = knownMint?.version ?? undefined
+  const version = knownMint?.version ?? null
   const nutCount = knownMint?.nutCount ?? null
   const latency = knownMint?.latencyMs ?? null
   const iconUrl = knownMint?.iconUrl ?? null
-  const lc = latencyColor(latency)
-  const sc = isOnline ? 'var(--accent)' : '#ff4d4d'
-  const uc = uptimeColor(records.length > 0 ? uptimePercent : undefined)
-  const pulse = isOnline ? 'pulse-green 2.6s ease-in-out infinite' : 'none'
+  const uptimePct = records.length > 0 ? uptimePercent : 100
 
   return (
     <div
-      className={`wl-card ${isOnline ? 'online' : 'offline'}`}
+      className={`mint-card ${knownMint?.online === true ? 'online' : knownMint?.online === false ? 'offline' : ''}`}
       onClick={() => navigate(`/mint/${encodeURIComponent(url)}`)}
     >
-      <div className="wl-card-top">
-        <div className="wl-card-identity">
-          <MintFavicon url={url} iconUrl={iconUrl} size={28} />
+      <div className="card-top">
+        <div className="card-name-row">
+          <MintFavicon url={url} iconUrl={iconUrl} size={22} />
           <div>
-            <div className="wl-card-name">{displayName}</div>
-            <div className="wl-card-host">{hostname}</div>
+            <div className="card-name">{displayName}</div>
+            <div className="card-host">{hostname}</div>
           </div>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-          <div style={{ width:7, height:7, borderRadius:'50%', background:sc, animation:pulse }}/>
-          <button
-            className="wl-card-remove"
-            onClick={e => { e.stopPropagation(); void removeMint(url) }}
-          >Remove</button>
-        </div>
+        <div className="status-dot" style={{ background: isOnline ? 'var(--accent)' : '#ff4d4d' }} />
       </div>
 
-      <div className="wl-card-badges">
-        {version !== undefined && <span className="wl-badge">{version}</span>}
-        {nutCount !== null && <span className="wl-badge">{nutCount} NUTs</span>}
-        {records.length > 0 && (
-          <div className="wl-uptime-bar-wrap">
-            <div className="wl-uptime-bar-track">
-              <div className="wl-uptime-bar-fill" style={{ width:`${uptimePercent}%`, background:uc }}/>
+      <div className="card-badges">
+        {version !== null && <span className="badge">{version}</span>}
+        {nutCount !== null && <span className="badge">{nutCount} NUTs</span>}
+        {(records.length > 0 || isOnline) && (
+          <div className="uptime-bar-wrap">
+            <div className="uptime-bar-track">
+              <div className="uptime-bar-fill" style={{ width: `${uptimePct}%`, background: uptimeColor(uptimePct) }} />
             </div>
-            <span style={{ fontSize:'9.5px', fontFamily:'var(--font-mono)', color:uc, fontWeight:500 }}>{uptimePercent}%</span>
+            <span className="uptime-pct" style={{ color: uptimeColor(uptimePct) }}>{uptimePct}%</span>
           </div>
         )}
+        {!isOnline && knownMint?.online === false && <span className="badge unreachable">Unreachable</span>}
       </div>
 
-      <div className="wl-card-bottom">
-        <div>
-          <div className="wl-card-lat-label">Latency</div>
-          <div className="wl-card-lat" style={{ color: lc }}>
-            {latency !== null ? latency : '—'}
-            {latency !== null && <span className="wl-card-lat-unit">ms</span>}
+      <div className="card-bottom">
+        <div className="latency-block">
+          <div className="latency-label">Latency</div>
+          <div className="latency-value" style={{ color: 'var(--text)' }}>
+            {!isOnline ? (knownMint?.online === null ? '—' : 'offline') : latency !== null ? latency : '—'}
+            {isOnline && latency !== null && <span className="latency-unit">ms</span>}
           </div>
         </div>
-        <div className="wl-watching-badge"><IcEye /><span>Watching</span></div>
+        <button
+          type="button"
+          className="wl-card-remove"
+          onClick={e => { e.stopPropagation(); void removeMint(url) }}
+        >Remove</button>
       </div>
     </div>
   )
@@ -123,6 +108,16 @@ function WatchlistCard({
 
 export default function Watchlist() {
   const [sortBy, setSortBy] = useState<'name' | 'latency' | 'trust' | 'status'>('name')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  function handleSortClick(s: typeof sortBy) {
+    if (s === sortBy) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(s)
+      setSortDir(DEFAULT_SORT_DIRS[s])
+    }
+  }
 
   const mints = useWatchlistStore(state => state.mints)
   const loadFromDb = useWatchlistStore(state => state.loadFromDb)
@@ -199,26 +194,29 @@ export default function Watchlist() {
   return (
     <div className="watchlist-page">
       <div className="wl-controls">
-        <div className="wl-page-title">My Watchlist</div>
+        <div className="wl-controls-top">
+          <div className="wl-page-title">My Watchlist</div>
+          {mints.length > 0 && (
+            <div className="wl-export-links">
+              <span className="wl-export-link" onClick={handleExport}>↓ JSON</span>
+              <span className="wl-export-sep">·</span>
+              <span className="wl-export-link" onClick={handleExportCsv}>↓ CSV</span>
+            </div>
+          )}
+        </div>
         <div className="sort-segment">
           {(['status', 'latency', 'name', 'trust'] as const).map(s => (
             <button
               key={s}
               type="button"
               className={`sort-btn${sortBy === s ? ' active' : ''}`}
-              onClick={() => setSortBy(s)}
+              onClick={() => handleSortClick(s)}
             >
               {s === 'trust' ? 'Trust Score' : s.charAt(0).toUpperCase() + s.slice(1)}
+              {sortBy === s && <span style={{marginLeft: 3, fontSize: 10, opacity: 0.7}}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
             </button>
           ))}
         </div>
-        {mints.length > 0 && (
-          <div className="wl-export-links">
-            <span className="wl-export-link" onClick={handleExport}>↓ JSON</span>
-            <span className="wl-export-sep">·</span>
-            <span className="wl-export-link" onClick={handleExportCsv}>↓ CSV</span>
-          </div>
-        )}
       </div>
 
       {mints.length === 0 ? (
@@ -232,18 +230,19 @@ export default function Watchlist() {
           {[...mints].sort((a, b) => {
             const ma = knownMintsMap.get(a) ?? null
             const mb = knownMintsMap.get(b) ?? null
+            let result = 0
             if (sortBy === 'status') {
-              return (mb?.online === true ? 1 : 0) - (ma?.online === true ? 1 : 0)
-            }
-            if (sortBy === 'latency') {
+              result = (mb?.online === true ? 1 : 0) - (ma?.online === true ? 1 : 0)
+            } else if (sortBy === 'latency') {
               const la = ma?.online === true && ma.latencyMs != null ? ma.latencyMs : Infinity
               const lb = mb?.online === true && mb.latencyMs != null ? mb.latencyMs : Infinity
-              return la - lb
+              result = la - lb
+            } else if (sortBy === 'trust') {
+              result = listTrustScore(mb) - listTrustScore(ma)
+            } else {
+              result = getHostname(a).localeCompare(getHostname(b))
             }
-            if (sortBy === 'trust') {
-              return listTrustScore(mb) - listTrustScore(ma)
-            }
-            return getHostname(a).localeCompare(getHostname(b))
+            return sortDir === DEFAULT_SORT_DIRS[sortBy] ? result : -result
           }).map(url => (
             <WatchlistCard key={url} url={url} knownMint={knownMintsMap.get(url) ?? null} />
           ))}

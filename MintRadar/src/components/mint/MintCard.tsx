@@ -56,7 +56,7 @@ export function MintCard({ status, onAddToWatchlist, isWatching = false }: MintC
 
       <div className="mint-card-badges">
         {status.online && status.latencyMs !== null && (
-          <span className="badge">{status.latencyMs}ms</span>
+          <span className="badge" title="Measured from our server in Frankfurt, DE. Open mint detail page to test your local latency.">{status.latencyMs}ms</span>
         )}
         {status.info?.version !== undefined && (
           <span className="badge">{status.info.version}</span>

@@ -54,22 +54,15 @@ const ALL_NUTS = [
   'NUT-12', 'NUT-14', 'NUT-15', 'NUT-17', 'NUT-19', 'NUT-20', 'NUT-29',
 ]
 
-function latencyColor(ms: number | null | undefined): string {
-  if (!ms || ms <= 0) return 'var(--text)'
-  if (ms < 800) return '#00E676'
-  if (ms < 1500) return '#ffa500'
-  return '#ff4d4d'
-}
-
 function uptimeColor(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return 'var(--text3)'
-  if (pct >= 80) return '#00E676'
+  if (pct >= 80) return '#4ade80'
   if (pct >= 50) return '#ffa500'
   return '#ff4d4d'
 }
 
 function trustScoreColor(score: number): string {
-  if (score >= 75) return '#00E676'
+  if (score >= 75) return '#4ade80'
   if (score >= 50) return '#ffa500'
   return '#ff4d4d'
 }
@@ -106,18 +99,9 @@ function auditReliabilityScore(nMints: number | null, nMelts: number | null, nEr
   return 1
 }
 
-function latencyScoreOf(latencyMs: number): number {
-  if (latencyMs <= 0) return 0
-  if (latencyMs < 150) return 20
-  if (latencyMs < 400) return Math.round(20 - (latencyMs - 150) / 250 * 10)
-  if (latencyMs < 2000) return Math.round(10 - (latencyMs - 400) / 1600 * 10)
-  return 0
-}
-
 function computeTrustScore(
   uptimePct: number,
   nutCount: number,
-  latencyMs: number,
   versionStr: string | null | undefined,
   email?: string,
   twitter?: string,
@@ -127,13 +111,12 @@ function computeTrustScore(
   auditNMelts?: number | null,
   auditNErrors?: number | null,
 ): number {
-  const uptimeScore = Math.round(uptimePct * 0.35)
-  const nutScore = Math.round(Math.min(nutCount / ALL_NUTS.length, 1) * 25)
-  const latScore = latencyScoreOf(latencyMs)
-  const verScore = versionFreshnessScore(versionStr)
+  const uptimeScore = Math.round(uptimePct * 0.45)
+  const nutScore = Math.round(Math.min(nutCount / ALL_NUTS.length, 1) * 30)
+  const verScore = Math.round(versionFreshnessScore(versionStr) / 10 * 15)
   const cScore = contactInfoScore(email, twitter, nostr, website)
   const aScore = auditReliabilityScore(auditNMints ?? null, auditNMelts ?? null, auditNErrors ?? null)
-  return Math.round(Math.min(100, uptimeScore + nutScore + latScore + verScore + cScore + aScore))
+  return Math.round(Math.min(100, uptimeScore + nutScore + verScore + cScore + aScore))
 }
 
 const WARNING_KEYWORDS = ['rug', 'shutdown', 'warning', 'beware', 'risk', 'danger', 'caution', 'maintenance']
@@ -149,7 +132,7 @@ function formatTime(date: Date): string {
 function MintDetailContent({ url }: { url: string }) {
   const navigate = useNavigate()
   const { data, isLoading } = useMintProbe(url)
-  const { records, uptimePercent, avgLatencyMs } = useMintHistory(url)
+  const { records, uptimePercent } = useMintHistory(url)
   const { data: knownMintsData } = useKnownMints()
   const knownMint = knownMintsData?.find(m => m.url === url) ?? null
   const { data: apiHistoryRaw } = useQuery({
@@ -190,6 +173,27 @@ function MintDetailContent({ url }: { url: string }) {
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSuccess, setReviewSuccess] = useState(false)
   const [auditTooltip, setAuditTooltip] = useState<'mints' | 'melts' | 'errors' | null>(null)
+  const [breakdownTooltip, setBreakdownTooltip] = useState<string | null>(null)
+  const [clientLatency, setClientLatency] = useState<number | string | null>(null)
+  const [testingLatency, setTestingLatency] = useState(false)
+
+  async function testClientLatency() {
+    setTestingLatency(true)
+    setClientLatency(null)
+    const ctrl = new AbortController()
+    const timeout = setTimeout(() => ctrl.abort(), 5000)
+    const t0 = performance.now()
+    try {
+      await fetch(url.replace(/\/$/, '') + '/v1/info', { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal })
+      clearTimeout(timeout)
+      setClientLatency(Math.round(performance.now() - t0))
+    } catch {
+      clearTimeout(timeout)
+      setClientLatency('Unreachable from your location')
+    } finally {
+      setTestingLatency(false)
+    }
+  }
 
   useEffect(() => { void loadFromDb() }, [loadFromDb])
 
@@ -248,7 +252,10 @@ function MintDetailContent({ url }: { url: string }) {
   const uptimePct = records.length > 0 ? uptimePercent : 0
   const onlineChecks = records.filter(r => r.online).length
   const totalChecks = records.length
-  const avgLatency = avgLatencyMs ?? 0
+  const avgLatency = (() => {
+    const lats = (apiHistoryRaw ?? []).filter(r => r.online && r.latencyMs !== null).map(r => r.latencyMs as number)
+    return lats.length === 0 ? 0 : Math.round(lats.reduce((a, b) => a + b, 0) / lats.length)
+  })()
 
   const isWatching = watchlistMints.includes(url)
   const toggleWatch = () => { void (isWatching ? removeMint(url) : addMint(url)) }
@@ -258,20 +265,22 @@ function MintDetailContent({ url }: { url: string }) {
     supportedNutNumbers.has(String(parseInt(nut.slice(4), 10)))
   )
 
-  const trustScore = computeTrustScore(uptimePct, supportedNuts.length, latency ?? 0, version, email, twitter, nostr, website, knownMint?.auditNMints ?? null, knownMint?.auditNMelts ?? null, knownMint?.auditNErrors ?? null)
+  const trustScore = computeTrustScore(uptimePct, supportedNuts.length, version, email, twitter, nostr, website, knownMint?.auditNMints ?? null, knownMint?.auditNMelts ?? null, knownMint?.auditNErrors ?? null)
 
   const avgRating = reviews.length > 0
     ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
     : null
 
-  const historySlice = records.slice(-20)
+  const apiHistoryChronological = (apiHistoryRaw ?? []).slice().reverse()
+
+  const historySlice = apiHistoryChronological.slice(-20)
   const historyPoints = historySlice.length < 2 ? '' :
     historySlice.map((r, i) => {
       const x = (i / (historySlice.length - 1)) * 220
       return `${x.toFixed(1)},${r.online ? 10 : 40}`
     }).join(' ')
 
-  const latencySlice = records.filter(r => r.latencyMs !== undefined).slice(-20)
+  const latencySlice = apiHistoryChronological.filter(r => r.online && r.latencyMs !== null).slice(-20)
   const latencyPoints = latencySlice.length < 2 ? '' : (() => {
     const lats = latencySlice.map(r => r.latencyMs as number)
     const minL = Math.min(...lats)
@@ -323,9 +332,25 @@ function MintDetailContent({ url }: { url: string }) {
 
       <div className="md-summary">
         <div className="md-sc">
-          <div className="md-sc-label">Latency</div>
-          <div className="md-sc-value" style={{color: latencyColor(latency)}}>{latency !== null ? `${latency} ms` : '—'}</div>
-          <div className="md-sc-sub">last check</div>
+          <div className="md-sc-label" style={{display:'flex',alignItems:'center',gap:4}}>
+            Latency
+            <span title="Measured from our server in Frankfurt, DE. Click 'Test' for your local latency." style={{cursor:'help',color:'var(--text3)',fontSize:9}}>ⓘ</span>
+          </div>
+          <div className="md-sc-value">{latency !== null ? `${latency} ms` : '—'}</div>
+          <div className="md-sc-sub" style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+            <span>server · Frankfurt</span>
+            <button
+              onClick={() => { void testClientLatency() }}
+              disabled={testingLatency}
+              className="latency-test-btn"
+              style={{background:'rgba(74,222,128,0.08)',border:'0.5px solid rgba(74,222,128,0.4)',borderRadius:4,color:'#4ade80',fontSize:9,padding:'1px 6px',cursor:testingLatency?'wait':'pointer',fontFamily:'var(--font-mono)',lineHeight:1.6}}
+            >{testingLatency ? '…' : 'Show my latency'}</button>
+          </div>
+          {clientLatency !== null && (
+            <div style={{fontSize:10,marginTop:4,fontFamily:'var(--font-mono)',color: typeof clientLatency === 'number' ? 'var(--text)' : 'var(--text3)'}}>
+              {typeof clientLatency === 'number' ? `Your latency: ${clientLatency}ms` : clientLatency}
+            </div>
+          )}
         </div>
         <div className={`md-sc ${uptimePct === 100 ? 'uptime' : ''}`}>
           <div className="md-sc-label">Uptime 24h</div>
@@ -672,7 +697,7 @@ function MintDetailContent({ url }: { url: string }) {
           </div>
 
           {knownMint !== null && knownMint.auditNMints !== null && (
-            <div className="md-panel">
+            <div className="md-panel" style={{background:'var(--bg)'}}>
               <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:12}}>
                 <div className="md-panel-title" style={{marginBottom:0}}>Audit stats</div>
                 <span style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>· via audit.8333.space</span>
@@ -688,7 +713,7 @@ function MintDetailContent({ url }: { url: string }) {
                       Number of successful ecash minting operations. The auditor actively creates ecash tokens to verify the mint works correctly.
                     </div>
                   )}
-                  <div className="audit-stat-value" style={{color:'#00E676'}}>{knownMint.auditNMints.toLocaleString()}</div>
+                  <div className="audit-stat-value" style={{color:'#4ade80'}}>{(knownMint.auditNMints ?? 0).toLocaleString()}</div>
                   <div className="audit-stat-label">Mint ops</div>
                 </div>
                 <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
@@ -701,7 +726,7 @@ function MintDetailContent({ url }: { url: string }) {
                       Number of successful ecash melting operations. The auditor redeems ecash back to Lightning to verify withdrawals work.
                     </div>
                   )}
-                  <div className="audit-stat-value" style={{color:'#00E676'}}>{(knownMint.auditNMelts ?? 0).toLocaleString()}</div>
+                  <div className="audit-stat-value" style={{color:'#4ade80'}}>{(knownMint.auditNMelts ?? 0).toLocaleString()}</div>
                   <div className="audit-stat-label">Melt ops</div>
                 </div>
                 <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
@@ -714,15 +739,15 @@ function MintDetailContent({ url }: { url: string }) {
                       Number of failed mint or melt operations detected by the auditor. Higher error count indicates reliability issues.
                     </div>
                   )}
-                  <div className="audit-stat-value" style={{color: (knownMint.auditNErrors ?? 0) > 0 ? '#ff4d4d' : '#00E676'}}>{(knownMint.auditNErrors ?? 0).toLocaleString()}</div>
+                  <div className="audit-stat-value" style={{color: (knownMint.auditNErrors ?? 0) > 0 ? '#ff4d4d' : '#4ade80'}}>{(knownMint.auditNErrors ?? 0).toLocaleString()}</div>
                   <div className="audit-stat-label">Errors</div>
                 </div>
               </div>
-              {knownMint.auditCheckedAt !== null && (
+              {knownMint.auditCheckedAt ? (
                 <div style={{fontSize:9,color:'var(--text3)',marginTop:10,fontFamily:'var(--font-mono)'}}>
                   Last checked {new Date(knownMint.auditCheckedAt).toLocaleDateString()}
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 
@@ -750,8 +775,16 @@ function MintDetailContent({ url }: { url: string }) {
                   <span className="trust-value">{supportedNuts.length}/{ALL_NUTS.length}</span>
                 </div>
                 <div className="trust-row">
-                  <span className="trust-label">Latency</span>
-                  <span className="trust-value" style={{ color: latency !== null ? latencyColor(latency) : 'var(--text3)' }}>{latency !== null ? `${latency}ms` : '—'}</span>
+                  <span className="trust-label">Version</span>
+                  <span className="trust-value" style={{ fontSize: 9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>{version ?? '—'}</span>
+                </div>
+                <div className="trust-row">
+                  <span className="trust-label">Audit</span>
+                  <span className="trust-value">
+                    {knownMint?.auditNMints !== null && knownMint?.auditNMints !== undefined
+                      ? `${auditReliabilityScore(knownMint.auditNMints, knownMint.auditNMelts ?? null, knownMint.auditNErrors ?? null)}/5`
+                      : '—'}
+                  </span>
                 </div>
               </div>
               <div style={{fontSize:9,color:'var(--text3)',textAlign:'center'}}>tap for details</div>
@@ -795,7 +828,7 @@ function MintDetailContent({ url }: { url: string }) {
             {showQr && (
               <div style={{marginTop: 12, display: 'flex', justifyContent: 'center'}}>
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}&bgcolor=111111&color=00E676&qzone=2`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}&bgcolor=111318&color=4ade80&qzone=2`}
                   alt="QR Code"
                   style={{borderRadius: 8, width: 160, height: 160}}
                 />
@@ -874,10 +907,9 @@ function MintDetailContent({ url }: { url: string }) {
               </div>
             </div>
             {(() => {
-              const uScore = Math.round(uptimePct * 0.35)
-              const nScore = Math.round(Math.min(supportedNuts.length / ALL_NUTS.length, 1) * 25)
-              const lScore = latencyScoreOf(latency ?? 0)
-              const vScore = versionFreshnessScore(version)
+              const uScore = Math.round(uptimePct * 0.45)
+              const nScore = Math.round(Math.min(supportedNuts.length / ALL_NUTS.length, 1) * 30)
+              const vScore = Math.round(versionFreshnessScore(version) / 10 * 15)
               const contactFields = [email, twitter, nostr, website].filter(Boolean)
               const cScore = Math.round((contactFields.length / 4) * 5)
               const contactDisplay = contactFields.length === 0 ? 'None' : (email ? 'Email' : '') + (twitter ? (email ? ' + Twitter' : 'Twitter') : '') + (nostr ? ((email || twitter) ? ' + Nostr' : 'Nostr') : '') + (website ? ((email || twitter || nostr) ? ' + Web' : 'Web') : '')
@@ -888,15 +920,20 @@ function MintDetailContent({ url }: { url: string }) {
               const auditTotal = (auditNMints ?? 0) + (auditNMelts ?? 0) + (auditNErrors ?? 0)
               const auditDisplay = auditNMints === null ? '—' : auditTotal === 0 ? '0%' : `${((auditNErrors ?? 0) / auditTotal * 100).toFixed(1)}% err`
               const rows = [
-                { label: 'Uptime (35%)', display: `${uptimePct}%`, score: uScore, max: 35, color: uptimeColor(uptimePct) },
-                { label: 'NUT Support (25%)', display: `${supportedNuts.length} / ${ALL_NUTS.length} NUTs`, score: nScore, max: 25, color: supportedNuts.length >= 12 ? '#00E676' : supportedNuts.length >= 8 ? '#ffa500' : '#ff4d4d' },
-                { label: 'Latency (20%)', display: latency !== null ? `${latency} ms` : '—', score: lScore, max: 20, color: latencyColor(latency) },
-                { label: 'Version (10%)', display: version ?? 'Unknown', score: vScore, max: 10, color: vScore >= 8 ? '#00E676' : vScore >= 4 ? '#ffa500' : '#ff4d4d' },
-                { label: 'Contact (5%)', display: contactDisplay, score: cScore, max: 5, color: cScore >= 4 ? '#00E676' : cScore >= 2 ? '#ffa500' : '#ff4d4d' },
-                { label: 'Audit reliability (5%)', display: auditDisplay, score: aScore, max: 5, color: aScore >= 4 ? '#00E676' : aScore >= 3 ? '#ffa500' : '#ff4d4d' },
+                { label: 'Uptime (45%)', display: `${uptimePct}%`, score: uScore, max: 45, color: uptimeColor(uptimePct), tooltip: 'Percentage of successful checks over the last 24h. 100% uptime = full points.' },
+                { label: 'NUT Support (30%)', display: `${supportedNuts.length} / ${ALL_NUTS.length} NUTs`, score: nScore, max: 30, color: supportedNuts.length >= 12 ? '#4ade80' : supportedNuts.length >= 8 ? '#ffa500' : '#ff4d4d', tooltip: 'Number of NUT specifications (cashu protocol features) this mint supports out of all tracked NUTs.' },
+                { label: 'Version (15%)', display: version ?? 'Unknown', score: vScore, max: 15, color: vScore >= 12 ? '#4ade80' : vScore >= 6 ? '#ffa500' : '#ff4d4d', tooltip: "How recent the mint's software version is compared to the latest known Nutshell releases. Newer = higher score." },
+                { label: 'Contact (5%)', display: contactDisplay, score: cScore, max: 5, color: cScore >= 4 ? '#4ade80' : cScore >= 2 ? '#ffa500' : '#ff4d4d', tooltip: 'Number of contact methods provided (email, Twitter, Nostr, website). More contact options = higher score.' },
+                { label: 'Audit reliability (5%)', display: auditDisplay, score: aScore, max: 5, color: aScore >= 4 ? '#4ade80' : aScore >= 3 ? '#ffa500' : '#ff4d4d', tooltip: 'Based on error rate from audit.8333.space — the percentage of failed mint/melt operations out of all tested operations. Lower error rate = higher score.' },
               ]
               return rows.map(row => (
-                <div key={row.label} style={{marginBottom:14}}>
+                <div key={row.label} style={{marginBottom:14,position:'relative'}}
+                  onMouseEnter={() => setBreakdownTooltip(row.label)}
+                  onMouseLeave={() => setBreakdownTooltip(null)}
+                >
+                  {breakdownTooltip === row.label && (
+                    <div className="audit-tooltip" style={{width:220,left:'50%',transform:'translateX(-50%)'}}>{row.tooltip}</div>
+                  )}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
                     <span style={{fontSize:12,color:'var(--text2)'}}>{row.label}</span>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -911,7 +948,7 @@ function MintDetailContent({ url }: { url: string }) {
               ))
             })()}
             <div style={{borderTop:'0.5px solid var(--border)',paddingTop:12,marginTop:4,fontSize:10,color:'var(--text3)',lineHeight:1.6}}>
-              Score = Uptime×35% + NUT support×25% + Latency×20% + Version×10% + Contact×5% + Audit×5%
+              Score = Uptime×45% + NUT support×30% + Version×15% + Contact×5% + Audit×5%
             </div>
           </div>
         </div>

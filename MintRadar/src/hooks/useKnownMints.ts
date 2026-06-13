@@ -12,10 +12,10 @@ export interface KnownMint {
   tosUrl: string | null
   descriptionLong: string | null
   nutsLimits: Record<string, unknown> | null
-  auditNMints: number | null
-  auditNMelts: number | null
-  auditNErrors: number | null
-  auditCheckedAt: string | null
+  auditNMints?: number | null
+  auditNMelts?: number | null
+  auditNErrors?: number | null
+  auditCheckedAt?: string | null
 }
 
 async function fetchKnownMints(): Promise<KnownMint[]> {

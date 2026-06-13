@@ -1,23 +1,6 @@
 import { nip19 } from 'nostr-tools'
 import { SimplePool } from 'nostr-tools/pool'
 
-declare global {
-  interface Window {
-    nostr?: {
-      getPublicKey(): Promise<string>
-      signEvent(event: object): Promise<object>
-      nip04?: {
-        encrypt(pubkey: string, plaintext: string): Promise<string>
-        decrypt(pubkey: string, ciphertext: string): Promise<string>
-      }
-      nip44?: {
-        encrypt(pubkey: string, plaintext: string): Promise<string>
-        decrypt(pubkey: string, ciphertext: string): Promise<string>
-      }
-    }
-  }
-}
-
 export interface NostrProfile {
   pubkey: string
   npub: string

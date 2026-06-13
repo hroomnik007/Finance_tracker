@@ -70,14 +70,14 @@ const IcEye = () => (
 
 function latencyColor(ms: number | null | undefined): string {
   if (!ms || ms <= 0) return 'var(--text)'
-  if (ms < 800) return '#00E676'
+  if (ms < 800) return '#4ade80'
   if (ms < 1500) return '#ffa500'
   return '#ff4d4d'
 }
 
 function uptimeColor(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return 'var(--text3)'
-  if (pct >= 80) return '#00E676'
+  if (pct >= 80) return '#4ade80'
   if (pct >= 50) return '#ffa500'
   return '#ff4d4d'
 }
@@ -102,6 +102,9 @@ function formatTimeAgo(date: Date | null): string {
   const hours = Math.floor(minutes / 60)
   return `${hours}h ago`
 }
+
+const NOSTR_LOOKUP_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band']
+const DEFAULT_SORT_DIRS: Record<'name' | 'latency' | 'status' | 'trust', 'asc' | 'desc'> = { status: 'desc', latency: 'asc', trust: 'desc', name: 'asc' }
 
 function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegraded?: boolean }) {
   const navigate = useNavigate()
@@ -138,12 +141,12 @@ function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegr
       <div className="card-badges">
         {mint.version !== null && <span className="badge">{mint.version}</span>}
         {mint.nutCount !== null && <span className="badge">{mint.nutCount} NUTs</span>}
-        {records.length > 0 && (
+        {(records.length > 0 || isOnline) && (
           <div className="uptime-bar-wrap">
             <div className="uptime-bar-track">
-              <div className="uptime-bar-fill" style={{ width: `${uptimePercent}%`, background: uptimeColor(uptimePercent) }} />
+              <div className="uptime-bar-fill" style={{ width: `${records.length > 0 ? uptimePercent : 100}%`, background: uptimeColor(records.length > 0 ? uptimePercent : 100) }} />
             </div>
-            <span className="uptime-pct" style={{ color: uptimeColor(uptimePercent) }}>{uptimePercent}%</span>
+            <span className="uptime-pct" style={{ color: uptimeColor(records.length > 0 ? uptimePercent : 100) }}>{records.length > 0 ? uptimePercent : 100}%</span>
           </div>
         )}
         {!isOnline && mint.online !== null && <span className="badge unreachable">Unreachable</span>}
@@ -152,7 +155,7 @@ function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegr
       <div className="card-bottom">
         <div className="latency-block">
           <div className="latency-label">Latency</div>
-          <div className="latency-value" style={{color: isOnline ? latencyColor(mint.latencyMs) : 'var(--red)'}}>
+          <div className="latency-value" style={{color: 'var(--text)'}}>
             {!isOnline ? (mint.online === null ? '—' : 'offline') : mint.latencyMs !== null ? mint.latencyMs : '—'}
             {isOnline && mint.latencyMs !== null && <span className="latency-unit">ms</span>}
           </div>
@@ -175,10 +178,12 @@ function MintGrid({
   mints,
   search,
   sortBy,
+  sortDir,
 }: {
   mints: KnownMint[]
   search: string
   sortBy: 'name' | 'latency' | 'status' | 'trust'
+  sortDir: 'asc' | 'desc'
 }) {
   const sortedFiltered = useMemo(() => {
     const q = search.toLowerCase()
@@ -189,20 +194,21 @@ function MintGrid({
     })
 
     return [...filtered].sort((a, b) => {
+      let result = 0
       if (sortBy === 'status') {
-        return (b.online === true ? 1 : 0) - (a.online === true ? 1 : 0)
-      }
-      if (sortBy === 'latency') {
+        result = (b.online === true ? 1 : 0) - (a.online === true ? 1 : 0)
+      } else if (sortBy === 'latency') {
         const la = a.online === true && a.latencyMs != null ? a.latencyMs : Infinity
         const lb = b.online === true && b.latencyMs != null ? b.latencyMs : Infinity
-        return la - lb
+        result = la - lb
+      } else if (sortBy === 'trust') {
+        result = listTrustScore(b) - listTrustScore(a)
+      } else {
+        result = (a.name ?? getHostname(a.url)).localeCompare(b.name ?? getHostname(b.url))
       }
-      if (sortBy === 'trust') {
-        return listTrustScore(b) - listTrustScore(a)
-      }
-      return (a.name ?? getHostname(a.url)).localeCompare(b.name ?? getHostname(b.url))
+      return sortDir === DEFAULT_SORT_DIRS[sortBy] ? result : -result
     })
-  }, [mints, search, sortBy])
+  }, [mints, search, sortBy, sortDir])
 
   return (
     <div className="mint-grid">
@@ -216,6 +222,7 @@ function MintGrid({
 export default function Dashboard() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'latency' | 'status' | 'trust'>('name')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null)
   const [, setTick] = useState(0)
   const [showDegraded, setShowDegraded] = useState(false)
@@ -279,7 +286,14 @@ export default function Dashboard() {
     return () => clearTimeout(timer)
   }, [submitState])
 
-  const NOSTR_LOOKUP_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band']
+  function handleSortClick(s: typeof sortBy) {
+    if (s === sortBy) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(s)
+      setSortDir(DEFAULT_SORT_DIRS[s])
+    }
+  }
 
   function handleSubmitInputChange(value: string) {
     setSubmitInput(value)
@@ -465,9 +479,10 @@ export default function Dashboard() {
               key={s}
               type="button"
               className={`sort-btn${sortBy === s ? ' active' : ''}`}
-              onClick={() => setSortBy(s)}
+              onClick={() => handleSortClick(s)}
             >
               {s === 'trust' ? 'Trust Score' : s.charAt(0).toUpperCase() + s.slice(1)}
+              {sortBy === s && <span style={{marginLeft: 3, fontSize: 10, opacity: 0.7}}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
             </button>
           ))}
         </div>
@@ -489,7 +504,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          <MintGrid mints={allMints} search={search} sortBy={sortBy} />
+          <MintGrid mints={allMints} search={search} sortBy={sortBy} sortDir={sortDir} />
           {degradedCount > 0 && (
             <p className="degraded-note">
               {degradedCount} mints skrytých (offline 24h+){' '}

@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWatchlistStore } from '@/stores/watchlist.store'
 import { SimplePool } from 'nostr-tools/pool'
-import type { NostrEvent } from 'nostr-tools'
+import type { NostrEvent, EventTemplate, UnsignedEvent } from 'nostr-tools'
+import { nip44, generateSecretKey, finalizeEvent, getEventHash } from 'nostr-tools'
 
 const NOTIFICATION_RELAYS = [
   'wss://relay.damus.io',
@@ -65,34 +66,65 @@ export function useWatchlistNotifications(
   }, [probeData, watchlist, profile])
 }
 
+// NIP-59 recommends randomizing seal/wrap timestamps (up to 2 days in the
+// past) so the real send time is not leaked through the gift wrap.
+const TWO_DAYS_SECONDS = 2 * 24 * 60 * 60
+function randomizedTimestamp(): number {
+  return Math.floor(Date.now() / 1000) - Math.floor(Math.random() * TWO_DAYS_SECONDS)
+}
+
+// Sends a private direct message using NIP-17 / NIP-59 gift wrapping with
+// NIP-44 encryption (replaces legacy NIP-04 kind:4). The seal is signed by
+// the user's NIP-07 extension; the outer gift wrap is signed by a throwaway
+// ephemeral key so the sender's identity is not exposed on the relay.
 async function sendNostrDM(recipientPubkey: string, content: string, pool: SimplePool) {
   try {
-    if (!window.nostr) return
-
-    // Encrypt content using NIP-04 via extension
-    const encrypted = await window.nostr.nip04?.encrypt(recipientPubkey, content)
-    if (!encrypted) {
-      console.warn('[notifications] nip04 encrypt not available')
+    if (!window.nostr?.nip44) {
+      console.warn('[notifications] nip44 not available — skipping DM')
       return
     }
 
-    const event = {
-      kind: 4,
+    const senderPubkey = await window.nostr.getPublicKey()
+
+    // 1. Rumor — unsigned kind:14 chat message (NIP-17)
+    const rumor: UnsignedEvent & { id?: string } = {
+      kind: 14,
       created_at: Math.floor(Date.now() / 1000),
       tags: [['p', recipientPubkey]],
-      content: encrypted,
+      content,
+      pubkey: senderPubkey,
     }
+    rumor.id = getEventHash(rumor)
 
-    const signed = await window.nostr.signEvent(event) as NostrEvent
-    if (!signed) return
+    // 2. Seal — kind:13, rumor NIP-44 encrypted to recipient, signed by sender
+    const sealContent = await window.nostr.nip44.encrypt(recipientPubkey, JSON.stringify(rumor))
+    const sealTemplate: EventTemplate = {
+      kind: 13,
+      created_at: randomizedTimestamp(),
+      tags: [],
+      content: sealContent,
+    }
+    const seal = await window.nostr.signEvent(sealTemplate) as NostrEvent
+    if (!seal) return
+
+    // 3. Gift wrap — kind:1059, seal NIP-44 encrypted from an ephemeral key
+    const ephemeralKey = generateSecretKey()
+    const conversationKey = nip44.getConversationKey(ephemeralKey, recipientPubkey)
+    const wrapContent = nip44.encrypt(JSON.stringify(seal), conversationKey)
+    const giftWrap = finalizeEvent({
+      kind: 1059,
+      created_at: randomizedTimestamp(),
+      tags: [['p', recipientPubkey]],
+      content: wrapContent,
+    }, ephemeralKey)
 
     await Promise.any(
       NOTIFICATION_RELAYS.map(relay =>
-        pool.publish([relay], signed)
+        pool.publish([relay], giftWrap)
       )
     )
 
-    console.log('[notifications] DM sent successfully')
+    console.log('[notifications] gift-wrapped DM sent successfully')
   } catch (err) {
     console.warn('[notifications] failed to send DM:', err)
   }
