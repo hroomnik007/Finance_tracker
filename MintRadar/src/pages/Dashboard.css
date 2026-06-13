@@ -12,7 +12,7 @@
 /* ── Stats Bar ──────────────────────────────────────────────── */
 .stats-bar {
   display: flex;
-  background: var(--bg2);
+  background: #0f1115;
   border-bottom: 1px solid var(--border);
 }
 
@@ -37,7 +37,7 @@
   flex-shrink: 0;
 }
 
-.stat-icon.green  { background: rgba(23, 232, 127, 0.11); color: var(--accent); opacity: 0.85; }
+.stat-icon.green  { background: rgba(74, 222, 128, 0.11); color: var(--accent); opacity: 0.85; }
 .stat-icon.gray   { background: var(--bg3);               color: var(--text3);  opacity: 0.7; }
 .stat-icon.yellow { background: rgba(239, 160, 48, 0.11); color: var(--yellow); opacity: 0.7; }
 
@@ -68,7 +68,7 @@
   gap: 7px;
   padding: 10px 18px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg2);
+  background: #0f1115;
 }
 
 .search-wrap {
@@ -152,7 +152,7 @@
   transition: all var(--transition);
 }
 
-.submit-btn:hover { background: rgba(23,232,127,0.14); }
+.submit-btn:hover { background: rgba(74,222,128,0.14); }
 
 .refresh-btn {
   background: var(--bg3);
@@ -180,7 +180,7 @@
 
 /* ── Mint Card ──────────────────────────────────────────────── */
 .mint-card {
-  background: #161b22;
+  background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: var(--card-radius);
   padding: 14px 16px;
@@ -289,8 +289,8 @@
 
 .badge.uptime-ok {
   color: var(--accent);
-  border-color: rgba(0, 239, 130, 0.22);
-  background: rgba(0, 239, 130, 0.07);
+  border-color: rgba(74, 222, 128, 0.22);
+  background: rgba(74, 222, 128, 0.07);
 }
 
 .badge.uptime-bad {
@@ -496,8 +496,8 @@
   border-radius: 7px; font-family: var(--font-mono);
 }
 .submit-result.success {
-  background: rgba(0, 239, 130, 0.08); color: var(--accent);
-  border: 1px solid rgba(0, 239, 130, 0.2);
+  background: rgba(74, 222, 128, 0.08); color: var(--accent);
+  border: 1px solid rgba(74, 222, 128, 0.2);
 }
 .submit-result.error {
   background: rgba(255, 61, 107, 0.08); color: var(--red);
@@ -514,8 +514,8 @@
 
 .submit-probe-preview {
   margin-bottom: 10px; padding: 10px 12px;
-  background: rgba(23, 232, 127, 0.06);
-  border: 1px solid rgba(23, 232, 127, 0.2);
+  background: rgba(74, 222, 128, 0.06);
+  border: 1px solid rgba(74, 222, 128, 0.2);
   border-radius: 8px;
 }
 

@@ -32,24 +32,24 @@
 
 /* ── Design tokens ──────────────────────────────────────────── */
 :root {
-  --bg:           #0B0C11;
-  --bg2:          #111319;
-  --bg3:          #181A24;
-  --bg4:          #1F2130;
+  --bg:           #111318;
+  --bg2:          #1a1d24;
+  --bg3:          #13161c;
+  --bg4:          #1c1f26;
 
-  --border:       rgba(255,255,255,0.055);
-  --border2:      rgba(255,255,255,0.09);
+  --border:       #252830;
+  --border2:      rgba(255,255,255,0.08);
   --border-hi:    rgba(255,255,255,0.16);
 
   --text:         #F0F0F0;
   --text2:        #C0BDD8;
   --text3:        #8A87A0;
 
-  --accent:       #17E87F;
-  --accent-dim:   rgba(23,232,127,0.09);
-  --accent-brd:   rgba(23,232,127,0.26);
-  --accent-glow:  0 0 16px rgba(23, 232, 127, 0.3);
-  --accent-glow-lg: 0 0 32px rgba(23, 232, 127, 0.18);
+  --accent:       #4ade80;
+  --accent-dim:   rgba(74,222,128,0.09);
+  --accent-brd:   rgba(74,222,128,0.26);
+  --accent-glow:  0 0 16px rgba(74, 222, 128, 0.3);
+  --accent-glow-lg: 0 0 32px rgba(74, 222, 128, 0.18);
 
   --red:           #F04560;
   --yellow:        #EFA030;
