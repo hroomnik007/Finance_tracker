@@ -8,7 +8,7 @@ on:
       - 'finance-tracker/**'
       - 'backend/**'
       - 'landing/**'
-      - 'mintradar/**'
+      - 'MintRadar/**'
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -90,7 +90,7 @@ jobs:
         with:
           filters: |
             mintradar:
-              - 'mintradar/**'
+              - 'MintRadar/**'
       - name: Deploy mintradar via SSH
         if: steps.filter.outputs.mintradar == 'true'
         uses: appleboy/ssh-action@v1
