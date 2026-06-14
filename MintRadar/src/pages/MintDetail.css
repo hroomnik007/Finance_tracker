@@ -253,6 +253,7 @@
 .nut-card:hover { border-color: var(--border2); }
 .nut-card.supported { border-color: rgba(74, 222, 128, 0.2); background: rgba(74, 222, 128, 0.05); }
 .nut-card.unsupported { opacity: 0.4; }
+.nut-card.nut-disabled { border-color: rgba(255, 165, 0, 0.25); background: rgba(255, 165, 0, 0.05); }
 
 .nut-icon {
   width: 24px;
@@ -267,6 +268,7 @@
 
 .nut-icon.supported   { background: rgba(74, 222, 128, 0.12); color: var(--accent); }
 .nut-icon.unsupported { background: var(--bg4); color: var(--text3); }
+.nut-icon.nut-disabled { background: rgba(255, 165, 0, 0.12); color: #ffa500; }
 
 .nut-info { flex: 1; min-width: 0; }
 .nut-name { font-size: 11px; font-weight: 500; color: var(--text); font-family: var(--font-mono); }
@@ -417,6 +419,9 @@
   font-size: 12px;
   color: #6b7280;
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .audit-tooltip {

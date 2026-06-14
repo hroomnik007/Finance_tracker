@@ -14,6 +14,7 @@ import { submitMintReview } from '@/hooks/useSubmitReview'
 import { useWatchlistStore } from '@/stores/watchlist.store'
 import { useAuthStore } from '@/stores/auth.store'
 import './MintDetail.css'
+import { Copy, Check, Info } from 'lucide-react'
 
 interface NutMethod {
   method: string
@@ -135,12 +136,21 @@ function MintDetailContent({ url }: { url: string }) {
   const { records, uptimePercent } = useMintHistory(url)
   const { data: knownMintsData } = useKnownMints()
   const knownMint = knownMintsData?.find(m => m.url === url) ?? null
-  const { data: apiHistoryRaw } = useQuery({
-    queryKey: ['mint', 'history-api', url],
+  const [historyPeriod, setHistoryPeriod] = useState<'24h' | '7d' | '30d'>('24h')
+  const { data: historyData } = useQuery({
+    queryKey: ['mint', 'history-api', url, historyPeriod],
     queryFn: async () => {
-      const res = await fetch(`/api/mints/history?url=${encodeURIComponent(url)}`)
+      const res = await fetch(`/api/mints/history?url=${encodeURIComponent(url)}&period=${historyPeriod}`)
       if (!res.ok) throw new Error('Failed to fetch history')
-      return (await res.json() as { history: Array<{ online: boolean; latencyMs: number | null; checkedAt: string }> }).history
+      return res.json() as Promise<{
+        period: string
+        segments: Array<{ bucket: string; online: boolean; latencyMs: number | null; total: number; onlineCount: number; uptimePct: number | null }>
+        uptimePct: number | null
+        avgLatencyMs: number | null
+        prevUptimePct: number | null
+        prevAvgLatencyMs: number | null
+        history: Array<{ online: boolean; latencyMs: number | null; checkedAt: string }>
+      }>
     },
     staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
@@ -176,6 +186,8 @@ function MintDetailContent({ url }: { url: string }) {
   const [breakdownTooltip, setBreakdownTooltip] = useState<string | null>(null)
   const [clientLatency, setClientLatency] = useState<number | string | null>(null)
   const [testingLatency, setTestingLatency] = useState(false)
+  const [latencyBtnTooltip, setLatencyBtnTooltip] = useState(false)
+  const [segmentTooltip, setSegmentTooltip] = useState<number | null>(null)
 
   async function testClientLatency() {
     setTestingLatency(true)
@@ -252,10 +264,33 @@ function MintDetailContent({ url }: { url: string }) {
   const uptimePct = records.length > 0 ? uptimePercent : 0
   const onlineChecks = records.filter(r => r.online).length
   const totalChecks = records.length
-  const avgLatency = (() => {
-    const lats = (apiHistoryRaw ?? []).filter(r => r.online && r.latencyMs !== null).map(r => r.latencyMs as number)
-    return lats.length === 0 ? 0 : Math.round(lats.reduce((a, b) => a + b, 0) / lats.length)
+
+  // NUT-04 (minting) and NUT-05 (melting) disabled detection
+  const nut4Disabled = (() => {
+    const raw = data.info?.nuts?.['4'] ?? knownMint?.nutsLimits?.['4']
+    return raw !== null && raw !== undefined && typeof raw === 'object' && (raw as NutConfig).disabled === true
   })()
+  const nut5Disabled = (() => {
+    const raw = data.info?.nuts?.['5'] ?? knownMint?.nutsLimits?.['5']
+    return raw !== null && raw !== undefined && typeof raw === 'object' && (raw as NutConfig).disabled === true
+  })()
+
+  const segments = historyData?.segments ?? []
+  const apiUptimePct = historyData?.uptimePct ?? null
+  const apiAvgLatency = historyData?.avgLatencyMs ?? null
+  const prevUptimePct = historyData?.prevUptimePct ?? null
+  const uptimeTrend = (apiUptimePct !== null && prevUptimePct !== null)
+    ? apiUptimePct - prevUptimePct
+    : null
+  const displayUptimePct = apiUptimePct ?? uptimePct
+
+  const discoveredAt = knownMint?.discoveredAt ?? null
+  const isLessThan7dOld = discoveredAt != null
+    ? (Date.now() - new Date(discoveredAt).getTime()) < 7 * 24 * 3600 * 1000
+    : false
+  const isLessThan30dOld = discoveredAt != null
+    ? (Date.now() - new Date(discoveredAt).getTime()) < 30 * 24 * 3600 * 1000
+    : false
 
   const isWatching = watchlistMints.includes(url)
   const toggleWatch = () => { void (isWatching ? removeMint(url) : addMint(url)) }
@@ -271,29 +306,8 @@ function MintDetailContent({ url }: { url: string }) {
     ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
     : null
 
-  const apiHistoryChronological = (apiHistoryRaw ?? []).slice().reverse()
-
-  const historySlice = apiHistoryChronological.slice(-20)
-  const historyPoints = historySlice.length < 2 ? '' :
-    historySlice.map((r, i) => {
-      const x = (i / (historySlice.length - 1)) * 220
-      return `${x.toFixed(1)},${r.online ? 10 : 40}`
-    }).join(' ')
-
-  const latencySlice = apiHistoryChronological.filter(r => r.online && r.latencyMs !== null).slice(-20)
-  const latencyPoints = latencySlice.length < 2 ? '' : (() => {
-    const lats = latencySlice.map(r => r.latencyMs as number)
-    const minL = Math.min(...lats)
-    const maxL = Math.max(...lats)
-    const range = maxL - minL
-    return latencySlice.map((r, i) => {
-      const x = (i / (latencySlice.length - 1)) * 220
-      const y = range === 0 ? 25 : 40 - ((r.latencyMs as number) - minL) / range * 30
-      return `${x.toFixed(1)},${y.toFixed(1)}`
-    }).join(' ')
-  })()
-
-  const chartData = (apiHistoryRaw ?? [])
+  const legacyHistory = historyData?.history ?? []
+  const chartData = legacyHistory
     .slice()
     .reverse()
     .filter(r => r.online && r.latencyMs !== null)
@@ -312,6 +326,11 @@ function MintDetailContent({ url }: { url: string }) {
           <div className={`status-dot ${isOnline ? '' : 'offline'}`} />
           {isOnline ? 'Online' : 'Offline'}
         </div>
+        {!isOnline && knownMint?.lastError && (
+          <span style={{fontSize:11,color:'#ff4d4d',fontFamily:'var(--font-mono)',background:'rgba(255,77,77,0.08)',border:'0.5px solid rgba(255,77,77,0.25)',borderRadius:5,padding:'2px 7px',whiteSpace:'nowrap'}}>
+            {knownMint.lastError}
+          </span>
+        )}
         {isLoggedIn
           ? (
             <button className={`md-watch-btn ${isWatching ? 'watching' : ''}`} onClick={toggleWatch}>
@@ -339,12 +358,23 @@ function MintDetailContent({ url }: { url: string }) {
           <div className="md-sc-value">{latency !== null ? `${latency} ms` : '—'}</div>
           <div className="md-sc-sub" style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
             <span>server · Frankfurt</span>
-            <button
-              onClick={() => { void testClientLatency() }}
-              disabled={testingLatency}
-              className="latency-test-btn"
-              style={{background:'rgba(74,222,128,0.08)',border:'0.5px solid rgba(74,222,128,0.4)',borderRadius:4,color:'#4ade80',fontSize:9,padding:'1px 6px',cursor:testingLatency?'wait':'pointer',fontFamily:'var(--font-mono)',lineHeight:1.6}}
-            >{testingLatency ? '…' : 'Show my latency'}</button>
+            <span
+              style={{position:'relative',display:'inline-flex'}}
+              onMouseEnter={() => setLatencyBtnTooltip(true)}
+              onMouseLeave={() => setLatencyBtnTooltip(false)}
+            >
+              {latencyBtnTooltip && (
+                <div className="audit-tooltip" style={{width:200}}>
+                  Your latency from this browser to the mint (client-side measurement).
+                </div>
+              )}
+              <button
+                onClick={() => { void testClientLatency() }}
+                disabled={testingLatency}
+                className="latency-test-btn"
+                style={{background:'rgba(74,222,128,0.08)',border:'0.5px solid rgba(74,222,128,0.4)',borderRadius:4,color:'#4ade80',fontSize:9,padding:'1px 6px',cursor:testingLatency?'wait':'pointer',fontFamily:'var(--font-mono)',lineHeight:1.6}}
+              >{testingLatency ? '…' : 'Show my latency'}</button>
+            </span>
           </div>
           {clientLatency !== null && (
             <div style={{fontSize:10,marginTop:4,fontFamily:'var(--font-mono)',color: typeof clientLatency === 'number' ? 'var(--text)' : 'var(--text3)'}}>
@@ -374,6 +404,15 @@ function MintDetailContent({ url }: { url: string }) {
 
           <div className="md-panel">
             <div className="md-panel-title">Mint info</div>
+            {(nut4Disabled || nut5Disabled) && (
+              <div style={{background:'rgba(255,165,0,0.08)',border:'0.5px solid rgba(255,165,0,0.3)',borderRadius:8,padding:'9px 12px',marginBottom:12,display:'flex',alignItems:'flex-start',gap:8}}>
+                <span style={{color:'#ffa500',fontSize:14,flexShrink:0,lineHeight:1.3}}>⚠</span>
+                <div style={{fontSize:12,color:'#ffa500',fontFamily:'var(--font-mono)',lineHeight:1.6}}>
+                  {nut4Disabled && <div>Minting is currently disabled by this mint operator</div>}
+                  {nut5Disabled && <div>Melting is currently disabled by this mint operator</div>}
+                </div>
+              </div>
+            )}
             {motd && (
               <div className={`md-motd${isWarningMotd(motd) ? ' warning' : ''}`}>
                 <div className="md-motd-label">Message of the Day</div>
@@ -416,11 +455,11 @@ function MintDetailContent({ url }: { url: string }) {
                     style={{
                       background: 'none', border: 'none', cursor: 'pointer',
                       color: copiedContact === 'pubkey' ? 'var(--accent)' : 'var(--text3)',
-                      fontSize: 13, padding: '2px 4px', flexShrink: 0,
+                      padding: '2px 4px', flexShrink: 0, display: 'flex',
                     }}
                     title="Copy full public key"
                   >
-                    {copiedContact === 'pubkey' ? '✓' : '⎘'}
+                    {copiedContact === 'pubkey' ? <Check size={13} /> : <Copy size={13} />}
                   </button>
                 </div>
               </div>
@@ -472,12 +511,12 @@ function MintDetailContent({ url }: { url: string }) {
                           }}
                           style={{
                             background:'none', border:'none', cursor:'pointer',
-                            color:'var(--text3)', fontSize:12, padding:'2px 4px',
-                            flexShrink:0,
+                            color:'var(--text3)', padding:'2px 4px',
+                            flexShrink:0, display:'flex',
                           }}
                           title="Copy URL"
                         >
-                          ⎘
+                          <Copy size={12} />
                         </button>
                       </div>
                     )
@@ -507,12 +546,12 @@ function MintDetailContent({ url }: { url: string }) {
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer',
                         color: copiedContact === 'email' ? 'var(--accent)' : 'var(--text3)',
-                        fontSize: 13, padding: '2px 4px', marginLeft: 'auto',
-                        flexShrink: 0,
+                        padding: '2px 4px', marginLeft: 'auto',
+                        flexShrink: 0, display: 'flex',
                       }}
                       title="Copy"
                     >
-                      {copiedContact === 'email' ? '✓' : '⎘'}
+                      {copiedContact === 'email' ? <Check size={13} /> : <Copy size={13} />}
                     </button>
                   </div>
                 )}
@@ -532,12 +571,12 @@ function MintDetailContent({ url }: { url: string }) {
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer',
                         color: copiedContact === 'twitter' ? 'var(--accent)' : 'var(--text3)',
-                        fontSize: 13, padding: '2px 4px', marginLeft: 'auto',
-                        flexShrink: 0,
+                        padding: '2px 4px', marginLeft: 'auto',
+                        flexShrink: 0, display: 'flex',
                       }}
                       title="Copy"
                     >
-                      {copiedContact === 'twitter' ? '✓' : '⎘'}
+                      {copiedContact === 'twitter' ? <Check size={13} /> : <Copy size={13} />}
                     </button>
                   </div>
                 )}
@@ -557,12 +596,12 @@ function MintDetailContent({ url }: { url: string }) {
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer',
                         color: copiedContact === 'nostr' ? 'var(--accent)' : 'var(--text3)',
-                        fontSize: 13, padding: '2px 4px', marginLeft: 'auto',
-                        flexShrink: 0,
+                        padding: '2px 4px', marginLeft: 'auto',
+                        flexShrink: 0, display: 'flex',
                       }}
                       title="Copy"
                     >
-                      {copiedContact === 'nostr' ? '✓' : '⎘'}
+                      {copiedContact === 'nostr' ? <Check size={13} /> : <Copy size={13} />}
                     </button>
                   </div>
                 )}
@@ -576,17 +615,21 @@ function MintDetailContent({ url }: { url: string }) {
               {ALL_NUTS.map(nut => {
                 const supported = supportedNuts.includes(nut)
                 const meta = NUT_DESCRIPTIONS[nut]
+                const nutKey = parseInt(nut.slice(4), 10).toString()
+                const rawConfig = data.info?.nuts?.[nutKey]
+                const nutConfig = (rawConfig !== null && rawConfig !== undefined && typeof rawConfig === 'object') ? rawConfig as NutConfig : null
+                const isDisabled = supported && nutConfig?.disabled === true
                 return (
-                  <div key={nut} className={`nut-card ${supported ? 'supported' : 'unsupported'}`} onClick={() => setSelectedNut(nut)}>
-                    <div className={`nut-icon ${supported ? 'supported' : 'unsupported'}`}>
-                      {supported ? '●' : '○'}
+                  <div key={nut} className={`nut-card ${isDisabled ? 'nut-disabled' : supported ? 'supported' : 'unsupported'}`} onClick={() => setSelectedNut(nut)}>
+                    <div className={`nut-icon ${isDisabled ? 'nut-disabled' : supported ? 'supported' : 'unsupported'}`}>
+                      {isDisabled ? '!' : supported ? '●' : '○'}
                     </div>
                     <div className="nut-info">
                       <div className="nut-name">{nut}</div>
-                      <div className="nut-desc">{meta?.short ?? ''}</div>
+                      <div className="nut-desc">{isDisabled ? 'Disabled by operator' : meta?.short ?? ''}</div>
                     </div>
-                    <span className="nut-check" style={{ color: supported ? 'var(--accent)' : 'var(--text3)' }}>
-                      {supported ? '✓' : '–'}
+                    <span className="nut-check" style={{ color: isDisabled ? '#ffa500' : supported ? 'var(--accent)' : 'var(--text3)' }}>
+                      {isDisabled ? '!' : supported ? '✓' : '–'}
                     </span>
                   </div>
                 )
@@ -615,7 +658,7 @@ function MintDetailContent({ url }: { url: string }) {
           )}
 
           <div className="md-panel">
-            <div className="md-panel-title">Latency (ms) — last 24h</div>
+            <div className="md-panel-title">Latency (ms) — last {historyPeriod}</div>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={120}>
                 <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 10, bottom: 0 }}>
@@ -670,31 +713,143 @@ function MintDetailContent({ url }: { url: string }) {
 
         <div className="md-right">
 
-          <div className="md-panel">
-            <div className="md-panel-title">Mint History</div>
-            <div className="mh-row">
-              <div className="mh-label">
-                <span className="mh-name">Uptime</span>
-                <span className={`mh-badge ${uptimePct >= 90 ? 'green' : 'yellow'}`}>{uptimePct}%</span>
+          {(() => {
+            const tabs: Array<{ id: '24h' | '7d' | '30d'; label: string; disabled: boolean }> = [
+              { id: '24h', label: '24h', disabled: false },
+              { id: '7d',  label: '7d',  disabled: isLessThan7dOld },
+              { id: '30d', label: '30d', disabled: isLessThan30dOld },
+            ]
+
+            function segColor(pct: number | null): string {
+              if (pct === null) return '#374151'
+              if (pct === 100) return '#4ade80'
+              if (pct >= 50)   return '#fb923c'
+              return '#f87171'
+            }
+
+            function latencyBadgeColor(ms: number | null): string {
+              if (ms === null) return 'var(--text3)'
+              if (ms < 300) return '#4ade80'
+              if (ms < 800) return '#fb923c'
+              return '#f87171'
+            }
+
+            function formatBucket(bucket: string): string {
+              const d = new Date(bucket)
+              if (historyPeriod === '24h') {
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+              }
+              return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+            }
+
+            const startLabel = (() => {
+              if (historyPeriod === '24h') return '24h ago'
+              if (historyPeriod === '7d') return '7d ago'
+              if (discoveredAt) {
+                const d = new Date(discoveredAt)
+                return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+              }
+              return '30d ago'
+            })()
+
+            return (
+              <div className="md-panel">
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                  <div className="md-panel-title" style={{marginBottom:0}}>Mint History</div>
+                  <div style={{display:'flex',background:'var(--bg3)',borderRadius:6,padding:2,gap:1}}>
+                    {tabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        disabled={tab.disabled}
+                        onClick={() => { if (!tab.disabled) setHistoryPeriod(tab.id) }}
+                        style={{
+                          background: historyPeriod === tab.id ? 'var(--accent)' : 'transparent',
+                          color: historyPeriod === tab.id ? 'var(--bg)' : tab.disabled ? 'var(--text3)' : 'var(--text2)',
+                          border: 'none',
+                          borderRadius: 4,
+                          padding: '2px 8px',
+                          fontSize: 10,
+                          fontFamily: 'var(--font-mono)',
+                          cursor: tab.disabled ? 'not-allowed' : 'pointer',
+                          opacity: tab.disabled ? 0.4 : 1,
+                          transition: 'all 150ms ease',
+                          fontWeight: historyPeriod === tab.id ? 700 : 400,
+                        }}
+                      >{tab.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontSize:20,fontWeight:600,color: displayUptimePct !== null ? segColor(displayUptimePct) : 'var(--text3)',fontFamily:'var(--font-mono)',letterSpacing:'-0.03em',lineHeight:1}}>
+                      {displayUptimePct !== null ? `${displayUptimePct}%` : '—'}
+                    </span>
+                    {uptimeTrend !== null && (
+                      <span style={{fontSize:10,color: uptimeTrend >= 0 ? '#4ade80' : '#f87171',fontFamily:'var(--font-mono)'}}>
+                        {uptimeTrend >= 0 ? `↑+${uptimeTrend}%` : `↓${uptimeTrend}%`}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>Avg. latency</span>
+                    <span style={{
+                      fontSize:10,fontFamily:'var(--font-mono)',
+                      color: latencyBadgeColor(apiAvgLatency),
+                      background: apiAvgLatency !== null ? `${latencyBadgeColor(apiAvgLatency)}18` : 'var(--bg3)',
+                      border: `0.5px solid ${apiAvgLatency !== null ? latencyBadgeColor(apiAvgLatency) : 'var(--border)'}40`,
+                      borderRadius:4,padding:'1px 6px',
+                    }}>
+                      {apiAvgLatency !== null ? `${apiAvgLatency}ms` : '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{position:'relative',paddingBottom:6}}>
+                  <div style={{display:'flex',gap:2}}>
+                    {segments.map((seg, i) => (
+                      <div
+                        key={i}
+                        style={{flex:1,height:20,background:segColor(seg.uptimePct),borderRadius:2,cursor:'default'}}
+                        onMouseEnter={() => setSegmentTooltip(i)}
+                        onMouseLeave={() => setSegmentTooltip(null)}
+                      />
+                    ))}
+                    {segments.length === 0 && (
+                      <div style={{flex:1,height:20,background:'var(--bg3)',borderRadius:2}}/>
+                    )}
+                    {segmentTooltip !== null && segments[segmentTooltip] !== undefined && (() => {
+                      const seg = segments[segmentTooltip]!
+                      const leftPct = Math.min(Math.max((segmentTooltip + 0.5) / segments.length * 100, 10), 90)
+                      return (
+                        <div style={{position:'absolute',bottom:'calc(100% + 6px)',left:`${leftPct}%`,transform:'translateX(-50%)',background:'var(--bg2)',border:'0.5px solid var(--border2)',borderRadius:6,padding:'4px 8px',fontSize:10,whiteSpace:'nowrap',fontFamily:'var(--font-mono)',zIndex:10,pointerEvents:'none'}}>
+                          <div style={{color:'var(--text2)'}}>{formatBucket(seg.bucket)}</div>
+                          <div style={{color:segColor(seg.uptimePct)}}>
+                            {seg.uptimePct !== null ? `${seg.uptimePct}% uptime` : 'No data'}
+                          </div>
+                          {seg.latencyMs !== null && (
+                            <div style={{color:'var(--text3)'}}>{seg.latencyMs}ms latency</div>
+                          )}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',marginTop:4,fontSize:9,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>
+                    <span>{startLabel}</span>
+                    <span>Now</span>
+                  </div>
+                  <div style={{display:'flex',gap:10,marginTop:6,flexWrap:'wrap'}}>
+                    {([{color:'#4ade80',label:'100%'},{color:'#fb923c',label:'50–99%'},{color:'#f87171',label:'<50%'}] as const).map(({color,label}) => (
+                      <div key={label} style={{display:'flex',alignItems:'center',gap:3}}>
+                        <div style={{width:8,height:8,background:color,borderRadius:1}}/>
+                        <span style={{fontSize:9,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="md-mini-chart">
-                <svg viewBox="0 0 220 44" preserveAspectRatio="none">
-                  <polyline fill="none" stroke="var(--accent)" strokeWidth="1.5" points={historyPoints} />
-                </svg>
-              </div>
-            </div>
-            <div className="mh-row">
-              <div className="mh-label">
-                <span className="mh-name">Avg. latency</span>
-                <span className={`mh-badge ${avgLatency > 0 && avgLatency < 150 ? 'green' : 'yellow'}`}>{avgLatency > 0 ? `${avgLatency} ms` : '—'}</span>
-              </div>
-              <div className="md-mini-chart">
-                <svg viewBox="0 0 220 44" preserveAspectRatio="none">
-                  <polyline fill="none" stroke="var(--yellow)" strokeWidth="1.5" points={latencyPoints} />
-                </svg>
-              </div>
-            </div>
-          </div>
+            )
+          })()}
 
           {knownMint !== null && knownMint.auditNMints !== null && (
             <div className="md-panel" style={{background:'var(--bg)'}}>
@@ -703,44 +858,59 @@ function MintDetailContent({ url }: { url: string }) {
                 <span style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--font-mono)'}}>· via audit.8333.space</span>
               </div>
               <div className="audit-stats-grid">
-                <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
-                  onMouseEnter={() => setAuditTooltip('mints')}
-                  onMouseLeave={() => setAuditTooltip(null)}
-                  onClick={() => setAuditTooltip(auditTooltip === 'mints' ? null : 'mints')}
-                >
-                  {auditTooltip === 'mints' && (
-                    <div className="audit-tooltip" style={{left:0,transform:'none'}}>
-                      Number of successful ecash minting operations. The auditor actively creates ecash tokens to verify the mint works correctly.
-                    </div>
-                  )}
+                <div className="audit-stat-card">
                   <div className="audit-stat-value" style={{color:'#4ade80'}}>{(knownMint.auditNMints ?? 0).toLocaleString()}</div>
-                  <div className="audit-stat-label">Mint ops</div>
+                  <div className="audit-stat-label">
+                    Mint ops
+                    <span style={{position:'relative',display:'inline-flex',marginLeft:3}}
+                      onMouseEnter={() => setAuditTooltip('mints')}
+                      onMouseLeave={() => setAuditTooltip(null)}
+                      onClick={() => setAuditTooltip(auditTooltip === 'mints' ? null : 'mints')}
+                    >
+                      <Info size={11} color="#6b7280" style={{cursor:'help'}} />
+                      {auditTooltip === 'mints' && (
+                        <div className="audit-tooltip" style={{left:'50%',transform:'translateX(-50%)'}}>
+                          Number of successful ecash minting operations. The auditor actively creates ecash tokens to verify the mint works correctly.
+                        </div>
+                      )}
+                    </span>
+                  </div>
                 </div>
-                <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
-                  onMouseEnter={() => setAuditTooltip('melts')}
-                  onMouseLeave={() => setAuditTooltip(null)}
-                  onClick={() => setAuditTooltip(auditTooltip === 'melts' ? null : 'melts')}
-                >
-                  {auditTooltip === 'melts' && (
-                    <div className="audit-tooltip">
-                      Number of successful ecash melting operations. The auditor redeems ecash back to Lightning to verify withdrawals work.
-                    </div>
-                  )}
+                <div className="audit-stat-card">
                   <div className="audit-stat-value" style={{color:'#4ade80'}}>{(knownMint.auditNMelts ?? 0).toLocaleString()}</div>
-                  <div className="audit-stat-label">Melt ops</div>
+                  <div className="audit-stat-label">
+                    Melt ops
+                    <span style={{position:'relative',display:'inline-flex',marginLeft:3}}
+                      onMouseEnter={() => setAuditTooltip('melts')}
+                      onMouseLeave={() => setAuditTooltip(null)}
+                      onClick={() => setAuditTooltip(auditTooltip === 'melts' ? null : 'melts')}
+                    >
+                      <Info size={11} color="#6b7280" style={{cursor:'help'}} />
+                      {auditTooltip === 'melts' && (
+                        <div className="audit-tooltip" style={{left:'50%',transform:'translateX(-50%)'}}>
+                          Number of successful ecash melting operations. The auditor redeems ecash back to Lightning to verify withdrawals work.
+                        </div>
+                      )}
+                    </span>
+                  </div>
                 </div>
-                <div className="audit-stat-card" style={{position:'relative',cursor:'default'}}
-                  onMouseEnter={() => setAuditTooltip('errors')}
-                  onMouseLeave={() => setAuditTooltip(null)}
-                  onClick={() => setAuditTooltip(auditTooltip === 'errors' ? null : 'errors')}
-                >
-                  {auditTooltip === 'errors' && (
-                    <div className="audit-tooltip" style={{left:'auto',right:0,transform:'none'}}>
-                      Number of failed mint or melt operations detected by the auditor. Higher error count indicates reliability issues.
-                    </div>
-                  )}
+                <div className="audit-stat-card">
                   <div className="audit-stat-value" style={{color: (knownMint.auditNErrors ?? 0) > 0 ? '#ff4d4d' : '#4ade80'}}>{(knownMint.auditNErrors ?? 0).toLocaleString()}</div>
-                  <div className="audit-stat-label">Errors</div>
+                  <div className="audit-stat-label">
+                    Errors
+                    <span style={{position:'relative',display:'inline-flex',marginLeft:3}}
+                      onMouseEnter={() => setAuditTooltip('errors')}
+                      onMouseLeave={() => setAuditTooltip(null)}
+                      onClick={() => setAuditTooltip(auditTooltip === 'errors' ? null : 'errors')}
+                    >
+                      <Info size={11} color="#6b7280" style={{cursor:'help'}} />
+                      {auditTooltip === 'errors' && (
+                        <div className="audit-tooltip" style={{left:'50%',transform:'translateX(-50%)'}}>
+                          Number of failed mint or melt operations detected by the auditor. Higher error count indicates reliability issues.
+                        </div>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
               {knownMint.auditCheckedAt ? (
@@ -810,10 +980,29 @@ function MintDetailContent({ url }: { url: string }) {
                 fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 fontFamily: 'var(--font-body)', marginBottom: 8,
                 transition: 'all 150ms ease',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}
             >
-              {copiedUrl ? '✓ Copied!' : '⎘ Copy Mint URL'}
+              {copiedUrl ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Mint URL</>}
             </button>
+            <a
+              href={`https://wallet.cashu.me/?mint=${encodeURIComponent(url)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                width: '100%', background: 'var(--bg3)',
+                color: 'var(--text2)',
+                border: '0.5px solid var(--border)',
+                borderRadius: 8, padding: '9px 16px',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-body)', marginBottom: 8,
+                textDecoration: 'none', boxSizing: 'border-box',
+                transition: 'border-color 150ms ease',
+              }}
+            >
+              ↗ Open in Cashu.me
+            </a>
             <button
               onClick={() => setShowQr(!showQr)}
               style={{
@@ -927,15 +1116,21 @@ function MintDetailContent({ url }: { url: string }) {
                 { label: 'Audit reliability (5%)', display: auditDisplay, score: aScore, max: 5, color: aScore >= 4 ? '#4ade80' : aScore >= 3 ? '#ffa500' : '#ff4d4d', tooltip: 'Based on error rate from audit.8333.space — the percentage of failed mint/melt operations out of all tested operations. Lower error rate = higher score.' },
               ]
               return rows.map(row => (
-                <div key={row.label} style={{marginBottom:14,position:'relative'}}
-                  onMouseEnter={() => setBreakdownTooltip(row.label)}
-                  onMouseLeave={() => setBreakdownTooltip(null)}
-                >
-                  {breakdownTooltip === row.label && (
-                    <div className="audit-tooltip" style={{width:220,left:'50%',transform:'translateX(-50%)'}}>{row.tooltip}</div>
-                  )}
+                <div key={row.label} style={{marginBottom:14}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                    <span style={{fontSize:12,color:'var(--text2)'}}>{row.label}</span>
+                    <span style={{fontSize:12,color:'var(--text2)',display:'flex',alignItems:'center',gap:4}}>
+                      {row.label}
+                      <span style={{position:'relative',display:'inline-flex'}}
+                        onMouseEnter={() => setBreakdownTooltip(row.label)}
+                        onMouseLeave={() => setBreakdownTooltip(null)}
+                        onClick={e => { e.stopPropagation(); setBreakdownTooltip(breakdownTooltip === row.label ? null : row.label) }}
+                      >
+                        <Info size={11} color="#6b7280" style={{flexShrink:0,cursor:'help'}} />
+                        {breakdownTooltip === row.label && (
+                          <div className="audit-tooltip" style={{width:220,left:'50%',transform:'translateX(-50%)'}}>{row.tooltip}</div>
+                        )}
+                      </span>
+                    </span>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--font-mono)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{row.display}</span>
                       <span style={{fontSize:13,fontWeight:600,color:row.color}}>{row.score}/{row.max}</span>
@@ -1027,6 +1222,7 @@ function MintDetailContent({ url }: { url: string }) {
         const nutKey = parseInt(selectedNut.slice(4), 10).toString()
         const rawNutConfig = data.info?.nuts?.[nutKey] ?? knownMint?.nutsLimits?.[nutKey]
         const nutConfig = (rawNutConfig !== null && typeof rawNutConfig === 'object') ? rawNutConfig as NutConfig : null
+        const isNutDisabled = supported && nutConfig?.disabled === true
         return (
           <div
             style={{
@@ -1057,12 +1253,12 @@ function MintDetailContent({ url }: { url: string }) {
                 <div style={{display:'flex', alignItems:'center', gap: 8}}>
                   <span style={{
                     fontSize: 11, padding: '3px 10px', borderRadius: 6,
-                    background: supported ? '#0d2018' : 'var(--bg3)',
-                    color: supported ? 'var(--accent)' : 'var(--text3)',
-                    border: `0.5px solid ${supported ? '#1a3a28' : 'var(--border)'}`,
+                    background: isNutDisabled ? 'rgba(255,165,0,0.1)' : supported ? '#0d2018' : 'var(--bg3)',
+                    color: isNutDisabled ? '#ffa500' : supported ? 'var(--accent)' : 'var(--text3)',
+                    border: `0.5px solid ${isNutDisabled ? 'rgba(255,165,0,0.3)' : supported ? '#1a3a28' : 'var(--border)'}`,
                     fontFamily: 'var(--font-mono)',
                   }}>
-                    {supported ? '✓ Supported' : '– Not supported'}
+                    {isNutDisabled ? '⊘ Disabled by operator' : supported ? '✓ Supported' : '– Not supported'}
                   </span>
                   <button
                     onClick={() => setSelectedNut(null)}

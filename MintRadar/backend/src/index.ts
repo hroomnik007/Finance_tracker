@@ -293,28 +293,143 @@ app.get('/api/mints/history', (req: Request, res: Response): void => {
     return
   }
 
+  const periodParam = req.query['period']
+  // Support legacy `days` param for backward compat
+  const daysParam = req.query['days']
+  let period: '24h' | '7d' | '30d'
+  if (periodParam === '7d') period = '7d'
+  else if (periodParam === '30d') period = '30d'
+  else if (daysParam === '7') period = '7d'
+  else period = '24h'
+
   isSafeUrl(url)
     .then(safe => {
       if (!safe) {
         res.status(400).json({ error: 'Invalid url' })
         return
       }
-      return pool
-        .query(
-          `SELECT online, latency_ms, checked_at FROM mint_history
-           WHERE url = $1 ORDER BY checked_at DESC LIMIT 288`,
-          [url]
-        )
-        .then(result => {
-          res.json({
-            url,
-            history: result.rows.map(r => ({
-              online: r.online as boolean,
-              latencyMs: r.latency_ms as number | null,
-              checkedAt: r.checked_at as string,
-            })),
-          })
+
+      // Each period returns N segments + prev period uptime for trend.
+      // 24h → 24 hourly buckets, prev 24h for trend
+      // 7d  → 7 daily buckets, prev 7d for trend
+      // 30d → 30 daily buckets, prev 30d for trend
+      let segmentsQuery: string
+      let prevQuery: string
+
+      if (period === '24h') {
+        segmentsQuery = `
+          SELECT
+            DATE_TRUNC('hour', checked_at AT TIME ZONE 'UTC') AS bucket,
+            BOOL_OR(online) AS online,
+            ROUND(AVG(CASE WHEN online THEN latency_ms END))::int AS latency_ms,
+            COUNT(*) AS total,
+            SUM(CASE WHEN online THEN 1 ELSE 0 END) AS online_count
+          FROM mint_history
+          WHERE url = $1
+            AND checked_at >= NOW() - INTERVAL '24 hours'
+            AND checked_at < NOW()
+          GROUP BY bucket
+          ORDER BY bucket ASC`
+        prevQuery = `
+          SELECT
+            SUM(CASE WHEN online THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0) AS uptime_ratio,
+            ROUND(AVG(CASE WHEN online THEN latency_ms END))::int AS avg_latency_ms
+          FROM mint_history
+          WHERE url = $1
+            AND checked_at >= NOW() - INTERVAL '48 hours'
+            AND checked_at < NOW() - INTERVAL '24 hours'`
+      } else if (period === '7d') {
+        segmentsQuery = `
+          SELECT
+            DATE_TRUNC('day', checked_at AT TIME ZONE 'UTC') AS bucket,
+            BOOL_OR(online) AS online,
+            ROUND(AVG(CASE WHEN online THEN latency_ms END))::int AS latency_ms,
+            COUNT(*) AS total,
+            SUM(CASE WHEN online THEN 1 ELSE 0 END) AS online_count
+          FROM mint_history
+          WHERE url = $1
+            AND checked_at >= NOW() - INTERVAL '7 days'
+            AND checked_at < NOW()
+          GROUP BY bucket
+          ORDER BY bucket ASC`
+        prevQuery = `
+          SELECT
+            SUM(CASE WHEN online THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0) AS uptime_ratio,
+            ROUND(AVG(CASE WHEN online THEN latency_ms END))::int AS avg_latency_ms
+          FROM mint_history
+          WHERE url = $1
+            AND checked_at >= NOW() - INTERVAL '14 days'
+            AND checked_at < NOW() - INTERVAL '7 days'`
+      } else {
+        // 30d
+        segmentsQuery = `
+          SELECT
+            DATE_TRUNC('day', checked_at AT TIME ZONE 'UTC') AS bucket,
+            BOOL_OR(online) AS online,
+            ROUND(AVG(CASE WHEN online THEN latency_ms END))::int AS latency_ms,
+            COUNT(*) AS total,
+            SUM(CASE WHEN online THEN 1 ELSE 0 END) AS online_count
+          FROM mint_history
+          WHERE url = $1
+            AND checked_at >= NOW() - INTERVAL '30 days'
+            AND checked_at < NOW()
+          GROUP BY bucket
+          ORDER BY bucket ASC`
+        prevQuery = `
+          SELECT
+            SUM(CASE WHEN online THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0) AS uptime_ratio,
+            ROUND(AVG(CASE WHEN online THEN latency_ms END))::int AS avg_latency_ms
+          FROM mint_history
+          WHERE url = $1
+            AND checked_at >= NOW() - INTERVAL '60 days'
+            AND checked_at < NOW() - INTERVAL '30 days'`
+      }
+
+      return Promise.all([
+        pool.query(segmentsQuery, [url]),
+        pool.query(prevQuery, [url]),
+      ]).then(([segResult, prevResult]) => {
+        const segments = segResult.rows.map(r => ({
+          bucket: (r.bucket as Date).toISOString(),
+          online: r.online as boolean,
+          latencyMs: r.latency_ms as number | null,
+          total: Number(r.total),
+          onlineCount: Number(r.online_count),
+          uptimePct: Number(r.total) === 0 ? null
+            : Math.round(Number(r.online_count) / Number(r.total) * 100),
+        }))
+        const prevRow = prevResult.rows[0]
+        const prevUptimePct = prevRow?.uptime_ratio != null
+          ? Math.round(Number(prevRow.uptime_ratio) * 100)
+          : null
+        const prevAvgLatencyMs = prevRow?.avg_latency_ms != null
+          ? Number(prevRow.avg_latency_ms)
+          : null
+
+        // Compute overall stats for the period
+        const totalChecks = segments.reduce((s, r) => s + r.total, 0)
+        const totalOnline = segments.reduce((s, r) => s + r.onlineCount, 0)
+        const uptimePct = totalChecks === 0 ? null : Math.round(totalOnline / totalChecks * 100)
+        const latencies = segments.filter(r => r.latencyMs !== null).map(r => r.latencyMs as number)
+        const avgLatencyMs = latencies.length === 0 ? null
+          : Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+
+        res.json({
+          url,
+          period,
+          segments,
+          uptimePct,
+          avgLatencyMs,
+          prevUptimePct,
+          prevAvgLatencyMs,
+          // Legacy field for backward compat
+          history: segResult.rows.map(r => ({
+            online: r.online as boolean,
+            latencyMs: r.latency_ms as number | null,
+            checkedAt: (r.bucket as Date).toISOString(),
+          })),
         })
+      })
     })
     .catch((err: unknown) => {
       if (IS_DEV) console.error('[/api/mints/history]', err)
@@ -378,6 +493,7 @@ app.get('/api/mints/known', (_req: Request, res: Response): void => {
       SELECT m.url, m.name, m.icon_url, m.version, m.nut_count,
         m.tos_url, m.description_long, m.nuts_limits,
         m.audit_n_mints, m.audit_n_melts, m.audit_n_errors, m.audit_checked_at,
+        m.discovered_at, m.last_trust_score, m.last_error,
         COUNT(h.online) AS total,
         COALESCE(SUM(CASE WHEN h.online THEN 1 ELSE 0 END), 0) AS online_count,
         latest.online AS latest_online,
@@ -391,6 +507,7 @@ app.get('/api/mints/known', (_req: Request, res: Response): void => {
       GROUP BY m.url, m.name, m.icon_url, m.version, m.nut_count,
         m.tos_url, m.description_long, m.nuts_limits,
         m.audit_n_mints, m.audit_n_melts, m.audit_n_errors, m.audit_checked_at,
+        m.discovered_at, m.last_trust_score, m.last_error,
         latest.online, latest.latency_ms
     `)
     .then(result => {
@@ -413,6 +530,9 @@ app.get('/api/mints/known', (_req: Request, res: Response): void => {
           auditNMelts: (r.audit_n_melts as number | null) ?? null,
           auditNErrors: (r.audit_n_errors as number | null) ?? null,
           auditCheckedAt: (r.audit_checked_at as string | null) ?? null,
+          discoveredAt: (r.discovered_at as string | null) ?? null,
+          trustScore: (r.last_trust_score as number | null) ?? null,
+          lastError: (r.last_error as string | null) ?? null,
         }
       })
       knownMintsCache = { data, expiresAt: Date.now() + KNOWN_MINTS_CACHE_TTL }
@@ -421,6 +541,59 @@ app.get('/api/mints/known', (_req: Request, res: Response): void => {
     })
     .catch((err: unknown) => {
       if (IS_DEV) console.error('[/api/mints/known]', err)
+      res.status(500).json({ error: 'Internal server error' })
+    })
+})
+
+app.get('/api/mints/daily-uptime', (req: Request, res: Response): void => {
+  const url = req.query['url']
+
+  if (typeof url !== 'string' || url.length === 0) {
+    res.status(400).json({ error: 'Missing required query parameter: url' })
+    return
+  }
+
+  if (!url.startsWith('https://')) {
+    res.status(400).json({ error: 'url must start with https://' })
+    return
+  }
+
+  if (url.length > MAX_URL_LENGTH) {
+    res.status(400).json({ error: `url exceeds maximum length of ${MAX_URL_LENGTH} characters` })
+    return
+  }
+
+  isSafeUrl(url)
+    .then(safe => {
+      if (!safe) {
+        res.status(400).json({ error: 'Invalid url' })
+        return
+      }
+      return pool
+        .query(
+          `SELECT
+            DATE_TRUNC('day', checked_at AT TIME ZONE 'UTC') AS day,
+            SUM(CASE WHEN online THEN 1 ELSE 0 END)::int AS online_count,
+            COUNT(*)::int AS total_count
+           FROM mint_history
+           WHERE url = $1 AND checked_at > NOW() - INTERVAL '30 days'
+           GROUP BY DATE_TRUNC('day', checked_at AT TIME ZONE 'UTC')
+           ORDER BY day ASC`,
+          [url]
+        )
+        .then(result => {
+          res.json({
+            url,
+            days: result.rows.map(r => ({
+              day: (r.day as Date).toISOString().slice(0, 10),
+              onlineCount: r.online_count as number,
+              totalCount: r.total_count as number,
+            })),
+          })
+        })
+    })
+    .catch((err: unknown) => {
+      if (IS_DEV) console.error('[/api/mints/daily-uptime]', err)
       res.status(500).json({ error: 'Internal server error' })
     })
 })

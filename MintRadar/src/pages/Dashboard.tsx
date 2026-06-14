@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { nip19 } from 'nostr-tools'
@@ -6,6 +6,7 @@ import { SimplePool } from 'nostr-tools/pool'
 import type { NostrEvent } from 'nostr-tools'
 import { useNostrDiscovery } from '@/hooks/useNostrDiscovery'
 import { useWatchlistNotifications } from '@/hooks/useWatchlistNotifications'
+import { useUserRelays } from '@/hooks/useUserRelays'
 import { MintFavicon } from '@/components/mint/MintFavicon'
 import { useNostrMints } from '@/hooks/useNostrMints'
 import { useKnownMints, type KnownMint } from '@/hooks/useKnownMints'
@@ -121,6 +122,13 @@ function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegr
   const isOnline = mint.online === true
   const displayName = mint.name ?? hostname
 
+  const nutsLimits = mint.nutsLimits as Record<string, { disabled?: boolean }> | null
+  const isMintingDisabled = nutsLimits?.['4']?.disabled === true
+  const isMeltingDisabled = nutsLimits?.['5']?.disabled === true
+
+  const isNew = mint.discoveredAt != null
+    && (Date.now() - new Date(mint.discoveredAt).getTime()) < 48 * 3600 * 1000
+
   return (
     <div
       className={`mint-card ${mint.online === true ? 'online' : mint.online === false ? 'offline' : ''}`}
@@ -131,7 +139,12 @@ function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegr
         <div className="card-name-row">
           <MintFavicon url={mint.url} iconUrl={mint.iconUrl ?? null} size={22} />
           <div>
-            <div className="card-name">{displayName}</div>
+            <div className="card-name" style={{display:'flex',alignItems:'center',gap:5,minWidth:0}}>
+              <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{displayName}</span>
+              {isNew && (
+                <span style={{flexShrink:0,background:'rgba(74,222,128,0.15)',color:'#4ade80',border:'0.5px solid rgba(74,222,128,0.3)',fontSize:10,padding:'1px 5px',borderRadius:4,fontFamily:'var(--font-mono)',fontWeight:600}}>New</span>
+              )}
+            </div>
             <div className="card-host">{hostname}</div>
           </div>
         </div>
@@ -150,6 +163,11 @@ function MintCardDisplay({ mint, isDegraded = false }: { mint: KnownMint; isDegr
           </div>
         )}
         {!isOnline && mint.online !== null && <span className="badge unreachable">Unreachable</span>}
+        {(isMintingDisabled || isMeltingDisabled) && (
+          <span className="badge" style={{color:'#ffa500',background:'rgba(255,165,0,0.1)',border:'0.5px solid rgba(255,165,0,0.25)'}}>
+            {isMintingDisabled && isMeltingDisabled ? 'Disabled' : isMintingDisabled ? 'No minting' : 'No melting'}
+          </span>
+        )}
       </div>
 
       <div className="card-bottom">
@@ -234,6 +252,8 @@ export default function Dashboard() {
   const [probeState, setProbeState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [probeResult, setProbeResult] = useState<{ name: string | null; version: string | null; nutCount: number; latencyMs: number | null } | null>(null)
   const [nostrLookupState, setNostrLookupState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [searchFocused, setSearchFocused] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [nostrLookupMsg, setNostrLookupMsg] = useState('')
   const queryClient = useQueryClient()
   useNostrDiscovery()
@@ -248,7 +268,14 @@ export default function Dashboard() {
         .map(m => [m.url, { online: m.online as boolean, latencyMs: m.latencyMs ?? null }])
     )
   }, [knownMintsData])
-  useWatchlistNotifications(statusRecord)
+
+  const trustScoreRecord = useMemo(() => {
+    if (!knownMintsData) return {}
+    return Object.fromEntries(knownMintsData.map(m => [m.url, m.trustScore ?? null]))
+  }, [knownMintsData])
+
+  const userReadRelays = useUserRelays()
+  useWatchlistNotifications(statusRecord, trustScoreRecord, userReadRelays)
 
   const degradedUrls = knownMintsData?.filter(m => m.degraded).map(m => m.url) ?? []
   const degradedCount = degradedUrls.length
@@ -279,6 +306,18 @@ export default function Dashboard() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [showSubmit])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== '/') return
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement).isContentEditable) return
+      e.preventDefault()
+      searchInputRef.current?.focus()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   useEffect(() => {
     if (submitState !== 'success') return
@@ -466,12 +505,18 @@ export default function Dashboard() {
         <div className="search-wrap">
           <span className="search-icon"><IcSearch /></span>
           <input
+            ref={searchInputRef}
             className="search-input"
             type="text"
             placeholder="Search mints by name, URL or version…"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
           />
+          {!searchFocused && search === '' && (
+            <span className="search-shortcut">/</span>
+          )}
         </div>
         <div className="sort-segment">
           {(['status', 'latency', 'name', 'trust'] as const).map(s => (
@@ -507,10 +552,10 @@ export default function Dashboard() {
           <MintGrid mints={allMints} search={search} sortBy={sortBy} sortDir={sortDir} />
           {degradedCount > 0 && (
             <p className="degraded-note">
-              {degradedCount} mints skrytých (offline 24h+){' '}
+              {degradedCount} mints hidden (offline 24h+){' '}
               <button onClick={() => setShowDegraded(v => !v)}
                 style={{background:'none',border:'none',color:'var(--accent)',fontSize:11,cursor:'pointer',textDecoration:'underline'}}>
-                {showDegraded ? 'Skryť' : 'Zobraziť'}
+                {showDegraded ? 'Hide' : 'Show'}
               </button>
             </p>
           )}
