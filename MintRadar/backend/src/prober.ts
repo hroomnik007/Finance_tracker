@@ -4,6 +4,71 @@ import { isSafeUrl, safeFetch } from './ssrf.js'
 const PROBE_TIMEOUT_MS = 10000
 const RETENTION_DAYS = 30
 
+// [major, minor] descending — newest first
+const SERVER_NUTSHELL_VERSIONS: [number, number][] = [
+  [0, 16], [0, 15], [0, 14], [0, 13], [0, 12], [0, 11],
+]
+
+function serverVersionFreshnessScore(v: string | null | undefined): number {
+  if (!v) return 0
+  const m = v.match(/(\d+)\.(\d+)/)
+  if (!m || !m[1] || !m[2]) return 3
+  const major = parseInt(m[1], 10)
+  const minor = parseInt(m[2], 10)
+  const idx = SERVER_NUTSHELL_VERSIONS.findIndex(
+    ([mj, mn]) => major > mj || (major === mj && minor >= mn)
+  )
+  if (idx === -1) return 0
+  return Math.max(0, 10 - idx * 2)
+}
+
+function computeServerTrustScore(
+  uptimePct: number,
+  nutCount: number | null,
+  version: string | null,
+  auditNMints: number | null,
+  auditNMelts: number | null,
+  auditNErrors: number | null
+): number {
+  const uScore = Math.round(uptimePct * 0.45)
+  const nScore = Math.round(Math.min((nutCount ?? 0) / 14, 1) * 30)
+  const vScore = Math.round(serverVersionFreshnessScore(version) / 10 * 15)
+  const total = (auditNMints ?? 0) + (auditNMelts ?? 0) + (auditNErrors ?? 0)
+  const errRate = total === 0 ? 0 : (auditNErrors ?? 0) / total
+  const aScore = auditNMints === null
+    ? 2.5
+    : errRate === 0 ? 5
+    : errRate < 0.01 ? 4
+    : errRate < 0.05 ? 3
+    : errRate < 0.15 ? 2
+    : 1
+  return Math.min(100, Math.round(uScore + nScore + vScore + aScore))
+}
+
+function classifyFetchError(err: unknown): string {
+  if (!(err instanceof Error)) return 'Unreachable'
+  const code = (err as { code?: string }).code
+  const name = err.name
+  const msg = err.message.toLowerCase()
+  if (
+    name === 'AbortError' || name === 'TimeoutError' ||
+    code === 'UND_ERR_CONNECT_TIMEOUT'
+  ) return 'Connection timeout'
+  if (code === 'ECONNREFUSED') return 'Connection refused'
+  if (
+    code === 'ENOTFOUND' || code === 'EAI_AGAIN' ||
+    msg.includes('getaddrinfo')
+  ) return 'DNS resolution failed'
+  if (
+    code?.startsWith('ERR_TLS') ||
+    code === 'CERT_HAS_EXPIRED' ||
+    code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
+    msg.includes('certificate') ||
+    msg.includes('ssl')
+  ) return 'TLS/SSL error'
+  return 'Unreachable'
+}
+
 export async function probeMintToDb(url: string): Promise<void> {
   if (!(await isSafeUrl(url))) {
     if (process.env['NODE_ENV'] !== 'production') {
@@ -15,11 +80,14 @@ export async function probeMintToDb(url: string): Promise<void> {
   const start = Date.now()
   let online = false
   let latencyMs: number | null = null
+  let lastError: string | null = null
+  let capturedErr: unknown = null
 
   try {
-    // safeFetch follows redirects internally, re-validating each hop with
-    // isSafeUrl() and pinning DNS at connect time (SSRF + rebinding safe).
-    const res = await safeFetch(`${url}/v1/info`, { timeoutMs: PROBE_TIMEOUT_MS })
+    const res = await safeFetch(`${url}/v1/info`, {
+      timeoutMs: PROBE_TIMEOUT_MS,
+      onError: (err) => { capturedErr = err },
+    })
 
     if (res && res.ok) {
       online = true
@@ -57,9 +125,13 @@ export async function probeMintToDb(url: string): Promise<void> {
           )
         }
       } catch { /* ignore parse errors */ }
+    } else if (res && !res.ok) {
+      lastError = `HTTP ${res.status}`
+    } else {
+      lastError = classifyFetchError(capturedErr)
     }
   } catch {
-    // mint unreachable
+    lastError = 'Unreachable'
   }
 
   await pool.query(
@@ -67,6 +139,42 @@ export async function probeMintToDb(url: string): Promise<void> {
      VALUES ($1, $2, $3, NOW())`,
     [url, online, latencyMs]
   )
+
+  try {
+    const statsRes = await pool.query(
+      `SELECT
+        m.nut_count, m.version,
+        m.audit_n_mints, m.audit_n_melts, m.audit_n_errors,
+        COUNT(h.online) AS total,
+        COALESCE(SUM(CASE WHEN h.online THEN 1 ELSE 0 END), 0) AS online_count
+       FROM mints m
+       LEFT JOIN mint_history h
+         ON h.url = m.url AND h.checked_at > NOW() - INTERVAL '24 hours'
+       WHERE m.url = $1
+       GROUP BY m.nut_count, m.version, m.audit_n_mints, m.audit_n_melts, m.audit_n_errors`,
+      [url]
+    )
+    const row = statsRes.rows[0]
+    if (row) {
+      const total = Number(row.total)
+      const onlineCount = Number(row.online_count)
+      const uptimePct = total === 0
+        ? (online ? 100 : 0)
+        : Math.round((onlineCount / total) * 100)
+      const trustScore = computeServerTrustScore(
+        uptimePct,
+        row.nut_count as number | null,
+        row.version as string | null,
+        row.audit_n_mints as number | null,
+        row.audit_n_melts as number | null,
+        row.audit_n_errors as number | null
+      )
+      await pool.query(
+        `UPDATE mints SET last_trust_score = $1, last_error = $2 WHERE url = $3`,
+        [trustScore, lastError, url]
+      )
+    }
+  } catch { /* ignore trust score errors */ }
 }
 
 export async function pruneOldHistory(): Promise<void> {

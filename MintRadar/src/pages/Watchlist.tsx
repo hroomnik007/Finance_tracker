@@ -58,6 +58,13 @@ function WatchlistCard({
   const iconUrl = knownMint?.iconUrl ?? null
   const uptimePct = records.length > 0 ? uptimePercent : 100
 
+  const nutsLimits = knownMint?.nutsLimits as Record<string, { disabled?: boolean }> | null | undefined
+  const isMintingDisabled = nutsLimits?.['4']?.disabled === true
+  const isMeltingDisabled = nutsLimits?.['5']?.disabled === true
+
+  const isNew = knownMint?.discoveredAt != null
+    && (Date.now() - new Date(knownMint.discoveredAt).getTime()) < 48 * 3600 * 1000
+
   return (
     <div
       className={`mint-card ${knownMint?.online === true ? 'online' : knownMint?.online === false ? 'offline' : ''}`}
@@ -67,7 +74,12 @@ function WatchlistCard({
         <div className="card-name-row">
           <MintFavicon url={url} iconUrl={iconUrl} size={22} />
           <div>
-            <div className="card-name">{displayName}</div>
+            <div className="card-name" style={{display:'flex',alignItems:'center',gap:5,minWidth:0}}>
+              <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{displayName}</span>
+              {isNew && (
+                <span style={{flexShrink:0,background:'rgba(74,222,128,0.15)',color:'#4ade80',border:'0.5px solid rgba(74,222,128,0.3)',fontSize:10,padding:'1px 5px',borderRadius:4,fontFamily:'var(--font-mono)',fontWeight:600}}>New</span>
+              )}
+            </div>
             <div className="card-host">{hostname}</div>
           </div>
         </div>
@@ -86,6 +98,11 @@ function WatchlistCard({
           </div>
         )}
         {!isOnline && knownMint?.online === false && <span className="badge unreachable">Unreachable</span>}
+        {(isMintingDisabled || isMeltingDisabled) && (
+          <span className="badge" style={{color:'#ffa500',background:'rgba(255,165,0,0.1)',border:'0.5px solid rgba(255,165,0,0.25)'}}>
+            {isMintingDisabled && isMeltingDisabled ? 'Disabled' : isMintingDisabled ? 'No minting' : 'No melting'}
+          </span>
+        )}
       </div>
 
       <div className="card-bottom">

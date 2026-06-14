@@ -16,6 +16,9 @@ export interface KnownMint {
   auditNMelts?: number | null
   auditNErrors?: number | null
   auditCheckedAt?: string | null
+  discoveredAt?: string | null
+  trustScore?: number | null
+  lastError?: string | null
 }
 
 async function fetchKnownMints(): Promise<KnownMint[]> {

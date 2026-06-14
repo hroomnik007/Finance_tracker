@@ -11,11 +11,14 @@ const NOTIFICATION_RELAYS = [
   'wss://purplepag.es',
 ]
 
-// Track previous online states to detect transitions
+// Track previous online states and trust scores to detect transitions
 const prevStates = new Map<string, boolean>()
+const prevTrustScores = new Map<string, number>()
 
 export function useWatchlistNotifications(
-  probeData: Record<string, { online: boolean; latencyMs: number | null } | undefined>
+  probeData: Record<string, { online: boolean; latencyMs: number | null } | undefined>,
+  trustScoreData?: Record<string, number | null | undefined>,
+  userReadRelays?: string[] | null
 ) {
   const profile = useAuthStore(s => s.profile)
   const { mints: watchlist } = useWatchlistStore()
@@ -38,13 +41,16 @@ export function useWatchlistNotifications(
         const prev = prevStates.get(url)
         const isOnline = current.online
 
+        const dmRelays = userReadRelays ?? NOTIFICATION_RELAYS
+
         // Detect online → offline transition
         if (prev === true && isOnline === false) {
           console.log(`[notifications] mint down: ${url}`)
           await sendNostrDM(
             profile.pubkey,
             `⚠️ MintRadar Alert\n\nMint is down: ${url}\n\nCheck status: https://mintradar.pedani.eu`,
-            poolRef.current!
+            poolRef.current!,
+            dmRelays
           )
         }
 
@@ -54,16 +60,35 @@ export function useWatchlistNotifications(
           await sendNostrDM(
             profile.pubkey,
             `✅ MintRadar Alert\n\nMint is back online: ${url}\n\nLatency: ${current.latencyMs}ms`,
-            poolRef.current!
+            poolRef.current!,
+            dmRelays
           )
         }
 
         prevStates.set(url, isOnline)
+
+        // Detect trust score changes ≥ 10 points
+        if (trustScoreData) {
+          const currentScore = trustScoreData[url]
+          if (currentScore != null) {
+            const prevScore = prevTrustScores.get(url)
+            if (prevScore !== undefined && Math.abs(currentScore - prevScore) >= 10) {
+              const mintId = encodeURIComponent(url)
+              await sendNostrDM(
+                profile.pubkey,
+                `⚡ MintRadar Alert\n\nTrust Score for ${url} changed from ${prevScore}% to ${currentScore}%.\n\nCheck details: https://mintradar.pedani.eu/mint/${mintId}`,
+                poolRef.current!,
+                dmRelays
+              )
+            }
+            prevTrustScores.set(url, currentScore)
+          }
+        }
       }
     }
 
     checkTransitions()
-  }, [probeData, watchlist, profile])
+  }, [probeData, trustScoreData, userReadRelays, watchlist, profile])
 }
 
 // NIP-59 recommends randomizing seal/wrap timestamps (up to 2 days in the
@@ -77,7 +102,7 @@ function randomizedTimestamp(): number {
 // NIP-44 encryption (replaces legacy NIP-04 kind:4). The seal is signed by
 // the user's NIP-07 extension; the outer gift wrap is signed by a throwaway
 // ephemeral key so the sender's identity is not exposed on the relay.
-async function sendNostrDM(recipientPubkey: string, content: string, pool: SimplePool) {
+async function sendNostrDM(recipientPubkey: string, content: string, pool: SimplePool, relays: string[]) {
   try {
     if (!window.nostr?.nip44) {
       console.warn('[notifications] nip44 not available — skipping DM')
@@ -119,7 +144,7 @@ async function sendNostrDM(recipientPubkey: string, content: string, pool: Simpl
     }, ephemeralKey)
 
     await Promise.any(
-      NOTIFICATION_RELAYS.map(relay =>
+      relays.map(relay =>
         pool.publish([relay], giftWrap)
       )
     )

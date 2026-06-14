@@ -109,6 +109,7 @@ const MAX_REDIRECTS = 3
 
 export interface SafeFetchOptions {
   timeoutMs?: number
+  onError?: (err: unknown) => void
 }
 
 /**
@@ -135,7 +136,8 @@ export async function safeFetch(
         redirect: 'manual',
         dispatcher: safeAgent,
       }) as unknown as Response
-    } catch {
+    } catch (err) {
+      options.onError?.(err)
       return null
     }
 
