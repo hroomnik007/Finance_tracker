@@ -213,6 +213,15 @@ docker compose up --build -d
 ```
 - **NIKDY nepoužívať `docker-compose` (s pomlčkou)** — na tomto serveri nie je k dispozícii
 
+### PostgreSQL — definícia a upgrade
+- Postgres **NIE je** v repo `docker-compose.yml` (ten definuje len backend) — je v samostatnom `/var/www/finance-tracker/docker-compose.yml`, image `postgres:17-alpine`, dáta v named volume `finance-tracker_postgres_data` (external)
+- **Dve DB identity** (rôzne roly!):
+  - Backend kontajner: rola `user`, host `postgres` (container link) — v `backend/.env`
+  - CI deploy migrácia: rola `finance_user` (vlastník schémy), host `localhost:5432` — v GitHub secrete `DATABASE_URL`
+- **`pg_hba.conf`**: `127.0.0.1`/`::1`/`local` = `trust` (bez hesla); všetko ostatné vrátane docker bridge subnetu = `scram-sha-256` → docker-published spojenia **vyžadujú heslo**
+- **Major version upgrade gotcha** (16→17): `pg_dump` jednej databázy **nezachová cluster roly ani heslá** (sú globálne). Po fresh init + restore treba `finance_user` znovu vytvoriť s LOGIN + heslom zhodným s GitHub secretom `DATABASE_URL`, inak CI deploy zlyhá na `password authentication failed for user "finance_user"` (kód `28P01`). Postup: čistý volume → `docker compose up -d postgres` → restore z `pg_dump` ako rola `user` → `ALTER ROLE finance_user WITH LOGIN PASSWORD '...'` + `ALTER ROLE "user" PASSWORD '...'` (decoded z `backend/.env` DATABASE_URL)
+- **`gh secret set`**: hodnotu posielať cez **stdin** (`printf '...' | gh secret set DATABASE_URL --repo ...`) — **NIE** `--body -` (nastaví doslovný reťazec, prejaví sa ako `getaddrinfo ENOTFOUND base`)
+
 ### Nginx
 - Config: `/etc/nginx/sites-enabled/api.pedani.eu.conf`
 - `client_max_body_size 20M` — potrebné pre avatar upload (base64 ~5MB)
