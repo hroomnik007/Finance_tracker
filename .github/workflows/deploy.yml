@@ -43,6 +43,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd /var/www/finance-tracker-repo/finance-tracker
+            rm -rf ~/.npm/_cacache || true
             rm -rf node_modules && npm cache clean --force
             npm ci --legacy-peer-deps
             export PATH="$PATH:$(pwd)/node_modules/.bin"
@@ -71,6 +72,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd /var/www/finance-tracker-repo/backend
+            rm -rf ~/.npm/_cacache || true
             rm -rf node_modules && npm cache clean --force
             npm ci --prefer-offline
             # Add DATABASE_URL to GitHub repo Settings → Secrets and variables → Actions
