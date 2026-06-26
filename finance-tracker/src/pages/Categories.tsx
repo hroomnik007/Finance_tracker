@@ -258,7 +258,7 @@ export function CategoriesPage() {
   const { t } = useTranslation()
   const now = new Date()
   const { variableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
-  const { fixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
+  const { fixedExpenses } = useFixedExpenses()
 
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses })
 
