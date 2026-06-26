@@ -260,21 +260,7 @@ export function CategoriesPage() {
   const { variableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
   const { fixedExpenses } = useFixedExpenses(now.getMonth() + 1, now.getFullYear())
 
-  const allExpenses = useMemo(() => [
-    ...variableExpenses,
-    ...fixedExpenses
-      .filter(fe => fe.categoryId != null)
-      .map(fe => ({
-        id: fe.id,
-        amount: fe.amount,
-        categoryId: fe.categoryId as string,
-        note: fe.label,
-        date: '',
-        created_by: null as null,
-      })),
-  ], [variableExpenses, fixedExpenses])
-
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allExpenses })
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses })
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
