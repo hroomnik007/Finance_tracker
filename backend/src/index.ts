@@ -1,4 +1,3 @@
-import 'express-async-errors';
 import express from "express";
 import helmet from "helmet";
 import compression from "compression";
