@@ -47,7 +47,7 @@ The demo account is pre-filled with realistic data: income, expenses, savings, a
 ## Tech stack
 
 ### Frontend
-- **React 19** + **TypeScript 5.7** + **Vite 8**
+- **React 19** + **TypeScript 5.8** + **Vite 8**
 - **Tailwind CSS 4**
 - **i18n** — custom typed system (5 languages, 413 keys)
 - **Recharts** — charts
@@ -55,8 +55,8 @@ The demo account is pre-filled with realistic data: income, expenses, savings, a
 - **Export** — jsPDF, xlsx, papaparse
 
 ### Backend
-- **Node.js** + **Express** + **TypeScript**
-- **PostgreSQL** + **Drizzle ORM**
+- **Node.js** + **Express 5** + **TypeScript 5.8**
+- **PostgreSQL 17** + **Drizzle ORM**
 - **JWT** (access token in memory) + **httpOnly cookie** (refresh token)
 - **WebAuthn** Google OAuth, PIN login
 

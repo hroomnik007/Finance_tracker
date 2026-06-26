@@ -45,7 +45,7 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 ## Tech stack
 
 ### Frontend
-- **React 19** + **TypeScript 5.7** + **Vite 8**
+- **React 19** + **TypeScript 5.8** + **Vite 8**
 - **Tailwind CSS 4**
 - **i18n** — vlastný typovaný systém (5 jazykov, 413 kľúčov)
 - **Recharts** — grafy
@@ -53,8 +53,8 @@ Demo účet je predvyplnený realistickými dátami: príjmy, výdavky, sporenie
 - **Export** — jsPDF, xlsx, papaparse
 
 ### Backend
-- **Node.js** + **Express** + **TypeScript**
-- **PostgreSQL** + **Drizzle ORM**
+- **Node.js** + **Express 5** + **TypeScript 5.8**
+- **PostgreSQL 17** + **Drizzle ORM**
 - **JWT** (access token v pamäti) + **httpOnly cookie** (refresh token)
 - **WebAuthn** (passkeys), Google OAuth, PIN login
 
