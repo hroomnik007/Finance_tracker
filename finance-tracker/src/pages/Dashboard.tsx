@@ -67,6 +67,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
+  const { fixedExpenses: allFixedExpenses } = useFixedExpenses()
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses, fixedExpenses })
@@ -179,16 +180,11 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
 const upcomingFixed = useMemo(() => {
     const today = new Date().getDate()
-    const daysInMo = new Date(year, month, 0).getDate()
-    return fixedExpenses
-      .map(fe => {
-        let daysUntil = fe.dayOfMonth - today
-        if (daysUntil < 0) daysUntil += daysInMo
-        return { ...fe, daysUntil }
-      })
+    return [...allFixedExpenses]
+      .map(e => ({ ...e, daysUntil: ((e.dayOfMonth - today + 31) % 31) }))
       .sort((a, b) => a.daysUntil - b.daysUntil)
-      .slice(0, 5)
-  }, [fixedExpenses, month, year])
+      .slice(0, 4)
+  }, [allFixedExpenses])
 
   const motivationalMsg = (() => {
     if (balance > 0 && balance > totalIncome * 0.3) {
