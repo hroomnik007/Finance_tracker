@@ -6,6 +6,7 @@ import { updateWeeklyEmail, updateUserSettings, changePassword, savePin, getSess
 import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
+import * as XLSX from '@e965/xlsx'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
 import { useSettingsContext } from '../context/SettingsContext'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
@@ -410,6 +411,41 @@ export function SettingsPage() {
 
   function handleExportPDF() {
     window.print()
+  }
+
+  async function handleExportXLSX() {
+    try {
+      setExportError(null)
+      const [transactions, { data: categories }] = await Promise.all([
+        fetchAllTransactions({}),
+        getCategories(),
+      ])
+
+      const transactionRows = transactions.map(t => ({
+        Dátum: t.date,
+        Typ: t.type,
+        Kategória: t.categoryName ?? '',
+        Poznámka: t.description ?? '',
+        Suma: t.amount,
+      }))
+      const categoryRows = categories.map(c => ({
+        Názov: c.name,
+        Typ: c.type,
+        Limit: c.budgetLimit ?? '',
+      }))
+
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(transactionRows), 'Transakcie')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categoryRows), 'Kategórie')
+
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+      downloadBlob(
+        new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        `finvu-export-${new Date().toISOString().split('T')[0]}.xlsx`
+      )
+    } catch {
+      setExportError('Export zlyhal. Skúste znova.')
+    }
   }
 
 
@@ -1083,6 +1119,7 @@ export function SettingsPage() {
                       <button onClick={handleExportJSON} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>JSON</button>
                       <button onClick={handleExportCSV} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>CSV</button>
                       <button onClick={handleExportPDF} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>PDF</button>
+                      <button onClick={handleExportXLSX} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>XLSX</button>
                     </div>
                   </SettingRow>
                   <SettingRow label="Importovať CSV" sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP">
