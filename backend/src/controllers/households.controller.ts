@@ -2,7 +2,7 @@ import { Response } from "express";
 import { and, eq, sql, desc } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { households, householdMembers, users, transactions } from "../db/schema";
+import { households, householdMembers, users, transactions, categories } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 import { generateInviteCode } from "../utils/inviteCode";
 
@@ -241,16 +241,48 @@ export async function getMonthlyStats(req: AuthRequest, res: Response): Promise<
     )
     .groupBy(transactions.createdBy, transactions.type, users.name);
 
-  const memberMap = new Map<string, { user_id: string; name: string; expenses: number; income: number }>();
+  const memberMap = new Map<string, { user_id: string; name: string; expenses: number; income: number; category_breakdown: Array<{ category_id: string | null; name: string; color: string | null; amount: number }> }>();
 
   for (const row of rows) {
     const uid = row.createdBy ?? "unknown";
     if (!memberMap.has(uid)) {
-      memberMap.set(uid, { user_id: uid, name: row.creatorName ?? "Unknown", expenses: 0, income: 0 });
+      memberMap.set(uid, { user_id: uid, name: row.creatorName ?? "Unknown", expenses: 0, income: 0, category_breakdown: [] });
     }
     const entry = memberMap.get(uid)!;
     if (row.type === "expense") entry.expenses += parseFloat(row.total);
     else entry.income += parseFloat(row.total);
+  }
+
+  const categoryRows = await db
+    .select({
+      createdBy: transactions.createdBy,
+      categoryId: transactions.categoryId,
+      categoryName: categories.name,
+      categoryColor: categories.color,
+      total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`,
+    })
+    .from(transactions)
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(
+      and(
+        eq(transactions.householdId, householdId),
+        eq(transactions.type, "expense"),
+        sql`${transactions.date} >= ${start}`,
+        sql`${transactions.date} < ${nextMonth}`
+      )
+    )
+    .groupBy(transactions.createdBy, transactions.categoryId, categories.name, categories.color);
+
+  for (const row of categoryRows) {
+    const uid = row.createdBy ?? "unknown";
+    const entry = memberMap.get(uid);
+    if (!entry) continue;
+    entry.category_breakdown.push({
+      category_id: row.categoryId,
+      name: row.categoryName ?? "Ostatné",
+      color: row.categoryColor,
+      amount: parseFloat(row.total),
+    });
   }
 
   const perMember = Array.from(memberMap.values());

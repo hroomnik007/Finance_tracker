@@ -230,13 +230,11 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
             const inc = memberStats?.income ?? 0
             const exp = memberStats?.expenses ?? 0
             const bal = inc - exp
-            // Simulated category breakdown from member color
             const memberColor = CAT_COLORS[mi % CAT_COLORS.length]
-            const catBreakdown = [
-              { name: 'Potraviny', val: exp * 0.4, color: CAT_COLORS[0] },
-              { name: 'Doprava', val: exp * 0.25, color: CAT_COLORS[1] },
-              { name: 'Ostatné', val: exp * 0.35, color: CAT_COLORS[2] },
-            ].filter(c => c.val > 0)
+            const catBreakdown = (memberStats?.category_breakdown ?? [])
+              .filter(c => c.amount > 0)
+              .sort((a, b) => b.amount - a.amount)
+              .map((c, ci) => ({ name: c.name, val: c.amount, color: c.color ?? CAT_COLORS[ci % CAT_COLORS.length] }))
             return (
               <div
                 key={m.id}

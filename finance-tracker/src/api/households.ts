@@ -24,6 +24,12 @@ export interface MonthlyStats {
     name: string
     expenses: number
     income: number
+    category_breakdown: Array<{
+      category_id: string | null
+      name: string
+      color: string | null
+      amount: number
+    }>
   }>
 }
 
