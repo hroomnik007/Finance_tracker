@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, Crown } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { BottomSheet } from '../components/BottomSheet'
 import { useAuth } from '../context/AuthContext'
@@ -22,7 +23,12 @@ function timeAgo(iso: string, ht: { timeJustNow: string; timeMinutes: string; ti
   return ht.timeDays.replace('{n}', String(days))
 }
 
-export function HouseholdPage() {
+interface HouseholdPageProps {
+  month: number
+  year: number
+}
+
+export function HouseholdPage({ month, year }: HouseholdPageProps) {
   const { user, refreshUser } = useAuth()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
@@ -61,15 +67,15 @@ export function HouseholdPage() {
     try {
       const [hd, ms, activity] = await Promise.all([
         getMyHousehold(),
-        getMonthlyStats(householdId),
-        getActivity(householdId, 10),
+        getMonthlyStats(householdId, month, year),
+        getActivity(householdId, month, year, 20),
       ])
       setHouseholdData(hd)
       setStats(ms)
       setActivityFeed(activity)
     } catch { /* not authenticated or no household */ }
     setLoading(false)
-  }, [householdEnabled, householdId])
+  }, [householdEnabled, householdId, month, year])
 
   useEffect(() => { load() }, [load])
 
@@ -356,11 +362,16 @@ export function HouseholdPage() {
           <div style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', lineHeight: 1.6 }}>
             {ht.inviteCodeDesc}
           </div>
-          <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 16, padding: '20px 32px', textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
+          {householdData?.invite_code && (
+            <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 8px 24px -8px rgba(139,92,246,0.35)' }}>
+              <QRCodeSVG value={householdData.invite_code} size={200} level="M" />
+            </div>
+          )}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>
               {ht.inviteCode}
             </div>
-            <code style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--violet)', letterSpacing: '4px', fontSize: 28 }}>
+            <code style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: 'var(--violet)', letterSpacing: '3px', fontSize: 18 }}>
               {householdData?.invite_code}
             </code>
           </div>

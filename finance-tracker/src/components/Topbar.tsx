@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { updateUserSettings } from '../api/auth'
 import { NotificationCenter } from './NotificationCenter'
 
-const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses']
+const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'household']
 
 interface TopbarProps {
   page: Page

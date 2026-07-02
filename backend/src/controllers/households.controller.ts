@@ -215,10 +215,13 @@ export async function getMonthlyStats(req: AuthRequest, res: Response): Promise<
   if (!isMember) return;
 
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const yearRaw = parseInt((req.query["year"] as string) ?? "", 10);
+  const monthRaw = parseInt((req.query["month"] as string) ?? "", 10);
+  const year = isNaN(yearRaw) ? now.getFullYear() : yearRaw;
+  const monthNum = isNaN(monthRaw) ? now.getMonth() + 1 : monthRaw;
+  const month = String(monthNum).padStart(2, "0");
   const start = `${year}-${month}-01`;
-  const nextMonth = now.getMonth() === 11 ? `${year + 1}-01-01` : `${year}-${String(now.getMonth() + 2).padStart(2, "0")}-01`;
+  const nextMonth = monthNum === 12 ? `${year + 1}-01-01` : `${year}-${String(monthNum + 1).padStart(2, "0")}-01`;
 
   const rows = await db
     .select({
@@ -267,6 +270,14 @@ export async function getActivity(req: AuthRequest, res: Response): Promise<void
   const limitRaw = parseInt((req.query["limit"] as string) ?? "10", 10);
   const limit = Math.min(isNaN(limitRaw) ? 10 : limitRaw, 50);
 
+  const now = new Date();
+  const yearRaw = parseInt((req.query["year"] as string) ?? "", 10);
+  const monthRaw = parseInt((req.query["month"] as string) ?? "", 10);
+  const year = isNaN(yearRaw) ? now.getFullYear() : yearRaw;
+  const monthNum = isNaN(monthRaw) ? now.getMonth() + 1 : monthRaw;
+  const start = `${year}-${String(monthNum).padStart(2, "0")}-01`;
+  const nextMonth = monthNum === 12 ? `${year + 1}-01-01` : `${year}-${String(monthNum + 1).padStart(2, "0")}-01`;
+
   const rows = await db
     .select({
       type: transactions.type,
@@ -278,7 +289,13 @@ export async function getActivity(req: AuthRequest, res: Response): Promise<void
     })
     .from(transactions)
     .leftJoin(users, eq(transactions.createdBy, users.id))
-    .where(eq(transactions.householdId, householdId))
+    .where(
+      and(
+        eq(transactions.householdId, householdId),
+        sql`${transactions.date} >= ${start}`,
+        sql`${transactions.date} < ${nextMonth}`
+      )
+    )
     .orderBy(desc(transactions.createdAt))
     .limit(limit);
 

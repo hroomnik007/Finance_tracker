@@ -61,12 +61,12 @@ export async function toggleHousehold(enabled: boolean): Promise<{ household_ena
   return data as { household_enabled: boolean }
 }
 
-export async function getMonthlyStats(householdId: number): Promise<MonthlyStats> {
-  const { data } = await apiClient.get(`/api/households/${householdId}/stats/monthly`)
+export async function getMonthlyStats(householdId: number, month: number, year: number): Promise<MonthlyStats> {
+  const { data } = await apiClient.get(`/api/households/${householdId}/stats/monthly`, { params: { month, year } })
   return data as MonthlyStats
 }
 
-export async function getActivity(householdId: number, limit = 10): Promise<ActivityItem[]> {
-  const { data } = await apiClient.get(`/api/households/${householdId}/activity`, { params: { limit } })
+export async function getActivity(householdId: number, month: number, year: number, limit = 20): Promise<ActivityItem[]> {
+  const { data } = await apiClient.get(`/api/households/${householdId}/activity`, { params: { limit, month, year } })
   return data as ActivityItem[]
 }

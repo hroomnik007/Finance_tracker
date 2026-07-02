@@ -458,7 +458,7 @@ function App() {
             <div style={{ flex: 1, overflowY: 'auto' }}>
               <div style={{ padding: '20px', minHeight: '100%' }}>
                 {page === 'settings' && <SettingsPage />}
-                {page === 'household' && <HouseholdPage />}
+                {page === 'household' && <HouseholdPage month={month} year={year} />}
               </div>
             </div>
           )}
