@@ -78,6 +78,7 @@ export const en: Translations = {
     motivationalGood: 'Great job! You saved more than 30% of your income.',
     motivationalBad: 'Warning — expenses exceed income. Try to reduce variable expenses.',
     motivationalAvg: 'Excellent! Your daily average is below €20.',
+    motivationalNoIncome: 'No income recorded yet this month.',
     showLess: 'Show less ↑',
     moreItems: '+ {n} more →',
     viewPersonal: 'Mine',

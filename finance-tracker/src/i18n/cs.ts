@@ -78,6 +78,7 @@ export const cs: Translations = {
     motivationalGood: 'Skvělá práce! Ušetřili jste více než {pct} % příjmů.',
     motivationalBad: 'Pozor — výdaje převyšují příjmy. Zkuste omezit variabilní výdaje.',
     motivationalAvg: 'Výborně! Váš denní průměr je pod 20 €.',
+    motivationalNoIncome: 'Zatím žádné příjmy tento měsíc.',
     showLess: 'Zobrazit méně ↑',
     moreItems: '+ {n} dalších →',
     viewPersonal: 'Moje',

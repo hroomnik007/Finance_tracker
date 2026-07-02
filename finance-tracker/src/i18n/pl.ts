@@ -78,6 +78,7 @@ export const pl: Translations = {
     motivationalGood: 'Świetna robota! Zaoszczędziłeś ponad {pct} % dochodów.',
     motivationalBad: 'Uwaga — wydatki przekraczają dochody. Spróbuj ograniczyć zmienne wydatki.',
     motivationalAvg: 'Doskonale! Twoja dzienna średnia jest poniżej 20 €.',
+    motivationalNoIncome: 'Brak dochodów w tym miesiącu.',
     showLess: 'Pokaż mniej ↑',
     moreItems: '+ {n} więcej →',
     viewPersonal: 'Moje',

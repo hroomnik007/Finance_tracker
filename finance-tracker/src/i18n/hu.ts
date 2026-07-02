@@ -78,6 +78,7 @@ export const hu: Translations = {
     motivationalGood: 'Szép munka! A bevételek több mint {pct}%-át megtakarítottad.',
     motivationalBad: 'Figyelem — a kiadások meghaladják a bevételeket. Próbálja csökkenteni a változó kiadásokat.',
     motivationalAvg: 'Kiváló! A napi átlagod 20 € alatt van.',
+    motivationalNoIncome: 'Ebben a hónapban még nincs bevétel.',
     showLess: 'Kevesebb mutatása ↑',
     moreItems: '+ {n} további →',
     viewPersonal: 'Saját',

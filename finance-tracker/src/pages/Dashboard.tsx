@@ -187,6 +187,10 @@ const upcomingFixed = useMemo(() => {
   }, [allFixedExpenses])
 
   const motivationalMsg = (() => {
+    if (totalIncome < 0.01) {
+      if (totalExpenses > 0) return { msg: t.dashboard.motivationalNoIncome, color: '#A78BFA' }
+      return null
+    }
     if (balance > 0 && balance > totalIncome * 0.3) {
       const savingsPct = totalIncome > 0 ? Math.floor((balance / totalIncome) * 100 / 5) * 5 : 30
       const pct = Math.max(savingsPct, 30)
