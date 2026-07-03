@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Delete } from 'lucide-react'
 import { useTranslation } from '../i18n'
 
@@ -14,32 +14,44 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
   const [pin, setPin] = useState('')
   const [shake, setShake] = useState(false)
   const [checking, setChecking] = useState(false)
+  const checkingRef = useRef(checking)
+  checkingRef.current = checking
+  const lastTapRef = useRef(0)
 
-  async function handleKey(k: string) {
-    if (checking) return
-    if (k === '⌫') { setPin(p => p.slice(0, -1)); return }
-    if (k === 'Enter') {
-      if (pin.length !== 4) return
-      setChecking(true)
-      const ok = await onVerify(pin)
+  function submitPin(candidate: string) {
+    setChecking(true)
+    onVerify(candidate).then(ok => {
       if (!ok) {
         setShake(true)
         setTimeout(() => { setShake(false); setPin(''); setChecking(false) }, 600)
       }
-      return
-    }
-    if (pin.length >= 4) return
-    const next = pin + k
-    setPin(next)
-    if (next.length === 4) {
-      setChecking(true)
-      const ok = await onVerify(next)
-      if (!ok) {
-        setShake(true)
-        setTimeout(() => { setShake(false); setPin(''); setChecking(false) }, 600)
-      }
-    }
+    })
   }
+
+  function handleKey(k: string) {
+    if (checkingRef.current) return
+    const now = Date.now()
+    if (now - lastTapRef.current < 80) return
+    lastTapRef.current = now
+
+    if (k === '⌫') { setPin(p => p.slice(0, -1)); return }
+    // Enter is a no-op: the 4th digit (however entered) already triggers
+    // verification via the effect below.
+    if (k === 'Enter') return
+    setPin(prev => (prev.length >= 4 ? prev : prev + k))
+  }
+
+  // Trigger verification once 4 digits have actually committed to state —
+  // never inside the setPin updater itself. React 18 StrictMode double-invokes
+  // updater functions (to surface impure updaters), which previously caused
+  // onVerify to fire twice for the same PIN when the submit was scheduled
+  // from inside the updater.
+  useEffect(() => {
+    if (pin.length !== 4) return
+    const timer = setTimeout(() => submitPin(pin), 100)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,7 +62,7 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin, checking])
+  }, [])
 
   return (
     <div style={{
@@ -89,15 +101,17 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
           ) : (
             <button
               key={i}
+              disabled={checking}
               onClick={() => handleKey(k)}
               style={{
                 width: 72, height: 72, borderRadius: '50%',
                 background: k === '⌫' ? 'transparent' : 'var(--bg3)',
                 border: k === '⌫' ? 'none' : '1px solid var(--border2)',
                 color: 'var(--text)', fontSize: k === '⌫' ? 20 : 24, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit',
+                cursor: checking ? 'default' : 'pointer', fontFamily: 'inherit',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'background 0.1s',
+                opacity: checking ? 0.6 : 1,
               }}
               onPointerDown={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.15)')}
               onPointerUp={e => (e.currentTarget.style.background = k === '⌫' ? 'transparent' : 'var(--bg3)')}

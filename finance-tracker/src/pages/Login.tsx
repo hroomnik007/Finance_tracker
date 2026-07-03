@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
@@ -29,6 +29,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [pinError, setPinError] = useState<string | null>(null)
 
   const [authMethods, setAuthMethods] = useState({ pin: false, google: false, password: false })
+  const lastPinTapRef = useRef(0)
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
@@ -112,15 +113,23 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     }
   }, [email, loginWithPin])
 
+  // Trigger verification once 4 digits have actually committed to state —
+  // never inside the setPinValue updater itself. React 18 StrictMode
+  // double-invokes updater functions (to surface impure updaters), which
+  // previously caused handlePinLogin to fire twice for the same PIN when the
+  // submit was scheduled from inside the updater.
+  useEffect(() => {
+    if (pinValue.length !== 4) return
+    const timer = setTimeout(() => handlePinLogin(pinValue), 100)
+    return () => clearTimeout(timer)
+  }, [pinValue, handlePinLogin])
+
   useEffect(() => {
     if (!pinModalOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (pinLoading) return
       if (e.key >= '0' && e.key <= '9') {
-        if (pinValue.length < 4) {
-          const next = pinValue + e.key
-          setPinValue(next)
-          if (next.length === 4) setTimeout(() => handlePinLogin(next), 100)
-        }
+        setPinValue(prev => (prev.length >= 4 ? prev : prev + e.key))
       } else if (e.key === 'Backspace') {
         setPinValue(v => v.slice(0, -1))
         setPinError(null)
@@ -128,7 +137,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [pinModalOpen, pinValue, handlePinLogin])
+  }, [pinModalOpen, pinLoading])
 
   const inp = (name: string): React.CSSProperties => ({
     width: '100%',
@@ -365,14 +374,14 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
               {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
                 <button
                   key={idx}
-                  disabled={k === ''}
+                  disabled={k === '' || pinLoading}
                   onClick={() => {
-                    if (k === '⌫') { setPinValue(v => v.slice(0, -1)); setPinError(null) }
-                    else if (k !== '' && pinValue.length < 4) {
-                      const next = pinValue + String(k)
-                      setPinValue(next)
-                      if (next.length === 4) setTimeout(() => handlePinLogin(next), 100)
-                    }
+                    const now = Date.now()
+                    if (now - lastPinTapRef.current < 80) return
+                    lastPinTapRef.current = now
+                    if (k === '⌫') { setPinValue(v => v.slice(0, -1)); setPinError(null); return }
+                    if (k === '') return
+                    setPinValue(prev => (prev.length >= 4 ? prev : prev + String(k)))
                   }}
                   style={{
                     height: 52, borderRadius: 12,
