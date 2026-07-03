@@ -178,13 +178,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
   const MONTHS_SK = t.monthsShort
 
-  const rpSection = (title: string, children: React.ReactNode) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
-      {children}
-    </div>
-  )
-
   const yearlyContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{formatAmount(total * 12)}</div>
@@ -613,13 +606,21 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         </div>
 
         {/* Right panel — desktop only */}
-        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--bg2)' }}>
-          {rpSection(t.expenses.fixed.yearly, yearlyContent)}
+        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 12, background: 'var(--bg2)' }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.expenses.fixed.yearly}</p>
+            {yearlyContent}
+          </div>
           <div style={severityCardStyle(paymentSeverity)}>
             <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{t.expenses.fixed.upcoming}</div>
             {upcomingContent}
           </div>
-          {vsContent && rpSection(t.expenses.fixed.vsVariable, vsContent)}
+          {vsContent && (
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+              <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</p>
+              {vsContent}
+            </div>
+          )}
         </div>
 
       </div>
