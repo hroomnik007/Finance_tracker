@@ -44,7 +44,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
   }
 
   function closeSubmenu() {
-    hideTimerRef.current = setTimeout(() => setSubmenuVisible(false), 80)
+    hideTimerRef.current = setTimeout(() => setSubmenuVisible(false), 160)
   }
 
   function handleChange(p: Page) {

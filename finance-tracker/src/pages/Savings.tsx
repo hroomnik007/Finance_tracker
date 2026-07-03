@@ -168,7 +168,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   }
 
   const handleSave = useCallback(async () => {
-    const targetNum = parseFloat(formTarget)
+    const targetNum = parseFloat(formTarget.replace(',', '.'))
     if (!formName.trim() || isNaN(targetNum) || targetNum <= 0) return
     const savedNum = parseFloat(formSaved) || 0
     setSaving(true)
@@ -254,11 +254,18 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
           <label style={labelStyle}>{t.savings.targetAmount} (€)</label>
           <input
             style={inputStyle}
-            type="number"
-            min="0.01"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             value={formTarget}
-            onChange={e => setFormTarget(e.target.value)}
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9,]/g, '')
+              if ((raw.match(/,/g) || []).length > 1) return
+              setFormTarget(raw)
+            }}
+            onKeyDown={e => {
+              const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+              if (!allowed.includes(e.key)) e.preventDefault()
+            }}
             placeholder="1000"
           />
         </div>
