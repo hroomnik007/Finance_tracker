@@ -875,7 +875,7 @@ const upcomingFixed = useMemo(() => {
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT
       ════════════════════════════════════════ */}
-      <div className="hidden lg:grid gap-6 items-start w-full" style={{ gridTemplateColumns: 'minmax(0, 1fr) 280px', marginTop: 24 }}>
+      <div className="hidden lg:grid gap-6 items-start w-full" style={{ gridTemplateColumns: 'minmax(0, 1fr) 280px', marginTop: 8 }}>
 
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0, overflowX: 'hidden' }}>
