@@ -22,6 +22,13 @@ import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
 
+const FALLBACK_ICON = '📦'
+const FALLBACK_COLOR = '#6b7280'
+
+function catBg(color: string) {
+  return color + '26'
+}
+
 function getLast6Months(monthsShort: string[]) {
   const now = new Date()
   return Array.from({ length: 6 }, (_, i) => {
@@ -180,6 +187,15 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const prevMonthData = chartData[chartData.length - 2]
   const monthChallengeTarget = prevMonthData?.expenses ?? 0
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
+
+  function countdownBadge(daysUntil: number) {
+    if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' }
+    const text = t.expenses.fixed.countdown.days.replace('{n}', String(daysUntil))
+    if (daysUntil <= 3) return { text, color: '#f97316', bg: 'rgba(249,115,22,0.15)' }
+    if (daysUntil <= 7) return { text, color: '#eab308', bg: 'rgba(234,179,8,0.15)' }
+    return { text, color: '#22c55e', bg: 'rgba(34,197,94,0.15)' }
+  }
+
 const upcomingFixed = useMemo(() => {
     const today = new Date().getDate()
     return [...allFixedExpenses]
@@ -599,20 +615,27 @@ const upcomingFixed = useMemo(() => {
       <div style={severityCardStyle(paymentSeverity)}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.upcomingPayments}</p>
         {upcomingFixed.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {upcomingFixed.map(fe => (
-              <div key={fe.id ?? fe.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 2px' }}>{fe.label}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
-                    {fe.daysUntil === 0 ? t.dashboard.today : fe.daysUntil === 1 ? t.dashboard.tomorrow : t.dashboard.inDays.replace('{n}', String(fe.daysUntil))}
-                  </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {upcomingFixed.map(fe => {
+              const badge = countdownBadge(fe.daysUntil)
+              const cat = categories.find(c => c.id === fe.categoryId)
+              const icon = cat?.icon ?? FALLBACK_ICON
+              const color = cat?.color ?? FALLBACK_COLOR
+              return (
+                <div key={fe.id ?? fe.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                    {icon}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fe.label}</div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 6px', borderRadius: 20 }}>{badge.text}</span>
+                  </div>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>
+                    {formatAmount(fe.amount)}
+                  </span>
                 </div>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 600, color: '#F87171', flexShrink: 0, marginLeft: 12 }}>
-                  -{formatAmount(fe.amount)}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noUpcomingPayments}</p>
