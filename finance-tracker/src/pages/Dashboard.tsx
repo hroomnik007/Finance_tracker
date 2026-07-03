@@ -131,7 +131,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     const months = getLast6Months(t.monthsShort).filter(m =>
       m.year > minYear || (m.year === minYear && m.month >= minMonth)
     )
-    Promise.all(months.map(m => getSummary(m.key).catch(() => null)))
+    Promise.all(months.map(m => getSummary(m.key, dashView).catch(() => null)))
       .then(results => {
         setChartData(
           months.map((m, i) => {
@@ -145,11 +145,11 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         )
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, year, user?.tracking_start_date, user?.createdAt])
+  }, [month, year, user?.tracking_start_date, user?.createdAt, dashView])
 
   useEffect(() => {
-    getSummaryCards(year, month).then(d => setSummaryCards(d)).catch(() => {})
-  }, [year, month])
+    getSummaryCards(year, month, dashView).then(d => setSummaryCards(d)).catch(() => {})
+  }, [year, month, dashView])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderPieShape = (props: any) => {
@@ -306,9 +306,14 @@ const upcomingFixed = useMemo(() => {
   )
 
   // Hero section — wallet card style
-  const heroBalance = summaryCards?.balance ?? balance
-  const heroIncome = summaryCards?.income ?? totalIncome
-  const heroExpenses = summaryCards?.expenses ?? totalExpenses
+  // summaryCards reflects the current dashView scope (personal|family) once loaded.
+  // While loading/on error, only fall back to the client-computed totals for the
+  // personal view — those are already correctly scoped; there's no equivalent
+  // client-side "family" total to fall back to, so avoid silently showing personal
+  // data under a "Rodinné" label.
+  const heroBalance = summaryCards?.balance ?? (dashView === 'personal' ? balance : 0)
+  const heroIncome = summaryCards?.income ?? (dashView === 'personal' ? totalIncome : 0)
+  const heroExpenses = summaryCards?.expenses ?? (dashView === 'personal' ? totalExpenses : 0)
   const savRate = heroIncome > 0 ? Math.round((heroBalance / heroIncome) * 100) : 0
   const animatedBalance = useCountUp(heroBalance, 800)
   const animatedIncome = useCountUp(heroIncome, 800)

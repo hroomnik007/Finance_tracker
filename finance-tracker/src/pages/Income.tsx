@@ -5,12 +5,9 @@ import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
-import { MemberAvatar } from '../components/MemberAvatar'
 import { useIncomes } from '../hooks/useIncomes'
-import { useHousehold } from '../hooks/useHousehold'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import { useAuth } from '../context/AuthContext'
 import type { Translations } from '../i18n'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
@@ -103,31 +100,16 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
 }
 
 
-const pillStyle = (active: boolean): React.CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '6px 14px', borderRadius: 50, fontSize: 13,
-  fontWeight: active ? 600 : 500, cursor: 'pointer',
-  border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
-  background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-  color: active ? 'var(--violet)' : 'var(--text2)',
-  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
-  flexShrink: 0,
-})
-
 export function IncomePage({ month, year }: IncomePageProps) {
   const { incomes, addIncome, updateIncome, deleteIncome } = useIncomes(month, year)
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
-  const { user } = useAuth()
-  const householdEnabled = user?.household_enabled ?? false
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
   const [form, setForm] = useState<FormState>(makeEmpty())
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
   const [yearlyIncome, setYearlyIncome] = useState(0)
-  const { members } = useHousehold()
-  const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -165,7 +147,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
   }
 
   const sorted = [...incomes]
-    .filter(i => memberFilter === 'all' || i.created_by === memberFilter || (memberFilter === user?.id && !i.created_by))
     .sort((a, b) => b.date.localeCompare(a.date))
   const totalAmount = sorted.reduce((s, i) => s + i.amount, 0)
   const recurringIncomes = sorted.filter(i => i.recurring)
@@ -238,22 +219,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
             <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
             <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
           </div>
-
-          {/* Member filter pills */}
-          {householdEnabled && members.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-                <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
-                  👥 Všetci
-                </button>
-                {members.map(m => (
-                  <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
-                    <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* List / empty state */}
           {sorted.length === 0 ? (
@@ -340,11 +305,6 @@ export function IncomePage({ month, year }: IncomePageProps) {
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
                         </div>
-                        {householdEnabled && (
-                          <div style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                            {income.created_by && <MemberAvatar userId={income.created_by} userName={members.find(m => m.id === income.created_by)?.name ?? '?'} size={24} />}
-                          </div>
-                        )}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                           <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--green)', marginRight: 8 }}>+{formatAmount(income.amount)}</span>
                           <button onClick={() => openEdit(income)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>

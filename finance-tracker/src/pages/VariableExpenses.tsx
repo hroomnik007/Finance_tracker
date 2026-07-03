@@ -5,14 +5,11 @@ import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
-import { MemberAvatar } from '../components/MemberAvatar'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
-import { useHousehold } from '../hooks/useHousehold'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
-import { useAuth } from '../context/AuthContext'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
 import type { VariableExpense, BudgetStatus } from '../types'
@@ -62,8 +59,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
   const { formatAmount, formatDate } = useFormatters()
   const { t } = useTranslation()
-  const { user } = useAuth()
-  const householdEnabled = user?.household_enabled ?? false
   const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -75,8 +70,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const [csvOpen, setCsvOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [_prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
-  const { members } = useHousehold()
-  const [memberFilter, setMemberFilter] = useState<string | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
@@ -153,9 +146,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     (activeCategory
       ? variableExpenses.filter(e => e.categoryId === activeCategory)
       : variableExpenses
-    ).filter(e => memberFilter === 'all' || e.created_by === memberFilter || (memberFilter === user?.id && !e.created_by))
-     .reduce((sum, e) => sum + e.amount, 0)
-  , [variableExpenses, activeCategory, memberFilter, user?.id])
+    ).reduce((sum, e) => sum + e.amount, 0)
+  , [variableExpenses, activeCategory])
 
   const categoriesWithExpenses = useMemo(
     () => categories.filter(c => variableExpenses.some(e => e.categoryId === c.id)),
@@ -167,9 +159,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       ? variableExpenses.filter(e => e.categoryId === activeCategory)
       : variableExpenses
     )]
-      .filter(e => memberFilter === 'all' || e.created_by === memberFilter || (memberFilter === user?.id && !e.created_by))
       .sort((a, b) => b.date.localeCompare(a.date))
-  , [variableExpenses, activeCategory, memberFilter, user?.id])
+  , [variableExpenses, activeCategory])
 
   const searchFiltered = useMemo(() => {
     if (!searchQuery.trim()) return filteredSorted
@@ -282,37 +273,21 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             )}
           </div>
 
-          {/* Category + member filter pills */}
-          {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {categoriesWithExpenses.length > 0 && (
-                <div style={{ position: 'relative', minWidth: 0 }}>
-                  <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-                    <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
-                      {t.expenses.variable.allCategories}
-                    </button>
-                    {categoriesWithExpenses.map(c => (
-                      <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
-                        <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
-                        <span>{c.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <ScrollFadeOverlay visible={catPillsShowFade} background="var(--bg)" />
-                </div>
-              )}
-              {householdEnabled && members.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-                  <button type="button" onClick={() => setMemberFilter('all')} style={pillStyle(memberFilter === 'all')}>
-                    👥 Všetci
+          {/* Category filter pills */}
+          {categoriesWithExpenses.length > 0 && (
+            <div style={{ position: 'relative', minWidth: 0 }}>
+              <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
+                  {t.expenses.variable.allCategories}
+                </button>
+                {categoriesWithExpenses.map(c => (
+                  <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
+                    <span>{c.name}</span>
                   </button>
-                  {members.map(m => (
-                    <button key={m.id} type="button" onClick={() => setMemberFilter(memberFilter === m.id ? 'all' : m.id)} style={pillStyle(memberFilter === m.id)}>
-                      <MemberAvatar userId={m.id} userName={m.name} size={16} />{m.name}
-                    </button>
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
+              <ScrollFadeOverlay visible={catPillsShowFade} background="var(--bg)" />
             </div>
           )}
 
@@ -385,7 +360,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                   <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
                   {items.map((e, idx) => {
                     const cat = getCategoryById(e.categoryId)
-                    const creator = members.find(m => m.id === e.created_by)
                     const name = e.note || cat?.name || t.expenses.variable.defaultExpense
                     const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
                     return (
@@ -403,11 +377,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                           <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
                           <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
                         </div>
-                        {householdEnabled && (
-                          <div style={{ flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
-                            {e.created_by && <MemberAvatar userId={e.created_by} userName={creator?.name ?? '?'} size={24} />}
-                          </div>
-                        )}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
                           <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)', marginRight: 8 }}>-{formatAmount(e.amount)}</span>
                           <button onClick={() => openEdit(e)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>

@@ -51,8 +51,10 @@ export async function deleteTransaction(id: string): Promise<void> {
   await apiClient.delete(`/api/transactions/${id}`)
 }
 
-export async function getSummary(month: string): Promise<ApiSummary> {
-  const { data } = await apiClient.get('/api/transactions/summary', { params: { month } })
+export type BalanceScope = 'personal' | 'family'
+
+export async function getSummary(month: string, scope: BalanceScope = 'personal'): Promise<ApiSummary> {
+  const { data } = await apiClient.get('/api/transactions/summary', { params: { month, scope } })
   return data
 }
 
@@ -61,12 +63,12 @@ export async function getTotalBalance(): Promise<{ totalIncome: number; totalExp
   return data
 }
 
-export async function getBalanceAtMonth(year: number, month: number): Promise<{ balance: number }> {
-  const { data } = await apiClient.get('/api/transactions/balance-at-month', { params: { year, month } })
+export async function getBalanceAtMonth(year: number, month: number, scope: BalanceScope = 'personal'): Promise<{ balance: number }> {
+  const { data } = await apiClient.get('/api/transactions/balance-at-month', { params: { year, month, scope } })
   return data
 }
 
-export async function getSummaryCards(year: number, month: number): Promise<{ balance: number; income: number; expenses: number; savingsRate: number }> {
-  const { data } = await apiClient.get('/api/transactions/summary-cards', { params: { year, month } })
+export async function getSummaryCards(year: number, month: number, scope: BalanceScope = 'personal'): Promise<{ balance: number; income: number; expenses: number; savingsRate: number }> {
+  const { data } = await apiClient.get('/api/transactions/summary-cards', { params: { year, month, scope } })
   return data
 }

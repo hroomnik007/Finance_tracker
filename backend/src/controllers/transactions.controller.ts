@@ -2,7 +2,7 @@ import { Response } from "express";
 import { and, eq, gte, lt, isNull, or, sql, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { transactions, categories, users } from "../db/schema";
+import { transactions, categories, users, householdMembers } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 import { recalculateCategoryLimit } from "./categories.controller";
 
@@ -25,13 +25,17 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).optional().default(0),
 });
 
+const scopeSchema = z.enum(["personal", "family"]).optional().default("personal");
+
 const summaryQuerySchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, "month must be YYYY-MM"),
+  scope: scopeSchema,
 });
 
 const balanceAtMonthSchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100),
   month: z.coerce.number().int().min(1).max(12),
+  scope: scopeSchema,
 });
 
 function monthRange(month: string): { start: string; end: string } {
@@ -50,23 +54,28 @@ async function resolveUserHousehold(userId: string) {
   return u;
 }
 
+// Earliest trackingStartDate/createdAt across ALL members of a household — used so
+// a "family" scope balance sums each member's FULL history, not just from when the
+// currently logged-in member happened to join.
+async function getFamilyStartDate(householdId: number): Promise<string> {
+  const rows = await db
+    .select({ trackingStartDate: users.trackingStartDate, createdAt: users.createdAt })
+    .from(householdMembers)
+    .innerJoin(users, eq(householdMembers.userId, users.id))
+    .where(eq(householdMembers.householdId, householdId));
+
+  const dates = rows.map((r) => r.trackingStartDate ?? r.createdAt.toISOString().split("T")[0]);
+  if (dates.length === 0) return new Date().toISOString().split("T")[0];
+  return dates.reduce((min, d) => (d < min ? d : min));
+}
+
 function buildFilters(
   userId: string,
-  householdId: number | null | undefined,
-  householdEnabled: boolean | null | undefined,
   month?: string,
   type?: string,
   isFixed?: string
 ) {
-  const baseFilter =
-    householdEnabled && householdId
-      ? or(
-          eq(transactions.householdId, householdId),
-          and(eq(transactions.userId, userId), isNull(transactions.householdId))
-        )
-      : and(eq(transactions.userId, userId), isNull(transactions.householdId));
-
-  const filters = [baseFilter!];
+  const filters = [eq(transactions.userId, userId)];
   if (month) {
     const { start, end } = monthRange(month);
     filters.push(gte(transactions.date, start));
@@ -89,8 +98,7 @@ export async function listTransactions(req: AuthRequest, res: Response): Promise
   }
 
   const { month, type, isFixed, limit, offset } = query.data;
-  const userCtx = await resolveUserHousehold(req.userId!);
-  const filters = buildFilters(req.userId!, userCtx?.householdId, userCtx?.householdEnabled, month, type, isFixed);
+  const filters = buildFilters(req.userId!, month, type, isFixed);
 
   const [rows, [{ total }]] = await Promise.all([
     db
@@ -240,17 +248,19 @@ export async function getSummary(req: AuthRequest, res: Response): Promise<void>
     return;
   }
 
-  const { month } = query.data;
+  const { month, scope } = query.data;
   const { start, end } = monthRange(month);
-  const userCtx = await resolveUserHousehold(req.userId!);
 
-  const baseFilter =
-    userCtx?.householdEnabled && userCtx?.householdId
-      ? or(
-          eq(transactions.householdId, userCtx.householdId),
-          and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
-        )
-      : and(eq(transactions.userId, req.userId!), isNull(transactions.householdId));
+  let baseFilter = eq(transactions.userId, req.userId!);
+  if (scope === "family") {
+    const userCtx = await resolveUserHousehold(req.userId!);
+    if (userCtx?.householdEnabled && userCtx?.householdId) {
+      baseFilter = or(
+        eq(transactions.householdId, userCtx.householdId),
+        and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
+      )!;
+    }
+  }
 
   const rows = await db
     .select({
@@ -313,7 +323,7 @@ export async function getBalanceAtMonth(req: AuthRequest, res: Response): Promis
     return;
   }
 
-  const { year, month } = query.data;
+  const { year, month, scope } = query.data;
   const monthStr = `${year}-${String(month).padStart(2, "0")}`;
   const { end } = monthRange(monthStr);
 
@@ -330,15 +340,18 @@ export async function getBalanceAtMonth(req: AuthRequest, res: Response): Promis
 
   if (!userRow) { res.status(404).json({ error: "User not found" }); return; }
 
-  const startDate = userRow.trackingStartDate ?? userRow.createdAt.toISOString().split("T")[0];
+  const isFamily = scope === "family" && !!userRow.householdEnabled && !!userRow.householdId;
 
-  const baseFilter =
-    userRow.householdEnabled && userRow.householdId
-      ? or(
-          eq(transactions.householdId, userRow.householdId),
-          and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
-        )
-      : and(eq(transactions.userId, req.userId!), isNull(transactions.householdId));
+  const baseFilter = isFamily
+    ? or(
+        eq(transactions.householdId, userRow.householdId!),
+        and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
+      )!
+    : eq(transactions.userId, req.userId!);
+
+  const startDate = isFamily
+    ? await getFamilyStartDate(userRow.householdId!)
+    : userRow.trackingStartDate ?? userRow.createdAt.toISOString().split("T")[0];
 
   const rows = await db
     .select({
@@ -368,7 +381,7 @@ export async function getSummaryCards(req: AuthRequest, res: Response): Promise<
     return;
   }
 
-  const { year, month } = query.data;
+  const { year, month, scope } = query.data;
   const monthStr = `${year}-${String(month).padStart(2, "0")}`;
   const { start: monthStart, end: monthEnd } = monthRange(monthStr);
 
@@ -385,15 +398,18 @@ export async function getSummaryCards(req: AuthRequest, res: Response): Promise<
 
   if (!userRow) { res.status(404).json({ error: "User not found" }); return; }
 
-  const startDate = userRow.trackingStartDate ?? userRow.createdAt.toISOString().split("T")[0];
+  const isFamily = scope === "family" && !!userRow.householdEnabled && !!userRow.householdId;
 
-  const baseFilter =
-    userRow.householdEnabled && userRow.householdId
-      ? or(
-          eq(transactions.householdId, userRow.householdId),
-          and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
-        )
-      : and(eq(transactions.userId, req.userId!), isNull(transactions.householdId));
+  const baseFilter = isFamily
+    ? or(
+        eq(transactions.householdId, userRow.householdId!),
+        and(eq(transactions.userId, req.userId!), isNull(transactions.householdId))
+      )!
+    : eq(transactions.userId, req.userId!);
+
+  const startDate = isFamily
+    ? await getFamilyStartDate(userRow.householdId!)
+    : userRow.trackingStartDate ?? userRow.createdAt.toISOString().split("T")[0];
 
   // Balance: cumulative from tracking start to end of requested month
   const balanceRows = await db
