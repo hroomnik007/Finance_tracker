@@ -221,6 +221,36 @@ const upcomingFixed = useMemo(() => {
 
   const showTrackingBanner = !user?.tracking_start_date && !user?.onboarding_banner_dismissed
 
+  // ── Right panel urgency + severity tinting ─────────────────────────────────
+  const paymentSeverity = upcomingFixed.some(fe => fe.daysUntil === 0)
+    ? 'red'
+    : upcomingFixed.some(fe => fe.daysUntil <= 2)
+      ? 'warning'
+      : null
+  const budgetSeverity = sortedBudgetStatuses.some(b => b.percentage >= 100)
+    ? 'red'
+    : sortedBudgetStatuses.some(b => b.percentage >= 90)
+      ? 'warning'
+      : null
+  const severityCardStyle = (severity: 'red' | 'warning' | null) => ({
+    background: severity ? `color-mix(in srgb, var(--${severity}) 8%, var(--bg2))` : 'var(--bg2)',
+    border: severity ? `1px solid color-mix(in srgb, var(--${severity}) 35%, var(--border))` : '1px solid var(--border)',
+    borderRadius: 16,
+    padding: 16,
+  })
+
+  const hasMonthComparison = (prevMonthData?.expenses ?? 0) > 0
+  const comparisonDiffPct = hasMonthComparison
+    ? Math.abs(((totalExpenses - prevMonthData!.expenses) / prevMonthData!.expenses) * 100)
+    : 0
+  const comparisonIsUp = hasMonthComparison && totalExpenses > prevMonthData!.expenses
+  const insightMainText = hasMonthComparison
+    ? (comparisonIsUp ? t.dashboard.spendingMore : t.dashboard.spendingLess).replace('{pct}', String(Math.round(comparisonDiffPct)))
+    : motivationalMsg?.msg ?? null
+  const insightMainColor = hasMonthComparison
+    ? (comparisonIsUp ? 'var(--red)' : 'var(--green)')
+    : (motivationalMsg?.color ?? 'var(--text)')
+
   // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
   const greetingDesktop = (
@@ -540,7 +570,7 @@ const upcomingFixed = useMemo(() => {
 
   const rightPanelCards = (
     <>
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+      <div style={severityCardStyle(paymentSeverity)}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.upcomingPayments}</p>
         {upcomingFixed.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -563,7 +593,7 @@ const upcomingFixed = useMemo(() => {
         )}
       </div>
 
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+      <div style={severityCardStyle(budgetSeverity)}>
         <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>
         {sortedBudgetStatuses.map(b => {
           const bCat = categories.find(c => c.id === b.categoryId)
@@ -603,52 +633,29 @@ const upcomingFixed = useMemo(() => {
         )}
       </div>
 
-      {motivationalMsg && (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderLeft: `3px solid ${motivationalMsg.color}`, borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 14, color: motivationalMsg.color, margin: 0 }}>{motivationalMsg.msg}</p>
-        </div>
-      )}
-
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.monthComparison}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.thisMonth}</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 600, color: '#F87171' }}>-{formatAmount(totalExpenses)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: 'var(--text3)' }}>{t.dashboard.lastMonth}</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: 'var(--text)' }}>-{formatAmount(prevMonthData?.expenses ?? 0)}</span>
-          </div>
-          {(prevMonthData?.expenses ?? 0) > 0 && (() => {
-            const diff = ((totalExpenses - (prevMonthData?.expenses ?? 0)) / (prevMonthData?.expenses ?? 0) * 100).toFixed(1)
-            const isUp = totalExpenses > (prevMonthData?.expenses ?? 0)
-            return (
-              <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: isUp ? '#F87171' : '#34D399' }}>
-                {isUp ? '↑' : '↓'} {Math.abs(Number(diff))}% {t.dashboard.vsLastMonth}
-              </div>
-            )
-          })()}
-        </div>
-      </div>
-
-      {monthChallengeTarget > 0 && (
+      {(insightMainText || monthChallengeTarget > 0) && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 8px' }}>{t.dashboard.monthlyChallenge}</p>
-          <p style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 8px' }}>{t.dashboard.spendLessThan} {formatAmount(monthChallengeTarget)}</p>
-          <div style={{ height: 8, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
-            <div
-              style={{
-                height: '100%', borderRadius: 99,
-                width: `${Math.round(challengeProgress * 100)}%`,
-                background: challengeProgress < 0.8 ? '#34D399' : challengeProgress < 1 ? '#F59E0B' : '#F87171',
-                transition: 'width 0.4s',
-              }}
-            />
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text3)', margin: '6px 0 0' }}>
-            {formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)
-          </p>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.howYouAreDoing}</p>
+          {insightMainText && (
+            <p style={{ fontSize: 14, color: insightMainColor, margin: monthChallengeTarget > 0 ? '0 0 12px' : 0 }}>{insightMainText}</p>
+          )}
+          {monthChallengeTarget > 0 && (
+            <>
+              <div style={{ height: 8, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    height: '100%', borderRadius: 99,
+                    width: `${Math.round(challengeProgress * 100)}%`,
+                    background: challengeProgress < 0.8 ? 'var(--green)' : challengeProgress < 1 ? 'var(--warning)' : 'var(--red)',
+                    transition: 'width 0.4s',
+                  }}
+                />
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text3)', margin: '6px 0 0' }}>
+                {formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)
+              </p>
+            </>
+          )}
         </div>
       )}
 
