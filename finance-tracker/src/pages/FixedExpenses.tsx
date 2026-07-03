@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CsvImportModal } from '../components/CsvImportModal'
+import { CategorySelect } from '../components/CategorySelect'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
@@ -572,18 +573,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {expenseCategories.length > 0 && (
             <div>
               <label className="form-label">{t.expenses.fixed.categoryLabel}</label>
-              <select
-                className="input-field"
+              <CategorySelect
+                categories={expenseCategories}
                 value={categoryId}
-                onChange={e => setCategoryId(e.target.value)}
-              >
-                <option value="">— Bez kategórie —</option>
-                {expenseCategories.map(cat => (
-                  <option key={cat.id} value={cat.id ?? ''}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setCategoryId}
+                placeholder="— Bez kategórie —"
+              />
             </div>
           )}
           <div>
