@@ -249,8 +249,6 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <MemberAvatar userId={m.id} userName={m.name} size={52} avatarUrl={m.avatar_url} />
-                    {/* Online dot */}
-                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: 14, height: 14, borderRadius: '50%', background: '#34d399', border: '2px solid var(--bg2)' }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</p>
