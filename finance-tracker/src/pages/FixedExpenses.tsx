@@ -14,6 +14,7 @@ import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
 import { useScrollFade } from '../hooks/useScrollFade'
+import { severityCardStyle } from '../utils/severityCardStyle'
 import React from 'react'
 
 const FALLBACK_ICON = '📦'
@@ -108,6 +109,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       .sort((a, b) => a.daysUntil - b.daysUntil)
       .slice(0, 4)
   }, [fixedExpenses])
+
+  const paymentSeverity = upcomingPayments.some(e => e.daysUntil === 0)
+    ? 'red'
+    : upcomingPayments.some(e => e.daysUntil <= 2)
+      ? 'warning'
+      : null
 
   const daysInCurrentMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month])
   const calendarToday = (() => {
@@ -608,7 +615,10 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         {/* Right panel — desktop only */}
         <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--bg2)' }}>
           {rpSection(t.expenses.fixed.yearly, yearlyContent)}
-          {rpSection(t.expenses.fixed.upcoming, upcomingContent)}
+          <div style={severityCardStyle(paymentSeverity)}>
+            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{t.expenses.fixed.upcoming}</div>
+            {upcomingContent}
+          </div>
           {vsContent && rpSection(t.expenses.fixed.vsVariable, vsContent)}
         </div>
 

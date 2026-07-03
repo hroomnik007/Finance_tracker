@@ -18,6 +18,7 @@ import { updateUserSettings } from '../api/auth'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useSavings } from '../hooks/useSavings'
 import { useCountUp } from '../hooks/useCountUp'
+import { severityCardStyle } from '../utils/severityCardStyle'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
@@ -250,12 +251,6 @@ const upcomingFixed = useMemo(() => {
     : sortedBudgetStatuses.some(b => b.percentage >= 90)
       ? 'warning'
       : null
-  const severityCardStyle = (severity: 'red' | 'warning' | null) => ({
-    background: severity ? `color-mix(in srgb, var(--${severity}) 8%, var(--bg2))` : 'var(--bg2)',
-    border: severity ? `1px solid color-mix(in srgb, var(--${severity}) 35%, var(--border))` : '1px solid var(--border)',
-    borderRadius: 16,
-    padding: 16,
-  })
 
   const hasMonthComparison = (prevMonthData?.expenses ?? 0) > 0
   const comparisonDiffPct = hasMonthComparison
