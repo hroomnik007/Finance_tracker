@@ -286,7 +286,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {categoriesWithExpenses.length > 0 && (
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', minWidth: 0 }}>
                   <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
                     <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
                       {t.expenses.variable.allCategories}

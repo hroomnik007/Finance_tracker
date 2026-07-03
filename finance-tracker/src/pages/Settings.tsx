@@ -634,7 +634,7 @@ export function SettingsPage() {
         </div>
 
         {/* Mobile: horizontal scroll chips */}
-        <div className="lg:hidden" style={{ position: 'relative', gridColumn: '1 / -1' }}>
+        <div className="lg:hidden" style={{ position: 'relative', gridColumn: '1 / -1', minWidth: 0 }}>
           <div ref={tabsScrollRef} className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {SECTIONS.map(s => {
               const isActive = activeSection === s.id
