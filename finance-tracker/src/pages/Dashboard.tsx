@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { SparklineMini } from '../components/SparklineMini'
+import { ForecastCard } from '../components/ForecastCard'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -251,6 +252,13 @@ const upcomingFixed = useMemo(() => {
   const insightMainColor = hasMonthComparison
     ? (comparisonIsUp ? 'var(--red)' : 'var(--green)')
     : (motivationalMsg?.color ?? 'var(--text)')
+
+  // ── Forecast (end-of-month prediction) ──────────────────────────────────────
+  const forecastProgressPct = daysInMonth > 0 ? (dayOfMonth / daysInMonth) * 100 : 0
+  const predictedBalance = totalIncome - dailyAvgExpense * daysInMonth
+  const predictedBalanceText = `${predictedBalance >= 0 ? '+' : ''}${formatAmount(predictedBalance)}`
+  const predictedBalanceColor = predictedBalance >= 0 ? 'var(--green)' : 'var(--red)'
+  const paceText = t.dashboard.pace.replace('{amount}', formatAmount(dailyAvgExpense))
 
   // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
@@ -671,6 +679,15 @@ const upcomingFixed = useMemo(() => {
           )}
         </div>
       )}
+
+      <ForecastCard
+        progressPct={forecastProgressPct}
+        monthLabel={t.dashboard.ofMonth}
+        predictedBalanceLabel={t.dashboard.predictedBalance}
+        predictedBalanceText={predictedBalanceText}
+        predictedBalanceColor={predictedBalanceColor}
+        paceText={paceText}
+      />
 
       {(user?.savings_enabled && savingsGoals.length > 0) && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
