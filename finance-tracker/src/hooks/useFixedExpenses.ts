@@ -4,7 +4,7 @@ import { getTransactions, createTransaction, updateTransaction, deleteTransactio
 import { useAuth } from '../context/AuthContext'
 import type { FixedExpense, ApiTransaction } from '../types'
 
-function parseDescription(desc: string | null, fallbackDay: number): { label: string; note: string; dayOfMonth: number } {
+export function parseDescription(desc: string | null, fallbackDay: number): { label: string; note: string; dayOfMonth: number } {
   if (!desc) return { label: '', note: '', dayOfMonth: fallbackDay }
   try {
     const obj = JSON.parse(desc)

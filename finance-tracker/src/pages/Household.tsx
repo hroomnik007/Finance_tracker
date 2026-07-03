@@ -8,6 +8,7 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { getMyHousehold, getMonthlyStats, getActivity, leaveHousehold } from '../api/households'
 import type { HouseholdData, MonthlyStats, ActivityItem } from '../api/households'
+import { parseDescription } from '../hooks/useFixedExpenses'
 
 const CAT_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#A78BFA', '#F97316']
 
@@ -326,6 +327,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
               const name = a.created_by_name ?? member?.name ?? '?'
               const isIncome = a.type === 'income'
               const actionText = isIncome ? ht.addedIncome : ht.addedExpense
+              const description = parseDescription(a.description, 1).label || '—'
               return (
                 <div key={i} style={{ display: 'flex', gap: 12, padding: '11px 0', borderBottom: i < activityFeed.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
                   <MemberAvatar
@@ -338,7 +340,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
                     <p style={{ fontSize: 13, color: 'var(--text)', marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <span style={{ fontWeight: 600 }}>{name}</span>
                       <span style={{ color: 'var(--text3)' }}> {actionText} </span>
-                      <span style={{ fontWeight: 500 }}>{a.description ?? '—'}</span>
+                      <span style={{ fontWeight: 500 }}>{description}</span>
                     </p>
                     <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(a.created_at, ht)}</p>
                   </div>
