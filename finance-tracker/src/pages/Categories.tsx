@@ -52,9 +52,10 @@ interface CardProps {
   onDelete: (id: string) => void
   isSwipeOpen?: boolean
   onSwipeOpen?: () => void
+  severity?: 'red' | 'warning' | null
 }
 
-function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete }: CardProps) {
+function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete, severity }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
   const pct = status ? Math.min(status.percentage, 100) : 0
   const rawPct = status?.percentage ?? 0
@@ -66,8 +67,8 @@ function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete }: Ca
       {...attributes}
       onClick={() => onEdit(cat)}
       style={{
-        background: 'var(--bg2)',
-        border: '1px solid var(--border)',
+        background: severity ? `color-mix(in srgb, var(--${severity}) 8%, var(--bg2))` : 'var(--bg2)',
+        border: severity ? `1px solid color-mix(in srgb, var(--${severity}) 35%, var(--border))` : '1px solid var(--border)',
         borderRadius: 16, padding: 16,
         cursor: isDragging ? 'grabbing' : 'pointer',
         transform: CSS.Transform.toString(transform),
@@ -122,7 +123,7 @@ function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete }: Ca
 }
 
 function SortableListCard(props: CardProps) {
-  const { cat, status, formatAmount, onEdit, onDelete } = props
+  const { cat, status, formatAmount, onEdit, onDelete, severity } = props
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
   const pct = status ? Math.min(status.percentage, 100) : 0
   const rawPct = status?.percentage ?? 0
@@ -134,8 +135,8 @@ function SortableListCard(props: CardProps) {
       {...attributes}
       onClick={() => onEdit(cat)}
       style={{
-        background: 'var(--bg2)',
-        border: '1px solid var(--border)',
+        background: severity ? `color-mix(in srgb, var(--${severity}) 8%, var(--bg2))` : 'var(--bg2)',
+        border: severity ? `1px solid color-mix(in srgb, var(--${severity}) 35%, var(--border))` : '1px solid var(--border)',
         borderRadius: 14, padding: '12px 16px',
         cursor: isDragging ? 'grabbing' : 'pointer',
         transform: CSS.Transform.toString(transform),
@@ -179,7 +180,7 @@ function SortableListCard(props: CardProps) {
   )
 }
 
-function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete, isSwipeOpen, onSwipeOpen }: CardProps) {
+function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete, isSwipeOpen, onSwipeOpen, severity }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id! })
   const pct = status ? Math.min(status.percentage, 100) : 0
   const rawPct = status?.percentage ?? 0
@@ -204,8 +205,8 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete, is
         <div
           onClick={() => onEdit(cat)}
           style={{
-            background: 'var(--bg2)',
-            border: isDragging ? '2px solid var(--violet)' : '1px solid var(--border)',
+            background: severity ? `color-mix(in srgb, var(--${severity}) 8%, var(--bg2))` : 'var(--bg2)',
+            border: isDragging ? '2px solid var(--violet)' : severity ? `1px solid color-mix(in srgb, var(--${severity}) 35%, var(--border))` : '1px solid var(--border)',
             borderRadius: 14, padding: '12px 14px',
             display: 'flex', flexDirection: 'column', gap: 8,
             userSelect: 'none',
@@ -261,6 +262,17 @@ export function CategoriesPage() {
   const { fixedExpenses } = useFixedExpenses()
 
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses })
+
+  // Single most urgent over/near-budget category gets a tinted card — everything else stays neutral
+  const worstBudgetStatus = useMemo(() =>
+    budgetStatuses
+      .filter(b => b.limit > 0)
+      .reduce<BudgetStatus | undefined>((worst, b) => (!worst || b.percentage > worst.percentage) ? b : worst, undefined),
+  [budgetStatuses])
+  const urgentCategoryId = worstBudgetStatus && worstBudgetStatus.percentage >= 90 ? worstBudgetStatus.categoryId : null
+  const urgentSeverity: 'red' | 'warning' | null = !worstBudgetStatus
+    ? null
+    : worstBudgetStatus.percentage >= 100 ? 'red' : worstBudgetStatus.percentage >= 90 ? 'warning' : null
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
@@ -499,10 +511,11 @@ export function CategoriesPage() {
                     }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
+                        const severity = cat.id === urgentCategoryId ? urgentSeverity : null
                         if (view === 'list') {
-                          return <SortableListCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                          return <SortableListCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} severity={severity} />
                         }
-                        return <SortableGridCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} />
+                        return <SortableGridCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={id => setDeleteId(id)} severity={severity} />
                       })}
                     </div>
                   </SortableContext>
@@ -523,7 +536,8 @@ export function CategoriesPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
-                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={(id) => setDeleteId(id)} isSwipeOpen={openSwipeId === cat.id} onSwipeOpen={() => setOpenSwipeId(cat.id!)} />
+                        const severity = cat.id === urgentCategoryId ? urgentSeverity : null
+                        return <SortableMobileCard key={cat.id} cat={cat} status={status} formatAmount={formatAmount} t={t} onEdit={openEdit} onDelete={(id) => setDeleteId(id)} isSwipeOpen={openSwipeId === cat.id} onSwipeOpen={() => setOpenSwipeId(cat.id!)} severity={severity} />
                       })}
                     </div>
                   </SortableContext>
