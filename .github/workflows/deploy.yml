@@ -58,8 +58,8 @@ jobs:
             cp /var/www/finance-tracker-repo/landing/index.html /var/www/landing/index.html 2>/dev/null || true
             sudo systemctl reload nginx
   deploy-backend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed_backend == 'true'
+    needs: [detect-changes, deploy-frontend]
+    if: always() && needs.detect-changes.outputs.changed_backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy backend via SSH
