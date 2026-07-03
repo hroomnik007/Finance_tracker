@@ -14,6 +14,8 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
+import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
+import { useScrollFade } from '../hooks/useScrollFade'
 import type { ApiTransaction, UserSession } from '../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -159,6 +161,7 @@ export function SettingsPage() {
 
   const securityRef = useRef<HTMLDivElement>(null)
   const dataRef = useRef<HTMLDivElement>(null)
+  const { ref: tabsScrollRef, showFade: tabsShowFade } = useScrollFade<HTMLDivElement>()
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
 
@@ -631,27 +634,30 @@ export function SettingsPage() {
         </div>
 
         {/* Mobile: horizontal scroll chips */}
-        <div className="flex lg:hidden" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4, gridColumn: '1 / -1' }}>
-          {SECTIONS.map(s => {
-            const isActive = activeSection === s.id
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px 14px', borderRadius: 99, flexShrink: 0,
-                  background: isActive ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-                  border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border)',
-                  color: isActive ? 'var(--violet)' : 'var(--text2)',
-                  fontSize: 13, fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                {sectionLabels[s.id]}
-              </button>
-            )
-          })}
+        <div className="lg:hidden" style={{ position: 'relative', gridColumn: '1 / -1' }}>
+          <div ref={tabsScrollRef} className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+            {SECTIONS.map(s => {
+              const isActive = activeSection === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSection(s.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 14px', borderRadius: 99, flexShrink: 0,
+                    background: isActive ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
+                    border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border)',
+                    color: isActive ? 'var(--violet)' : 'var(--text2)',
+                    fontSize: 13, fontWeight: isActive ? 600 : 500,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  {sectionLabels[s.id]}
+                </button>
+              )
+            })}
+          </div>
+          <ScrollFadeOverlay visible={tabsShowFade} background="var(--bg)" />
         </div>
 
         {/* Right content */}

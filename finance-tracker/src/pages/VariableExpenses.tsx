@@ -17,6 +17,8 @@ import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
 import type { VariableExpense, BudgetStatus } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
+import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
+import { useScrollFade } from '../hooks/useScrollFade'
 import React from 'react'
 
 interface VariableExpensesPageProps {
@@ -62,6 +64,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const { t } = useTranslation()
   const { user } = useAuth()
   const householdEnabled = user?.household_enabled ?? false
+  const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<VariableExpense | null>(null)
@@ -283,16 +286,19 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
           {(categoriesWithExpenses.length > 0 || (householdEnabled && members.length > 0)) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {categoriesWithExpenses.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-                  <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
-                    {t.expenses.variable.allCategories}
-                  </button>
-                  {categoriesWithExpenses.map(c => (
-                    <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
-                      <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
-                      <span>{c.name}</span>
+                <div style={{ position: 'relative' }}>
+                  <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                    <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
+                      {t.expenses.variable.allCategories}
                     </button>
-                  ))}
+                    {categoriesWithExpenses.map(c => (
+                      <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
+                        <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
+                        <span>{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <ScrollFadeOverlay visible={catPillsShowFade} background="var(--bg)" />
                 </div>
               )}
               {householdEnabled && members.length > 0 && (

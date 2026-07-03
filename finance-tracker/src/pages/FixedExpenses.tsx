@@ -11,6 +11,8 @@ import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
+import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
+import { useScrollFade } from '../hooks/useScrollFade'
 import React from 'react'
 
 const FALLBACK_ICON = '📦'
@@ -44,6 +46,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const { t } = useTranslation()
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+  const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const expenseCategories = useMemo(
     () => categories.filter(c => c.type === 'expense'),
@@ -367,20 +370,23 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Category filter pills */}
           {usedCategoryIds.filter(id => id !== '').length >= 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
-                <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
-                  {t.expenses.fixed.allCategories}
-                </button>
-                {usedCategoryIds.filter(id => id !== '').map(catId => {
-                  const cat = getCat(catId)
-                  const isActive = activeCat === catId
-                  return (
-                    <button key={catId} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
-                      <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
-                      <span>{cat?.name ?? '—'}</span>
-                    </button>
-                  )
-                })}
+              <div style={{ position: 'relative' }}>
+                <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+                  <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
+                    {t.expenses.fixed.allCategories}
+                  </button>
+                  {usedCategoryIds.filter(id => id !== '').map(catId => {
+                    const cat = getCat(catId)
+                    const isActive = activeCat === catId
+                    return (
+                      <button key={catId} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
+                        <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                        <span>{cat?.name ?? '—'}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <ScrollFadeOverlay visible={catPillsShowFade} background="var(--bg)" />
               </div>
             </div>
           )}
