@@ -228,6 +228,9 @@ export const en: Translations = {
       yearlyLabel: 'Yearly',
       installmentsLabel: 'Payments',
       monthCalendar: 'Month calendar',
+      viewList: 'List',
+      viewCalendar: 'Calendar',
+      noPaymentsThisDay: 'No payments this day',
     },
     categories: {
       title: 'Categories',

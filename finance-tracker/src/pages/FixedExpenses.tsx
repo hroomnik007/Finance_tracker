@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Pencil, Trash2, Plus, Lock } from 'lucide-react'
+import { Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -63,6 +63,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
   const [activeCat, setActiveCat] = useState<string | null>(null)
   const [csvOpen, setCsvOpen] = useState(false)
+  const [mobileView, setMobileView] = useState<'list' | 'calendar'>('list')
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | null>(null)
 
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
@@ -113,6 +115,15 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     return (n.getFullYear() === year && n.getMonth() + 1 === month) ? n.getDate() : -1
   })()
 
+  // Monday-first weekday offset for the compact mobile month grid
+  const monthStartWeekday = useMemo(() => (new Date(year, month - 1, 1).getDay() + 6) % 7, [year, month])
+  const calendarCells = useMemo(() => {
+    const cells: (number | null)[] = Array(monthStartWeekday).fill(null)
+    for (let d = 1; d <= daysInCurrentMonth; d++) cells.push(d)
+    while (cells.length % 7 !== 0) cells.push(null)
+    return cells
+  }, [monthStartWeekday, daysInCurrentMonth])
+
   function countdownBadge(daysUntil: number) {
     if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' }
     const text = t.expenses.fixed.countdown.days.replace('{n}', String(daysUntil))
@@ -136,6 +147,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   }
 
   function closeSheet() { setSheetOpen(false); setEditing(null) }
+
+  useEffect(() => { setSelectedCalendarDay(null) }, [month, year])
 
   async function handleSave() {
     const amt = parseFloat(amount.replace(',', '.'))
@@ -321,6 +334,103 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             </div>
           </div>
 
+          {/* View toggle — mobile only (desktop always shows calendar + list stacked) */}
+          <div className="lg:hidden">
+            <div style={{ display: 'inline-flex', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 11, padding: 3, gap: 2 }}>
+              {(['list', 'calendar'] as const).map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setMobileView(v)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px',
+                    borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+                    transition: 'all 0.15s', background: mobileView === v ? 'var(--bg2)' : 'transparent',
+                    color: mobileView === v ? 'var(--text)' : 'var(--text3)',
+                    boxShadow: mobileView === v ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                  }}
+                >
+                  {v === 'list' ? <ListIcon size={14} /> : <Calendar size={14} />}
+                  {v === 'list' ? t.expenses.fixed.viewList : t.expenses.fixed.viewCalendar}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Compact month-grid calendar — mobile only */}
+          <div className={mobileView === 'calendar' ? 'lg:hidden' : 'hidden'}>
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
+                {t.daysShort.map(d => (
+                  <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--text3)' }}>{d}</div>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                {calendarCells.map((day, i) => {
+                  if (day === null) return <div key={`empty-${i}`} />
+                  const dayFixed = fixedExpenses.filter(f => f.dayOfMonth === day)
+                  const hasPayment = dayFixed.length > 0
+                  const isToday = day === calendarToday
+                  const isPast = calendarToday > 0 && day < calendarToday
+                  const isSelected = selectedCalendarDay === day
+                  const daysUntil = ((day - (calendarToday > 0 ? calendarToday : new Date().getDate()) + 31) % 31)
+                  const dotColor = hasPayment ? countdownBadge(daysUntil).color : 'transparent'
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => hasPayment && setSelectedCalendarDay(isSelected ? null : day)}
+                      style={{
+                        aspectRatio: '1',
+                        borderRadius: 10,
+                        background: isSelected ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
+                        border: isToday ? '1.5px solid var(--violet)' : isSelected ? '1px solid rgba(139,92,246,0.4)' : '1px solid transparent',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+                        fontSize: 12, fontWeight: 600, fontFamily: "'DM Mono', monospace",
+                        color: isPast ? 'var(--text3)' : isToday ? 'var(--violet)' : 'var(--text2)',
+                        opacity: isPast ? 0.6 : 1,
+                        cursor: hasPayment ? 'pointer' : 'default',
+                        padding: 0,
+                      }}
+                    >
+                      {day}
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor }} />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Inline expansion — payments due on the selected day */}
+            {selectedCalendarDay !== null && (() => {
+              const dayPayments = fixedExpenses.filter(f => f.dayOfMonth === selectedCalendarDay)
+              return (
+                <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 14, marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {dayPayments.length === 0 ? (
+                    <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.fixed.noPaymentsThisDay}</p>
+                  ) : dayPayments.map(e => {
+                    const cat = getCat(e.categoryId)
+                    const icon = cat?.icon ?? FALLBACK_ICON
+                    const color = cat?.color ?? FALLBACK_COLOR
+                    return (
+                      <div key={e.id ?? e.label} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => openEdit(e)}>
+                        <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                          {icon}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text3)' }}>{cat?.name ?? '—'}</div>
+                        </div>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: 'var(--red)', flexShrink: 0 }}>{formatAmount(e.amount)}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+          </div>
+
           {/* Calendar strip — desktop only */}
           <div className="hidden lg:block">
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
@@ -402,7 +512,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             )}
           </div>
 
-          {/* Expense list — upcoming/past split */}
+          {/* Expense list — upcoming/past split (mobile: hidden while calendar view is active) */}
+          <div className={mobileView === 'list' ? undefined : 'hidden lg:block'}>
           {fixedExpenses.length === 0 ? (
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
               <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>🔒</span>
@@ -489,6 +600,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               </div>
             )
           })()}
+          </div>
 
 
         </div>

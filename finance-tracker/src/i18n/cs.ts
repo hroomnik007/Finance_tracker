@@ -228,6 +228,9 @@ export const cs: Translations = {
       yearlyLabel: 'Ročně',
       installmentsLabel: 'Splátek',
       monthCalendar: 'Kalendář měsíce',
+      viewList: 'Seznam',
+      viewCalendar: 'Kalendář',
+      noPaymentsThisDay: 'Žádné platby tento den',
     },
     categories: {
       title: 'Kategorie',

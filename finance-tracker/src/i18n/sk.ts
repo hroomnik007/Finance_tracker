@@ -226,6 +226,9 @@ export const sk = {
       yearlyLabel: 'Ročne',
       installmentsLabel: 'Splátok',
       monthCalendar: 'Kalendár mesiaca',
+      viewList: 'Zoznam',
+      viewCalendar: 'Kalendár',
+      noPaymentsThisDay: 'Žiadne platby tento deň',
     },
     categories: {
       title: 'Kategórie',

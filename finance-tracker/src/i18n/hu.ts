@@ -228,6 +228,9 @@ export const hu: Translations = {
       yearlyLabel: 'Éves',
       installmentsLabel: 'Részlet',
       monthCalendar: 'Hónap naptára',
+      viewList: 'Lista',
+      viewCalendar: 'Naptár',
+      noPaymentsThisDay: 'Nincs fizetés ezen a napon',
     },
     categories: {
       title: 'Kategóriák',

@@ -228,6 +228,9 @@ export const pl: Translations = {
       yearlyLabel: 'Rocznie',
       installmentsLabel: 'Rat',
       monthCalendar: 'Kalendarz miesiąca',
+      viewList: 'Lista',
+      viewCalendar: 'Kalendarz',
+      noPaymentsThisDay: 'Brak płatności tego dnia',
     },
     categories: {
       title: 'Kategorie',
