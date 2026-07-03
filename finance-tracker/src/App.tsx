@@ -102,7 +102,7 @@ function App() {
     (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
   )
   const { toasts, showToast } = useToast()
-  const { locked, verifyPin } = usePinLockContext()
+  const { locked, lockMethod, verifyPin } = usePinLockContext()
   const { showOnboarding, completeOnboarding } = useOnboarding()
   const needsBudgetTemplate = useBudgetTemplate()
   const [showBudgetTemplate, setShowBudgetTemplate] = useState(false)
@@ -383,7 +383,7 @@ function App() {
       background: 'var(--bg)',
     }}>
       <PWAUpdateBanner />
-      {locked && isAuthenticated && (
+      {locked && lockMethod === 'pin' && (
         <PinLock
           onVerify={verifyPin}
           onFallbackToLogin={handleLogout}

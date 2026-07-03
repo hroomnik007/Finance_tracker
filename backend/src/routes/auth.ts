@@ -62,11 +62,23 @@ const sessionCheckLimiter = rateLimit({
   message: { error: 'Príliš veľa pokusov. Skúste neskôr.' },
 });
 
+// Separate from loginLimiter: pingSession fires every 60s while the app is
+// visible (up to ~15 pings per 15-min window), which was sharing — and
+// exhausting — the login attempt quota, causing genuine login attempts to be
+// rejected as rate-limited.
+const pingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Príliš veľa pokusov. Skúste neskôr.' },
+});
+
 const router = Router();
 
 router.get("/methods",          generalLimiter,       getAuthMethods);
 router.get("/session-check",    sessionCheckLimiter,  authenticateToken, sessionCheck);
-router.get("/ping",             loginLimiter,         authenticateToken, pingSession);
+router.get("/ping",             pingLimiter,          authenticateToken, pingSession);
 router.post("/register",        registerLimiter, register);
 router.post("/login",           loginLimiter,    login);
 router.post("/refresh",         refreshLimiter,  refresh);

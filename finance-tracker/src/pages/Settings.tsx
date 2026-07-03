@@ -245,7 +245,6 @@ export function SettingsPage() {
     setAutoLockSaving(true)
     try {
       await updateUserSettings({ autoLockMinutes: val })
-      localStorage.setItem('auto_lock_minutes', String(val))
       await refreshUser()
     } finally {
       setAutoLockSaving(false)

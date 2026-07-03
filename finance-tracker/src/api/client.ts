@@ -79,7 +79,12 @@ apiClient.interceptors.response.use(
       processQueue(refreshError, null)
       setAccessToken(null)
       if (!initializingAuth) {
-        window.dispatchEvent(new Event('auth:logout'))
+        // If PIN lock is enabled, a failed background token refresh (e.g. after
+        // returning from an auto-locked background tab) must not clear the
+        // session — it should just re-show the PIN screen, not force a full
+        // logout/relogin (which was also hammering the login rate limiter).
+        const hasPinLock = localStorage.getItem('lock_method') === 'pin'
+        window.dispatchEvent(new Event(hasPinLock ? 'auth:pin-lock-required' : 'auth:logout'))
       }
       return Promise.reject(refreshError)
     } finally {

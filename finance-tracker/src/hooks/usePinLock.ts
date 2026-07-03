@@ -15,14 +15,13 @@ export function usePinLock() {
   )
   // Start locked if PIN is set AND this browser session hasn't verified yet.
   // sessionStorage persists across hard refresh but clears on tab close / logout.
+  // Note: auto_lock_minutes isn't known synchronously here (user loads async on
+  // cold PWA open) — the "Nikdy" case is reconciled once `user` loads, below.
   const [locked, setLocked] = useState(() => {
     const v = localStorage.getItem(LOCK_METHOD_KEY)
     if (v !== 'pin') return false
-    const autoLockMinutes = localStorage.getItem('auto_lock_minutes')
-    if (autoLockMinutes === 'null' || autoLockMinutes === null) return false
     return sessionStorage.getItem(PIN_SESSION_KEY) !== 'true'
   })
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lockMethodRef = useRef(lockMethod)
   lockMethodRef.current = lockMethod
 
@@ -38,25 +37,14 @@ export function usePinLock() {
     setLocked(true)
   }, [])
 
-  const resetTimer = useCallback(() => {
-    if (!lockMethod) return
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (autoLockMs === null || autoLockMs === 0) return
-    timerRef.current = setTimeout(lockAndClearSession, autoLockMs)
-  }, [lockMethod, lockAndClearSession, autoLockMs])
-
+  // The axios interceptor dispatches this when a background silent token
+  // refresh fails while PIN lock is enabled — show the PIN screen instead of
+  // logging the user out (see client.ts).
   useEffect(() => {
-    if (!lockMethod || locked) return
-    resetTimer()
-    const onActivity = () => resetTimer()
-    window.addEventListener('pointerdown', onActivity)
-    window.addEventListener('keydown', onActivity)
-    return () => {
-      window.removeEventListener('pointerdown', onActivity)
-      window.removeEventListener('keydown', onActivity)
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [lockMethod, locked, resetTimer])
+    const handler = () => lockAndClearSession()
+    window.addEventListener('auth:pin-lock-required', handler)
+    return () => window.removeEventListener('auth:pin-lock-required', handler)
+  }, [lockAndClearSession])
 
   useEffect(() => {
     const handler = (e: StorageEvent) => {
@@ -136,7 +124,11 @@ export function usePinLock() {
     // (set at mount before login completed), unlock now so PinLock never shows.
     if (sessionStorage.getItem(PIN_SESSION_KEY) === 'true' && lockedRef.current) {
       setLocked(false)
-      resetTimer()
+    }
+
+    // "Nikdy" (auto_lock_minutes === null): never require PIN, not even on cold open.
+    if (user.auto_lock_minutes == null && lockedRef.current) {
+      setLocked(false)
     }
 
     const serverHasPin = !!user.has_pin
@@ -145,7 +137,6 @@ export function usePinLock() {
       localStorage.removeItem(LOCK_METHOD_KEY)
       setLockMethod(null)
       setLocked(false)
-      if (timerRef.current) clearTimeout(timerRef.current)
     } else if (serverHasPin && current === null) {
       localStorage.setItem(LOCK_METHOD_KEY, 'pin')
       setLockMethod('pin')
@@ -171,8 +162,7 @@ export function usePinLock() {
     sessionStorage.setItem(PIN_SESSION_KEY, 'true')
     setLockMethod('pin')
     setLocked(false)
-    resetTimer()
-  }, [resetTimer])
+  }, [])
 
   const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
     if (!user?.email) return false
@@ -180,12 +170,11 @@ export function usePinLock() {
       await pinLogin(user.email, pin)
       sessionStorage.setItem(PIN_SESSION_KEY, 'true')
       setLocked(false)
-      resetTimer()
       return true
     } catch {
       return false
     }
-  }, [user, resetTimer])
+  }, [user])
 
   const removePin = useCallback(async () => {
     await deletePin()
@@ -193,7 +182,6 @@ export function usePinLock() {
     sessionStorage.removeItem(PIN_SESSION_KEY)
     setLockMethod(null)
     setLocked(false)
-    if (timerRef.current) clearTimeout(timerRef.current)
     refreshUser()
   }, [refreshUser])
 
