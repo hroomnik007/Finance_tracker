@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer,
 } from 'recharts'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
+import { SparklineMini } from '../components/SparklineMini'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -310,6 +311,8 @@ const upcomingFixed = useMemo(() => {
   const expChangePct = (prevMonthData?.expenses ?? 0) > 0
     ? ((heroExpenses - prevMonthData!.expenses) / prevMonthData!.expenses * 100)
     : null
+  const incomeSparklineData = useMemo(() => chartData.map(d => d.income), [chartData])
+  const expenseSparklineData = useMemo(() => chartData.map(d => d.expenses), [chartData])
   const heroSection = (
     <div style={{
       background: 'linear-gradient(135deg,#1a0d2e 0%,#3d1f82 50%,#1a0d2e 100%)',
@@ -390,6 +393,11 @@ const upcomingFixed = useMemo(() => {
               )}
             </div>
             <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#86efac', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedIncome)}</p>
+            {incomeSparklineData.length >= 2 && (
+              <div style={{ marginTop: 6 }}>
+                <SparklineMini data={incomeSparklineData} color="var(--green)" width={120} height={24} id="hero-income" />
+              </div>
+            )}
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -401,6 +409,11 @@ const upcomingFixed = useMemo(() => {
               )}
             </div>
             <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#fca5a5', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
+            {expenseSparklineData.length >= 2 && (
+              <div style={{ marginTop: 6 }}>
+                <SparklineMini data={expenseSparklineData} color="var(--red)" width={120} height={24} id="hero-expenses" />
+              </div>
+            )}
           </div>
         </div>
       </div>
