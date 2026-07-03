@@ -8,6 +8,9 @@ on:
       - 'finance-tracker/**'
       - 'backend/**'
       - 'landing/**'
+concurrency:
+  group: hetzner-deploy
+  cancel-in-progress: false
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
