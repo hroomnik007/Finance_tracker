@@ -49,18 +49,10 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     updateUserSettings({ theme: next }).catch(() => {})
   }
 
-  const now = new Date()
   const householdEnabled = user?.household_enabled ?? false
   const showMonth = MONTH_PAGES.includes(page)
   const showToggle = householdEnabled && page === 'dashboard'
   const showAdd = !(['household', 'settings'] as string[]).includes(page)
-
-  const dayName = new Intl.DateTimeFormat('sk-SK', { weekday: 'long' }).format(now)
-  const dayNameLower = dayName.charAt(0).toLowerCase() + dayName.slice(1)
-  const day = now.getDate()
-  const monthNum = now.getMonth() + 1
-  const yearNum = now.getFullYear()
-  const dateStr = `${dayNameLower} ${day}.${monthNum}.${yearNum}`
 
   const minDate = useMemo(() => {
     const src = user?.tracking_start_date ?? user?.createdAt
@@ -221,9 +213,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
               <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user?.name?.split(' ')[0] ?? ''}
               </span>
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-              {dateStr}
             </div>
           </div>
           {themeToggleBtn}
