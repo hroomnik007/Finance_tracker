@@ -5,6 +5,7 @@ import { db } from "../db";
 import { households, householdMembers, users, transactions, categories } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 import { generateInviteCode } from "../utils/inviteCode";
+import { evaluateAchievements } from "../services/achievements.service";
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
@@ -108,16 +109,22 @@ export async function joinHousehold(req: AuthRequest, res: Response): Promise<vo
     .set({ householdId: household.id, householdEnabled: true })
     .where(eq(users.id, userId));
 
-  const [{ memberCount }] = await db
-    .select({ memberCount: sql<number>`COUNT(*)` })
+  const members = await db
+    .select({ userId: householdMembers.userId })
     .from(householdMembers)
     .where(eq(householdMembers.householdId, household.id));
+
+  // Re-evaluate every member: joining pushes the household to ≥ 2 members, so
+  // both the newcomer AND the existing creator now qualify for "Tímový hráč".
+  for (const m of members) {
+    evaluateAchievements(m.userId).catch(err => console.error('achievement eval failed:', err));
+  }
 
   res.json({
     id: household.id,
     name: household.name,
     invite_code: household.inviteCode,
-    member_count: Number(memberCount),
+    member_count: members.length,
   });
 }
 

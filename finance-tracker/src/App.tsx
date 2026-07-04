@@ -31,7 +31,8 @@ import { useVariableExpenses } from './hooks/useVariableExpenses'
 import { useIncomes } from './hooks/useIncomes'
 import { fetchIncomes, incomeQueryKey } from './hooks/useIncomes'
 import { fetchVariableExpenses, variableExpenseQueryKey } from './hooks/useVariableExpenses'
-import { fetchFixedExpenses, fixedExpenseQueryKey } from './hooks/useFixedExpenses'
+import { fetchFixedExpenses, fixedExpenseQueryKey, useFixedExpenses } from './hooks/useFixedExpenses'
+import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotifications'
 import { fetchCategoriesData } from './hooks/useCategories'
 import { fetchSavingsData } from './hooks/useSavings'
 import { fetchHouseholdData, householdQueryKey } from './hooks/useHousehold'
@@ -84,6 +85,10 @@ function App() {
   const now = new Date()
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
   const { incomes: allIncomes } = useIncomes(now.getMonth() + 1, now.getFullYear())
+  // Native OS reminders for fixed expenses due today. Reads the Settings toggle
+  // (getNotificationsEnabled → localStorage); fires at most once per expense per day.
+  const { fixedExpenses: allFixedExpensesForNotif } = useFixedExpenses()
+  useFixedExpenseNotifications(allFixedExpensesForNotif, isAuthenticated)
   const [page, setPage] = useState<Page>(getPageFromHash)
   type AuthPage = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email' | 'privacy-policy'
 

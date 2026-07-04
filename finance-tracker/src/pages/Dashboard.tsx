@@ -5,6 +5,8 @@ import {
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { SparklineMini } from '../components/SparklineMini'
 import { ForecastCard } from '../components/ForecastCard'
+import { StreakBadge } from '../components/StreakBadge'
+import { StreakModal } from '../components/StreakModal'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -69,6 +71,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
   const [summaryCards, setSummaryCards] = useState<{ balance: number; income: number; expenses: number; savingsRate: number } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [streakModalOpen, setStreakModalOpen] = useState(false)
   const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
   const [trackingSaving, setTrackingSaving] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -281,12 +284,7 @@ const upcomingFixed = useMemo(() => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <span style={{ fontSize: 26, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
-          {(user?.currentStreak ?? 0) > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
-              <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
-              {user!.currentStreak}
-            </span>
-          )}
+          <StreakBadge count={user?.currentStreak ?? 0} size="lg" onClick={() => setStreakModalOpen(true)} />
         </div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -304,12 +302,7 @@ const upcomingFixed = useMemo(() => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
-          {(user?.currentStreak ?? 0) > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.3)', color: '#FB923C', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
-              <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</span>
-              {user!.currentStreak}
-            </span>
-          )}
+          <StreakBadge count={user?.currentStreak ?? 0} size="sm" onClick={() => setStreakModalOpen(true)} />
         </div>
       </div>
       <span style={{ fontSize: 11, color: 'var(--text3)', flexShrink: 0, whiteSpace: 'nowrap' }}>{todayStr}</span>
@@ -796,6 +789,15 @@ const upcomingFixed = useMemo(() => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Streak detail modal */}
+      {streakModalOpen && (
+        <StreakModal
+          currentStreak={user?.currentStreak ?? 0}
+          longestStreak={user?.longestStreak ?? 0}
+          onClose={() => setStreakModalOpen(false)}
+        />
       )}
 
       {/* Tracking date modal */}

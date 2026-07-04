@@ -5,6 +5,7 @@ import { db } from "../db";
 import { transactions, categories, users, householdMembers } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
 import { recalculateCategoryLimit } from "./categories.controller";
+import { evaluateAchievements } from "../services/achievements.service";
 
 const createSchema = z.object({
   categoryId: z.string().uuid().nullable().optional(),
@@ -157,7 +158,10 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
     .returning();
 
   const withCategory = await fetchWithCategory(row.id);
-  updateStreakAndBadges(req.userId!, body.data.date).catch(err => console.error('streak update failed:', err));
+  // Update streak first (achievements read longestStreak), then evaluate achievements.
+  updateStreakAndBadges(req.userId!, body.data.date)
+    .then(() => evaluateAchievements(req.userId!))
+    .catch(err => console.error('streak/achievement update failed:', err));
   if (row.isFixed && row.categoryId) {
     recalculateCategoryLimit(row.categoryId, req.userId!).catch(err => console.error('auto-limit recalc failed:', err));
   }

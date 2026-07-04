@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../db";
 import { savingsGoals, savingsDeposits } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
+import { evaluateAchievements } from "../services/achievements.service";
 
 type SavingsGoalRow = typeof savingsGoals.$inferSelect;
 
@@ -62,6 +63,7 @@ export async function createSavingsGoal(req: AuthRequest, res: Response): Promis
     })
     .returning();
 
+  evaluateAchievements(req.userId!).catch(err => console.error('achievement eval failed:', err));
   res.status(201).json({ data: normalizeGoal(row) });
 }
 

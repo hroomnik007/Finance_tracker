@@ -234,3 +234,14 @@ export const notificationsDismissed = pgTable("notifications_dismissed", {
   index("notifications_dismissed_user_id_idx").on(t.userId),
 ]);
 export type NotificationDismissed = typeof notificationsDismissed.$inferSelect;
+
+export const userAchievements = pgTable("user_achievements", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  achievementKey: varchar("achievement_key", { length: 50 }).notNull(),
+  unlockedAt: timestamp("unlocked_at").notNull().defaultNow(),
+}, (t) => [
+  unique("user_achievements_unq").on(t.userId, t.achievementKey),
+  index("user_achievements_user_id_idx").on(t.userId),
+]);
+export type UserAchievement = typeof userAchievements.$inferSelect;

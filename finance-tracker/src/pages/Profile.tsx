@@ -6,29 +6,45 @@ import { usePinLockContext } from '../context/PinLockContext'
 import { updateAvatar, changePassword, updateUserSettings, updateProfile } from '../api/auth'
 import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
+import { getAchievements } from '../api/achievements'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
 
+// Presentation for the 8 achievements. `key` matches the backend achievement
+// keys returned by GET /api/achievements — unlock state is fetched, not hardcoded.
 const ACHIEVEMENTS = [
-  { emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', unlocked: true, color: '#7C3AED' },
-  { emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', unlocked: true, color: '#FB923C' },
-  { emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', unlocked: true, color: '#34D399' },
-  { emoji: '📊', name: 'Analytik', desc: 'Prvý report', unlocked: false, color: '#60a5fa' },
-  { emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', unlocked: false, color: '#FBBF24' },
-  { emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', unlocked: false, color: '#F59E0B' },
-  { emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', unlocked: false, color: '#A78BFA' },
-  { emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', unlocked: false, color: '#67E8F9' },
+  { key: 'first_transaction', emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', color: '#7C3AED' },
+  { key: 'week_streak', emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', color: '#FB923C' },
+  { key: 'first_savings_goal', emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', color: '#34D399' },
+  { key: 'first_report', emoji: '📊', name: 'Analytik', desc: 'Prvý report', color: '#60a5fa' },
+  { key: 'budget_met', emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', color: '#FBBF24' },
+  { key: 'speedster', emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', color: '#F59E0B' },
+  { key: 'team_player', emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', color: '#A78BFA' },
+  { key: 'veteran', emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', color: '#67E8F9' },
 ] as const
 
 function AchievementsTab() {
   const [hovered, setHovered] = useState<number | null>(null)
+  const [unlockedKeys, setUnlockedKeys] = useState<Set<string>>(new Set())
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    getAchievements()
+      .then(({ data }) => setUnlockedKeys(new Set(data.filter(a => a.unlocked).map(a => a.key))))
+      .catch(() => {})
+      .finally(() => setLoaded(true))
+  }, [])
+
+  const items = ACHIEVEMENTS.map(a => ({ ...a, unlocked: unlockedKeys.has(a.key) }))
+  const unlockedCount = items.filter(a => a.unlocked).length
+
   return (
     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>ZÍSKANÉ (3 z 8)</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        {ACHIEVEMENTS.map((a, i) => (
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>ZÍSKANÉ ({unlockedCount} z {ACHIEVEMENTS.length})</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, opacity: loaded ? 1 : 0.5, transition: 'opacity 0.2s' }}>
+        {items.map((a, i) => (
           <div
             key={i}
             onMouseEnter={() => setHovered(i)}

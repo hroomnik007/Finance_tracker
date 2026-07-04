@@ -35,16 +35,28 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
-  const generated = useRef(false)
+  const running = useRef(false)
   const ref = useRef<HTMLDivElement>(null)
   const { isAuthenticated } = useAuth()
   const { formatAmount } = useFormatters()
   const unreadCount = notifications.filter(n => !n.read).length
 
   useEffect(() => {
-    if (!isAuthenticated || generated.current) return
-    generated.current = true
+    if (!isAuthenticated) return
     generateNotifications()
+    // Periodic + focus/visibility refresh so "due today" surfaces even in
+    // long-lived sessions (e.g. app left open across midnight).
+    const REFRESH_MS = 5 * 60 * 1000
+    const interval = setInterval(() => generateNotifications(true), REFRESH_MS)
+    const onFocus = () => generateNotifications(true)
+    const onVisible = () => { if (document.visibilityState === 'visible') generateNotifications(true) }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -56,8 +68,10 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  async function generateNotifications() {
-    setLoading(true)
+  async function generateNotifications(silent = false) {
+    if (running.current) return
+    running.current = true
+    if (!silent) setLoading(true)
     try {
       // Fetch dismissed keys first — DB is source of truth, no fallback to empty
       const dismissedRes = await getDismissedNotifications()
@@ -103,21 +117,28 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         })
       }
 
-      // Upcoming fixed expenses (next 7 days, max 2)
-      let fixedAdded = 0
-      for (const tx of fixedRes.data) {
-        if (fixedAdded >= 2) break
-        let dayOfMonth = tx.date ? new Date(tx.date + 'T12:00:00').getDate() : 1
-        let label = tx.description ?? ''
-        try {
-          const obj = JSON.parse(tx.description ?? '')
-          if (obj && typeof obj.d === 'number') {
-            dayOfMonth = obj.d
-            label = String(obj.l ?? label)
-          }
-        } catch { /* plain text description */ }
-        const diff = dayOfMonth >= todayDay ? dayOfMonth - todayDay : daysInMonth - todayDay + dayOfMonth
-        if (diff > 7) continue
+      // Upcoming fixed expenses (next 7 days, max 2) — sort by urgency (days
+      // until due) BEFORE capping, so a payment due today is never crowded out
+      // by less-urgent items that happen to come earlier in the raw list order.
+      const upcomingFixed = fixedRes.data
+        .map(tx => {
+          let dayOfMonth = tx.date ? new Date(tx.date + 'T12:00:00').getDate() : 1
+          let label = tx.description ?? ''
+          try {
+            const obj = JSON.parse(tx.description ?? '')
+            if (obj && typeof obj.d === 'number') {
+              dayOfMonth = obj.d
+              label = String(obj.l ?? label)
+            }
+          } catch { /* plain text description */ }
+          const diff = dayOfMonth >= todayDay ? dayOfMonth - todayDay : daysInMonth - todayDay + dayOfMonth
+          return { tx, dayOfMonth, label, diff }
+        })
+        .filter(f => f.diff <= 7)
+        .sort((a, b) => a.diff - b.diff)
+        .slice(0, 2)
+
+      for (const { tx, dayOfMonth, label, diff } of upcomingFixed) {
         const timeStr = diff === 0 ? t.notifications.today : diff === 1 ? t.notifications.tomorrow : t.notifications.inDays.replace('{n}', String(diff))
         ns.push({
           id: `fixed-${tx.id}`,
@@ -130,7 +151,6 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           amount: formatAmount(tx.amount),
           target: 'fixed-expenses',
         })
-        fixedAdded++
       }
 
       // Latest income
@@ -174,7 +194,8 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
       setNotifications(ns.filter(n => !dismissedIds.has(n.id)))
     } catch { /* silently ignore fetch errors */ }
-    setLoading(false)
+    if (!silent) setLoading(false)
+    running.current = false
   }
 
   function markAllRead() {

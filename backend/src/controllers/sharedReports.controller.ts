@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { db } from "../db";
 import { sharedReports, transactions, users } from "../db/schema";
 import { AuthRequest } from "../middleware/authenticate";
+import { evaluateAchievements } from "../services/achievements.service";
 
 export async function createSharedReport(req: AuthRequest, res: Response): Promise<void> {
   const { data, expiresInHours = 24 * 7 } = req.body as { data?: string; expiresInHours?: number };
@@ -20,6 +21,7 @@ export async function createSharedReport(req: AuthRequest, res: Response): Promi
   const expiresAt = new Date(Date.now() + Math.min(expiresInHours, 24 * 30) * 3600 * 1000);
 
   await db.insert(sharedReports).values({ userId: req.userId!, token, data, expiresAt });
+  evaluateAchievements(req.userId!).catch(err => console.error('achievement eval failed:', err));
   res.status(201).json({ token });
 }
 
