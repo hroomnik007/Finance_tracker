@@ -1,17 +1,11 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from '../i18n'
 
 interface StreakModalProps {
   currentStreak: number
   longestStreak: number
   onClose: () => void
-}
-
-// Slovak day pluralization: 1 → deň, 2–4 → dni, else → dní
-function dayWord(n: number): string {
-  if (n === 1) return 'deň'
-  if (n >= 2 && n <= 4) return 'dni'
-  return 'dní'
 }
 
 function StatBox({ label, value }: { label: string; value: number }) {
@@ -24,6 +18,7 @@ function StatBox({ label, value }: { label: string; value: number }) {
 }
 
 export function StreakModal({ currentStreak, longestStreak, onClose }: StreakModalProps) {
+  const { t } = useTranslation()
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -44,24 +39,24 @@ export function StreakModal({ currentStreak, longestStreak, onClose }: StreakMod
           <div style={{ position: 'absolute', top: -60, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle,rgba(251,146,60,0.35),transparent 65%)', filter: 'blur(24px)', pointerEvents: 'none' }} />
           <button
             onClick={onClose}
-            aria-label="Zavrieť"
+            aria-label={t.common.close}
             style={{ position: 'absolute', top: 14, right: 14, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}
           >
             <X size={16} />
           </button>
           <div style={{ fontSize: 52, lineHeight: 1, display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>🔥</div>
           <div style={{ fontSize: 40, fontWeight: 800, color: 'white', fontFamily: "'DM Mono', monospace", marginTop: 8, letterSpacing: '-1px' }}>{currentStreak}</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{dayWord(currentStreak)} v rade</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{t.profile.days} {t.streak.inARow}</div>
         </div>
 
         {/* Body */}
         <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 12 }}>
-            <StatBox label="AKTUÁLNA SÉRIA" value={currentStreak} />
-            <StatBox label="NAJDLHŠIA SÉRIA" value={longestStreak} />
+            <StatBox label={t.streak.currentLabel.toUpperCase()} value={currentStreak} />
+            <StatBox label={t.streak.longestLabel.toUpperCase()} value={longestStreak} />
           </div>
           <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5, textAlign: 'center', margin: 0 }}>
-            Séria rastie o&nbsp;1 za každý deň, keď pridáš aspoň jednu transakciu. Keď deň vynecháš, začína odznova. Udrž si sériu aspoň 7&nbsp;dní a odomkneš odznak „Týždeň v&nbsp;rade"! 🔥
+            {t.streak.explanation}
           </p>
         </div>
       </div>

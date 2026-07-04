@@ -772,4 +772,23 @@ export const cs: Translations = {
     byCategory: 'Výdaje podle kategorií',
     createdVia: 'Vytvořeno přes',
   },
+  achievements: {
+    countLabel: '{unlocked} z {total}',
+    items: {
+      firstTransaction: { name: 'První krok', desc: 'První transakce' },
+      weekStreak: { name: 'Týden v řadě', desc: '7 dní po sobě' },
+      firstSavingsGoal: { name: 'Spořitel', desc: 'První cíl úspor' },
+      firstReport: { name: 'Analytik', desc: 'První report' },
+      budgetMet: { name: 'Měsíční cíl', desc: 'Splnění rozpočtu' },
+      speedster: { name: 'Rychlík', desc: '10 transakcí/den' },
+      teamPlayer: { name: 'Týmový hráč', desc: 'Pozvání člena' },
+      veteran: { name: 'Veterán', desc: '1 rok aktivity' },
+    },
+  },
+  streak: {
+    inARow: 'v řadě',
+    currentLabel: 'Aktuální série',
+    longestLabel: 'Nejdelší série',
+    explanation: 'Série roste o 1 za každý den, kdy přidáš alespoň jednu transakci. Když den vynecháš, začíná znovu od začátku. Udrž si sérii alespoň 7 dní a odemkneš odznak „Týden v řadě"! 🔥',
+  },
 }

@@ -14,18 +14,20 @@ const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑�
 
 // Presentation for the 8 achievements. `key` matches the backend achievement
 // keys returned by GET /api/achievements — unlock state is fetched, not hardcoded.
+// `i18nKey` maps to t.achievements.items.* for name/desc (see i18n/*.ts).
 const ACHIEVEMENTS = [
-  { key: 'first_transaction', emoji: '🎯', name: 'Prvý krok', desc: 'Prvá transakcia', color: '#7C3AED' },
-  { key: 'week_streak', emoji: '🔥', name: 'Týždeň v rade', desc: '7 dní po sebe', color: '#FB923C' },
-  { key: 'first_savings_goal', emoji: '💰', name: 'Sporiteľ', desc: 'Prvý cieľ úspor', color: '#34D399' },
-  { key: 'first_report', emoji: '📊', name: 'Analytik', desc: 'Prvý report', color: '#60a5fa' },
-  { key: 'budget_met', emoji: '🏆', name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu', color: '#FBBF24' },
-  { key: 'speedster', emoji: '⚡', name: 'Rýchly', desc: '10 transakcií/deň', color: '#F59E0B' },
-  { key: 'team_player', emoji: '👥', name: 'Tímový hráč', desc: 'Pozvanie člena', color: '#A78BFA' },
-  { key: 'veteran', emoji: '💎', name: 'Veterán', desc: '1 rok aktivity', color: '#67E8F9' },
+  { key: 'first_transaction', i18nKey: 'firstTransaction', emoji: '🎯', color: '#7C3AED' },
+  { key: 'week_streak', i18nKey: 'weekStreak', emoji: '🔥', color: '#FB923C' },
+  { key: 'first_savings_goal', i18nKey: 'firstSavingsGoal', emoji: '💰', color: '#34D399' },
+  { key: 'first_report', i18nKey: 'firstReport', emoji: '📊', color: '#60a5fa' },
+  { key: 'budget_met', i18nKey: 'budgetMet', emoji: '🏆', color: '#FBBF24' },
+  { key: 'speedster', i18nKey: 'speedster', emoji: '⚡', color: '#F59E0B' },
+  { key: 'team_player', i18nKey: 'teamPlayer', emoji: '👥', color: '#A78BFA' },
+  { key: 'veteran', i18nKey: 'veteran', emoji: '💎', color: '#67E8F9' },
 ] as const
 
 function AchievementsTab() {
+  const { t } = useTranslation()
   const [hovered, setHovered] = useState<number | null>(null)
   const [unlockedKeys, setUnlockedKeys] = useState<Set<string>>(new Set())
   const [loaded, setLoaded] = useState(false)
@@ -37,12 +39,18 @@ function AchievementsTab() {
       .finally(() => setLoaded(true))
   }, [])
 
-  const items = ACHIEVEMENTS.map(a => ({ ...a, unlocked: unlockedKeys.has(a.key) }))
+  const items = ACHIEVEMENTS.map(a => ({
+    ...a,
+    name: t.achievements.items[a.i18nKey].name,
+    desc: t.achievements.items[a.i18nKey].desc,
+    unlocked: unlockedKeys.has(a.key),
+  }))
   const unlockedCount = items.filter(a => a.unlocked).length
+  const countLabel = t.achievements.countLabel.replace('{unlocked}', String(unlockedCount)).replace('{total}', String(ACHIEVEMENTS.length))
 
   return (
     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>ZÍSKANÉ ({unlockedCount} z {ACHIEVEMENTS.length})</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>{t.profile.achievementsUnlocked.toUpperCase()} ({countLabel})</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, opacity: loaded ? 1 : 0.5, transition: 'opacity 0.2s' }}>
         {items.map((a, i) => (
           <div

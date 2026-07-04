@@ -772,4 +772,23 @@ export const en: Translations = {
     byCategory: 'Expenses by category',
     createdVia: 'Created via',
   },
+  achievements: {
+    countLabel: '{unlocked} of {total}',
+    items: {
+      firstTransaction: { name: 'First step', desc: 'First transaction' },
+      weekStreak: { name: 'Week streak', desc: '7 days in a row' },
+      firstSavingsGoal: { name: 'Saver', desc: 'First savings goal' },
+      firstReport: { name: 'Analyst', desc: 'First report' },
+      budgetMet: { name: 'Monthly goal', desc: 'Stayed within budget' },
+      speedster: { name: 'Speedster', desc: '10 transactions/day' },
+      teamPlayer: { name: 'Team player', desc: 'Invited a member' },
+      veteran: { name: 'Veteran', desc: '1 year of activity' },
+    },
+  },
+  streak: {
+    inARow: 'in a row',
+    currentLabel: 'Current streak',
+    longestLabel: 'Longest streak',
+    explanation: 'Your streak grows by 1 for every day you add at least one transaction. Miss a day and it resets. Keep it up for at least 7 days to unlock the "Week streak" badge! 🔥',
+  },
 }

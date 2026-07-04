@@ -772,4 +772,23 @@ export const hu: Translations = {
     byCategory: 'Kiadások kategóriánként',
     createdVia: 'Létrehozva:',
   },
+  achievements: {
+    countLabel: '{unlocked}/{total}',
+    items: {
+      firstTransaction: { name: 'Első lépés', desc: 'Első tranzakció' },
+      weekStreak: { name: 'Egy hét egymás után', desc: '7 egymást követő nap' },
+      firstSavingsGoal: { name: 'Megtakarító', desc: 'Első megtakarítási cél' },
+      firstReport: { name: 'Elemző', desc: 'Első jelentés' },
+      budgetMet: { name: 'Havi cél', desc: 'Költségvetés teljesítése' },
+      speedster: { name: 'Gyors', desc: '10 tranzakció/nap' },
+      teamPlayer: { name: 'Csapatjátékos', desc: 'Tag meghívása' },
+      veteran: { name: 'Veterán', desc: '1 év aktivitás' },
+    },
+  },
+  streak: {
+    inARow: 'egymás után',
+    currentLabel: 'Jelenlegi sorozat',
+    longestLabel: 'Leghosszabb sorozat',
+    explanation: 'A sorozat naponta 1-gyel nő, ha hozzáadsz legalább egy tranzakciót. Ha kihagysz egy napot, elölről kezdődik. Tartsd fenn a sorozatot legalább 7 napig, hogy feloldd az „Egy hét egymás után" jelvényt! 🔥',
+  },
 }

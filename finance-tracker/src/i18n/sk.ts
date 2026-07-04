@@ -770,6 +770,25 @@ export const sk = {
     byCategory: 'Výdavky podľa kategórií',
     createdVia: 'Vytvorené cez',
   },
+  achievements: {
+    countLabel: '{unlocked} z {total}',
+    items: {
+      firstTransaction: { name: 'Prvý krok', desc: 'Prvá transakcia' },
+      weekStreak: { name: 'Týždeň v rade', desc: '7 dní po sebe' },
+      firstSavingsGoal: { name: 'Sporiteľ', desc: 'Prvý cieľ úspor' },
+      firstReport: { name: 'Analytik', desc: 'Prvý report' },
+      budgetMet: { name: 'Mesačný cieľ', desc: 'Splnenie rozpočtu' },
+      speedster: { name: 'Rýchly', desc: '10 transakcií/deň' },
+      teamPlayer: { name: 'Tímový hráč', desc: 'Pozvanie člena' },
+      veteran: { name: 'Veterán', desc: '1 rok aktivity' },
+    },
+  },
+  streak: {
+    inARow: 'v rade',
+    currentLabel: 'Aktuálna séria',
+    longestLabel: 'Najdlhšia séria',
+    explanation: 'Séria rastie o 1 za každý deň, keď pridáš aspoň jednu transakciu. Keď deň vynecháš, začína odznova. Udrž si sériu aspoň 7 dní a odomkneš odznak „Týždeň v rade"! 🔥',
+  },
 }
 
 export type Translations = typeof sk

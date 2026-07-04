@@ -772,4 +772,23 @@ export const pl: Translations = {
     byCategory: 'Wydatki według kategorii',
     createdVia: 'Utworzone przez',
   },
+  achievements: {
+    countLabel: '{unlocked} z {total}',
+    items: {
+      firstTransaction: { name: 'Pierwszy krok', desc: 'Pierwsza transakcja' },
+      weekStreak: { name: 'Tydzień z rzędu', desc: '7 dni z rzędu' },
+      firstSavingsGoal: { name: 'Oszczędzający', desc: 'Pierwszy cel oszczędnościowy' },
+      firstReport: { name: 'Analityk', desc: 'Pierwszy raport' },
+      budgetMet: { name: 'Cel miesięczny', desc: 'Dotrzymanie budżetu' },
+      speedster: { name: 'Błyskawica', desc: '10 transakcji/dzień' },
+      teamPlayer: { name: 'Gracz zespołowy', desc: 'Zaproszenie członka' },
+      veteran: { name: 'Weteran', desc: '1 rok aktywności' },
+    },
+  },
+  streak: {
+    inARow: 'z rzędu',
+    currentLabel: 'Aktualna seria',
+    longestLabel: 'Najdłuższa seria',
+    explanation: 'Seria rośnie o 1 za każdy dzień, w którym dodasz co najmniej jedną transakcję. Gdy opuścisz dzień, zaczyna się od nowa. Utrzymaj serię przez co najmniej 7 dni, aby odblokować odznakę „Tydzień z rzędu"! 🔥',
+  },
 }
