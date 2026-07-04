@@ -318,7 +318,7 @@ const upcomingFixed = useMemo(() => {
   const heroBalance = summaryCards?.balance ?? (dashView === 'personal' ? balance : 0)
   const heroIncome = summaryCards?.income ?? (dashView === 'personal' ? totalIncome : 0)
   const heroExpenses = summaryCards?.expenses ?? (dashView === 'personal' ? totalExpenses : 0)
-  const savRate = heroIncome > 0 ? Math.round((heroBalance / heroIncome) * 100) : 0
+  const savRate = heroIncome > 0 ? Math.round(((heroIncome - heroExpenses) / heroIncome) * 100) : 0
   const animatedBalance = useCountUp(heroBalance, 800)
   const animatedIncome = useCountUp(heroIncome, 800)
   const animatedExpenses = useCountUp(heroExpenses, 800)
@@ -372,7 +372,7 @@ const upcomingFixed = useMemo(() => {
               color: savRate >= 0 ? '#34d399' : '#fca5a5',
               border: `1px solid ${savRate >= 0 ? 'rgba(52,211,153,0.4)' : 'rgba(248,113,113,0.4)'}`,
             }}>
-              {savRate >= 0 ? `↑ ${savRate} % úspora` : '↓ v mínuse'}
+              {savRate >= 0 ? '↑' : '↓'} {Math.abs(savRate)} % úspora
             </span>
           )}
         </div>
