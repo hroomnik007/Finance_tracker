@@ -25,6 +25,9 @@ import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTempl
 import { PinLock } from './components/PinLock'
 import { PinLockProvider, usePinLockContext } from './context/PinLockContext'
 import { useToast } from './hooks/useToast'
+import { useTranslation } from './i18n'
+import { subscribeAchievementUnlocks } from './utils/achievementEvents'
+import { getAchievementMeta } from './data/achievements'
 import { useAuth } from './context/AuthContext'
 import { useSettingsContext } from './context/SettingsContext'
 import { useVariableExpenses } from './hooks/useVariableExpenses'
@@ -107,6 +110,19 @@ function App() {
     (localStorage.getItem('finvu_dashboard_view') as 'personal' | 'family') || 'family'
   )
   const { toasts, showToast } = useToast()
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    return subscribeAchievementUnlocks(keys => {
+      for (const key of keys) {
+        const meta = getAchievementMeta(key)
+        const name = meta ? t.achievements.items[meta.i18nKey].name : key
+        showToast(name, { variant: 'achievement', icon: meta?.emoji, label: t.achievements.toastLabel })
+      }
+    })
+  }, [isAuthenticated, t, showToast])
+
   const { locked, lockMethod, verifyPin } = usePinLockContext()
   const { showOnboarding, completeOnboarding } = useOnboarding()
   const needsBudgetTemplate = useBudgetTemplate()

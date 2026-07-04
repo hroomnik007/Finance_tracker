@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import { announceAchievementUnlocks } from '../utils/achievementEvents'
 
 export interface HouseholdMember {
   id: string
@@ -49,6 +50,7 @@ export async function createHousehold(name: string): Promise<HouseholdData> {
 
 export async function joinHousehold(invite_code: string): Promise<{ id: number; name: string; invite_code: string; member_count: number }> {
   const { data } = await apiClient.post('/api/households/join', { invite_code })
+  announceAchievementUnlocks(data.newlyUnlockedAchievements)
   return data as { id: number; name: string; invite_code: string; member_count: number }
 }
 

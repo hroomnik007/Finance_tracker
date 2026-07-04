@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import { announceAchievementUnlocks } from '../utils/achievementEvents'
 import type { AuthUser, UserSession } from '../types'
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser'
 
@@ -105,6 +106,7 @@ export async function deactivateAccount(): Promise<void> {
 
 export async function createSharedReport(data: string, expiresInHours?: number): Promise<{ token: string }> {
   const { data: res } = await apiClient.post('/api/reports', { data, expiresInHours })
+  announceAchievementUnlocks(res.newlyUnlockedAchievements)
   return res
 }
 

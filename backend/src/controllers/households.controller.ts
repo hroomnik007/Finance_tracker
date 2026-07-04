@@ -116,8 +116,20 @@ export async function joinHousehold(req: AuthRequest, res: Response): Promise<vo
 
   // Re-evaluate every member: joining pushes the household to ≥ 2 members, so
   // both the newcomer AND the existing creator now qualify for "Tímový hráč".
+  // Only the joining user's request is awaited (to report newlyUnlocked in the
+  // response) — other members get evaluated fire-and-forget and pick up their
+  // unlock on their own next action/load.
+  let newlyUnlockedAchievements: string[] = [];
   for (const m of members) {
-    evaluateAchievements(m.userId).catch(err => console.error('achievement eval failed:', err));
+    if (m.userId === userId) {
+      try {
+        ({ newlyUnlocked: newlyUnlockedAchievements } = await evaluateAchievements(m.userId));
+      } catch (err) {
+        console.error('achievement eval failed:', err);
+      }
+    } else {
+      evaluateAchievements(m.userId).catch(err => console.error('achievement eval failed:', err));
+    }
   }
 
   res.json({
@@ -125,6 +137,7 @@ export async function joinHousehold(req: AuthRequest, res: Response): Promise<vo
     name: household.name,
     invite_code: household.inviteCode,
     member_count: members.length,
+    newlyUnlockedAchievements,
   });
 }
 

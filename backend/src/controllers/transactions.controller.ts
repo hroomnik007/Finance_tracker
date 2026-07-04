@@ -159,13 +159,18 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
 
   const withCategory = await fetchWithCategory(row.id);
   // Update streak first (achievements read longestStreak), then evaluate achievements.
-  updateStreakAndBadges(req.userId!, body.data.date)
-    .then(() => evaluateAchievements(req.userId!))
-    .catch(err => console.error('streak/achievement update failed:', err));
+  // Awaited (not fire-and-forget) so the response can report freshly-unlocked achievements.
+  let newlyUnlockedAchievements: string[] = [];
+  try {
+    await updateStreakAndBadges(req.userId!, body.data.date);
+    ({ newlyUnlocked: newlyUnlockedAchievements } = await evaluateAchievements(req.userId!));
+  } catch (err) {
+    console.error('streak/achievement update failed:', err);
+  }
   if (row.isFixed && row.categoryId) {
     recalculateCategoryLimit(row.categoryId, req.userId!).catch(err => console.error('auto-limit recalc failed:', err));
   }
-  res.status(201).json({ data: normalizeAmount(withCategory), newBadges: [] });
+  res.status(201).json({ data: normalizeAmount(withCategory), newBadges: [], newlyUnlockedAchievements });
 }
 
 export async function updateTransaction(req: AuthRequest, res: Response): Promise<void> {

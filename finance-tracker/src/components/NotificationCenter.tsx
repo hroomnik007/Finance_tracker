@@ -7,6 +7,9 @@ import { getDismissedNotifications, dismissNotification as dismissNotifApi } fro
 import { useFormatters } from '../hooks/useFormatters'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n'
+import type { Translations } from '../i18n/sk'
+import { subscribeAchievementUnlocks } from '../utils/achievementEvents'
+import { getAchievementMeta } from '../data/achievements'
 
 interface Notification {
   id: string
@@ -21,9 +24,24 @@ interface Notification {
 }
 
 const NOTIF_READ_KEY = 'finvu_read_notifications'
+const ACHIEVEMENT_NOTIF_PREFIX = 'achievement-'
 
 function saveReadIdsLocal(ids: string[]) {
   try { localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(ids)) } catch { /* ignore */ }
+}
+
+function achievementNotification(key: string, t: Translations): Notification {
+  const meta = getAchievementMeta(key)
+  const name = meta ? t.achievements.items[meta.i18nKey].name : key
+  return {
+    id: `${ACHIEVEMENT_NOTIF_PREFIX}${key}`,
+    icon: meta?.emoji ?? '🏆',
+    title: t.achievements.notificationTitle.replace('{name}', name),
+    body: '',
+    time: t.notifications.today,
+    read: false,
+    color: meta?.color ?? '#FBBF24',
+  }
 }
 
 interface NotificationCenterProps {
@@ -58,6 +76,19 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
       document.removeEventListener('visibilitychange', onVisible)
     }
   }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    return subscribeAchievementUnlocks(keys => {
+      setNotifications(prev => {
+        const existingIds = new Set(prev.map(n => n.id))
+        const newOnes = keys
+          .map(key => achievementNotification(key, t))
+          .filter(n => !existingIds.has(n.id))
+        return [...newOnes, ...prev]
+      })
+    })
+  }, [isAuthenticated, t])
 
   useEffect(() => {
     if (!open) return
@@ -192,7 +223,13 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         break
       }
 
-      setNotifications(ns.filter(n => !dismissedIds.has(n.id)))
+      // Preserve locally-added achievement-unlock entries across this
+      // periodic regeneration — they aren't part of the deterministic
+      // fetch-based list, so a plain overwrite would wipe them.
+      setNotifications(prev => {
+        const achievementOnes = prev.filter(n => n.id.startsWith(ACHIEVEMENT_NOTIF_PREFIX) && !dismissedIds.has(n.id))
+        return [...achievementOnes, ...ns.filter(n => !dismissedIds.has(n.id))]
+      })
     } catch { /* silently ignore fetch errors */ }
     if (!silent) setLoading(false)
     running.current = false

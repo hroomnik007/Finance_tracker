@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type { ApiSavingsGoal, Deposit } from '../types'
+import { announceAchievementUnlocks } from '../utils/achievementEvents'
 
 export interface SavingsGoalPayload {
   name: string
@@ -18,6 +19,7 @@ export async function getSavingsGoals(): Promise<{ data: ApiSavingsGoal[] }> {
 
 export async function createSavingsGoal(payload: SavingsGoalPayload): Promise<{ data: ApiSavingsGoal }> {
   const { data } = await apiClient.post('/api/savings', payload)
+  announceAchievementUnlocks(data.newlyUnlockedAchievements)
   return data as { data: ApiSavingsGoal }
 }
 

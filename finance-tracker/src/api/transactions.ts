@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type { ApiTransaction, ApiSummary } from '../types'
+import { announceAchievementUnlocks } from '../utils/achievementEvents'
 
 export interface TransactionParams {
   month?: string
@@ -36,6 +37,7 @@ export async function createTransaction(
   payload: TransactionPayload
 ): Promise<{ data: ApiTransaction }> {
   const { data } = await apiClient.post('/api/transactions', payload)
+  announceAchievementUnlocks(data.newlyUnlockedAchievements)
   return data
 }
 

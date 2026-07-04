@@ -63,8 +63,13 @@ export async function createSavingsGoal(req: AuthRequest, res: Response): Promis
     })
     .returning();
 
-  evaluateAchievements(req.userId!).catch(err => console.error('achievement eval failed:', err));
-  res.status(201).json({ data: normalizeGoal(row) });
+  let newlyUnlockedAchievements: string[] = [];
+  try {
+    ({ newlyUnlocked: newlyUnlockedAchievements } = await evaluateAchievements(req.userId!));
+  } catch (err) {
+    console.error('achievement eval failed:', err);
+  }
+  res.status(201).json({ data: normalizeGoal(row), newlyUnlockedAchievements });
 }
 
 export async function updateSavingsGoal(req: AuthRequest, res: Response): Promise<void> {

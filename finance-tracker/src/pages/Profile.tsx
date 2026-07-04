@@ -6,35 +6,24 @@ import { usePinLockContext } from '../context/PinLockContext'
 import { updateAvatar, changePassword, updateUserSettings, updateProfile } from '../api/auth'
 import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
-import { getAchievements } from '../api/achievements'
+import { getAchievements, type AchievementState } from '../api/achievements'
+import { ACHIEVEMENTS } from '../data/achievements'
+import { AchievementDetailModal } from '../components/AchievementDetailModal'
 import { useSettingsContext } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
 
-// Presentation for the 8 achievements. `key` matches the backend achievement
-// keys returned by GET /api/achievements — unlock state is fetched, not hardcoded.
-// `i18nKey` maps to t.achievements.items.* for name/desc (see i18n/*.ts).
-const ACHIEVEMENTS = [
-  { key: 'first_transaction', i18nKey: 'firstTransaction', emoji: '🎯', color: '#7C3AED' },
-  { key: 'week_streak', i18nKey: 'weekStreak', emoji: '🔥', color: '#FB923C' },
-  { key: 'first_savings_goal', i18nKey: 'firstSavingsGoal', emoji: '💰', color: '#34D399' },
-  { key: 'first_report', i18nKey: 'firstReport', emoji: '📊', color: '#60a5fa' },
-  { key: 'budget_met', i18nKey: 'budgetMet', emoji: '🏆', color: '#FBBF24' },
-  { key: 'speedster', i18nKey: 'speedster', emoji: '⚡', color: '#F59E0B' },
-  { key: 'team_player', i18nKey: 'teamPlayer', emoji: '👥', color: '#A78BFA' },
-  { key: 'veteran', i18nKey: 'veteran', emoji: '💎', color: '#67E8F9' },
-] as const
-
 function AchievementsTab() {
   const { t } = useTranslation()
   const [hovered, setHovered] = useState<number | null>(null)
-  const [unlockedKeys, setUnlockedKeys] = useState<Set<string>>(new Set())
+  const [remoteState, setRemoteState] = useState<Map<string, AchievementState>>(new Map())
   const [loaded, setLoaded] = useState(false)
+  const [selected, setSelected] = useState<number | null>(null)
 
   useEffect(() => {
     getAchievements()
-      .then(({ data }) => setUnlockedKeys(new Set(data.filter(a => a.unlocked).map(a => a.key))))
+      .then(({ data }) => setRemoteState(new Map(data.map(a => [a.key, a]))))
       .catch(() => {})
       .finally(() => setLoaded(true))
   }, [])
@@ -43,7 +32,9 @@ function AchievementsTab() {
     ...a,
     name: t.achievements.items[a.i18nKey].name,
     desc: t.achievements.items[a.i18nKey].desc,
-    unlocked: unlockedKeys.has(a.key),
+    hint: t.achievements.items[a.i18nKey].hint,
+    unlocked: remoteState.get(a.key)?.unlocked ?? false,
+    unlockedAt: remoteState.get(a.key)?.unlockedAt ?? null,
   }))
   const unlockedCount = items.filter(a => a.unlocked).length
   const countLabel = t.achievements.countLabel.replace('{unlocked}', String(unlockedCount)).replace('{total}', String(ACHIEVEMENTS.length))
@@ -57,6 +48,7 @@ function AchievementsTab() {
             key={i}
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
+            onClick={() => setSelected(i)}
             style={{
               background: 'var(--bg3)',
               border: a.unlocked ? `1px solid ${a.color}40` : '1px solid var(--border)',
@@ -64,10 +56,10 @@ function AchievementsTab() {
               padding: '12px 14px',
               opacity: a.unlocked ? 1 : 0.45,
               filter: a.unlocked ? 'none' : 'grayscale(0.7)',
-              cursor: a.unlocked ? 'pointer' : 'not-allowed',
+              cursor: 'pointer',
               position: 'relative',
               transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.2s',
-              transform: hovered === i ? (a.unlocked ? 'scale(1.02)' : 'scale(1.01)') : 'scale(1)',
+              transform: hovered === i ? 'scale(1.02)' : 'scale(1)',
               boxShadow: hovered === i && a.unlocked ? '0 0 0 1px rgba(139,92,246,0.4), 0 4px 16px rgba(139,92,246,0.15)' : 'none',
             }}
           >
@@ -86,6 +78,19 @@ function AchievementsTab() {
           </div>
         ))}
       </div>
+
+      {selected !== null && (
+        <AchievementDetailModal
+          emoji={items[selected].emoji}
+          color={items[selected].color}
+          name={items[selected].name}
+          desc={items[selected].desc}
+          hint={items[selected].hint}
+          unlocked={items[selected].unlocked}
+          unlockedAt={items[selected].unlockedAt}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   )
 }

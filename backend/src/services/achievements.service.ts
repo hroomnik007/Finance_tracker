@@ -38,6 +38,11 @@ export interface AchievementState {
   unlockedAt: string | null;
 }
 
+export interface EvaluateAchievementsResult {
+  state: AchievementState[];
+  newlyUnlocked: AchievementKey[];
+}
+
 function currentMonthStart(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -52,7 +57,7 @@ function currentMonthStart(): string {
  * re-checks every condition, the first GET also back-fills historical unlocks
  * for existing users, and time-based ones (veteran) resolve on the next call.
  */
-export async function evaluateAchievements(userId: string): Promise<AchievementState[]> {
+export async function evaluateAchievements(userId: string): Promise<EvaluateAchievementsResult> {
   const [user] = await db
     .select({
       longestStreak: users.longestStreak,
@@ -64,7 +69,12 @@ export async function evaluateAchievements(userId: string): Promise<AchievementS
     .where(eq(users.id, userId))
     .limit(1);
 
-  if (!user) return ACHIEVEMENT_KEYS.map((key) => ({ key, unlocked: false, unlockedAt: null }));
+  if (!user) {
+    return {
+      state: ACHIEVEMENT_KEYS.map((key) => ({ key, unlocked: false, unlockedAt: null })),
+      newlyUnlocked: [],
+    };
+  }
 
   const monthStart = currentMonthStart();
 
@@ -139,10 +149,14 @@ export async function evaluateAchievements(userId: string): Promise<AchievementS
     veteran: daysActive >= 365,
   };
 
-  const toInsert = ACHIEVEMENT_KEYS.filter((key) => qualifies[key]).map((key) => ({
-    userId,
-    achievementKey: key,
-  }));
+  const existingRows = await db
+    .select({ key: userAchievements.achievementKey })
+    .from(userAchievements)
+    .where(eq(userAchievements.userId, userId));
+  const alreadyUnlocked = new Set(existingRows.map((r) => r.key));
+
+  const newlyUnlocked = ACHIEVEMENT_KEYS.filter((key) => qualifies[key] && !alreadyUnlocked.has(key));
+  const toInsert = newlyUnlocked.map((key) => ({ userId, achievementKey: key }));
 
   if (toInsert.length > 0) {
     await db.insert(userAchievements).values(toInsert).onConflictDoNothing();
@@ -155,8 +169,10 @@ export async function evaluateAchievements(userId: string): Promise<AchievementS
 
   const byKey = new Map(rows.map((r) => [r.key, r.unlockedAt]));
 
-  return ACHIEVEMENT_KEYS.map((key) => {
+  const state = ACHIEVEMENT_KEYS.map((key) => {
     const at = byKey.get(key);
     return { key, unlocked: !!at, unlockedAt: at ? at.toISOString() : null };
   });
+
+  return { state, newlyUnlocked };
 }

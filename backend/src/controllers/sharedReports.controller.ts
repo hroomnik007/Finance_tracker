@@ -21,8 +21,13 @@ export async function createSharedReport(req: AuthRequest, res: Response): Promi
   const expiresAt = new Date(Date.now() + Math.min(expiresInHours, 24 * 30) * 3600 * 1000);
 
   await db.insert(sharedReports).values({ userId: req.userId!, token, data, expiresAt });
-  evaluateAchievements(req.userId!).catch(err => console.error('achievement eval failed:', err));
-  res.status(201).json({ token });
+  let newlyUnlockedAchievements: string[] = [];
+  try {
+    ({ newlyUnlocked: newlyUnlockedAchievements } = await evaluateAchievements(req.userId!));
+  } catch (err) {
+    console.error('achievement eval failed:', err);
+  }
+  res.status(201).json({ token, newlyUnlockedAchievements });
 }
 
 export async function getSharedReport(req: Request, res: Response): Promise<void> {
