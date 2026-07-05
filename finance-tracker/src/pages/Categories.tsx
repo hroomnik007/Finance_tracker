@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Pencil, Trash2, Tag, GripVertical } from 'lucide-react'
 import {
   DndContext,
@@ -281,17 +281,14 @@ export function CategoriesPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [autoLimitWarning, setAutoLimitWarning] = useState(false)
 
-  // Local order for optimistic drag updates
+  // Local order for optimistic drag updates — synced during render
   const [localIds, setLocalIds] = useState<string[]>([])
-  const prevCatKey = useRef('')
-
-  useEffect(() => {
-    const key = categories.map(c => c.id).join(',')
-    if (key !== prevCatKey.current) {
-      prevCatKey.current = key
-      setLocalIds(categories.map(c => c.id!))
-    }
-  }, [categories])
+  const [prevCatKey, setPrevCatKey] = useState('')
+  const catKey = categories.map(c => c.id).join(',')
+  if (catKey !== prevCatKey) {
+    setPrevCatKey(catKey)
+    setLocalIds(categories.map(c => c.id!))
+  }
 
   const sortedCategories = useMemo(() => {
     if (localIds.length === 0) return categories

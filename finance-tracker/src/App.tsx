@@ -20,8 +20,10 @@ import { ForgotPasswordPage } from './pages/ForgotPassword'
 import { ResetPasswordPage } from './pages/ResetPassword'
 import { VerifyEmailPage } from './pages/VerifyEmail'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
-import { OnboardingTutorial, useOnboarding } from './components/OnboardingTutorial'
-import { BudgetTemplateModal, useBudgetTemplate } from './components/BudgetTemplateModal'
+import { OnboardingTutorial } from './components/OnboardingTutorial'
+import { useOnboarding } from './hooks/useOnboarding'
+import { BudgetTemplateModal } from './components/BudgetTemplateModal'
+import { useBudgetTemplate } from './hooks/useBudgetTemplate'
 import { PinLock } from './components/PinLock'
 import { PinLockProvider, usePinLockContext } from './context/PinLockContext'
 import { useToast } from './hooks/useToast'
@@ -174,8 +176,9 @@ function App() {
         sessionStorage.removeItem('just_logged_in')
         hasNavigated.current = true
 
-        const m = now.getMonth() + 1
-        const y = now.getFullYear()
+        const loginDate = new Date()
+        const m = loginDate.getMonth() + 1
+        const y = loginDate.getFullYear()
         const trackingStart = user?.tracking_start_date ?? null
         let cancelled = false
 
@@ -283,7 +286,7 @@ function App() {
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [])
 
   useEffect(() => {

@@ -141,7 +141,7 @@ export function usePinLock() {
       localStorage.setItem(LOCK_METHOD_KEY, 'pin')
       setLockMethod('pin')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [user])
 
   // Clear session verification on logout so re-login requires PIN again

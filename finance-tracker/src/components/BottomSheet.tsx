@@ -17,9 +17,15 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
   const currentYRef = useRef(0)
   const panelRef = useRef<HTMLDivElement>(null)
 
+  // Reset drag offset when (re)opening — adjust state during render
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setTranslateY(0)
+  }
+
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
-    if (open) setTranslateY(0)
     return () => { document.body.style.overflow = '' }
   }, [open])
 

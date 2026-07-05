@@ -40,7 +40,7 @@ function parseDate(raw: string): string {
 
 function parseAmount(raw: string): number {
   if (!raw) return 0
-  return parseFloat(raw.replace(/\s/g,'').replace(',','.').replace(/[^\d.\-]/g,'')) || 0
+  return parseFloat(raw.replace(/\s/g,'').replace(',','.').replace(/[^\d.-]/g,'')) || 0
 }
 
 type CsvRow = Record<string, string | undefined>

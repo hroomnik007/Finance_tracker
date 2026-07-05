@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useCategories } from '../hooks/useCategories'
-import { useAuth } from '../context/AuthContext'
 import { deleteAllCategories } from '../api/categories'
 
 interface Template {
@@ -55,14 +54,6 @@ const TEMPLATES: Template[] = [
     ],
   },
 ]
-
-export function useBudgetTemplate() {
-  const { user, isGuest } = useAuth()
-  if (isGuest) return false
-  // If user has completed onboarding (backend flag), skip template
-  if (user?.onboardingComplete) return false
-  return true
-}
 
 interface BudgetTemplateModalProps {
   onComplete: () => void

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { usePinLock } from '../hooks/usePinLock'
@@ -7,25 +7,6 @@ import { savePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api
 import { useTranslation } from '../i18n'
 
 const STEP_EMOJIS = ['🎉', '💰', '📊', '🐷', '🏠', '⚙️', '🔐']
-
-export function useOnboarding() {
-  const { user, isLoading, isGuest, completeOnboarding: saveOnboarding } = useAuth()
-  const [showOnboarding, setShowOnboarding] = useState(false)
-
-  useEffect(() => {
-    if (isLoading) return
-    if (isGuest && !user?.isDemo) { setShowOnboarding(false); return }
-    if (user && !user.onboardingComplete) setShowOnboarding(true)
-    else setShowOnboarding(false)
-  }, [user, isLoading, isGuest])
-
-  async function completeOnboarding() {
-    setShowOnboarding(false)
-    await saveOnboarding()
-  }
-
-  return { showOnboarding, completeOnboarding }
-}
 
 interface OnboardingTutorialProps {
   onComplete: () => void
@@ -75,8 +56,8 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
     try {
       const { startRegistration } = await import('@simplewebauthn/browser')
       const options = await webauthnRegisterOptions()
-      const response = await startRegistration({ optionsJSON: options as any })
-      await webauthnRegisterVerify(response as any)
+      const response = await startRegistration({ optionsJSON: options })
+      await webauthnRegisterVerify(response)
       setWebauthnDone(true)
       if (user?.email) localStorage.setItem(`webauthn_enabled_${user.email}`, '1')
     } catch (e: unknown) {

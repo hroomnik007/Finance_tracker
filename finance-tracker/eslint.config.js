@@ -20,4 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Context files intentionally export Provider + hook together — the
+    // standard React context pattern. Fast refresh falls back to a full
+    // reload for these files, which is acceptable.
+    files: ['src/context/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

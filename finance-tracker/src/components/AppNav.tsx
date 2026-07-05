@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import {
   LayoutDashboard, TrendingUp, CreditCard, Settings,
@@ -27,9 +27,12 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
   const expensesActive = EXPENSE_CHILDREN.includes(current)
   const [expOpen, setExpOpen] = useState(expensesActive)
 
-  useEffect(() => {
+  // Adjust state during render (https://react.dev/learn/you-might-not-need-an-effect)
+  const [prevCurrent, setPrevCurrent] = useState(current)
+  if (current !== prevCurrent) {
+    setPrevCurrent(current)
     if (expensesActive && isExpanded) setExpOpen(true)
-  }, [current]) // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const [submenuVisible, setSubmenuVisible] = useState(false)
   const [submenuY, setSubmenuY] = useState(0)

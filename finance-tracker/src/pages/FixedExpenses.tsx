@@ -47,7 +47,10 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
   const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
   const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const expenseCategories = useMemo(
@@ -155,7 +158,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
   function closeSheet() { setSheetOpen(false); setEditing(null) }
 
-  useEffect(() => { setSelectedCalendarDay(null) }, [month, year])
+  // Clear selected day when the visible month changes — adjust state during render
+  const [prevMonthKey, setPrevMonthKey] = useState(`${month}-${year}`)
+  if (prevMonthKey !== `${month}-${year}`) {
+    setPrevMonthKey(`${month}-${year}`)
+    setSelectedCalendarDay(null)
+  }
 
   async function handleSave() {
     const amt = parseFloat(amount.replace(',', '.'))

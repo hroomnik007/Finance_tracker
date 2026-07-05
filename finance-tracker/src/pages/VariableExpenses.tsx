@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Edit2, Trash2, Plus, Receipt, Search, X } from 'lucide-react'
 
 import { BottomSheet } from '../components/BottomSheet'
@@ -11,7 +11,6 @@ import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { todayISO } from '../utils/format'
-import { getTransactions } from '../api/transactions'
 import type { VariableExpense, BudgetStatus } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
@@ -32,6 +31,9 @@ interface VarForm {
 }
 
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
+
+const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
+const SK_MONTHS_LC = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
 
 const getBudgetBarColor = (pct: number, autoLimit = false) => {
   if (autoLimit) return '#22c55e'
@@ -69,19 +71,9 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const [newCatName, setNewCatName] = useState('')
   const [csvOpen, setCsvOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [_prevMonthTotal, setPrevMonthTotal] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
-
-  useEffect(() => {
-    const prevMonth = month === 1 ? 12 : month - 1
-    const prevYear = month === 1 ? year - 1 : year
-    const monthStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
-    getTransactions({ type: 'expense', isFixed: false, month: monthStr, limit: 200 })
-      .then(({ data }) => setPrevMonthTotal(data.reduce((s, e) => s + e.amount, 0)))
-      .catch(() => {})
-  }, [month, year])
 
   const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
   const getCategoryById = useCallback((id: string) => categoriesMap.get(id) ?? null, [categoriesMap])
@@ -171,8 +163,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     })
   }, [filteredSorted, searchQuery, getCategoryById])
 
-  const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
-  const SK_MONTHS_LC = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
   const dayGroups = useMemo(() =>
     searchFiltered.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: VariableExpense[]; dayTotal: number }>>((acc, e) => {
       const last = acc[acc.length - 1]

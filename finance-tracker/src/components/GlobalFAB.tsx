@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { BottomSheet } from './BottomSheet'
 import { useIncomes } from '../hooks/useIncomes'
@@ -47,15 +47,18 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
   const [showTypeSelector, setShowTypeSelector] = useState(false)
   const [isMobile] = useState(() => window.innerWidth < 1024)
 
-  useEffect(() => {
-    if (!openTrigger) return
-    if (currentPage === 'dashboard') {
-      setShowTypeSelector(true)
-    } else {
-      const modalType = PAGE_MODAL_MAP[currentPage] ?? 'variable'
-      setActiveModal(modalType)
+  // openTrigger is an incrementing counter prop — react to it during render
+  const [prevTrigger, setPrevTrigger] = useState(openTrigger)
+  if (openTrigger !== prevTrigger) {
+    setPrevTrigger(openTrigger)
+    if (openTrigger) {
+      if (currentPage === 'dashboard') {
+        setShowTypeSelector(true)
+      } else {
+        setActiveModal(PAGE_MODAL_MAP[currentPage] ?? 'variable')
+      }
     }
-  }, [openTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   // ── Data hooks ────────────────────────────────────────────────────────────
   const { addIncome } = useIncomes(month, year)

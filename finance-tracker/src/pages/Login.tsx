@@ -111,7 +111,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     } finally {
       setPinLoading(false)
     }
-  }, [email, loginWithPin])
+  }, [email, loginWithPin, t.auth.wrongPin])
 
   // Trigger verification once 4 digits have actually committed to state —
   // never inside the setPinValue updater itself. React 18 StrictMode

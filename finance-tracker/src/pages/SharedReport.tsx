@@ -9,7 +9,9 @@ interface SharedReportProps {
 export function SharedReportPage({ token }: SharedReportProps) {
   const { t } = useTranslation()
   const [data, setData] = useState<Record<string, unknown> | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  // Store the error kind (or a server-provided message) and translate at
+  // render time so the message follows the active language.
+  const [errorKind, setErrorKind] = useState<'load' | 'notFound' | { msg: string } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -18,15 +20,20 @@ export function SharedReportPage({ token }: SharedReportProps) {
         try {
           setData(JSON.parse(res.data))
         } catch {
-          setError(t.sharedReport.loadError)
+          setErrorKind('load')
         }
       })
       .catch(err => {
-        const msg = err?.response?.data?.error ?? t.sharedReport.notFoundError
-        setError(msg)
+        const msg = err?.response?.data?.error
+        setErrorKind(msg ? { msg } : 'notFound')
       })
       .finally(() => setLoading(false))
   }, [token])
+
+  const error = errorKind === null ? null
+    : errorKind === 'load' ? t.sharedReport.loadError
+    : errorKind === 'notFound' ? t.sharedReport.notFoundError
+    : errorKind.msg
 
   const formatAmount = (n: number) =>
     new Intl.NumberFormat('sk-SK', { style: 'currency', currency: 'EUR' }).format(n)

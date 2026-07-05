@@ -19,11 +19,11 @@ export function useFormatters() {
     if (fmt === 'de') {
       const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
       const decPart = (abs % 1).toFixed(2).slice(2)
-      return `${sign}${intPart},${decPart} ${symbol}`
+      return `${sign}${intPart},${decPart}\u00A0${symbol}`
     }
     const intPart = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     const decPart = (abs % 1).toFixed(2).slice(2)
-    return `${sign}${intPart},${decPart} ${symbol}`
+    return `${sign}${intPart},${decPart}\u00A0${symbol}`
   }
 
   const formatDate = (dateStr: string): string => {

@@ -84,7 +84,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 
   useEffect(() => {
     if (openAddTrigger) openAdd()
-  }, [openAddTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [openAddTrigger])
 
   const [initialGoalId] = useState(() => {
     const params = window.location.hash.split('?')[1] ?? ''

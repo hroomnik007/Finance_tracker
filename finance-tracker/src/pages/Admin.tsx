@@ -15,13 +15,11 @@ export function AdminPage() {
   const [hasToken, setHasToken] = useState(() => !!getAdminToken())
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const loading = hasToken && !stats && !error
 
   useEffect(() => {
     if (!hasToken) return
-    setLoading(true)
-    setError(null)
     Promise.all([fetchAdminStats(), fetchAdminUsers()])
       .then(([s, u]) => {
         setStats(s)
@@ -35,7 +33,6 @@ export function AdminPage() {
           setError('Nepodarilo sa načítať admin dáta.')
         }
       })
-      .finally(() => setLoading(false))
   }, [hasToken])
 
   if (!hasToken) {
@@ -47,6 +44,7 @@ export function AdminPage() {
     setHasToken(false)
     setStats(null)
     setUsers([])
+    setError(null)
   }
 
   if (loading) {

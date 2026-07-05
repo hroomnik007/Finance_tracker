@@ -174,7 +174,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       setPinRemoveError(t.profile.incorrectPin)
       setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
     }
-  }, [verifyPin])
+  }, [verifyPin, t.profile.incorrectPin])
 
   useEffect(() => {
     if (!pinRemoveConfirm || pinVerified) return

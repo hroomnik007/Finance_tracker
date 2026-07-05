@@ -61,24 +61,6 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
 
   useEffect(() => {
     if (!isAuthenticated) return
-    generateNotifications()
-    // Periodic + focus/visibility refresh so "due today" surfaces even in
-    // long-lived sessions (e.g. app left open across midnight).
-    const REFRESH_MS = 5 * 60 * 1000
-    const interval = setInterval(() => generateNotifications(true), REFRESH_MS)
-    const onFocus = () => generateNotifications(true)
-    const onVisible = () => { if (document.visibilityState === 'visible') generateNotifications(true) }
-    window.addEventListener('focus', onFocus)
-    document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('focus', onFocus)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!isAuthenticated) return
     return subscribeAchievementUnlocks(keys => {
       setNotifications(prev => {
         const existingIds = new Set(prev.map(n => n.id))
@@ -234,6 +216,27 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     if (!silent) setLoading(false)
     running.current = false
   }
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    // Defer the initial run out of the effect body (avoids a synchronous
+    // setState cascade during mount).
+    const initial = setTimeout(() => generateNotifications(), 0)
+    // Periodic + focus/visibility refresh so "due today" surfaces even in
+    // long-lived sessions (e.g. app left open across midnight).
+    const REFRESH_MS = 5 * 60 * 1000
+    const interval = setInterval(() => generateNotifications(true), REFRESH_MS)
+    const onFocus = () => generateNotifications(true)
+    const onVisible = () => { if (document.visibilityState === 'visible') generateNotifications(true) }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearTimeout(initial)
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function markAllRead() {
     setNotifications(ns => {
