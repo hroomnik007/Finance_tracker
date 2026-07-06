@@ -24,7 +24,7 @@ app.set("trust proxy", 1);
 
 const allowedOrigins =
   env.NODE_ENV === "production"
-    ? ["https://financie.pedani.eu", "https://finvu.pedani.eu"]
+    ? ["https://finvu.pedani.eu"]
     : ["http://localhost:5173", "http://localhost:3000"];
 
 // crossOriginResourcePolicy must allow cross-origin so the frontend origin

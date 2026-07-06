@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy script for financie.pedani.eu + api.pedani.eu
+# Deploy script for finvu.pedani.eu + api.pedani.eu
 # Usage:
 #   ./deploy.sh            — deploy both frontend and backend
 #   ./deploy.sh frontend   — only frontend
@@ -57,7 +57,7 @@ deploy_frontend() {
     ok "Nginx reloaded"
 
     echo ""
-    echo "  Frontend live at https://financie.pedani.eu"
+    echo "  Frontend live at https://finvu.pedani.eu"
 }
 
 # ────────────────────────────────────────────────────────────────────────────
