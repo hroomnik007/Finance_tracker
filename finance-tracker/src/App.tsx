@@ -1,25 +1,28 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
 import { Topbar } from './components/Topbar'
 import { GlobalFAB } from './components/GlobalFAB'
 import { ToastContainer } from './components/ToastContainer'
-import { Dashboard } from './pages/Dashboard'
-import { IncomePage } from './pages/Income'
-import { VariableExpensesPage } from './pages/VariableExpenses'
-import { FixedExpensesPage } from './pages/FixedExpenses'
-import { CategoriesPage } from './pages/Categories'
-import { SettingsPage } from './pages/Settings'
-import { ProfileModal } from './pages/Profile'
-import { AdminPage } from './pages/Admin'
-import { SharedReportPage } from './pages/SharedReport'
 import { LoginPage } from './pages/Login'
-import { RegisterPage } from './pages/Register'
-import { ForgotPasswordPage } from './pages/ForgotPassword'
-import { ResetPasswordPage } from './pages/ResetPassword'
-import { VerifyEmailPage } from './pages/VerifyEmail'
-import { PrivacyPolicyPage } from './pages/PrivacyPolicy'
+
+// Pages are lazy-loaded so the entry chunk stays small (recharts, xlsx and
+// admin code load on demand); workbox precaches the chunks for offline use.
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
+const IncomePage = lazy(() => import('./pages/Income').then(m => ({ default: m.IncomePage })))
+const VariableExpensesPage = lazy(() => import('./pages/VariableExpenses').then(m => ({ default: m.VariableExpensesPage })))
+const FixedExpensesPage = lazy(() => import('./pages/FixedExpenses').then(m => ({ default: m.FixedExpensesPage })))
+const CategoriesPage = lazy(() => import('./pages/Categories').then(m => ({ default: m.CategoriesPage })))
+const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.SettingsPage })))
+const ProfileModal = lazy(() => import('./pages/Profile').then(m => ({ default: m.ProfileModal })))
+const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })))
+const SharedReportPage = lazy(() => import('./pages/SharedReport').then(m => ({ default: m.SharedReportPage })))
+const RegisterPage = lazy(() => import('./pages/Register').then(m => ({ default: m.RegisterPage })))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword').then(m => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPasswordPage })))
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmail').then(m => ({ default: m.VerifyEmailPage })))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicyPage })))
 import { OnboardingTutorial } from './components/OnboardingTutorial'
 import { useOnboarding } from './hooks/useOnboarding'
 import { BudgetTemplateModal } from './components/BudgetTemplateModal'
@@ -41,8 +44,8 @@ import { useFixedExpenseNotifications } from './hooks/useFixedExpenseNotificatio
 import { fetchCategoriesData } from './hooks/useCategories'
 import { fetchSavingsData } from './hooks/useSavings'
 import { fetchHouseholdData, householdQueryKey } from './hooks/useHousehold'
-import { HouseholdPage } from './pages/Household'
-import { SavingsPage } from './pages/Savings'
+const HouseholdPage = lazy(() => import('./pages/Household').then(m => ({ default: m.HouseholdPage })))
+const SavingsPage = lazy(() => import('./pages/Savings').then(m => ({ default: m.SavingsPage })))
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { TrackingDateOnboarding } from './components/TrackingDateOnboarding'
 import { CommandPalette } from './components/CommandPalette'
@@ -364,7 +367,7 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <>
+      <Suspense fallback={null}>
         <ToastContainer toasts={toasts} />
         {authPage === 'register' && (
           <RegisterPage
@@ -394,7 +397,7 @@ function App() {
             onNavigateForgotPassword={() => setAuthPage('forgot-password')}
           />
         )}
-      </>
+      </Suspense>
     )
   }
 
@@ -465,6 +468,7 @@ function App() {
           onNavigate={setPage}
         />
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <Suspense fallback={null}>
           {page === 'dashboard' && (
             <Dashboard month={month} year={year} onNavigate={setPage} dashView={dashView} />
           )}
@@ -487,6 +491,7 @@ function App() {
             </div>
           )}
           {page === 'savings' && <SavingsPage openAddTrigger={savingsFabTrigger} />}
+          </Suspense>
         </div>
       </main>
 
@@ -514,7 +519,11 @@ function App() {
         <OnboardingTutorial onComplete={() => { completeOnboarding(); setShowTutorial(false) }} />
       )}
 
-      {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} onLogout={handleLogout} />}
+      {isProfileOpen && (
+        <Suspense fallback={null}>
+          <ProfileModal onClose={() => setIsProfileOpen(false)} onLogout={handleLogout} />
+        </Suspense>
+      )}
       {showTrackingOnboarding && (
         <TrackingDateOnboarding onDone={() => setShowTrackingOnboarding(false)} />
       )}
@@ -538,9 +547,9 @@ function Root() {
     return () => window.removeEventListener('hashchange', handler)
   }, [])
 
-  if (routeKey.startsWith('#admin')) return <AdminPage />
+  if (routeKey.startsWith('#admin')) return <Suspense fallback={null}><AdminPage /></Suspense>
   const reportToken = getReportToken()
-  if (reportToken) return <SharedReportPage token={reportToken} />
+  if (reportToken) return <Suspense fallback={null}><SharedReportPage token={reportToken} /></Suspense>
   return <PinLockProvider><App /></PinLockProvider>
 }
 

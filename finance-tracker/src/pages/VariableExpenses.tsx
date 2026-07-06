@@ -9,7 +9,7 @@ import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
-import { useTranslation } from '../i18n'
+import { useTranslation, getLocalizedDayNames, getLocalizedMonthNames } from '../i18n'
 import { todayISO } from '../utils/format'
 import type { VariableExpense, BudgetStatus } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
@@ -31,9 +31,6 @@ interface VarForm {
 }
 
 const emptyForm = (): VarForm => ({ amount: '', categoryId: '', note: '', date: todayISO() })
-
-const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
-const SK_MONTHS_LC = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
 
 const getBudgetBarColor = (pct: number, autoLimit = false) => {
   if (autoLimit) return '#22c55e'
@@ -60,7 +57,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const { categories, addCategory } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
   const { formatAmount, formatDate } = useFormatters()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -163,19 +160,21 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     })
   }, [filteredSorted, searchQuery, getCategoryById])
 
-  const dayGroups = useMemo(() =>
-    searchFiltered.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: VariableExpense[]; dayTotal: number }>>((acc, e) => {
+  const dayGroups = useMemo(() => {
+    const dayNames = getLocalizedDayNames(locale)
+    const monthNames = getLocalizedMonthNames(locale)
+    return searchFiltered.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: VariableExpense[]; dayTotal: number }>>((acc, e) => {
       const last = acc[acc.length - 1]
       if (last?.date === e.date) {
         last.items.push(e)
         last.dayTotal += e.amount
       } else {
         const d = new Date(e.date + 'T00:00:00')
-        acc.push({ date: e.date, dayNum: d.getDate(), dayName: SK_DAYS[d.getDay()], monthName: SK_MONTHS_LC[d.getMonth()], items: [e], dayTotal: e.amount })
+        acc.push({ date: e.date, dayNum: d.getDate(), dayName: dayNames[d.getDay()], monthName: monthNames[d.getMonth()], items: [e], dayTotal: e.amount })
       }
       return acc
     }, [])
-  , [searchFiltered])
+  }, [searchFiltered, locale])
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

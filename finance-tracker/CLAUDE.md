@@ -168,7 +168,7 @@ docker exec finance-tracker-repo-backend-1 node dist/scripts/migrate.js
 - Token nikdy do localStorage — iba pamäť (access) + httpOnly cookie (refresh)
 - `household_enabled` sa ukladá do DB (`users.household_enabled`) — nie len localStorage
 - Stav domácnosti sa číta z `user.household_enabled` (AuthContext) — nie localStorage
-- Avatar sa ukladá ako base64 data URL v DB (`users.avatar_url`), max 10MB
+- Avatar (fotka) sa ukladá ako súbor na disku (`uploads/avatars/<userId>.<ext>`, Docker volume `uploads_data`); DB (`users.avatar_url`) drží len cestu `/uploads/avatars/…?v=<ts>`. Emoji avatar sa ukladá priamo ako string, prázdny string avatar zmaže. Frontend rieši URL cez `utils/avatar.ts` (`isPhotoUrl`, `avatarSrc`)
 - Theme preference: ukladá sa do DB aj localStorage cache
 
 ### Deploy
@@ -191,7 +191,7 @@ docker exec finance-tracker-repo-backend-1 node dist/scripts/migrate.js
 - Auth: WebAuthn + Google OAuth + PIN + JWT/httpOnly cookies
 - database.ts je deprecated
 - Žiadny TweaksPanel — bol odstránený
-- Notifikácie (NotificationCenter.tsx): generované z API, read stav sa persistuje do `localStorage` kľúča `finvu_read_notifications`
+- Notifikácie (NotificationCenter.tsx): jeden server-computed feed `GET /api/notifications/feed?today=YYYY-MM-DD` (kind + params, texty sa prekladajú na klientovi vo `feedItemToNotification`); read stav sa persistuje do `localStorage` kľúča `finvu_read_notifications`
 - Topbar má `NotificationCenter` ako self-contained komponent (vlastný state, vlastné API volania)
 
 ## Serverové poznámky (pedani.eu)
@@ -235,9 +235,11 @@ docker compose up --build -d
 - `refreshLimiter` **NESMIE** používať custom `keyGenerator` s `req.ip` priamo (IPv6 bug)
 
 ### Avatar upload
-- Max veľkosť: 10MB (kontrolované v `auth.controller.ts` — `avatarUrl.length > 10 * 1024 * 1024`)
-- Formát: base64 data URL poslaný ako JSON `{ avatarUrl: string }`
-- Nginx limit: 20M, Express limit: 15mb
+- Max veľkosť: 10MB binárne (kontrolované v `auth.controller.ts` — `avatarUrl.length > 14_000_000` base64 znakov)
+- Formát: base64 data URL poslaný ako JSON `{ avatarUrl: string }` — server ho dekóduje a uloží na disk (`lib/avatarStorage.ts`), do DB ide len verejná cesta
+- Statické servovanie: `GET /uploads/…` (express.static, immutable cache, `?v=` cache-buster); helmet má `crossOriginResourcePolicy: cross-origin` aby frontend origin mohol obrázky embednúť
+- Express JSON limit: 1mb globálne, 15mb len pre `/api/auth/avatar`; Nginx limit: 20M
+- Migrácia starých base64 avatarov z DB: `docker exec finance-tracker-repo-backend-1 node dist/scripts/migrate-avatars.js`
 
 ---
 

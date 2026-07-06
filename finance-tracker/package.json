@@ -20,8 +20,6 @@
     "@types/papaparse": "^5.5.2",
     "axios": "^1.15.2",
     "dexie-react-hooks": "^4.4.0",
-    "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^1.8.0",
     "papaparse": "^5.5.3",
     "qrcode.react": "^4.2.0",

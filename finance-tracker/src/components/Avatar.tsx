@@ -1,3 +1,5 @@
+import { isPhotoUrl, avatarSrc } from '../utils/avatar'
+
 const GRADIENTS = [
   'linear-gradient(135deg,#8B5CF6,#6D28D9)',
   'linear-gradient(135deg,#EC4899,#DB2777)',
@@ -20,7 +22,7 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, avatarUrl, size = 34 }: AvatarProps) {
-  const isPhoto = !!(avatarUrl && (avatarUrl.startsWith('data:') || avatarUrl.startsWith('http')))
+  const isPhoto = isPhotoUrl(avatarUrl)
   const isEmoji = !!(avatarUrl && !isPhoto)
   const gradient = GRADIENTS[hashName(name || '?') % GRADIENTS.length]
 
@@ -32,7 +34,7 @@ export function Avatar({ name, avatarUrl, size = 34 }: AvatarProps) {
       boxShadow: '0 0 0 2px rgba(139,92,246,0.25)',
     }}>
       {isPhoto
-        ? <img src={avatarUrl!} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+        ? <img src={avatarSrc(avatarUrl!)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
         : isEmoji
         ? <span style={{ fontSize: size * 0.56, lineHeight: 1 }}>{avatarUrl}</span>
         : <span style={{ color: 'white', fontWeight: 700, fontSize: size * 0.38, lineHeight: 1 }}>

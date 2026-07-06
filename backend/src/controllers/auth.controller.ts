@@ -22,6 +22,7 @@ import { sendEmail, verificationEmailHtml, resetPasswordEmailHtml, resetPassword
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories";
 import { AuthRequest } from "../middleware/authenticate";
 import { resetDemoAccount, DEMO_EMAIL } from "../lib/resetDemo";
+import { parseImageDataUrl, saveAvatarFile, deleteAvatarFiles } from "../lib/avatarStorage";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -324,20 +325,47 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
 
 export async function updateAvatar(req: AuthRequest, res: Response): Promise<void> {
   const { avatarUrl } = req.body as { avatarUrl?: string };
-  if (!avatarUrl || typeof avatarUrl !== 'string') {
+  if (typeof avatarUrl !== 'string') {
     res.status(400).json({ error: "avatarUrl is required" });
     return;
   }
-  if (!avatarUrl.startsWith('data:image/')) {
-    res.status(400).json({ error: "avatarUrl must be an image data URL (data:image/...)" });
+
+  // Empty string clears the avatar (fall back to initials)
+  if (avatarUrl === '') {
+    await deleteAvatarFiles(req.userId!);
+    await db.update(users).set({ avatarUrl: null, updatedAt: new Date() }).where(eq(users.id, req.userId!));
+    res.json({ success: true, avatarUrl: null });
     return;
   }
-  if (avatarUrl.length > 2_800_000) {
-    res.status(413).json({ error: "Avatar too large (max ~2MB)" });
+
+  // Photo upload: decode the data URL and store the image on disk — the DB
+  // keeps only the public path, not megabytes of base64.
+  if (avatarUrl.startsWith('data:image/')) {
+    // ~10MB binary ≈ 13.7M base64 chars (matches the frontend file-size check)
+    if (avatarUrl.length > 14_000_000) {
+      res.status(413).json({ error: "Avatar too large (max 10MB)" });
+      return;
+    }
+    const parsed = parseImageDataUrl(avatarUrl);
+    if (!parsed) {
+      res.status(400).json({ error: "Unsupported image format (png/jpeg/webp/gif)" });
+      return;
+    }
+    const publicUrl = await saveAvatarFile(req.userId!, parsed.buffer, parsed.ext);
+    await db.update(users).set({ avatarUrl: publicUrl, updatedAt: new Date() }).where(eq(users.id, req.userId!));
+    res.json({ success: true, avatarUrl: publicUrl });
     return;
   }
-  await db.update(users).set({ avatarUrl, updatedAt: new Date() }).where(eq(users.id, req.userId!));
-  res.json({ success: true, avatarUrl });
+
+  // Short non-URL string = emoji avatar, stored directly
+  if (!avatarUrl.startsWith('http') && !avatarUrl.startsWith('/') && avatarUrl.length <= 16) {
+    await deleteAvatarFiles(req.userId!);
+    await db.update(users).set({ avatarUrl, updatedAt: new Date() }).where(eq(users.id, req.userId!));
+    res.json({ success: true, avatarUrl });
+    return;
+  }
+
+  res.status(400).json({ error: "avatarUrl must be an image data URL, an emoji, or empty" });
 }
 
 export async function demoLogin(req: Request, res: Response): Promise<void> {
@@ -572,6 +600,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
 export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
 
+  await deleteAvatarFiles(userId);
   // Cascading deletes handle categories, transactions, refresh_tokens automatically
   await db.delete(users).where(eq(users.id, userId));
 

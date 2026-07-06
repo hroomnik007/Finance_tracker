@@ -20,6 +20,7 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().min(12),
   JWT_ADMIN_SECRET: z.string().min(32),
   GOOGLE_CLIENT_ID: z.string().optional(),
+  UPLOAD_DIR: z.string().default("uploads"),
 });
 
 export const env = envSchema.parse(process.env);

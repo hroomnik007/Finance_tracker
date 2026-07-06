@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { updateUserSettings } from '../api/auth'
+import { isPhotoUrl, avatarSrc } from '../utils/avatar'
 import { NotificationCenter } from './NotificationCenter'
 
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'household']
@@ -19,10 +20,6 @@ interface TopbarProps {
   onOpenProfile: () => void
   onOpenAdd?: () => void
   onNavigate?: (page: Page) => void
-}
-
-function isPhotoUrl(url: string | null | undefined): url is string {
-  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
 }
 
 export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd, onNavigate }: TopbarProps) {
@@ -123,7 +120,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
       style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : 'var(--violet)', border: 'none', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 2px rgba(139,92,246,0.3)' }}
     >
       {isPhotoUrl(user?.avatarUrl) ? (
-        <img src={user!.avatarUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={avatarSrc(user!.avatarUrl!)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : user?.avatarUrl ? (
         <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{user.avatarUrl}</span>
       ) : (

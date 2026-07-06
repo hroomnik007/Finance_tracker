@@ -6,7 +6,6 @@ import { updateWeeklyEmail, updateUserSettings, changePassword, savePin, getSess
 import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
-import * as XLSX from '@e965/xlsx'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
 import { useSettingsContext } from '../context/SettingsContext'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
@@ -418,7 +417,9 @@ export function SettingsPage() {
   async function handleExportXLSX() {
     try {
       setExportError(null)
-      const [transactions, { data: categories }] = await Promise.all([
+      // xlsx is heavy — load it only when the user actually exports
+      const [XLSX, transactions, { data: categories }] = await Promise.all([
+        import('@e965/xlsx'),
         fetchAllTransactions({}),
         getCategories(),
       ])

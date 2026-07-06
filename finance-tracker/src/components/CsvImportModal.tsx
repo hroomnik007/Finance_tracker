@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import Papa from 'papaparse'
 import { X, Upload, Check, ChevronDown } from 'lucide-react'
 import { createTransaction } from '../api/transactions'
 import { useTranslation } from '../i18n'
@@ -162,10 +161,12 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
     return parsed.map(r => ({ ...r, selected: filterType ? r.type === filterType : true }))
   }
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
     setError(null)
     setImportedCount(null)
     setRows([])
+    // papaparse loads on demand — CSV import is a rare action
+    const Papa = (await import('papaparse')).default
     Papa.parse<CsvRow>(file, {
       header: true,
       skipEmptyLines: true,

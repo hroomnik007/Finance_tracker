@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Page } from '../App'
-import { getCategories } from '../api/categories'
-import { getTransactions } from '../api/transactions'
-import { getSavingsGoals } from '../api/savings'
-import { getDismissedNotifications, dismissNotification as dismissNotifApi } from '../api/notifications'
+import { getNotificationFeed, dismissNotification as dismissNotifApi, type NotificationFeedItem } from '../api/notifications'
 import { useFormatters } from '../hooks/useFormatters'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n'
@@ -81,136 +78,89 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
+  function feedItemToNotification(item: NotificationFeedItem): Notification {
+    switch (item.kind) {
+      case 'budget': {
+        const pct = Math.round((item.spent / item.limit) * 100)
+        return {
+          id: item.id,
+          icon: pct >= 100 ? '🚨' : '⚠️',
+          title: `Limit ${item.categoryName} ${pct}%`,
+          body: t.notifications.spentOf.replace('{spent}', formatAmount(item.spent)).replace('{limit}', formatAmount(item.limit)),
+          time: t.notifications.today,
+          read: false,
+          color: pct >= 100 ? '#f87171' : '#FB923C',
+          amount: `${Math.round(item.spent)} / ${Math.round(item.limit)} €`,
+          target: 'variable-expenses',
+        }
+      }
+      case 'fixedDue': {
+        const timeStr = item.daysUntil === 0 ? t.notifications.today : item.daysUntil === 1 ? t.notifications.tomorrow : t.notifications.inDays.replace('{n}', String(item.daysUntil))
+        return {
+          id: item.id,
+          icon: '📅',
+          title: `${item.label} ${timeStr}`,
+          body: t.notifications.dueDay.replace('{n}', String(item.dayOfMonth)),
+          time: timeStr,
+          read: false,
+          color: '#f87171',
+          amount: formatAmount(item.amount),
+          target: 'fixed-expenses',
+        }
+      }
+      case 'income': {
+        const timeStr = item.daysAgo === 0 ? t.notifications.today : item.daysAgo === 1 ? t.notifications.yesterday : t.notifications.daysAgo.replace('{n}', String(item.daysAgo))
+        return {
+          id: item.id,
+          icon: '💰',
+          title: t.notifications.incomeReceived,
+          body: `${item.description ?? t.notifications.incomeDefault} — ${formatAmount(item.amount)}`,
+          time: timeStr,
+          read: item.daysAgo > 0,
+          color: '#34d399',
+          amount: `+${formatAmount(item.amount)}`,
+          target: 'income',
+        }
+      }
+      case 'savings': {
+        const pct = Math.round((item.savedAmount / item.targetAmount) * 100)
+        return {
+          id: item.id,
+          icon: item.icon ?? '🎯',
+          title: `${item.name} ${pct}%`,
+          body: t.notifications.goalRemaining.replace('{amount}', formatAmount(Math.max(0, item.targetAmount - item.savedAmount))),
+          time: t.notifications.currentTime,
+          read: true,
+          color: '#8B5CF6',
+          amount: `${formatAmount(item.savedAmount)} / ${formatAmount(item.targetAmount)}`,
+          target: 'savings',
+        }
+      }
+    }
+  }
+
   async function generateNotifications(silent = false) {
     if (running.current) return
     running.current = true
     if (!silent) setLoading(true)
     try {
-      // Fetch dismissed keys first — DB is source of truth, no fallback to empty
-      const dismissedRes = await getDismissedNotifications()
-      const dismissedIds = new Set(dismissedRes.data)
-      saveReadIdsLocal(dismissedRes.data)
-
+      // One server-computed feed call replaces the former five client fetches;
+      // the server also filters out dismissed items. Local date goes along so
+      // "due today" respects the user's timezone.
       const now = new Date()
-      const todayDay = now.getDate()
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const feed = await getNotificationFeed(todayStr)
+      saveReadIdsLocal(feed.dismissed)
+      const dismissedIds = new Set(feed.dismissed)
 
-      const [catsRes, varRes, fixedRes, incomeRes, savingsRes] = await Promise.all([
-        getCategories(),
-        getTransactions({ type: 'expense', isFixed: false, month: monthStr, limit: 200 }),
-        getTransactions({ type: 'expense', isFixed: true, limit: 200 }),
-        getTransactions({ type: 'income', limit: 3 }),
-        getSavingsGoals(),
-      ])
-
-      const ns: Notification[] = []
-
-      // Budget warnings (≥ 80%)
-      const spentByCategory: Record<string, number> = {}
-      for (const tx of varRes.data) {
-        if (tx.categoryId) spentByCategory[tx.categoryId] = (spentByCategory[tx.categoryId] ?? 0) + tx.amount
-      }
-      for (const cat of catsRes.data) {
-        const limit = cat.budgetLimit
-        if (!limit || limit <= 0) continue
-        const spent = spentByCategory[cat.id] ?? 0
-        const pct = (spent / limit) * 100
-        if (pct < 80) continue
-        ns.push({
-          id: `budget-${cat.id}`,
-          icon: pct >= 100 ? '🚨' : '⚠️',
-          title: `Limit ${cat.name} ${Math.round(pct)}%`,
-          body: t.notifications.spentOf.replace('{spent}', formatAmount(spent)).replace('{limit}', formatAmount(limit)),
-          time: t.notifications.today,
-          read: false,
-          color: pct >= 100 ? '#f87171' : '#FB923C',
-          amount: `${Math.round(spent)} / ${Math.round(limit)} €`,
-          target: 'variable-expenses',
-        })
-      }
-
-      // Upcoming fixed expenses (next 7 days, max 2) — sort by urgency (days
-      // until due) BEFORE capping, so a payment due today is never crowded out
-      // by less-urgent items that happen to come earlier in the raw list order.
-      const upcomingFixed = fixedRes.data
-        .map(tx => {
-          let dayOfMonth = tx.date ? new Date(tx.date + 'T12:00:00').getDate() : 1
-          let label = tx.description ?? ''
-          try {
-            const obj = JSON.parse(tx.description ?? '')
-            if (obj && typeof obj.d === 'number') {
-              dayOfMonth = obj.d
-              label = String(obj.l ?? label)
-            }
-          } catch { /* plain text description */ }
-          const diff = dayOfMonth >= todayDay ? dayOfMonth - todayDay : daysInMonth - todayDay + dayOfMonth
-          return { tx, dayOfMonth, label, diff }
-        })
-        .filter(f => f.diff <= 7)
-        .sort((a, b) => a.diff - b.diff)
-        .slice(0, 2)
-
-      for (const { tx, dayOfMonth, label, diff } of upcomingFixed) {
-        const timeStr = diff === 0 ? t.notifications.today : diff === 1 ? t.notifications.tomorrow : t.notifications.inDays.replace('{n}', String(diff))
-        ns.push({
-          id: `fixed-${tx.id}`,
-          icon: '📅',
-          title: `${label} ${timeStr}`,
-          body: t.notifications.dueDay.replace('{n}', String(dayOfMonth)),
-          time: timeStr,
-          read: false,
-          color: '#f87171',
-          amount: formatAmount(tx.amount),
-          target: 'fixed-expenses',
-        })
-      }
-
-      // Latest income
-      if (incomeRes.data.length > 0) {
-        const latest = incomeRes.data[0]
-        const dayDiff = Math.max(0, Math.floor(
-          (now.getTime() - new Date(latest.date + 'T12:00:00').getTime()) / 86400000
-        ))
-        const timeStr = dayDiff === 0 ? t.notifications.today : dayDiff === 1 ? t.notifications.yesterday : t.notifications.daysAgo.replace('{n}', String(dayDiff))
-        ns.push({
-          id: `income-${latest.id}`,
-          icon: '💰',
-          title: t.notifications.incomeReceived,
-          body: `${latest.description ?? t.notifications.incomeDefault} — ${formatAmount(latest.amount)}`,
-          time: timeStr,
-          read: dayDiff > 0,
-          color: '#34d399',
-          amount: `+${formatAmount(latest.amount)}`,
-          target: 'income',
-        })
-      }
-
-      // Savings goal near completion (80–99%)
-      for (const goal of savingsRes.data) {
-        if (!goal.targetAmount) continue
-        const pct = (goal.savedAmount / goal.targetAmount) * 100
-        if (pct < 80 || pct >= 100) continue
-        ns.push({
-          id: `savings-${goal.id}`,
-          icon: goal.icon ?? '🎯',
-          title: `${goal.name} ${Math.round(pct)}%`,
-          body: t.notifications.goalRemaining.replace('{amount}', formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))),
-          time: t.notifications.currentTime,
-          read: true,
-          color: '#8B5CF6',
-          amount: `${formatAmount(goal.savedAmount)} / ${formatAmount(goal.targetAmount)}`,
-          target: 'savings',
-        })
-        break
-      }
+      const ns = feed.data.map(feedItemToNotification)
 
       // Preserve locally-added achievement-unlock entries across this
       // periodic regeneration — they aren't part of the deterministic
       // fetch-based list, so a plain overwrite would wipe them.
       setNotifications(prev => {
         const achievementOnes = prev.filter(n => n.id.startsWith(ACHIEVEMENT_NOTIF_PREFIX) && !dismissedIds.has(n.id))
-        return [...achievementOnes, ...ns.filter(n => !dismissedIds.has(n.id))]
+        return [...achievementOnes, ...ns]
       })
     } catch { /* silently ignore fetch errors */ }
     if (!silent) setLoading(false)

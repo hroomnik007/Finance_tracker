@@ -7,7 +7,7 @@ import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFormatters } from '../hooks/useFormatters'
-import { useTranslation } from '../i18n'
+import { useTranslation, getLocalizedDayNames, getLocalizedMonthNames } from '../i18n'
 import type { Translations } from '../i18n'
 import { todayISO } from '../utils/format'
 import { getTransactions } from '../api/transactions'
@@ -103,7 +103,7 @@ function FormBody({ form, setForm, t }: FormBodyProps) {
 export function IncomePage({ month, year }: IncomePageProps) {
   const { incomes, addIncome, updateIncome, deleteIncome } = useIncomes(month, year)
   const { formatAmount, formatDate } = useFormatters()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
   const [form, setForm] = useState<FormState>(makeEmpty())
@@ -155,11 +155,11 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
   const recurringTotal = recurringIncomes.reduce((s, i) => s + i.amount, 0)
   const oneTimeTotal = totalAmount - recurringTotal
-  const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December']
-  const MONTH_NAME = MONTH_NAMES[month - 1] ?? ''
+  const dayNames = getLocalizedDayNames(locale)
+  const monthNames = getLocalizedMonthNames(locale)
+  const rawMonthName = monthNames[month - 1] ?? ''
+  const MONTH_NAME = rawMonthName.charAt(0).toLocaleUpperCase(locale) + rawMonthName.slice(1)
 
-  const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
-  const SK_MONTHS_LC = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december']
   const dayGroups = sorted.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: Income[]; dayTotal: number }>>((acc, income) => {
     const last = acc[acc.length - 1]
     if (last?.date === income.date) {
@@ -167,7 +167,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
       last.dayTotal += income.amount
     } else {
       const d = new Date(income.date + 'T00:00:00')
-      acc.push({ date: income.date, dayNum: d.getDate(), dayName: SK_DAYS[d.getDay()], monthName: SK_MONTHS_LC[d.getMonth()], items: [income], dayTotal: income.amount })
+      acc.push({ date: income.date, dayNum: d.getDate(), dayName: dayNames[d.getDay()], monthName: monthNames[d.getMonth()], items: [income], dayTotal: income.amount })
     }
     return acc
   }, [])

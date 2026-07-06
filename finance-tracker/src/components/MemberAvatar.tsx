@@ -1,3 +1,5 @@
+import { isPhotoUrl, avatarSrc } from '../utils/avatar'
+
 const MEMBER_COLORS = [
   'linear-gradient(135deg, #7C3AED, #6D28D9)',
   'linear-gradient(135deg, #ec4899, #db2777)',
@@ -25,10 +27,10 @@ export function MemberAvatar({ userId, userName, size = 24, avatarUrl }: MemberA
   const color = MEMBER_COLORS[hashUserId(userId) % MEMBER_COLORS.length]
   const initials = userName.charAt(0).toUpperCase()
 
-  if (avatarUrl) {
+  if (isPhotoUrl(avatarUrl)) {
     return (
       <img
-        src={avatarUrl}
+        src={avatarSrc(avatarUrl)}
         alt={userName}
         style={{
           width: size,
@@ -38,6 +40,28 @@ export function MemberAvatar({ userId, userName, size = 24, avatarUrl }: MemberA
           flexShrink: 0,
         }}
       />
+    )
+  }
+
+  if (avatarUrl) {
+    // Emoji avatar
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'var(--bg3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: size * 0.56,
+          lineHeight: 1,
+          flexShrink: 0,
+        }}
+      >
+        {avatarUrl}
+      </div>
     )
   }
 

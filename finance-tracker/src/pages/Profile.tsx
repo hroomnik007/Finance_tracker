@@ -10,6 +10,7 @@ import { getAchievements, type AchievementState } from '../api/achievements'
 import { ACHIEVEMENTS } from '../data/achievements'
 import { AchievementDetailModal } from '../components/AchievementDetailModal'
 import { useSettingsContext } from '../context/SettingsContext'
+import { isPhotoUrl, avatarSrc } from '../utils/avatar'
 import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
@@ -95,10 +96,6 @@ function AchievementsTab() {
   )
 }
 
-
-function isPhotoUrl(url: string | null | undefined): url is string {
-  return !!(url && (url.startsWith('data:') || url.startsWith('http')))
-}
 
 type Tab = 'profile' | 'account' | 'achievements'
 
@@ -305,7 +302,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 onClick={handlePhotoUpload}
               >
                 {photoUrl ? (
-                  <img src={photoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                  <img src={avatarSrc(photoUrl)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                 ) : user?.avatarUrl && !isPhotoUrl(user.avatarUrl) ? (
                   <span style={{ fontSize: 32, lineHeight: 1 }}>{user.avatarUrl}</span>
                 ) : profileAvatarDraft && !isPhotoUrl(profileAvatarDraft) ? (

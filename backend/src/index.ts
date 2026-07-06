@@ -1,3 +1,4 @@
+import path from "node:path";
 import express from "express";
 import helmet from "helmet";
 import compression from "compression";
@@ -26,7 +27,9 @@ const allowedOrigins =
     ? ["https://financie.pedani.eu", "https://finvu.pedani.eu"]
     : ["http://localhost:5173", "http://localhost:3000"];
 
-app.use(helmet());
+// crossOriginResourcePolicy must allow cross-origin so the frontend origin
+// (financie.pedani.eu) can embed avatars served from api.pedani.eu/uploads.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(compression());
 app.use(
   cors({
@@ -42,9 +45,21 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+// Only the avatar upload needs a large body (base64 photo); everything else
+// gets a tight limit so oversized payloads are rejected early.
+const jsonDefault = express.json({ limit: "1mb" });
+const jsonAvatar = express.json({ limit: "15mb" });
+app.use((req, res, next) =>
+  req.path === "/api/auth/avatar" ? jsonAvatar(req, res, next) : jsonDefault(req, res, next)
+);
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
+
+// Uploaded files (avatars) — URLs carry a ?v= cache-buster, so long immutable caching is safe
+app.use(
+  "/uploads",
+  express.static(path.resolve(env.UPLOAD_DIR), { maxAge: "365d", immutable: true, fallthrough: false })
+);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });

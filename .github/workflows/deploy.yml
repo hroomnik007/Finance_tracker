@@ -28,9 +28,31 @@ jobs:
               - 'landing/**'
             backend:
               - 'backend/**'
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Frontend — install
+        working-directory: finance-tracker
+        run: npm ci --legacy-peer-deps
+      - name: Frontend — ESLint
+        working-directory: finance-tracker
+        run: npx eslint . --max-warnings 20
+      - name: Frontend — typecheck
+        working-directory: finance-tracker
+        run: npx tsc -b --noEmit
+      - name: Backend — install
+        working-directory: backend
+        run: npm ci
+      - name: Backend — typecheck
+        working-directory: backend
+        run: npx tsc --noEmit
   deploy-frontend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed_frontend == 'true'
+    needs: [detect-changes, lint]
+    if: needs.lint.result == 'success' && needs.detect-changes.outputs.changed_frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy frontend via SSH
@@ -58,8 +80,8 @@ jobs:
             cp /var/www/finance-tracker-repo/landing/index.html /var/www/landing/index.html 2>/dev/null || true
             sudo systemctl reload nginx
   deploy-backend:
-    needs: [detect-changes, deploy-frontend]
-    if: (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') && needs.detect-changes.outputs.changed_backend == 'true'
+    needs: [detect-changes, lint, deploy-frontend]
+    if: (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') && needs.lint.result == 'success' && needs.detect-changes.outputs.changed_backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy backend via SSH

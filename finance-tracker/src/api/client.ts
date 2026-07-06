@@ -2,6 +2,11 @@ import axios from 'axios'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
+/** Resolve a server-relative asset path (e.g. /uploads/avatars/…) to a full API URL. */
+export function resolveAssetUrl(pathOrUrl: string): string {
+  return pathOrUrl.startsWith('/') ? `${BASE_URL}${pathOrUrl}` : pathOrUrl
+}
+
 let accessToken: string | null = null
 let initializingAuth = true
 
