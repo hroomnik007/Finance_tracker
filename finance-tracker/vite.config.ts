@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       strategies: 'generateSW',
       manifest: {
         name: 'Finvu',
@@ -24,15 +24,6 @@ export default defineConfig({
         start_url: 'https://finvu.pedani.eu/',
         lang: 'sk',
         categories: ['finance'],
-        screenshots: [
-          {
-            src: '/screenshot-mobile.png',
-            sizes: '390x844',
-            type: 'image/png',
-            form_factor: 'narrow',
-            label: 'Finvu – rodinné financie',
-          },
-        ],
         icons: [
           { src: 'pwa-72x72.png', sizes: '72x72', type: 'image/png' },
           { src: 'pwa-96x96.png', sizes: '96x96', type: 'image/png' },

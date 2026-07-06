@@ -3,7 +3,13 @@ import { useTranslation } from '../i18n'
 
 export function PWAUpdateBanner() {
   const { t } = useTranslation()
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
+    onRegisteredSW(_url, registration) {
+      // mobile home-screen PWAs rarely trigger the browser's native SW
+      // update check on their own — poll explicitly so updates aren't stuck
+      if (registration) setInterval(() => registration.update(), 60 * 60 * 1000)
+    },
+  })
 
   if (!needRefresh) return null
 
