@@ -81,7 +81,17 @@ jobs:
             sudo systemctl reload nginx
   deploy-backend:
     needs: [detect-changes, lint, deploy-frontend]
-    if: (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') && needs.lint.result == 'success' && needs.detect-changes.outputs.changed_backend == 'true'
+    # NOTE: an `if:` that doesn't call always()/success()/failure() gets an
+    # implicit `&& success()` appended by GitHub Actions, which requires
+    # ALL `needs` jobs (including deploy-frontend) to have literally
+    # succeeded — but deploy-frontend is *expected* to be `skipped` on a
+    # backend-only push. Without always() here, this job silently skips
+    # on every backend-only commit despite the explicit skipped-check below.
+    if: |
+      always() &&
+      needs.lint.result == 'success' &&
+      (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') &&
+      needs.detect-changes.outputs.changed_backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy backend via SSH
