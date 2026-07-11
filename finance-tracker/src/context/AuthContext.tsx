@@ -132,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      // A full authentication just happened in this tab — PIN quick-unlock isn't needed.
+      sessionStorage.setItem('pin_verified_session', 'true')
       if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
       if (me.theme) {
         localStorage.setItem('theme_preference', me.theme)
@@ -150,6 +152,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      // A full authentication just happened in this tab — PIN quick-unlock isn't needed.
+      sessionStorage.setItem('pin_verified_session', 'true')
       if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
     } catch { /* ignore */ }
   }, [])
@@ -163,6 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      // A full authentication just happened in this tab — PIN quick-unlock isn't needed.
+      sessionStorage.setItem('pin_verified_session', 'true')
       if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
       if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
@@ -192,6 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('auth_guest')
       localStorage.removeItem('auth_guest')
       sessionStorage.setItem('just_logged_in', 'true')
+      // A full authentication just happened in this tab — PIN quick-unlock isn't needed.
+      sessionStorage.setItem('pin_verified_session', 'true')
       if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }
   }, [])
