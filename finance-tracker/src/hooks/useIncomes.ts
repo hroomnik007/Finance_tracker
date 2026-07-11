@@ -85,8 +85,11 @@ export function useIncomes(month?: number, year?: number) {
     enabled: !!user,
   })
 
-  const invalidate = useCallback(() =>
-    qc.invalidateQueries({ queryKey: ['incomes'] }), [qc])
+  const invalidate = useCallback(() => Promise.all([
+    qc.invalidateQueries({ queryKey: ['incomes'] }),
+    qc.invalidateQueries({ queryKey: ['summaryCards'] }),
+    qc.invalidateQueries({ queryKey: ['dashboardChart'] }),
+  ]), [qc])
 
   const addIncome = useCallback(async (income: Omit<Income, 'id'>): Promise<void> => {
     await createTransaction({

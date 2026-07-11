@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer,
 } from 'recharts'
@@ -68,8 +69,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [legendHoverIndex, setLegendHoverIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
-  const [chartData, setChartData] = useState<{ label: string; income: number; expenses: number }[]>([])
-  const [summaryCards, setSummaryCards] = useState<{ balance: number; income: number; expenses: number; savingsRate: number } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [streakModalOpen, setStreakModalOpen] = useState(false)
   const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -135,32 +134,33 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
   const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
 
-  useEffect(() => {
-    const src = user?.tracking_start_date ?? user?.createdAt
-    const minYear = src ? new Date(src).getFullYear() : 0
-    const minMonth = src ? new Date(src).getMonth() + 1 : 0
-    const months = getLast6Months(t.monthsShort).filter(m =>
-      m.year > minYear || (m.year === minYear && m.month >= minMonth)
-    )
-    Promise.all(months.map(m => getSummary(m.key, dashView).catch(() => null)))
-      .then(results => {
-        setChartData(
-          months.map((m, i) => {
-            const s: ApiSummary | null = results[i]
-            return {
-              label: m.label,
-              income: s?.totalIncome ?? 0,
-              expenses: s?.totalExpenses ?? 0,
-            }
-          })
-        )
+  const { data: chartData = [] } = useQuery({
+    queryKey: ['dashboardChart', month, year, user?.tracking_start_date ?? null, user?.createdAt ?? null, dashView],
+    queryFn: async () => {
+      const src = user?.tracking_start_date ?? user?.createdAt
+      const minYear = src ? new Date(src).getFullYear() : 0
+      const minMonth = src ? new Date(src).getMonth() + 1 : 0
+      const months = getLast6Months(t.monthsShort).filter(m =>
+        m.year > minYear || (m.year === minYear && m.month >= minMonth)
+      )
+      const results = await Promise.all(months.map(m => getSummary(m.key, dashView).catch(() => null)))
+      return months.map((m, i) => {
+        const s: ApiSummary | null = results[i]
+        return {
+          label: m.label,
+          income: s?.totalIncome ?? 0,
+          expenses: s?.totalExpenses ?? 0,
+        }
       })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, year, user?.tracking_start_date, user?.createdAt, dashView])
+    },
+    enabled: !!user,
+  })
 
-  useEffect(() => {
-    getSummaryCards(year, month, dashView).then(d => setSummaryCards(d)).catch(() => {})
-  }, [year, month, dashView])
+  const { data: summaryCards = null } = useQuery({
+    queryKey: ['summaryCards', year, month, dashView],
+    queryFn: () => getSummaryCards(year, month, dashView),
+    enabled: !!user,
+  })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderPieShape = (props: any) => {

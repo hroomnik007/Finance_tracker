@@ -73,8 +73,11 @@ export function useFixedExpenses(month?: number, year?: number) {
     enabled: isAuthenticated,
   })
 
-  const invalidate = useCallback(() =>
-    qc.invalidateQueries({ queryKey: ['fixedExpenses'] }), [qc])
+  const invalidate = useCallback(() => Promise.all([
+    qc.invalidateQueries({ queryKey: ['fixedExpenses'] }),
+    qc.invalidateQueries({ queryKey: ['summaryCards'] }),
+    qc.invalidateQueries({ queryKey: ['dashboardChart'] }),
+  ]), [qc])
 
   const addFixedExpense = useCallback(async (expense: Omit<FixedExpense, 'id'>): Promise<void> => {
     const today = new Date().toISOString().split('T')[0]

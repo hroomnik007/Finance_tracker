@@ -41,8 +41,11 @@ export function useVariableExpenses(month?: number, year?: number) {
     queryFn: () => fetchVariableExpenses(month, year),
   })
 
-  const invalidate = useCallback(() =>
-    qc.invalidateQueries({ queryKey: ['variableExpenses'] }), [qc])
+  const invalidate = useCallback(() => Promise.all([
+    qc.invalidateQueries({ queryKey: ['variableExpenses'] }),
+    qc.invalidateQueries({ queryKey: ['summaryCards'] }),
+    qc.invalidateQueries({ queryKey: ['dashboardChart'] }),
+  ]), [qc])
 
   const addVariableExpense = useCallback(async (expense: Omit<VariableExpense, 'id'>): Promise<void> => {
     await createTransaction({
