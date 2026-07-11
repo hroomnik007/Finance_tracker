@@ -1,10 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
   --font-landing: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-outfit: 'Outfit', system-ui, sans-serif;
+  --font-manrope: 'Manrope', system-ui, sans-serif;
+}
+
+/* ─────────────────────────────────────────
+   AURORA GLASS — design foundation (Phase 1)
+   Scoped under its own token namespace so the
+   redesign can roll out screen-by-screen without
+   touching the existing v3 (DM Sans) palette used
+   by routes not yet migrated.
+───────────────────────────────────────── */
+:root {
+  --aurora-bg:      #07060B;
+  --aurora-hi:      #F5F3FF;
+  --aurora-lo:      #A79FC9;
+  --aurora-faint:   #5B5578;
+  --aurora-violet:  #8B5CF6;
+  --aurora-fuchsia: #EC4899;
+  --aurora-cyan:    #22D3EE;
+  --aurora-emerald: #34D399;
+  --aurora-rose:    #FB7185;
+  --aurora-amber:   #FBBF24;
+  --aurora-glass:   rgba(255,255,255,.06);
+  --aurora-gline:   rgba(255,255,255,.12);
 }
 
 /* === RESET === */

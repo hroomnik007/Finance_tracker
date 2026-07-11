@@ -43,6 +43,7 @@ export const cs: Translations = {
     negativeBalance: 'Záporný zůstatek tento měsíc',
     income: 'Příjmy',
     expenses: 'Výdaje',
+    savingsRate: 'Úspora',
     budget: 'Rozpočet',
     budgetThisMonth: 'tento měsíc',
     expensesByCategory: 'Výdaje podle kategorie',

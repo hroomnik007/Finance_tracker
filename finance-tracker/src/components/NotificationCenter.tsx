@@ -226,11 +226,11 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         onClick={() => setOpen(v => !v)}
         aria-label={t.notifications.ariaLabel}
         style={{
-          width: 34, height: 34, borderRadius: '50%',
-          background: open ? 'var(--bg3)' : 'transparent',
-          border: '1px solid var(--border)',
+          width: 36, height: 36, borderRadius: '50%',
+          background: open ? 'rgba(255,255,255,.1)' : 'var(--aurora-glass)',
+          border: '1px solid var(--aurora-gline)',
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--text2)', flexShrink: 0, position: 'relative',
+          color: 'var(--aurora-lo)', flexShrink: 0, position: 'relative',
           transition: 'background 0.15s',
         }}
       >

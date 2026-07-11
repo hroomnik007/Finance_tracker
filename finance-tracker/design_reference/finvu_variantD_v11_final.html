@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="UTF-8"><title>Finvu — Login final, Settings label fix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060B; --hi:#F5F3FF; --lo:#A79FC9; --faint:#5B5578;
+  --violet:#8B5CF6; --fuchsia:#EC4899; --cyan:#22D3EE;
+  --emerald:#34D399; --rose:#FB7185; --amber:#FBBF24;
+  --glass:rgba(255,255,255,.06); --gline:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;display:flex;flex-wrap:wrap;gap:32px;justify-content:center;padding:40px 16px;font-family:'Manrope',sans-serif;}
+.frame{width:390px;height:844px;background:var(--bg);border-radius:42px;border:8px solid #000;overflow:hidden;box-shadow:0 40px 90px rgba(139,92,246,.25);position:relative;flex-shrink:0;}
+.frame-label{position:absolute;top:-30px;left:8px;color:#8B5CF6;font-family:'Outfit';font-weight:700;font-size:13px;}
+.status{display:flex;justify-content:space-between;padding:18px 26px 4px;color:var(--hi);font-size:14px;font-weight:600;}
+.header{display:flex;justify-content:space-between;align-items:center;margin:14px 0 16px;padding:0 20px;}
+.mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:16px;}
+.acts{display:flex;gap:8px;}
+.ibtn{width:36px;height:36px;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;color:var(--lo);}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a3f8c,#c93d9a);border:1px solid rgba(255,255,255,.15);}
+
+.loginscreen{height:100%;display:flex;flex-direction:column;padding:20px 24px 28px;}
+.brandrow{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
+.wordmark{font-family:'Outfit';font-size:16px;font-weight:700;color:var(--hi);}
+.h1{font-family:'Outfit';font-size:27px;font-weight:700;color:var(--hi);margin-bottom:6px;}
+.h1sub{font-size:13px;color:var(--lo);margin-bottom:32px;}
+.field{margin-bottom:14px;}
+.flabel{font-size:11px;color:var(--lo);text-transform:uppercase;font-weight:700;letter-spacing:.05em;margin-bottom:8px;}
+.finput{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:14px 16px;color:var(--hi);font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+.btnprimary{background:linear-gradient(135deg,var(--violet),var(--fuchsia));border-radius:16px;padding:14px;text-align:center;color:#fff;font-family:'Outfit';font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.altlabel{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:24px 0 10px;}
+.altbtn{background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:12px 8px;text-align:center;color:var(--hi);font-family:'Manrope';font-weight:600;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.altrow{display:flex;gap:10px;}
+.altrow .altbtn{flex:1;}
+.spacer{flex:1;}
+.footlink{font-size:12.5px;color:var(--lo);text-align:center;}
+.footlink b{color:var(--violet);font-weight:700;}
+
+.screen{padding:6px 20px 100px;}
+.h1b{font-family:'Outfit';font-size:20px;color:var(--hi);font-weight:700;margin-bottom:16px;}
+.tabsrow{display:flex;gap:7px;overflow-x:auto;margin-bottom:16px;}
+.tabpill{flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--gline);border-radius:13px;padding:8px 12px;font-size:11.5px;color:var(--lo);font-weight:600;}
+.tabpill.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:#fff;border-color:transparent;}
+.card{background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:2px 16px;margin-bottom:14px;}
+.setrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gline);}
+.setrow:last-child{border-bottom:none;}
+.setmid{flex:1;}
+.settitle{font-size:12.5px;color:var(--hi);font-weight:600;}
+.setsub{font-size:10.5px;color:var(--faint);margin-top:2px;}
+.grouphead{font-size:10px;color:var(--faint);text-transform:uppercase;font-weight:700;letter-spacing:.06em;margin:0 0 8px 4px;}
+</style></head>
+<body>
+
+<div style="position:relative;">
+<div class="frame-label">Login — bez PIN (finálne)</div>
+<div class="frame">
+  <div class="status"><span>17:59</span><span>●●●● 70%</span></div>
+  <div class="loginscreen">
+    <div class="brandrow"><div class="mark">Fv</div><div class="wordmark">Finvu</div></div>
+    <div class="h1">Vitaj späť</div>
+    <div class="h1sub">Prihlás sa a pokračuj v prehľade financií</div>
+    <div class="field"><div class="flabel">Email</div><div class="finput"><span>peter.bliznak@protonmail.com</span></div></div>
+    <div class="field"><div class="flabel">Heslo</div><div class="finput"><span>••••••••</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5B5578" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="btnprimary">Prihlásiť sa <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+    <div class="altlabel">Alebo pokračuj cez</div>
+    <div class="altbtn"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22 12.2c0-.7-.06-1.4-.19-2H12v3.8h5.6a4.8 4.8 0 01-2.08 3.15v2.6h3.36c1.97-1.8 3.1-4.47 3.1-7.55z"/><path fill="#34A853" d="M12 22c2.8 0 5.15-.93 6.87-2.5l-3.36-2.6c-.93.63-2.13 1-3.5 1-2.7 0-4.98-1.8-5.8-4.24H2.7v2.65A10 10 0 0012 22z"/><path fill="#FBBC05" d="M6.2 13.66a6 6 0 010-3.84V7.17H2.7a10 10 0 000 8.98z"/><path fill="#EA4335" d="M12 6.4c1.5 0 2.85.5 3.9 1.5l2.9-2.9C16.94 3.3 14.6 2.4 12 2.4a10 10 0 00-9.3 5.77l3.5 2.65C6.02 8.4 8.3 6.4 12 6.4z"/></svg>Google</div>
+    <div class="spacer"></div>
+    <div class="footlink">Nemáte účet? <b>Registrovať sa →</b></div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">Login — s PIN (finálne)</div>
+<div class="frame">
+  <div class="status"><span>17:59</span><span>●●●● 70%</span></div>
+  <div class="loginscreen">
+    <div class="brandrow"><div class="mark">Fv</div><div class="wordmark">Finvu</div></div>
+    <div class="h1">Vitaj späť</div>
+    <div class="h1sub">Prihlás sa a pokračuj v prehľade financií</div>
+    <div class="field"><div class="flabel">Email</div><div class="finput"><span>peter.bliznak@protonmail.com</span></div></div>
+    <div class="field"><div class="flabel">Heslo</div><div class="finput"><span>••••••••</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5B5578" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="btnprimary">Prihlásiť sa <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+    <div class="altlabel">Alebo pokračuj cez</div>
+    <div class="altrow">
+      <div class="altbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M7 10V7a5 5 0 0110 0v3"/></svg>PIN</div>
+      <div class="altbtn"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22 12.2c0-.7-.06-1.4-.19-2H12v3.8h5.6a4.8 4.8 0 01-2.08 3.15v2.6h3.36c1.97-1.8 3.1-4.47 3.1-7.55z"/><path fill="#34A853" d="M12 22c2.8 0 5.15-.93 6.87-2.5l-3.36-2.6c-.93.63-2.13 1-3.5 1-2.7 0-4.98-1.8-5.8-4.24H2.7v2.65A10 10 0 0012 22z"/><path fill="#FBBC05" d="M6.2 13.66a6 6 0 010-3.84V7.17H2.7a10 10 0 000 8.98z"/><path fill="#EA4335" d="M12 6.4c1.5 0 2.85.5 3.9 1.5l2.9-2.9C16.94 3.3 14.6 2.4 12 2.4a10 10 0 00-9.3 5.77l3.5 2.65C6.02 8.4 8.3 6.4 12 6.4z"/></svg>Google</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="footlink">Nemáte účet? <b>Registrovať sa →</b></div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">Nastavenia — Bezpečnosť</div>
+<div class="frame">
+  <div class="status"><span>18:03</span><span>●●●● 69%</span></div>
+  <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+  <div class="screen" style="padding-top:0;">
+    <div class="h1b">Nastavenia</div>
+    <div class="tabsrow">
+      <div class="tabpill">Vzhľad</div>
+      <div class="tabpill">Financie</div>
+      <div class="tabpill">Notif.</div>
+      <div class="tabpill on">Bezp.</div>
+      <div class="tabpill">Dáta</div>
+    </div>
+    <div class="card">
+      <div class="setrow"><div class="settitle" style="flex:1;">Zmeniť heslo</div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      <div class="setrow"><div class="setmid"><div class="settitle">PIN kód</div><div class="setsub" style="color:var(--emerald);">Aktívny</div></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      <div class="setrow"><div class="settitle" style="flex:1;">Automatické uzamknutie</div><div style="font-size:12px;color:var(--lo);font-weight:600;display:flex;align-items:center;gap:5px;">5 min <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      <div class="setrow"><div class="setmid"><div class="settitle">Aktívne zariadenia</div><div class="setsub">2 relácie · Android, Linux</div></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>
+    <div class="grouphead">Deaktivácia</div>
+    <div class="card">
+      <div class="setrow"><div class="settitle" style="flex:1;color:var(--rose);">Vymazať transakcie, resetovať alebo zmazať účet</div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</body></html>

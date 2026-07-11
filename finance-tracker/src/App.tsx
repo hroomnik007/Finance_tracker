@@ -407,7 +407,7 @@ function App() {
       height: '100svh',
       width: '100vw',
       overflow: 'hidden',
-      background: 'var(--bg)',
+      background: 'var(--aurora-bg)',
     }}>
       <PWAUpdateBanner />
       {locked && lockMethod === 'pin' && (
@@ -444,7 +444,7 @@ function App() {
 
       {/* Physical gap between sidebar and main */}
       {isDesktop && (
-        <div style={{ width: '12px', flexShrink: 0, background: 'var(--bg)' }} />
+        <div style={{ width: '12px', flexShrink: 0, background: 'var(--aurora-bg)' }} />
       )}
 
       {/* Main content column */}
@@ -454,7 +454,7 @@ function App() {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        background: 'var(--bg)',
+        background: 'var(--aurora-bg)',
       }}>
         <Topbar
           page={page}

@@ -41,6 +41,7 @@ export const sk = {
     negativeBalance: 'Záporný zostatok tento mesiac',
     income: 'Príjmy',
     expenses: 'Výdavky',
+    savingsRate: 'Úspora',
     budget: 'Rozpočet',
     budgetThisMonth: 'tento mesiac',
     expensesByCategory: 'Výdavky podľa kategórie',

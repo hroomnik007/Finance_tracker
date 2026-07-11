@@ -3,11 +3,13 @@ import { useQuery } from '@tanstack/react-query'
 import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer,
 } from 'recharts'
+import { CalendarClock, X } from 'lucide-react'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
-import { SparklineMini } from '../components/SparklineMini'
 import { ForecastCard } from '../components/ForecastCard'
 import { StreakBadge } from '../components/StreakBadge'
 import { StreakModal } from '../components/StreakModal'
+import { GlassCard } from '../components/GlassCard'
+import { HeroCard } from '../components/HeroCard'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -21,7 +23,6 @@ import { updateUserSettings } from '../api/auth'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useSavings } from '../hooks/useSavings'
 import { useCountUp } from '../hooks/useCountUp'
-import { severityCardStyle } from '../utils/severityCardStyle'
 import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
@@ -31,6 +32,20 @@ const FALLBACK_COLOR = '#6b7280'
 
 function catBg(color: string) {
   return color + '26'
+}
+
+type AuroraSeverity = 'red' | 'warning' | null
+
+function auroraSeverityStyle(severity: AuroraSeverity) {
+  const tint = severity === 'red' ? 'var(--aurora-rose)' : severity === 'warning' ? 'var(--aurora-amber)' : null
+  return {
+    background: tint ? `color-mix(in srgb, ${tint} 10%, var(--aurora-glass))` : 'var(--aurora-glass)',
+    border: tint ? `1px solid color-mix(in srgb, ${tint} 35%, var(--aurora-gline))` : '1px solid var(--aurora-gline)',
+    borderRadius: 20,
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    padding: 16,
+  }
 }
 
 function getLast6Months(monthsShort: string[]) {
@@ -46,12 +61,12 @@ function getLast6Months(monthsShort: string[]) {
   })
 }
 
-function getGreeting(name: string, t: Translations): { text: string; emoji: string } {
+function getGreeting(name: string, t: Translations): { text: string } {
   const hour = new Date().getHours()
-  if (hour >= 5 && hour < 12) return { text: `${t.dashboard.greetingMorning}${name ? `, ${name}` : ''}`, emoji: '☀️' }
-  if (hour >= 12 && hour < 18) return { text: `${t.dashboard.greetingDay}${name ? `, ${name}` : ''}`, emoji: '👋' }
-  if (hour >= 18 && hour < 22) return { text: `${t.dashboard.greetingEvening}${name ? `, ${name}` : ''}`, emoji: '🌙' }
-  return { text: `${t.dashboard.greetingNight}${name ? `, ${name}` : ''}`, emoji: '😴' }
+  if (hour >= 5 && hour < 12) return { text: `${t.dashboard.greetingMorning}${name ? `, ${name}` : ''}` }
+  if (hour >= 12 && hour < 18) return { text: `${t.dashboard.greetingDay}${name ? `, ${name}` : ''}` }
+  if (hour >= 18 && hour < 22) return { text: `${t.dashboard.greetingEvening}${name ? `, ${name}` : ''}` }
+  return { text: `${t.dashboard.greetingNight}${name ? `, ${name}` : ''}` }
 }
 
 
@@ -193,11 +208,11 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const challengeProgress = monthChallengeTarget > 0 ? Math.min(totalExpenses / monthChallengeTarget, 1) : 0
 
   function countdownBadge(daysUntil: number) {
-    if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' }
+    if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: 'var(--aurora-violet)', bg: 'rgba(139,92,246,0.15)' }
     const text = t.expenses.fixed.countdown.days.replace('{n}', String(daysUntil))
-    if (daysUntil <= 3) return { text, color: '#f97316', bg: 'rgba(249,115,22,0.15)' }
-    if (daysUntil <= 7) return { text, color: '#eab308', bg: 'rgba(234,179,8,0.15)' }
-    return { text, color: '#22c55e', bg: 'rgba(34,197,94,0.15)' }
+    if (daysUntil <= 3) return { text, color: 'var(--aurora-rose)', bg: 'rgba(251,113,133,0.15)' }
+    if (daysUntil <= 7) return { text, color: 'var(--aurora-amber)', bg: 'rgba(251,191,36,0.15)' }
+    return { text, color: 'var(--aurora-emerald)', bg: 'rgba(52,211,153,0.15)' }
   }
 
 const upcomingFixed = useMemo(() => {
@@ -210,16 +225,16 @@ const upcomingFixed = useMemo(() => {
 
   const motivationalMsg = (() => {
     if (totalIncome < 0.01) {
-      if (totalExpenses > 0) return { msg: t.dashboard.motivationalNoIncome, color: '#A78BFA' }
+      if (totalExpenses > 0) return { msg: t.dashboard.motivationalNoIncome, color: 'var(--aurora-violet)' }
       return null
     }
     if (balance > 0 && balance > totalIncome * 0.3) {
       const savingsPct = totalIncome > 0 ? Math.floor((balance / totalIncome) * 100 / 5) * 5 : 30
       const pct = Math.max(savingsPct, 30)
-      return { msg: t.dashboard.motivationalGood.replace('{pct}', String(pct)), color: '#34D399' }
+      return { msg: t.dashboard.motivationalGood.replace('{pct}', String(pct)), color: 'var(--aurora-emerald)' }
     }
-    if (balance < 0) return { msg: t.dashboard.motivationalBad, color: '#F87171' }
-    if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: t.dashboard.motivationalAvg, color: '#A78BFA' }
+    if (balance < 0) return { msg: t.dashboard.motivationalBad, color: 'var(--aurora-rose)' }
+    if (totalExpenses > 0 && dailyAvgExpense < 20) return { msg: t.dashboard.motivationalAvg, color: 'var(--aurora-violet)' }
     return null
   })()
 
@@ -244,11 +259,6 @@ const upcomingFixed = useMemo(() => {
   const showTrackingBanner = !user?.tracking_start_date && !user?.onboarding_banner_dismissed
 
   // ── Right panel urgency + severity tinting ─────────────────────────────────
-  const paymentSeverity = upcomingFixed.some(fe => fe.daysUntil === 0)
-    ? 'red'
-    : upcomingFixed.some(fe => fe.daysUntil <= 2)
-      ? 'warning'
-      : null
   const budgetSeverity = sortedBudgetStatuses.some(b => b.percentage >= 100)
     ? 'red'
     : sortedBudgetStatuses.some(b => b.percentage >= 90)
@@ -264,48 +274,37 @@ const upcomingFixed = useMemo(() => {
     ? (comparisonIsUp ? t.dashboard.spendingMore : t.dashboard.spendingLess).replace('{pct}', String(Math.round(comparisonDiffPct)))
     : motivationalMsg?.msg ?? null
   const insightMainColor = hasMonthComparison
-    ? (comparisonIsUp ? 'var(--red)' : 'var(--green)')
-    : (motivationalMsg?.color ?? 'var(--text)')
+    ? (comparisonIsUp ? 'var(--aurora-rose)' : 'var(--aurora-emerald)')
+    : (motivationalMsg?.color ?? 'var(--aurora-hi)')
 
   // ── Forecast (end-of-month prediction) ──────────────────────────────────────
   const forecastProgressPct = daysInMonth > 0 ? (dayOfMonth / daysInMonth) * 100 : 0
   const predictedBalance = totalIncome - dailyAvgExpense * daysInMonth
   const predictedBalanceText = `${predictedBalance >= 0 ? '+' : ''}${formatAmount(predictedBalance)}`
-  const predictedBalanceColor = predictedBalance >= 0 ? 'var(--green)' : 'var(--red)'
+  const predictedBalanceColor = predictedBalance >= 0 ? 'var(--aurora-emerald)' : 'var(--aurora-rose)'
   const paceText = t.dashboard.pace.replace('{amount}', formatAmount(dailyAvgExpense))
 
   // ── Shared JSX blocks ──────────────────────────────────────────────────────
 
   const greetingDesktop = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-          {greeting.emoji}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <span style={{ fontSize: 26, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
-          <StreakBadge count={user?.currentStreak ?? 0} size="lg" onClick={() => setStreakModalOpen(true)} />
-        </div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, paddingBottom: 12, borderBottom: '1px solid var(--aurora-gline)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
+        <StreakBadge count={user?.currentStreak ?? 0} size="lg" variant="aurora" onClick={() => setStreakModalOpen(true)} />
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <p className="t-label" style={{ marginBottom: 4 }}>{t.dashboard.today}</p>
-        <p style={{ fontSize: 13, color: 'var(--text2)', fontFamily: "'DM Mono', monospace", letterSpacing: '-0.2px', margin: 0 }}>{todayStr}</p>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-faint)', marginBottom: 4 }}>{t.dashboard.today}</p>
+        <p style={{ fontSize: 13, color: 'var(--aurora-lo)', fontFamily: "'Manrope', sans-serif", margin: 0 }}>{todayStr}</p>
       </div>
     </div>
   )
 
   const greetingRow = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(167,139,250,0.06))', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-          {greeting.emoji}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
-          <StreakBadge count={user?.currentStreak ?? 0} size="sm" onClick={() => setStreakModalOpen(true)} />
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 19, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting.text}</span>
+        <StreakBadge count={user?.currentStreak ?? 0} size="sm" variant="aurora" onClick={() => setStreakModalOpen(true)} />
       </div>
-      <span style={{ fontSize: 11, color: 'var(--text3)', flexShrink: 0, whiteSpace: 'nowrap' }}>{todayStr}</span>
     </div>
   )
 
@@ -322,130 +321,50 @@ const upcomingFixed = useMemo(() => {
   const animatedBalance = useCountUp(heroBalance, 800)
   const animatedIncome = useCountUp(heroIncome, 800)
   const animatedExpenses = useCountUp(heroExpenses, 800)
-  const incomeChangePct = (prevMonthData?.income ?? 0) > 0
-    ? ((heroIncome - prevMonthData!.income) / prevMonthData!.income * 100)
-    : null
-  const expChangePct = (prevMonthData?.expenses ?? 0) > 0
-    ? ((heroExpenses - prevMonthData!.expenses) / prevMonthData!.expenses * 100)
-    : null
-  const incomeSparklineData = useMemo(() => chartData.map(d => d.income), [chartData])
-  const expenseSparklineData = useMemo(() => chartData.map(d => d.expenses), [chartData])
   const heroSection = (
-    <div style={{
-      background: 'linear-gradient(135deg,#1a0d2e 0%,#3d1f82 50%,#1a0d2e 100%)',
-      borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
-      boxShadow: '0 18px 50px -16px rgba(80,40,180,0.35),0 0 0 1px rgba(139,92,246,0.18)',
-      flexShrink: 0,
-    }}>
-      {/* Atmospheric blobs */}
-      <div style={{ position: 'absolute', top: -90, right: -50, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle,rgba(167,139,250,0.35),transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: -60, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.25),transparent 65%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
-      {/* Shimmer */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)', pointerEvents: 'none' }} />
-      {/* Gold EMV chip ornament */}
-      <div style={{ position: 'absolute', top: 24, right: 24, width: 38, height: 28, borderRadius: 6, background: 'linear-gradient(135deg,#FFD89F 0%,#C9A35F 100%)', boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.2)', pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', inset: '30% 22%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 2, opacity: 0.55 }}>
-          <div style={{ background: '#705425' }} /><div style={{ background: '#705425' }} />
-          <div style={{ background: '#705425' }} /><div style={{ background: '#705425' }} />
+    <HeroCard variant="neutral">
+      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+        {t.dashboard.balance} · {t.months[month - 1]} {year}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
+        <span style={{
+          fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
+          background: `linear-gradient(120deg, #fff, ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
+          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+        }}>
+          {heroBalance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}
+        </span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+          ,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}&nbsp;€
+        </span>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.dashboard.income}</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-emerald)', lineHeight: 1.15, wordBreak: 'break-word' }}>{formatAmount(animatedIncome)}</div>
+        </div>
+        <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.dashboard.expenses}</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-rose)', lineHeight: 1.15, wordBreak: 'break-word' }}>{formatAmount(animatedExpenses)}</div>
+        </div>
+        <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.dashboard.savingsRate}</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{savRate}%</div>
         </div>
       </div>
-
-      <div style={{ position: 'relative' }}>
-        {/* Label row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 16 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.85)' }}>ZOSTATOK</span>
-          <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '0.05em', color: 'rgba(255,255,255,0.5)' }}>{t.months[month - 1].toUpperCase()} {year}</span>
-        </div>
-
-        {/* Balance — editorial large typography */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 14, flexWrap: 'wrap' as const }}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: heroBalance >= 0 ? '#86efac' : '#fca5a5', marginRight: 6, alignSelf: 'center' }}>{heroBalance >= 0 ? '+' : '−'}</span>
-          <span style={{ fontSize: 46, fontWeight: 300, color: 'white', letterSpacing: '-1.8px', lineHeight: 1 }}>{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}</span>
-          <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.75)', letterSpacing: '-0.4px', marginLeft: 1 }}>,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}</span>
-          <span style={{ fontSize: 22, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>€</span>
-          {heroIncome > 0 && (
-            <span style={{
-              marginLeft: 'auto', alignSelf: 'center',
-              fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 99, flexShrink: 0,
-              background: savRate >= 0 ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)',
-              color: savRate >= 0 ? '#34d399' : '#fca5a5',
-              border: `1px solid ${savRate >= 0 ? 'rgba(52,211,153,0.4)' : 'rgba(248,113,113,0.4)'}`,
-            }}>
-              {savRate >= 0 ? '↑' : '↓'} {Math.abs(savRate)} % úspora
-            </span>
-          )}
-        </div>
-
-        {/* Transaction count pill */}
-        <button
-          onClick={() => onNavigate('variable-expenses')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 12px 7px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', cursor: 'pointer', transition: 'background 0.15s', fontFamily: 'inherit', marginBottom: 16 }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-        >
-          <span style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2.4" strokeLinecap="round">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-          </span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12.5, color: 'white', letterSpacing: '-0.2px' }}>{variableExpenses.length}</span>
-          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>transakcií tento mesiac</span>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', marginBottom: 14 }} />
-
-        {/* PRÍJMY / VÝDAVKY 2-col grid inside hero */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', margin: 0 }}>PRÍJMY</p>
-              {incomeChangePct !== null && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 99, background: incomeChangePct >= 0 ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)', color: incomeChangePct >= 0 ? '#6ee7b7' : '#fca5a5' }}>
-                  {incomeChangePct >= 0 ? '↑' : '↓'} {Math.abs(incomeChangePct).toFixed(1).replace('.', ',')}%
-                </span>
-              )}
-            </div>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#86efac', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedIncome)}</p>
-            {incomeSparklineData.length >= 2 && (
-              <div style={{ marginTop: 6 }}>
-                <SparklineMini data={incomeSparklineData} color="var(--green)" width={120} height={24} id="hero-income" />
-              </div>
-            )}
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', margin: 0 }}>VÝDAVKY</p>
-              {expChangePct !== null && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 99, background: expChangePct <= 0 ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)', color: expChangePct <= 0 ? '#6ee7b7' : '#fca5a5' }}>
-                  {expChangePct >= 0 ? '↑' : '↓'} {Math.abs(expChangePct).toFixed(1).replace('.', ',')}%
-                </span>
-              )}
-            </div>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 16, color: '#fca5a5', margin: 0, letterSpacing: '-0.3px' }}>{formatAmount(animatedExpenses)}</p>
-            {expenseSparklineData.length >= 2 && (
-              <div style={{ marginTop: 6 }}>
-                <SparklineMini data={expenseSparklineData} color="var(--red)" width={120} height={24} id="hero-expenses" />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    </HeroCard>
   )
 
   // Effective active index: clicked (locked) > legend hover > pie hover
   const pieDisplayIndex = clickedIndex ?? legendHoverIndex ?? activeIndex
 
   const pieChartCard = (
-    <div
-      style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
+    <GlassCard
+      radius={20}
+      style={{ position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
       onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
     >
-      <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
+      <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
       {pieData.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ position: 'relative', width: 190, height: 190, minHeight: 190 }}>
@@ -463,13 +382,13 @@ const upcomingFixed = useMemo(() => {
                     endAngle={-270}
                     isAnimationActive={false}
                   >
-                    <Cell fill="var(--bg3)" />
+                    <Cell fill="rgba(255,255,255,.08)" />
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
             )}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>{t.dashboard.noExpenses}</p>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0, textAlign: 'center' }}>{t.dashboard.noExpenses}</p>
             </div>
           </div>
         </div>
@@ -500,13 +419,14 @@ const upcomingFixed = useMemo(() => {
                 >
                   <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
                   <span style={{
+                    fontFamily: "'Manrope', sans-serif",
                     fontSize: 12,
-                    color: isHighlighted ? 'var(--text)' : 'var(--text2)',
+                    color: isHighlighted ? 'var(--aurora-hi)' : 'var(--aurora-lo)',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     fontWeight: isHighlighted ? 700 : 400,
                     transition: 'font-weight 0.1s, color 0.1s',
                   }}>{item.name}</span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{totalExpenses > 0 ? Math.round((item.value / totalExpenses) * 100) : 0}%</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', flexShrink: 0 }}>{totalExpenses > 0 ? Math.round((item.value / totalExpenses) * 100) : 0}%</span>
                 </div>
               )
               if (i < 5) return row
@@ -520,7 +440,7 @@ const upcomingFixed = useMemo(() => {
               <button
                 className="md:hidden"
                 onClick={() => setShowAllPie(p => !p)}
-                style={{ fontSize: 12, color: 'var(--violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}
+                style={{ fontSize: 12, color: 'var(--aurora-violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: "'Manrope', sans-serif" }}
               >
                 {showAllPie ? t.dashboard.showLess : t.dashboard.moreItems.replace('{n}', String(remainingPieCount))}
               </button>
@@ -563,15 +483,15 @@ const upcomingFixed = useMemo(() => {
                 return (
                   <>
                     <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
-                    <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
-                    <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 12, color: 'var(--text)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                    <p style={{ fontSize: 10, color: 'var(--text3)', margin: 0 }}>{totalExpenses > 0 ? Math.round((slice.value / totalExpenses) * 100) : 0}%</p>
+                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
+                    <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
+                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: 0 }}>{totalExpenses > 0 ? Math.round((slice.value / totalExpenses) * 100) : 0}%</p>
                   </>
                 )
               })() : (
                 <>
-                  <p style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalExpenses)}</p>
-                  <p style={{ fontSize: 10, color: 'var(--text3)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalExpenses)}</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
                 </>
               )}
             </div>
@@ -585,7 +505,7 @@ const upcomingFixed = useMemo(() => {
           </div>
         </div>
       )}
-    </div>
+    </GlassCard>
   )
 
   const heatmapCard = (
@@ -600,8 +520,18 @@ const upcomingFixed = useMemo(() => {
 
   const rightPanelCards = (
     <>
-      <div style={severityCardStyle(paymentSeverity)}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.upcomingPayments}</p>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+          <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.dashboard.upcomingPayments}</h3>
+          {upcomingFixed.length > 0 && (
+            <button
+              onClick={() => onNavigate('fixed-expenses')}
+              style={{ fontSize: 11, fontWeight: 600, color: 'var(--aurora-cyan)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
+            >
+              {t.dashboard.showAll} →
+            </button>
+          )}
+        </div>
         {upcomingFixed.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {upcomingFixed.map(fe => {
@@ -610,40 +540,42 @@ const upcomingFixed = useMemo(() => {
               const icon = cat?.icon ?? FALLBACK_ICON
               const color = cat?.color ?? FALLBACK_COLOR
               return (
-                <div key={fe.id ?? fe.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                <GlassCard key={fe.id ?? fe.label} radius={18} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 13, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>
                     {icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fe.label}</div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 6px', borderRadius: 20 }}>{badge.text}</span>
+                    <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{fe.label}</div>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 7px', borderRadius: 20 }}>{badge.text}</span>
                   </div>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-rose)', flexShrink: 0 }}>
                     {formatAmount(fe.amount)}
                   </span>
-                </div>
+                </GlassCard>
               )
             })}
           </div>
         ) : (
-          <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noUpcomingPayments}</p>
+          <GlassCard radius={18}>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>{t.dashboard.noUpcomingPayments}</p>
+          </GlassCard>
         )}
       </div>
 
-      <div style={severityCardStyle(budgetSeverity)}>
-        <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>
+      <div style={auroraSeverityStyle(budgetSeverity)}>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.dashboard.budget}</p>
         {sortedBudgetStatuses.map(b => {
           const bCat = categories.find(c => c.id === b.categoryId)
-          const barColor = (bCat?.autoLimit) ? '#22c55e' : b.percentage >= 100 ? '#ef4444' : b.percentage >= 70 ? '#FBBF24' : '#34D399'
+          const barColor = (bCat?.autoLimit) ? 'var(--aurora-emerald)' : b.percentage >= 100 ? 'var(--aurora-rose)' : b.percentage >= 70 ? 'var(--aurora-amber)' : 'var(--aurora-emerald)'
           return (
             <div key={b.categoryId} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-hi)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span>{b.categoryIcon}</span> {b.categoryName}
                 </span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: barColor }}>{Math.round(b.percentage)}%</span>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: barColor }}>{Math.round(b.percentage)}%</span>
               </div>
-              <div style={{ height: 6, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
+              <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', borderRadius: 99, width: `${Math.min(b.percentage, 100)}%`, background: barColor }} />
               </div>
             </div>
@@ -651,10 +583,10 @@ const upcomingFixed = useMemo(() => {
         })}
         {sortedBudgetStatuses.length === 0 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.dashboard.noLimits}</p>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>{t.dashboard.noLimits}</p>
             <button
               onClick={() => onNavigate('categories')}
-              style={{ fontSize: 12, color: 'var(--violet)', background: 'var(--violet-glow)', border: '1px solid rgba(139,92,246,0.2)', padding: '4px 8px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--aurora-violet)', background: 'rgba(139,92,246,.14)', border: '1px solid rgba(139,92,246,0.25)', padding: '4px 8px', borderRadius: 8, cursor: 'pointer' }}
             >
               {t.dashboard.setLimits}
             </button>
@@ -663,7 +595,7 @@ const upcomingFixed = useMemo(() => {
         {sortedBudgetStatuses.length > 0 && (
           <button
             onClick={() => onNavigate('categories')}
-            style={{ marginTop: 4, fontSize: 12, color: 'var(--violet)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', display: 'block' }}
+            style={{ marginTop: 4, fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--aurora-violet)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'block' }}
           >
             {t.dashboard.showMore}
           </button>
@@ -671,29 +603,29 @@ const upcomingFixed = useMemo(() => {
       </div>
 
       {(insightMainText || monthChallengeTarget > 0) && (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.dashboard.howYouAreDoing}</p>
+        <GlassCard radius={20}>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.dashboard.howYouAreDoing}</p>
           {insightMainText && (
-            <p style={{ fontSize: 14, color: insightMainColor, margin: monthChallengeTarget > 0 ? '0 0 12px' : 0 }}>{insightMainText}</p>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, color: insightMainColor, margin: monthChallengeTarget > 0 ? '0 0 12px' : 0 }}>{insightMainText}</p>
           )}
           {monthChallengeTarget > 0 && (
             <>
-              <div style={{ height: 8, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
+              <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
                 <div
                   style={{
                     height: '100%', borderRadius: 99,
                     width: `${Math.round(challengeProgress * 100)}%`,
-                    background: challengeProgress < 0.8 ? 'var(--green)' : challengeProgress < 1 ? 'var(--warning)' : 'var(--red)',
+                    background: challengeProgress < 0.8 ? 'var(--aurora-emerald)' : challengeProgress < 1 ? 'var(--aurora-amber)' : 'var(--aurora-rose)',
                     transition: 'width 0.4s',
                   }}
                 />
               </div>
-              <p style={{ fontSize: 12, color: 'var(--text3)', margin: '6px 0 0' }}>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: '6px 0 0' }}>
                 {formatAmount(totalExpenses)} / {formatAmount(monthChallengeTarget)} ({Math.round(challengeProgress * 100)}%)
               </p>
             </>
           )}
-        </div>
+        </GlassCard>
       )}
 
       <ForecastCard
@@ -706,12 +638,12 @@ const upcomingFixed = useMemo(() => {
       />
 
       {(user?.savings_enabled && savingsGoals.length > 0) && (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+        <GlassCard radius={20}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: 0 }}>{t.savings.dashboardTitle}</p>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: 0 }}>{t.savings.dashboardTitle}</p>
             <button
               onClick={() => onNavigate('savings')}
-              style={{ fontSize: 12, color: 'var(--text3)', cursor: 'pointer', background: 'transparent', border: 'none', fontFamily: 'inherit' }}
+              style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', cursor: 'pointer', background: 'transparent', border: 'none' }}
             >
               {t.savings.viewAll} →
             </button>
@@ -724,20 +656,20 @@ const upcomingFixed = useMemo(() => {
               return (
                 <div key={goal.id}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-hi)', display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {goal.icon && <span>{goal.icon}</span>}
                       {goal.name}
                     </span>
-                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: 'var(--text3)', flexShrink: 0, marginLeft: 8 }}>{pctLabel}</span>
+                    <span style={{ fontSize: 11, fontFamily: "'Outfit', sans-serif", color: 'var(--aurora-faint)', flexShrink: 0, marginLeft: 8 }}>{pctLabel}</span>
                   </div>
-                  <div style={{ height: 6, borderRadius: 99, background: 'var(--bg4)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: goal.color ?? 'var(--violet)', transition: 'width 0.4s' }} />
+                  <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: goal.color ?? 'var(--aurora-violet)', transition: 'width 0.4s' }} />
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
+        </GlassCard>
       )}
 
     </>
@@ -749,17 +681,16 @@ const upcomingFixed = useMemo(() => {
 
       {/* Tracking start date banner */}
       {showTrackingBanner && (
-        <div style={{
+        <GlassCard radius={14} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           gap: 12, padding: '12px 16px',
-          background: 'rgba(124,58,237,0.1)',
-          border: '1px solid rgba(124,58,237,0.3)',
-          borderRadius: 14,
+          background: 'rgba(139,92,246,0.1)',
+          border: '1px solid rgba(139,92,246,0.3)',
           flexWrap: 'wrap',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 18, flexShrink: 0 }}>📅</span>
-            <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.4 }}>
+            <CalendarClock size={18} strokeWidth={1.8} color="var(--aurora-violet)" style={{ flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)', lineHeight: 1.4 }}>
               Nastav počiatočný dátum sledovania financií
             </span>
           </div>
@@ -768,8 +699,8 @@ const upcomingFixed = useMemo(() => {
               onClick={() => setShowTrackingModal(true)}
               style={{
                 padding: '6px 14px', borderRadius: 10,
-                background: 'var(--violet)', color: 'white',
-                fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white',
+                fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif",
               }}
             >
               Nastaviť
@@ -778,17 +709,17 @@ const upcomingFixed = useMemo(() => {
               onClick={handleDismissBanner}
               style={{
                 width: 28, height: 28, borderRadius: 8,
-                background: 'transparent', border: '1px solid var(--border)',
-                color: 'var(--text3)', fontSize: 14, cursor: 'pointer',
+                background: 'transparent', border: '1px solid var(--aurora-gline)',
+                color: 'var(--aurora-faint)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'inherit', flexShrink: 0,
+                flexShrink: 0,
               }}
               title="Zavrieť natrvalo"
             >
-              ×
+              <X size={14} strokeWidth={2} />
             </button>
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Streak detail modal */}
@@ -806,22 +737,22 @@ const upcomingFixed = useMemo(() => {
           style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) setShowTrackingModal(false) }}
         >
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: '0 0 6px' }}>{t.dashboard.trackingFromTitle}</h3>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.dashboard.trackingFromNote}</p>
+              <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>{t.dashboard.trackingFromTitle}</h3>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.dashboard.trackingFromNote}</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t.onboarding.trackingLabel}</label>
+              <label style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 600, color: 'var(--aurora-lo)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t.onboarding.trackingLabel}</label>
               <input
                 type="date"
                 value={trackingDate}
                 onChange={e => setTrackingDate(e.target.value)}
                 style={{
-                  background: 'var(--bg3)', border: '1px solid var(--border)',
+                  background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
                   borderRadius: 10, padding: '12px 14px', fontSize: 14,
-                  color: 'var(--text)', width: '100%', outline: 'none',
-                  fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark',
+                  color: 'var(--aurora-hi)', width: '100%', outline: 'none',
+                  fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box', colorScheme: 'dark',
                 }}
               />
             </div>
@@ -830,8 +761,8 @@ const upcomingFixed = useMemo(() => {
                 onClick={() => setShowTrackingModal(false)}
                 style={{
                   flex: 1, padding: '12px', borderRadius: 10,
-                  background: 'var(--bg3)', border: '1px solid var(--border)',
-                  color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                  background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
+                  color: 'var(--aurora-lo)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'Outfit', sans-serif",
                 }}
               >
                 Zrušiť
@@ -841,9 +772,9 @@ const upcomingFixed = useMemo(() => {
                 disabled={trackingSaving || !trackingDate}
                 style={{
                   flex: 1, padding: '12px', borderRadius: 10,
-                  background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                  background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
                   color: 'white', fontSize: 14, fontWeight: 600, border: 'none',
-                  cursor: trackingSaving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                  cursor: trackingSaving ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif",
                   opacity: (trackingSaving || !trackingDate) ? 0.6 : 1,
                 }}
               >
@@ -887,8 +818,8 @@ const upcomingFixed = useMemo(() => {
         {/* RIGHT panel */}
         <div
           style={{
-            background: 'var(--bg2)',
-            border: '1px solid var(--border)',
+            background: 'var(--aurora-glass)',
+            border: '1px solid var(--aurora-gline)',
             borderRadius: 20,
             padding: '16px 12px',
             overflowX: 'hidden',

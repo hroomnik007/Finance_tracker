@@ -43,6 +43,7 @@ export const en: Translations = {
     negativeBalance: 'Negative balance this month',
     income: 'Income',
     expenses: 'Expenses',
+    savingsRate: 'Savings',
     budget: 'Budget',
     budgetThisMonth: 'this month',
     expensesByCategory: 'Expenses by category',

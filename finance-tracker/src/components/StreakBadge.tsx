@@ -1,13 +1,17 @@
+import { Flame } from 'lucide-react'
+
 interface StreakBadgeProps {
   count: number
   size?: 'sm' | 'lg'
   onClick?: () => void
+  variant?: 'default' | 'aurora'
 }
 
-export function StreakBadge({ count, size = 'lg', onClick }: StreakBadgeProps) {
+export function StreakBadge({ count, size = 'lg', onClick, variant = 'default' }: StreakBadgeProps) {
   if (count <= 0) return null
   const isLg = size === 'lg'
   const interactive = !!onClick
+  const isAurora = variant === 'aurora'
   return (
     <button
       type="button"
@@ -17,18 +21,16 @@ export function StreakBadge({ count, size = 'lg', onClick }: StreakBadgeProps) {
         display: 'inline-flex', alignItems: 'center', gap: 4,
         padding: isLg ? '4px 9px' : '2px 6px',
         borderRadius: 99,
-        background: 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))',
-        border: '1px solid rgba(251,146,60,0.3)',
-        fontSize: isLg ? 11 : 10, fontWeight: 700, color: '#FB923C',
+        background: isAurora ? 'rgba(251,191,36,.15)' : 'linear-gradient(135deg,rgba(251,146,60,0.18),rgba(248,113,113,0.15))',
+        border: isAurora ? '1px solid rgba(251,191,36,.3)' : '1px solid rgba(251,146,60,0.3)',
+        fontSize: isLg ? 11 : 10, fontWeight: 700, color: isAurora ? 'var(--aurora-amber)' : '#FB923C',
         cursor: interactive ? 'pointer' : 'default', userSelect: 'none',
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: isAurora ? "'Manrope', sans-serif" : "'DM Mono', monospace",
         flexShrink: 0,
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      <span style={{ display: 'inline-block', animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }}>
-        🔥
-      </span>
+      <Flame size={isLg ? 12 : 11} strokeWidth={2} fill="currentColor" style={{ animation: 'flame 1.4s ease-in-out infinite', transformOrigin: 'bottom center' }} />
       {count}
     </button>
   )

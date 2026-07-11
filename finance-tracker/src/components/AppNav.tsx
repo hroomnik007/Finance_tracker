@@ -63,8 +63,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
     justifyContent: isExpanded ? 'flex-start' : 'center',
     borderRadius: 10,
     fontWeight: isActive ? 600 : 500,
-    color: isActive ? 'var(--violet)' : 'var(--text2)',
-    background: isActive ? 'rgba(139,92,246,0.12)' : 'transparent',
+    color: isActive ? '#fff' : 'var(--aurora-lo)',
+    background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
     cursor: 'pointer',
     transition: 'all 0.15s',
     marginBottom: 2,
@@ -73,10 +73,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
     width: '100%',
     border: 'none',
     textAlign: 'left' as const,
+    fontFamily: "'Manrope', sans-serif",
   })
 
   function hoverOn(e: React.MouseEvent<HTMLButtonElement>, active: boolean) {
-    if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg3)'
+    if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--aurora-glass)'
   }
   function hoverOff(e: React.MouseEvent<HTMLButtonElement>, active: boolean) {
     if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
@@ -100,9 +101,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--bg2)',
-          borderRight: '1px solid var(--border)',
-          boxShadow: '2px 0 20px rgba(0,0,0,0.25)',
+          background: '#0D0B14',
+          borderRight: '1px solid var(--aurora-gline)',
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -113,15 +113,20 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           alignItems: 'center',
           gap: 10,
           padding: '18px 14px',
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid var(--aurora-gline)',
           overflow: 'hidden',
           flexShrink: 0,
         }}>
-          <img src="/logo.svg" alt="Finvu" style={{ width: 34, height: 34, flexShrink: 0 }} />
+          <div style={{
+            width: 34, height: 34, borderRadius: 11, flexShrink: 0,
+            background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: '#fff', fontSize: 14,
+          }}>Fv</div>
           {isExpanded && (
             <div>
-              <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>Finvu</span>
-              <div style={{ fontSize: 9, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>{t.nav.appTagline}</div>
+              <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>Finvu</span>
+              <div style={{ fontSize: 9, color: 'var(--aurora-faint)', fontFamily: "'Manrope', sans-serif", letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>{t.nav.appTagline}</div>
             </div>
           )}
         </div>
@@ -224,8 +229,8 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
                 position: 'fixed',
                 left: 'var(--sidebar-collapsed-w)',
                 top: submenuY,
-                background: 'var(--bg3)',
-                border: '1px solid var(--border2)',
+                background: '#14121C',
+                border: '1px solid var(--aurora-gline)',
                 borderRadius: '0 12px 12px 0',
                 padding: '6px 0',
                 minWidth: '170px',
@@ -235,7 +240,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
               onMouseEnter={openSubmenu}
               onMouseLeave={closeSubmenu}
             >
-              <div style={{ padding: '6px 16px 4px', fontSize: '10px', color: 'var(--text3)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              <div style={{ padding: '6px 16px 4px', fontSize: '10px', color: 'var(--aurora-faint)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
                 {t.nav.expenses}
               </div>
               {([
@@ -254,11 +259,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
                     padding: '10px 16px',
                     fontSize: 12,
                     fontWeight: current === item.page ? 600 : 500,
-                    color: current === item.page ? 'var(--violet)' : 'var(--text2)',
-                    background: current === item.page ? 'rgba(139,92,246,0.12)' : 'transparent',
+                    color: current === item.page ? '#fff' : 'var(--aurora-lo)',
+                    background: current === item.page ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Manrope', sans-serif",
                     textAlign: 'left',
                   }}
                 >
@@ -306,7 +311,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
         </div>
 
         {/* Bottom section: Nastavenia + Profile */}
-        <div style={{ borderTop: '1px solid var(--border)', padding: '8px', flexShrink: 0 }}>
+        <div style={{ borderTop: '1px solid var(--aurora-gline)', padding: '8px', flexShrink: 0 }}>
           {/* Nastavenia */}
           <button
             onClick={() => handleChange('settings')}
@@ -334,13 +339,13 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             transform: 'translateY(-50%)',
             width: 24, height: 24,
             borderRadius: '50%',
-            background: 'var(--bg2)',
-            border: '1px solid var(--border2)',
+            background: '#14121C',
+            border: '1px solid var(--aurora-gline)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
-            color: 'var(--text3)',
+            color: 'var(--aurora-faint)',
             zIndex: 10,
-            boxShadow: 'var(--card-shadow)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
           }}
         >
           {isExpanded ? <ChevronLeft size={11} strokeWidth={1.5} /> : <ChevronRight size={11} strokeWidth={1.5} />}
@@ -372,12 +377,12 @@ function SubNavItem({
         borderRadius: 8,
         fontSize: 12,
         fontWeight: active ? 600 : 500,
-        color: active ? 'var(--violet)' : 'var(--text2)',
-        background: active ? 'rgba(139,92,246,0.12)' : 'transparent',
+        color: active ? '#fff' : 'var(--aurora-lo)',
+        background: active ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
         cursor: 'pointer',
         width: '100%',
         border: 'none',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Manrope', sans-serif",
         marginBottom: 2,
         transition: 'all 0.15s',
         textAlign: 'left',

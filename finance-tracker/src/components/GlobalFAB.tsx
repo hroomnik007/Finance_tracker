@@ -197,8 +197,8 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
           style={{
             bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
             zIndex: 40,
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            boxShadow: '0 8px 25px rgba(99,102,241,0.4)',
+            background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
+            boxShadow: '0 10px 30px rgba(139,92,246,.5)',
           }}
         >
           <Plus size={26} />

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="UTF-8"><title>Finvu — Variant D — Full set</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060B; --hi:#F5F3FF; --lo:#A79FC9; --faint:#5B5578;
+  --violet:#8B5CF6; --fuchsia:#EC4899; --cyan:#22D3EE;
+  --emerald:#34D399; --rose:#FB7185; --amber:#FBBF24;
+  --glass:rgba(255,255,255,.06); --gline:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;display:flex;flex-wrap:wrap;gap:32px;justify-content:center;padding:40px 16px;font-family:'Manrope',sans-serif;}
+.frame{width:390px;height:844px;background:var(--bg);border-radius:42px;border:8px solid #000;overflow:hidden;box-shadow:0 40px 90px rgba(139,92,246,.25);position:relative;flex-shrink:0;}
+.frame-label{position:absolute;top:-30px;left:8px;color:#8B5CF6;font-family:'Outfit';font-weight:700;font-size:13px;}
+.status{display:flex;justify-content:space-between;padding:18px 26px 4px;color:var(--hi);font-size:14px;font-weight:600;}
+.screen{padding:6px 20px 100px;position:relative;z-index:1;height:100%;overflow-y:auto;}
+.header{display:flex;justify-content:space-between;align-items:center;margin:14px 0 20px;}
+.mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:16px;}
+.acts{display:flex;gap:8px;}
+.ibtn{width:36px;height:36px;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a3f8c,#c93d9a);border:1px solid rgba(255,255,255,.15);}
+.rowbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.pill{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--gline);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--hi);font-weight:600;}
+.pill .a{color:var(--faint);}
+.tg{display:flex;background:var(--glass);border:1px solid var(--gline);border-radius:20px;padding:3px;}
+.tg div{padding:6px 13px;font-size:12px;font-weight:600;border-radius:16px;color:var(--lo);}
+.tg div.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:#fff;}
+.greet{font-family:'Outfit';font-size:19px;color:var(--hi);font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.streak{font-family:'Manrope';font-size:11px;background:rgba(251,191,36,.15);color:var(--amber);padding:3px 9px;border-radius:10px;font-weight:700;}
+.h1{font-family:'Outfit';font-size:26px;color:var(--hi);font-weight:700;margin:6px 0 4px;}
+.hsub{font-size:13px;color:var(--lo);margin-bottom:18px;}
+.hero{position:relative;border-radius:28px;padding:24px;margin-bottom:18px;overflow:hidden;background:var(--glass);border:1px solid var(--gline);backdrop-filter:blur(20px);}
+.blob{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;z-index:0;}
+.b1{width:180px;height:180px;background:var(--violet);top:-70px;left:-50px;}
+.b2{width:150px;height:150px;background:var(--fuchsia);bottom:-60px;right:-40px;}
+.b3{width:110px;height:110px;background:var(--cyan);top:20px;right:20px;opacity:.35;}
+.g-emerald .b1{background:var(--emerald);} .g-emerald .b2{background:var(--cyan);}
+.g-rose .b1{background:var(--rose);} .g-rose .b2{background:var(--amber);}
+.heroin{position:relative;z-index:2;}
+.eyebrow{font-size:11px;letter-spacing:.08em;color:var(--lo);text-transform:uppercase;font-weight:700;margin-bottom:8px;}
+.bal{font-family:'Outfit';font-weight:800;font-size:44px;line-height:1;background:linear-gradient(120deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.bal.em{background:linear-gradient(120deg,#fff,var(--emerald));-webkit-background-clip:text;background-clip:text;}
+.bal.ro{background:linear-gradient(120deg,#fff,var(--rose));-webkit-background-clip:text;background-clip:text;}
+.bal span{font-size:22px;-webkit-text-fill-color:var(--lo);color:var(--lo);}
+.chipsrow{display:flex;gap:8px;margin-top:16px;}
+.mchip{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:10px 12px;flex:1;}
+.mchip .l{font-size:10px;color:var(--lo);text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.mchip .v{font-family:'Outfit';font-size:14px;color:var(--hi);font-weight:700;}
+.mchip.g .v{color:var(--emerald);} .mchip.r .v{color:var(--rose);}
+.section{margin-bottom:18px;}
+.shead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.shead h3{font-family:'Outfit';font-size:16px;color:var(--hi);font-weight:700;}
+.shead a{font-size:11px;color:var(--cyan);font-weight:600;}
+.card{background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:14px 16px;margin-bottom:10px;backdrop-filter:blur(12px);}
+.brow{display:flex;align-items:center;gap:12px;}
+.chip{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.mid{flex:1;} .mid .nm{font-size:13px;color:var(--hi);font-weight:600;margin-bottom:2px;}
+.mid .sm{font-size:11px;color:var(--faint);}
+.bar{height:6px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-top:6px;} .bar .f{height:100%;border-radius:4px;}
+.pct{font-family:'Outfit';font-size:13px;font-weight:700;}
+.amt{font-family:'Outfit';font-size:14px;font-weight:700;}
+.amt.g{color:var(--emerald);} .amt.r{color:var(--rose);}
+.daylabel{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;margin:14px 0 8px;}
+.chipsscroll{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;}
+.fchip{flex-shrink:0;background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:8px 14px;font-size:12px;color:var(--lo);font-weight:600;display:flex;align-items:center;gap:6px;}
+.fchip.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:#fff;border-color:transparent;}
+.fab{position:absolute;bottom:96px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(139,92,246,.5);z-index:5;}
+.navwrap{position:absolute;bottom:0;left:0;right:0;background:rgba(7,6,11,.85);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.08);}
+.nav{display:flex;justify-content:space-around;padding:12px 0 20px;}
+.ni{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);}
+.ni.on{color:var(--hi);} .ni span{font-size:10px;font-weight:600;}
+
+.field{margin-bottom:16px;}
+.flabel{font-size:11px;color:var(--lo);text-transform:uppercase;font-weight:700;letter-spacing:.05em;margin-bottom:8px;}
+.finput{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:14px 16px;color:var(--hi);font-size:15px;font-family:'Manrope';}
+.finput.big{font-family:'Outfit';font-size:28px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.finput .ph{color:var(--faint);}
+.btn-primary{background:linear-gradient(135deg,var(--violet),var(--fuchsia));border-radius:18px;padding:16px;text-align:center;color:#fff;font-family:'Outfit';font-weight:700;font-size:15px;}
+.btn-ghost{background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:16px;text-align:center;color:var(--hi);font-family:'Outfit';font-weight:700;font-size:15px;}
+.catgrid{display:flex;flex-wrap:wrap;gap:8px;}
+.catchip{background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:9px 13px;font-size:12px;color:var(--hi);font-weight:600;display:flex;align-items:center;gap:6px;}
+.catchip.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));border-color:transparent;}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:#0D0B14;border-top:1px solid var(--gline);border-radius:28px 28px 0 0;padding:14px 20px 30px;z-index:10;box-shadow:0 -20px 60px rgba(0,0,0,.5);}
+.handle{width:40px;height:4px;background:var(--gline);border-radius:2px;margin:0 auto 18px;}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.sheet-head h2{font-family:'Outfit';font-size:19px;color:var(--hi);font-weight:700;}
+.xbtn{width:32px;height:32px;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;}
+.launchrow{display:flex;align-items:center;gap:14px;background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:14px 16px;margin-bottom:10px;}
+.launchrow .lmid{flex:1;} .launchrow .lmid .t{font-family:'Outfit';font-size:14px;color:var(--hi);font-weight:700;}
+.launchrow .lmid .s{font-size:11px;color:var(--faint);margin-top:2px;}
+.licon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+
+.center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100% - 120px);text-align:center;}
+.applogo{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:32px;margin-bottom:22px;box-shadow:0 20px 50px rgba(139,92,246,.4);}
+.brand{font-family:'Outfit';font-size:30px;font-weight:800;color:var(--hi);margin-bottom:4px;}
+.tagline{font-size:11px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:36px;}
+.loginform{width:100%;}
+.pindots{display:flex;justify-content:center;gap:16px;margin:28px 0 40px;}
+.pindot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--gline);}
+.pindot.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));border-color:transparent;}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:280px;margin:0 auto;}
+.key{aspect-ratio:1;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-size:22px;font-weight:600;color:var(--hi);}
+.key.empty{background:transparent;border:none;}
+
+.ring{position:relative;width:96px;height:96px;flex-shrink:0;}
+.ring svg{transform:rotate(-90deg);}
+.ringtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:700;font-size:16px;color:var(--hi);}
+.toggle-sw{width:44px;height:26px;border-radius:13px;background:var(--glass);border:1px solid var(--gline);position:relative;flex-shrink:0;}
+.toggle-sw.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));}
+.toggle-sw .dot{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;}
+.toggle-sw.on .dot{left:auto;right:3px;}
+.settingrow{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--gline);}
+.settingrow:last-child{border-bottom:none;}
+.settingrow .st{font-size:13px;color:var(--hi);font-weight:600;}
+.settingrow .ss{font-size:11px;color:var(--faint);margin-top:3px;}
+</style></head>
+<body>
+
+<div style="position:relative;">
+<div class="frame-label">01 · Login</div>
+<div class="frame">
+  <div class="status"><span>17:59</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="center-screen">
+      <div class="applogo">Fv</div>
+      <div class="brand">Finvu</div>
+      <div class="tagline">Financie pod kontrolou</div>
+      <div class="loginform">
+        <div class="field"><div class="flabel">Email</div><div class="finput">peter.bliznak@protonmail.com</div></div>
+        <div class="field"><div class="flabel">Heslo</div><div class="finput">••••••••</div></div>
+        <div class="btn-primary" style="margin-bottom:10px;">Prihlásiť sa →</div>
+        <div class="btn-ghost">🔢 Prihlásiť sa PINom</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">02 · PIN login</div>
+<div class="frame">
+  <div class="status"><span>17:59</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="center-screen">
+      <div class="applogo">Fv</div>
+      <div class="brand" style="font-size:20px;">Zadaj PIN</div>
+      <div class="tagline" style="text-transform:none;letter-spacing:0;">Finvu je uzamknuté</div>
+      <div class="pindots">
+        <div class="pindot on"></div><div class="pindot on"></div><div class="pindot"></div><div class="pindot"></div>
+      </div>
+      <div class="keypad">
+        <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+        <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+        <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+        <div class="key empty"></div><div class="key">0</div><div class="key">⌫</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">03 · Prehľad</div>
+<div class="frame">
+  <div class="status"><span>18:00</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header">
+      <div class="mark">Fv</div>
+      <div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div>
+    </div>
+    <div class="rowbar">
+      <div class="pill"><span class="a">‹</span> Júl 2026 <span class="a">›</span></div>
+      <div class="tg"><div>Moje</div><div class="on">Rodinné</div></div>
+    </div>
+    <div class="greet">Dobrý večer <span class="streak">🔥 1 deň</span></div>
+    <div class="hero">
+      <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+      <div class="heroin">
+        <div class="eyebrow">Zostatok · Júl 2026</div>
+        <div class="bal">+1 930<span>,45 €</span></div>
+        <div class="chipsrow">
+          <div class="mchip g"><div class="l">Príjmy</div><div class="v">1 987 €</div></div>
+          <div class="mchip r"><div class="l">Výdavky</div><div class="v">1 322 €</div></div>
+          <div class="mchip"><div class="l">Úspora</div><div class="v">33%</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="shead"><h3>Výdavky podľa kategórie</h3><a>Detail →</a></div>
+      <div class="card" style="display:flex;align-items:center;gap:18px;">
+        <svg width="90" height="90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="15"/>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#8B5CF6" stroke-width="15" stroke-dasharray="247 301" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#EC4899" stroke-width="15" stroke-dasharray="24 301" stroke-dashoffset="-247" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#22D3EE" stroke-width="15" stroke-dasharray="21 301" stroke-dashoffset="-271" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#34D399" stroke-width="15" stroke-dasharray="9 301" stroke-dashoffset="-292" transform="rotate(-90 60 60)"/>
+          <text x="60" y="57" text-anchor="middle" font-family="Outfit" font-size="15" fill="#F5F3FF" font-weight="700">240 €</text>
+          <text x="60" y="72" text-anchor="middle" font-family="Manrope" font-size="8" fill="#A79FC9">celkom</text>
+        </svg>
+        <div>
+          <div style="font-size:11px;color:var(--hi);margin-bottom:7px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#8B5CF6;margin-right:6px;"></span>Tankovanie 82%</div>
+          <div style="font-size:11px;color:var(--hi);margin-bottom:7px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#EC4899;margin-right:6px;"></span>Ostatné 8%</div>
+          <div style="font-size:11px;color:var(--hi);margin-bottom:7px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22D3EE;margin-right:6px;"></span>IT a technika 7%</div>
+          <div style="font-size:11px;color:var(--hi);"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#34D399;margin-right:6px;"></span>Nákupy 3%</div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="shead"><h3>Nadchádzajúce platby</h3><a>Všetky →</a></div>
+      <div class="card brow"><div class="chip" style="background:rgba(251,191,36,.14);">🎮</div><div class="mid"><div class="nm">Spotify</div><div class="sm">o 1 dni</div></div><div class="amt r">9,99 €</div></div>
+      <div class="card brow"><div class="chip" style="background:rgba(251,191,36,.14);">🏠</div><div class="mid"><div class="nm">Nájom BA</div><div class="sm">o 2 dni</div></div><div class="amt r">300,00 €</div></div>
+    </div>
+  </div>
+  <div class="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Domácnosť</span></div>
+  </div></div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">04 · Príjmy</div>
+<div class="frame">
+  <div class="status"><span>18:00</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+    <div class="rowbar"><div class="pill"><span class="a">‹</span> Júl 2026 <span class="a">›</span></div></div>
+    <div class="hero g-emerald">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <div class="heroin">
+        <div class="eyebrow">Príjmy · Júl 2026</div>
+        <div class="bal em">+1 562<span>,37 €</span></div>
+        <div class="chipsrow">
+          <div class="mchip"><div class="l">Opakujúce</div><div class="v">220 €</div></div>
+          <div class="mchip"><div class="l">Jednorazové</div><div class="v">1 342 €</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="daylabel">7 · Utorok, júl</div>
+    <div class="card brow"><div class="chip" style="background:rgba(52,211,153,.14);">📅</div><div class="mid"><div class="nm">Výplata</div><div class="sm">07.07.2026</div></div><div class="amt g">+1 342,37 €</div></div>
+    <div class="daylabel">3 · Piatok, júl</div>
+    <div class="card brow"><div class="chip" style="background:rgba(52,211,153,.14);">🔁</div><div class="mid"><div class="nm">Babka</div><div class="sm">Opakujúci sa</div></div><div class="amt g">+220,00 €</div></div>
+  </div>
+  <div class="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Domácnosť</span></div>
+  </div></div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">05 · Výdavky</div>
+<div class="frame">
+  <div class="status"><span>18:01</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+    <div class="rowbar"><div class="pill"><span class="a">‹</span> Júl 2026 <span class="a">›</span></div></div>
+    <div class="hero g-rose">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <div class="heroin">
+        <div class="eyebrow">Variabilné výdavky · Júl 2026</div>
+        <div class="bal ro">−240<span>,36 €</span></div>
+        <div style="font-size:12px;color:var(--lo);margin-top:12px;">6 transakcií tento mesiac</div>
+      </div>
+    </div>
+    <div class="finput" style="margin-bottom:14px;color:var(--faint);font-size:13px;">🔍 Hľadať výdavok alebo kategóriu…</div>
+    <div class="chipsscroll">
+      <div class="fchip on">Všetky</div><div class="fchip">💻 IT a technika</div><div class="fchip">🛒 Nákupy</div><div class="fchip">🚗 Tankovanie</div>
+    </div>
+    <div class="daylabel">8 · Streda, júl</div>
+    <div class="card brow"><div class="chip" style="background:rgba(251,113,133,.14);">💻</div><div class="mid"><div class="nm">Hetzner</div><div class="sm">IT a technika</div></div><div class="amt r">−11,00 €</div></div>
+    <div class="daylabel">6 · Pondelok, júl</div>
+    <div class="card brow"><div class="chip" style="background:rgba(251,113,133,.14);">🚗</div><div class="mid"><div class="nm">Nová autobatéria</div><div class="sm">Tankovanie</div></div><div class="amt r">−130,00 €</div></div>
+  </div>
+  <div class="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Domácnosť</span></div>
+  </div></div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">06 · Kategórie</div>
+<div class="frame">
+  <div class="status"><span>18:01</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+    <div class="hero">
+      <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+      <div class="heroin">
+        <div class="eyebrow">Kategórie · 12 aktívnych</div>
+        <div class="bal">1 135<span>,48 €</span></div>
+        <div style="font-size:12px;color:var(--lo);margin-top:10px;">69 % z 1 645 € · zostáva 509,64 €</div>
+      </div>
+    </div>
+    <div class="card brow"><div class="chip" style="background:rgba(52,211,153,.14);">🏠</div><div class="mid"><div class="nm">Bývanie</div><div class="bar"><div class="f" style="width:100%;background:var(--emerald);"></div></div></div><div class="pct" style="color:var(--emerald);">100%</div></div>
+    <div class="card brow"><div class="chip" style="background:rgba(139,92,246,.14);">💻</div><div class="mid"><div class="nm">IT a technika</div><div class="bar"><div class="f" style="width:9%;background:var(--violet);"></div></div></div><div class="pct" style="color:var(--violet);">9%</div></div>
+    <div class="card brow"><div class="chip" style="background:rgba(251,191,36,.14);">🛒</div><div class="mid"><div class="nm">Nákupy</div><div class="bar"><div class="f" style="width:2%;background:var(--amber);"></div></div></div><div class="pct" style="color:var(--amber);">2%</div></div>
+  </div>
+  <div class="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Domácnosť</span></div>
+  </div></div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">07 · Sporenie</div>
+<div class="frame">
+  <div class="status"><span>18:02</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+    <div class="hero g-emerald">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <div class="heroin">
+        <div class="eyebrow">Sporenie · 1 aktívny cieľ</div>
+        <div class="bal em">0<span>,00 €</span></div>
+        <div style="font-size:12px;color:var(--lo);margin-top:10px;">Mesačne +1 000 € · 75 % z príjmov</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="ring">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+            <circle cx="48" cy="48" r="40" fill="none" stroke="#8B5CF6" stroke-width="9" stroke-dasharray="0 251" stroke-linecap="round"/>
+          </svg>
+          <div class="ringtext">0%</div>
+        </div>
+        <div style="flex:1;">
+          <div class="nm" style="font-family:'Outfit';font-size:15px;">Test</div>
+          <div class="sm" style="margin-bottom:6px;">do 31. 7. 2026</div>
+          <div style="font-family:'Outfit';font-size:17px;color:var(--hi);font-weight:700;">0 € <span style="color:var(--faint);font-size:13px;font-weight:500;">/ 1 000 €</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg><span>Viac</span></div>
+  </div></div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">08 · Nastavenia</div>
+<div class="frame">
+  <div class="status"><span>18:03</span><span>●●●● 69%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+    <div class="h1" style="font-size:22px;">Prispôsobenie</div>
+    <div class="chipsscroll">
+      <div class="fchip on">Vzhľad</div><div class="fchip">Financie</div><div class="fchip">Notifikácie</div><div class="fchip">Bezpečnosť</div>
+    </div>
+    <div class="card">
+      <div class="settingrow"><div><div class="st">Téma</div><div class="ss">Farebná schéma aplikácie</div></div>
+        <div style="display:flex;gap:6px;">
+          <div class="fchip on" style="padding:6px 10px;">🌙</div><div class="fchip" style="padding:6px 10px;">☀</div><div class="fchip" style="padding:6px 10px;">⚙</div>
+        </div>
+      </div>
+      <div class="settingrow"><div><div class="st">Kompaktný režim</div><div class="ss">Menšie karty a písmo</div></div><div class="toggle-sw on"><div class="dot"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="settingrow"><div><div class="st">Splatnosť fixných výdavkov</div><div class="ss">3 dni vopred</div></div><div class="toggle-sw on"><div class="dot"></div></div></div>
+      <div class="settingrow"><div><div class="st">Upozornenia rozpočtu</div><div class="ss">Pri 80% a 100% limitu</div></div><div class="toggle-sw on"><div class="dot"></div></div></div>
+      <div class="settingrow"><div><div class="st">Týždenný email</div><div class="ss">Každý pondelok ráno</div></div><div class="toggle-sw"><div class="dot"></div></div></div>
+    </div>
+  </div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Domácnosť</span></div>
+  </div></div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">09 · Pridať záznam</div>
+<div class="frame">
+  <div class="status"><span>18:00</span><span>●●●● 70%</span></div>
+  <div class="screen" style="opacity:.3;">
+    <div class="header"><div class="mark">Fv</div></div>
+  </div>
+  <div class="sheet" style="bottom:0;">
+    <div class="handle"></div>
+    <div class="sheet-head"><h2>Pridať záznam</h2><div class="xbtn">✕</div></div>
+    <div class="launchrow"><div class="licon" style="background:rgba(52,211,153,.14);">💰</div><div class="lmid"><div class="t">Príjem</div><div class="s">Mzda, bonus, iný príjem</div></div>›</div>
+    <div class="launchrow"><div class="licon" style="background:rgba(251,113,133,.14);">💸</div><div class="lmid"><div class="t">Výdavok</div><div class="s">Nákup, jedlo, zábava…</div></div>›</div>
+    <div class="launchrow"><div class="licon" style="background:rgba(251,191,36,.14);">🔒</div><div class="lmid"><div class="t">Fixný výdavok</div><div class="s">Nájom, predplatné, splátka</div></div>›</div>
+    <div class="launchrow"><div class="licon" style="background:rgba(139,92,246,.14);">🏷️</div><div class="lmid"><div class="t">Kategória</div><div class="s">Nová kategória výdavkov</div></div>›</div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">10 · Pridať výdavok</div>
+<div class="frame">
+  <div class="status"><span>18:01</span><span>●●●● 70%</span></div>
+  <div class="screen" style="opacity:.3;">
+    <div class="header"><div class="mark">Fv</div></div>
+  </div>
+  <div class="sheet" style="bottom:0; max-height:88%; overflow-y:auto;">
+    <div class="handle"></div>
+    <div class="sheet-head"><h2>Pridať výdavok</h2><div class="xbtn">✕</div></div>
+    <div class="field"><div class="flabel">Suma</div><div class="finput big"><span class="ph">0,00</span><span>€</span></div></div>
+    <div class="field">
+      <div class="flabel">Kategória</div>
+      <div class="catgrid">
+        <div class="catchip on">🏠 Bývanie</div><div class="catchip">💻 IT a technika</div><div class="catchip">🛒 Nákupy</div>
+        <div class="catchip">🏦 Financie</div><div class="catchip">📈 Investície</div><div class="catchip">⚡ Energie</div>
+        <div class="catchip">💡 Ostatné</div><div class="catchip">🛡️ Poistenie</div><div class="catchip">🎮 Predplatné</div>
+      </div>
+    </div>
+    <div class="field"><div class="flabel">Poznámka</div><div class="finput"><span class="ph">Nepovinná poznámka…</span></div></div>
+    <div class="field"><div class="flabel">Dátum</div><div class="finput">11.07.2026 📅</div></div>
+    <div class="btn-primary">Pridať</div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">11 · Domácnosť</div>
+<div class="frame">
+  <div class="status"><span>18:01</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+    <div class="hero">
+      <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+      <div class="heroin">
+        <div class="eyebrow">Domácnosť · Rodina Bližňákovci</div>
+        <div class="bal">+664<span>,84 €</span></div>
+        <div class="chipsrow">
+          <div class="mchip g"><div class="l">Príjmy</div><div class="v">1 987 €</div></div>
+          <div class="mchip r"><div class="l">Výdavky</div><div class="v">1 322 €</div></div>
+          <div class="mchip"><div class="l">Členov</div><div class="v">2</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card brow"><div class="chip" style="background:rgba(139,92,246,.14);">👤</div><div class="mid"><div class="nm">Peter</div><div class="sm">Správca</div></div><div class="amt g">+1 102 €</div></div>
+    <div class="card brow"><div class="chip" style="background:rgba(52,211,153,.14);">D</div><div class="mid"><div class="nm">Danka</div><div class="sm">Člen</div></div><div class="amt r">−437 €</div></div>
+  </div>
+  <div class="navwrap"><div class="nav">
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Prehľad</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/></svg><span>Príjmy</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="6" width="18" height="12" rx="2"/></svg><span>Výdavky</span></div>
+    <div class="ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/></svg><span>Nastavenia</span></div>
+    <div class="ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Domácnosť</span></div>
+  </div></div>
+</div>
+</div>
+
+</body></html>

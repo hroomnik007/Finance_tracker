@@ -43,6 +43,7 @@ export const pl: Translations = {
     negativeBalance: 'Ujemne saldo w tym miesiącu',
     income: 'Przychody',
     expenses: 'Wydatki',
+    savingsRate: 'Oszczędności',
     budget: 'Budżet',
     budgetThisMonth: 'w tym miesiącu',
     expensesByCategory: 'Wydatki według kategorii',

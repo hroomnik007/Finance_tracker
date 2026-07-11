@@ -43,6 +43,7 @@ export const hu: Translations = {
     negativeBalance: 'Negatív egyenleg ebben a hónapban',
     income: 'Bevételek',
     expenses: 'Kiadások',
+    savingsRate: 'Megtakarítás',
     budget: 'Költségvetés',
     budgetThisMonth: 'ebben a hónapban',
     expensesByCategory: 'Kiadások kategóriánként',

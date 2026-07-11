@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="UTF-8"><title>Finvu — Variant D — Login, Settings, Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060B; --hi:#F5F3FF; --lo:#A79FC9; --faint:#5B5578;
+  --violet:#8B5CF6; --fuchsia:#EC4899; --cyan:#22D3EE;
+  --emerald:#34D399; --rose:#FB7185; --amber:#FBBF24;
+  --glass:rgba(255,255,255,.06); --gline:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;display:flex;flex-wrap:wrap;gap:32px;justify-content:center;padding:40px 16px;font-family:'Manrope',sans-serif;}
+.frame{width:390px;height:844px;background:var(--bg);border-radius:42px;border:8px solid #000;overflow:hidden;box-shadow:0 40px 90px rgba(139,92,246,.25);position:relative;flex-shrink:0;}
+.frame-label{position:absolute;top:-30px;left:8px;color:#8B5CF6;font-family:'Outfit';font-weight:700;font-size:13px;}
+.status{display:flex;justify-content:space-between;padding:18px 26px 4px;color:var(--hi);font-size:14px;font-weight:600;}
+.screen{padding:6px 20px 100px;position:relative;z-index:1;height:100%;overflow-y:auto;}
+.header{display:flex;justify-content:space-between;align-items:center;margin:14px 0 20px;}
+.mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:16px;}
+.acts{display:flex;gap:8px;}
+.ibtn{width:36px;height:36px;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;color:var(--lo);}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a3f8c,#c93d9a);border:1px solid rgba(255,255,255,.15);}
+
+/* login */
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:78%;text-align:center;}
+.applogo{width:78px;height:78px;border-radius:24px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:30px;margin-bottom:20px;box-shadow:0 20px 50px rgba(139,92,246,.35);}
+.brand{font-family:'Outfit';font-size:28px;font-weight:800;color:var(--hi);margin-bottom:4px;}
+.tagline{font-size:11px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:34px;}
+.loginform{width:100%;}
+.field{margin-bottom:14px;text-align:left;}
+.flabel{font-size:11px;color:var(--lo);text-transform:uppercase;font-weight:700;letter-spacing:.05em;margin-bottom:8px;}
+.finput{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:14px 16px;color:var(--hi);font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+.finput .ph{color:var(--faint);}
+.btnprimary{background:linear-gradient(135deg,var(--violet),var(--fuchsia));border-radius:16px;padding:15px;text-align:center;color:#fff;font-family:'Outfit';font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+.btnghost{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:14px;text-align:center;color:var(--hi);font-family:'Outfit';font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--faint);font-size:11px;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--gline);}
+.footlink{font-size:12px;color:var(--lo);margin-top:20px;}
+.footlink b{color:var(--violet);font-weight:700;}
+
+/* pin */
+.pindots{display:flex;justify-content:center;gap:16px;margin:26px 0 36px;}
+.pindot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--gline);}
+.pindot.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));border-color:transparent;}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:270px;}
+.key{aspect-ratio:1;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-size:21px;font-weight:600;color:var(--hi);}
+.key.empty{background:transparent;border:none;}
+
+/* settings */
+.profcard{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:14px 16px;margin-bottom:18px;}
+.profcard .pav{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4a3f8c,#c93d9a);}
+.profcard .pmid{flex:1;}
+.profcard .pname{font-family:'Outfit';font-size:14px;font-weight:700;color:var(--hi);display:flex;align-items:center;gap:8px;}
+.probadge{font-size:9px;background:linear-gradient(135deg,var(--amber),#f59e0b);color:#3D2A00;padding:2px 8px;border-radius:8px;font-weight:800;}
+.profcard .pemail{font-size:11px;color:var(--faint);margin-top:2px;}
+.tabsrow{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;}
+.tabpill{flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:9px 14px;font-size:12px;color:var(--lo);font-weight:600;}
+.tabpill.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:#fff;border-color:transparent;}
+.grouphead{font-size:11px;color:var(--faint);text-transform:uppercase;font-weight:700;letter-spacing:.05em;margin:0 0 10px 4px;}
+.card{background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:4px 16px;margin-bottom:18px;}
+.setrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--gline);}
+.setrow:last-child{border-bottom:none;}
+.sicon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.setmid{flex:1;}
+.settitle{font-size:13px;color:var(--hi);font-weight:600;}
+.setsub{font-size:11px;color:var(--faint);margin-top:2px;}
+.toggle-sw{width:42px;height:24px;border-radius:12px;background:var(--glass);border:1px solid var(--gline);position:relative;flex-shrink:0;}
+.toggle-sw.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));}
+.toggle-sw .dot{position:absolute;top:2.5px;left:2.5px;width:17px;height:17px;border-radius:50%;background:#fff;}
+.toggle-sw.on .dot{left:auto;right:2.5px;}
+.chevron{color:var(--faint);}
+.themeopts{display:flex;gap:8px;}
+.themeopt{width:36px;height:30px;border-radius:9px;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;color:var(--lo);}
+.themeopt.on{border-color:var(--violet);color:var(--violet);background:rgba(139,92,246,.12);}
+.colordots{display:flex;gap:8px;}
+.cdot{width:22px;height:22px;border-radius:50%;}
+.cdot.on{box-shadow:0 0 0 2px rgba(255,255,255,.5);}
+
+/* profile */
+.herobal2{position:relative;border-radius:26px;padding:22px;margin-bottom:18px;overflow:hidden;background:var(--glass);border:1px solid var(--gline);text-align:center;}
+.blob{position:absolute;border-radius:50%;filter:blur(40px);opacity:.5;z-index:0;}
+.b1{width:160px;height:160px;background:var(--violet);top:-60px;left:-40px;}
+.b2{width:140px;height:140px;background:var(--fuchsia);bottom:-50px;right:-30px;}
+.pavatarwrap{position:relative;z-index:2;width:76px;height:76px;margin:0 auto 12px;}
+.pavatarbig{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#4a3f8c,#c93d9a);border:2px solid rgba(255,255,255,.15);}
+.pedit{position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--violet);border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;color:#fff;}
+.pnamebig{position:relative;z-index:2;font-family:'Outfit';font-size:19px;font-weight:700;color:var(--hi);margin-bottom:2px;}
+.pemailbig{position:relative;z-index:2;font-size:12px;color:var(--lo);margin-bottom:10px;}
+.statsgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.statbox{background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:10px 6px;text-align:center;}
+.statbox .sv{font-family:'Outfit';font-size:16px;font-weight:700;color:var(--hi);}
+.statbox .sl{font-size:9px;color:var(--faint);text-transform:uppercase;font-weight:700;margin-top:3px;}
+.achgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.achcard{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:12px;}
+.achcard.locked{opacity:.4;}
+.achicon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+.achtitle{font-size:12px;color:var(--hi);font-weight:700;font-family:'Outfit';}
+.achsub{font-size:10px;color:var(--faint);margin-top:2px;}
+</style></head>
+<body>
+
+<div style="position:relative;">
+<div class="frame-label">Login</div>
+<div class="frame">
+  <div class="status"><span>17:59</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="center">
+      <div class="applogo">Fv</div>
+      <div class="brand">Finvu</div>
+      <div class="tagline">Financie pod kontrolou</div>
+      <div class="loginform">
+        <div class="field"><div class="flabel">Email</div><div class="finput"><span>peter.bliznak@protonmail.com</span></div></div>
+        <div class="field"><div class="flabel">Heslo</div><div class="finput"><span>••••••••</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5B5578" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+        <div class="btnprimary">Prihlásiť sa <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        <div class="btnghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M7 10V7a5 5 0 0110 0v3"/></svg>Prihlásiť sa PINom</div>
+        <div class="divider">alebo</div>
+        <div class="btnghost"><svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22 12.2c0-.7-.06-1.4-.19-2H12v3.8h5.6a4.8 4.8 0 01-2.08 3.15v2.6h3.36c1.97-1.8 3.1-4.47 3.1-7.55z"/><path fill="#34A853" d="M12 22c2.8 0 5.15-.93 6.87-2.5l-3.36-2.6c-.93.63-2.13 1-3.5 1-2.7 0-4.98-1.8-5.8-4.24H2.7v2.65A10 10 0 0012 22z"/><path fill="#FBBC05" d="M6.2 13.66a6 6 0 010-3.84V7.17H2.7a10 10 0 000 8.98z"/><path fill="#EA4335" d="M12 6.4c1.5 0 2.85.5 3.9 1.5l2.9-2.9C16.94 3.3 14.6 2.4 12 2.4a10 10 0 00-9.3 5.77l3.5 2.65C6.02 8.4 8.3 6.4 12 6.4z"/></svg>Pokračovať cez Google</div>
+      </div>
+      <div class="footlink">Nemáte účet? <b>Registrovať sa →</b></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">PIN login</div>
+<div class="frame">
+  <div class="status"><span>17:59</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="center">
+      <div class="applogo" style="width:64px;height:64px;font-size:24px;">Fv</div>
+      <div class="brand" style="font-size:19px;">Zadaj PIN</div>
+      <div class="tagline" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--lo);">Finvu je uzamknuté</div>
+      <div class="pindots">
+        <div class="pindot on"></div><div class="pindot on"></div><div class="pindot"></div><div class="pindot"></div>
+      </div>
+      <div class="keypad">
+        <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+        <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+        <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+        <div class="key empty"></div><div class="key">0</div>
+        <div class="key"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 4H8l-6 8 6 8h13a1 1 0 001-1V5a1 1 0 00-1-1z"/><path d="M13 9l6 6M19 9l-6 6"/></svg></div>
+      </div>
+      <div class="footlink" style="margin-top:28px;">Prihlásiť sa inak</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">Nastavenia</div>
+<div class="frame">
+  <div class="status"><span>18:03</span><span>●●●● 69%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div><div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div></div>
+
+    <div class="profcard">
+      <div class="pav"></div>
+      <div class="pmid">
+        <div class="pname">Peter <span class="probadge">PRO</span></div>
+        <div class="pemail">peter.bliznak@protonmail.com</div>
+      </div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <div class="tabsrow">
+      <div class="tabpill on">Vzhľad</div>
+      <div class="tabpill">Financie</div>
+      <div class="tabpill">Notifikácie</div>
+      <div class="tabpill">Bezpečnosť</div>
+      <div class="tabpill">Dáta</div>
+    </div>
+
+    <div class="grouphead">Téma</div>
+    <div class="card">
+      <div class="setrow">
+        <div class="setmid"><div class="settitle">Farebná schéma</div><div class="setsub">Ovplyvňuje celú aplikáciu</div></div>
+        <div class="themeopts">
+          <div class="themeopt on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></div>
+          <div class="themeopt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2"/></svg></div>
+          <div class="themeopt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+        </div>
+      </div>
+      <div class="setrow">
+        <div class="setmid"><div class="settitle">Kompaktný režim</div><div class="setsub">Menšie karty a písmo</div></div>
+        <div class="toggle-sw on"><div class="dot"></div></div>
+      </div>
+      <div class="setrow">
+        <div class="setmid"><div class="settitle">Akcentová farba</div><div class="setsub">Pre tlačidlá, grafy a odkazy</div></div>
+        <div class="colordots">
+          <div class="cdot on" style="background:var(--violet);"></div>
+          <div class="cdot" style="background:var(--cyan);"></div>
+          <div class="cdot" style="background:var(--emerald);"></div>
+          <div class="cdot" style="background:var(--rose);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grouphead">Rýchly prístup</div>
+    <div class="card">
+      <div class="setrow">
+        <div class="sicon" style="background:rgba(251,191,36,.16);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+        <div class="setmid"><div class="settitle">Notifikácie</div><div class="setsub">4 aktívne upozornenia</div></div>
+        <svg class="chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="setrow">
+        <div class="sicon" style="background:rgba(139,92,246,.16);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="1.8"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M7 10V7a5 5 0 0110 0v3"/></svg></div>
+        <div class="setmid"><div class="settitle">Bezpečnosť</div><div class="setsub">PIN aktívny · heslo</div></div>
+        <svg class="chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="setrow">
+        <div class="sicon" style="background:rgba(34,211,238,.16);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="1.8"><path d="M12 3v12M6 9l6 6 6-6"/><path d="M4 21h16"/></svg></div>
+        <div class="setmid"><div class="settitle">Export dát</div><div class="setsub">JSON, CSV, PDF, XLSX</div></div>
+        <svg class="chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div style="position:relative;">
+<div class="frame-label">Profil</div>
+<div class="frame">
+  <div class="status"><span>18:04</span><span>●●●● 69%</span></div>
+  <div class="screen">
+    <div class="header"><div class="ibtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div><div class="acts"></div></div>
+
+    <div class="herobal2">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <div class="pavatarwrap"><div class="pavatarbig"></div><div class="pedit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div></div>
+      <div class="pnamebig" style="position:relative;z-index:2;">Peter</div>
+      <div class="pemailbig" style="position:relative;z-index:2;">peter.bliznak@protonmail.com</div>
+      <div class="probadge" style="position:relative;z-index:2;display:inline-block;">PRO</div>
+    </div>
+
+    <div class="statsgrid">
+      <div class="statbox"><div class="sv">116</div><div class="sl">Transakcie</div></div>
+      <div class="statbox"><div class="sv">—</div><div class="sl">Úspory</div></div>
+      <div class="statbox"><div class="sv" style="color:var(--amber);">1</div><div class="sl">Séria</div></div>
+      <div class="statbox"><div class="sv">101d</div><div class="sl">Sledovanie</div></div>
+    </div>
+
+    <div class="tabsrow">
+      <div class="tabpill">Profil</div>
+      <div class="tabpill">Účet</div>
+      <div class="tabpill on">Úspechy</div>
+    </div>
+
+    <div class="grouphead">Získané (7 z 8)</div>
+    <div class="achgrid">
+      <div class="achcard"><div class="achicon" style="background:rgba(139,92,246,.16);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg></div><div class="achtitle">Prvý krok</div><div class="achsub">Prvá transakcia</div></div>
+      <div class="achcard"><div class="achicon" style="background:rgba(251,191,36,.16);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div><div class="achtitle">Týždeň v rade</div><div class="achsub">7 dní po sebe</div></div>
+      <div class="achcard"><div class="achicon" style="background:rgba(52,211,153,.16);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div><div class="achtitle">Sporiteľ</div><div class="achsub">Prvý cieľ úspor</div></div>
+      <div class="achcard achlocked locked"><div class="achicon" style="background:rgba(255,255,255,.06);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5B5578" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><div class="achtitle">Analytik</div><div class="achsub">Prvý report</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</body></html>
