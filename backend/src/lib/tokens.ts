@@ -1,6 +1,17 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import { createHash, timingSafeEqual } from "crypto";
 import { env } from "../config/env";
+
+// Refresh tokens are high-entropy, machine-generated opaque strings (unlike
+// passwords, which are low-entropy and need bcrypt's slow, salted hashing to
+// resist brute-force/dictionary attacks). bcrypt also silently truncates its
+// input at 72 bytes — a signed refresh-token JWT exceeds that well before the
+// parts that vary between tokens (iat/exp/signature), so every token issued
+// to the same user used to hash identically. SHA-256 has no such truncation
+// and is the standard choice for hashing opaque token secrets.
+function sha256Hex(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 export interface AccessTokenPayload {
   userId: string;
@@ -39,11 +50,17 @@ export function verifyAdminToken(token: string): AdminTokenPayload {
 }
 
 export function hashToken(token: string): Promise<string> {
-  return bcrypt.hash(token, 10);
+  return Promise.resolve(sha256Hex(token));
 }
 
 export function compareToken(token: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(token, hash);
+  const a = Buffer.from(sha256Hex(token), "hex");
+  const b = Buffer.from(hash, "hex");
+  // Old bcrypt-hashed rows (pre-fix) won't decode to a 32-byte buffer and
+  // must not match — also guards timingSafeEqual, which throws on unequal
+  // lengths instead of returning false.
+  if (a.length !== b.length) return Promise.resolve(false);
+  return Promise.resolve(timingSafeEqual(a, b));
 }
 
 export function refreshTokenExpiry(): Date {

@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "crypto";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, desc } from "drizzle-orm";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
@@ -245,19 +245,18 @@ export async function refresh(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const stored = await db.select().from(refreshTokens).where(eq(refreshTokens.userId, payload.userId));
+  const stored = await db
+    .select()
+    .from(refreshTokens)
+    .where(and(eq(refreshTokens.userId, payload.userId), gt(refreshTokens.expiresAt, new Date())))
+    .orderBy(desc(refreshTokens.createdAt));
 
   let matchedRow: (typeof stored)[number] | undefined;
   for (const row of stored) {
     if (await compareToken(token, row.tokenHash)) { matchedRow = row; break; }
   }
 
-  if (!matchedRow) { res.status(401).json({ error: "Refresh token not recognized" }); return; }
-  if (matchedRow.expiresAt < new Date()) {
-    await db.delete(refreshTokens).where(eq(refreshTokens.id, matchedRow.id));
-    res.status(401).json({ error: "Refresh token expired" });
-    return;
-  }
+  if (!matchedRow) { res.status(401).json({ error: "Refresh token not recognized or expired" }); return; }
 
   const accessToken = signAccessToken({ userId: payload.userId, email: payload.email });
   res.json({ accessToken });
