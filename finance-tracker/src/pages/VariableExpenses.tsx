@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Edit2, Trash2, Plus, Receipt, Search, X, ArrowDown, Tag,
+  Edit2, Trash2, Plus, Receipt, X, ArrowDown, Tag,
   UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
   Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
   Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
@@ -22,8 +22,6 @@ import { useTranslation, getLocalizedDayNames, getLocalizedMonthNames } from '..
 import { todayISO } from '../utils/format'
 import type { VariableExpense, BudgetStatus } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
-import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
-import { useScrollFade } from '../hooks/useScrollFade'
 import React from 'react'
 
 interface VariableExpensesPageProps {
@@ -98,7 +96,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
   const { formatAmount, formatDate } = useFormatters()
   const { t, locale } = useTranslation()
-  const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<VariableExpense | null>(null)
@@ -108,8 +105,6 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
   const [newCatName, setNewCatName] = useState('')
   const [csvOpen, setCsvOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchFocused, setSearchFocused] = useState(false)
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
 
   const categoriesMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
@@ -192,19 +187,10 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       .sort((a, b) => b.date.localeCompare(a.date))
   , [variableExpenses, activeCategory])
 
-  const searchFiltered = useMemo(() => {
-    if (!searchQuery.trim()) return filteredSorted
-    const q = searchQuery.toLowerCase()
-    return filteredSorted.filter(e => {
-      const cat = getCategoryById(e.categoryId)
-      return (e.note?.toLowerCase().includes(q)) || (cat?.name?.toLowerCase().includes(q))
-    })
-  }, [filteredSorted, searchQuery, getCategoryById])
-
   const dayGroups = useMemo(() => {
     const dayNames = getLocalizedDayNames(locale)
     const monthNames = getLocalizedMonthNames(locale)
-    return searchFiltered.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: VariableExpense[]; dayTotal: number }>>((acc, e) => {
+    return filteredSorted.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: VariableExpense[]; dayTotal: number }>>((acc, e) => {
       const last = acc[acc.length - 1]
       if (last?.date === e.date) {
         last.items.push(e)
@@ -215,7 +201,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       }
       return acc
     }, [])
-  }, [searchFiltered, locale])
+  }, [filteredSorted, locale])
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -257,42 +243,10 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             </div>
           </HeroCard>
 
-          {/* Search bar */}
-          <div style={{ position: 'relative' }}>
-            <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: searchFocused ? 'var(--aurora-violet)' : 'var(--aurora-faint)', pointerEvents: 'none', transition: 'color 0.15s' }}>
-              <Search size={15} />
-            </div>
-            <input
-              type="text"
-              placeholder="Hľadať výdavok alebo kategóriu..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              style={{
-                width: '100%', height: 42, paddingLeft: 38, paddingRight: searchQuery ? 36 : 16,
-                borderRadius: 16, background: 'var(--aurora-glass)', border: `1px solid ${searchFocused ? 'var(--aurora-violet)' : 'var(--aurora-gline)'}`,
-                color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none',
-                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                boxShadow: searchFocused ? '0 0 0 3px rgba(139,92,246,0.18)' : 'none',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
-                boxSizing: 'border-box',
-              }}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', display: 'flex', alignItems: 'center', padding: 2 }}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
           {/* Category filter pills */}
           {categoriesWithExpenses.length > 0 && (
-            <div style={{ position: 'relative', minWidth: 0 }}>
-              <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
                 <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
                   {t.expenses.variable.allCategories}
                 </button>
@@ -303,18 +257,17 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                   </button>
                 ))}
               </div>
-              <ScrollFadeOverlay visible={catPillsShowFade} background="var(--bg)" />
             </div>
           )}
 
           {/* Mobile: day-grouped GlassCard rows */}
           <div className="lg:hidden" style={{ paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
-            {searchFiltered.length === 0 ? (
+            {filteredSorted.length === 0 ? (
               <GlassCard radius={18}>
                 <div className="empty-state">
                   <Receipt size={40} color="var(--aurora-faint)" style={{ marginBottom: 4 }} />
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
-                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
                 </div>
               </GlassCard>
             ) : (
@@ -337,8 +290,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                           <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
                             <GlassCard radius={18} onClick={() => openEdit(e)} style={{ cursor: 'pointer' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <div style={{ width: 38, height: 38, borderRadius: 13, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                                  {cat?.icon ?? '📦'}
+                                <div style={{ width: 38, height: 38, borderRadius: 13, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  {(() => { const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag; return <Icon size={17} color={cat?.color ?? '#9D84D4'} strokeWidth={1.8} /> })()}
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
@@ -359,12 +312,12 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
           {/* Desktop: day-grouped GlassCard rows */}
           <div className="hidden lg:block">
-            {searchFiltered.length === 0 ? (
+            {filteredSorted.length === 0 ? (
               <GlassCard radius={20}>
                 <div className="empty-state">
                   <Receipt size={40} color="var(--aurora-faint)" style={{ marginBottom: 4 }} />
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
-                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.expenses.variable.noExpenses}</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.expenses.variable.noExpensesSubtitle}</p>
                 </div>
               </GlassCard>
             ) : (
@@ -385,8 +338,8 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                       return (
                         <GlassCard key={e.id} radius={18} onClick={() => openEdit(e)} style={{ cursor: 'pointer' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 38, height: 38, borderRadius: 13, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                              {cat?.icon ?? '📦'}
+                            <div style={{ width: 38, height: 38, borderRadius: 13, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {(() => { const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag; return <Icon size={17} color={cat?.color ?? '#9D84D4'} strokeWidth={1.8} /> })()}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
@@ -427,7 +380,9 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                     <GlassCard key={bs.categoryId} radius={12} style={{ padding: '12px 14px', border: bs.isOver ? '1px solid rgba(251,113,133,0.35)' : '1px solid var(--aurora-gline)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-                          <span style={{ width: 24, height: 24, borderRadius: 8, background: bs.categoryColor + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>{bs.categoryIcon}</span>
+                          <span style={{ width: 24, height: 24, borderRadius: 8, background: bs.categoryColor + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {(() => { const Icon = CATEGORY_ICON_MAP[bs.categoryIcon ?? ''] ?? Tag; return <Icon size={13} color={bs.categoryColor} strokeWidth={1.8} /> })()}
+                          </span>
                           <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 500, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bs.categoryName}</span>
                         </div>
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: barColor, background: barColor + '20', padding: '2px 6px', borderRadius: 20, flexShrink: 0, marginLeft: 6 }}>{Math.round(bs.percentage)}%</span>

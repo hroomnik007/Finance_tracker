@@ -98,8 +98,8 @@ function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete, seve
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-          {cat.icon}
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {(() => { const Icon = CATEGORY_ICON_MAP[cat.icon ?? ''] ?? Tag; return <Icon size={20} color={cat.color} strokeWidth={1.8} /> })()}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
@@ -174,7 +174,9 @@ function SortableListCard(props: CardProps) {
       >
         <GripVertical size={15} />
       </div>
-      <div style={{ width: 36, height: 36, borderRadius: 12, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+      <div style={{ width: 36, height: 36, borderRadius: 12, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {(() => { const Icon = CATEGORY_ICON_MAP[cat.icon ?? ''] ?? Tag; return <Icon size={16} color={cat.color} strokeWidth={1.8} /> })()}
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
         {cat.budgetLimit != null && <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 1 }}>Limit: {formatAmount(cat.budgetLimit)}</div>}
@@ -236,7 +238,9 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete, is
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 12, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{cat.icon}</div>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: cat.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {(() => { const Icon = CATEGORY_ICON_MAP[cat.icon ?? ''] ?? Tag; return <Icon size={16} color={cat.color} strokeWidth={1.8} /> })()}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
               {cat.budgetLimit != null

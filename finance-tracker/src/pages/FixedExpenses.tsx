@@ -4,7 +4,7 @@ import {
   Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon, CheckCircle2, Tag, Repeat,
   UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
   Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
-  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet, Receipt,
+  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { CompactModal } from '../components/CompactModal'
@@ -20,8 +20,6 @@ import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation } from '../i18n'
 import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
-import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
-import { useScrollFade } from '../hooks/useScrollFade'
 import React from 'react'
 
 const FALLBACK_ICON = '📦'
@@ -88,7 +86,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     const id = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(id)
   }, [])
-  const { ref: catPillsRef, showFade: catPillsShowFade } = useScrollFade<HTMLDivElement>()
 
   const expenseCategories = useMemo(
     () => categories.filter(c => c.type === 'expense'),
@@ -143,20 +140,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     [fixedExpenses]
   )
 
-  const upcomingPayments = useMemo(() => {
-    const today = new Date().getDate()
-    return [...fixedExpenses]
-      .map(e => ({ ...e, daysUntil: ((e.dayOfMonth - today + 31) % 31) }))
-      .sort((a, b) => a.daysUntil - b.daysUntil)
-      .slice(0, 4)
-  }, [fixedExpenses])
-
-  const paymentSeverity = upcomingPayments.some(e => e.daysUntil === 0)
-    ? 'red'
-    : upcomingPayments.some(e => e.daysUntil <= 2)
-      ? 'warning'
-      : null
-
   const daysInCurrentMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month])
   const calendarToday = (() => {
     const n = new Date()
@@ -178,14 +161,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     if (daysUntil <= 3) return { text, color: 'var(--aurora-rose)', bg: 'rgba(251,113,133,0.15)' }
     if (daysUntil <= 7) return { text, color: 'var(--aurora-amber)', bg: 'rgba(251,191,36,0.15)' }
     return { text, color: 'var(--aurora-emerald)', bg: 'rgba(52,211,153,0.15)' }
-  }
-
-  // Simple 2-tier badge for the "Nadchádzajúce" GlassCard widget (mockup only shows soon/ok)
-  function upcomingBadge(daysUntil: number) {
-    const text = daysUntil === 0 ? t.expenses.fixed.countdown.today : t.expenses.fixed.countdown.days.replace('{n}', String(daysUntil))
-    return daysUntil <= 2
-      ? { text, color: 'var(--aurora-rose)', bg: 'rgba(251,113,133,0.16)' }
-      : { text, color: 'var(--aurora-emerald)', bg: 'rgba(52,211,153,0.16)' }
   }
 
   function openAdd() {
@@ -240,12 +215,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
           {categoryTotals.map(({ id, amount: catAmt }) => {
             const cat = getCat(id)
-            const icon = cat?.icon ?? FALLBACK_ICON
+            const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag
             const name = cat?.name ?? '—'
             return (
               <div key={id || '__none__'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-lo)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-                  <span style={{ flexShrink: 0 }}>{icon}</span>
+                  <Icon size={13} color={cat?.color ?? FALLBACK_COLOR} strokeWidth={1.8} style={{ flexShrink: 0 }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, marginLeft: 8 }}>
@@ -257,35 +232,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           })}
         </div>
       )}
-    </div>
-  )
-
-  const upcomingContent = upcomingPayments.length === 0 ? (
-    <div style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--aurora-faint)', fontSize: 13 }}>—</div>
-  ) : (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {upcomingPayments.map(e => {
-        const badge = upcomingBadge(e.daysUntil)
-        const cat = getCat(e.categoryId)
-        const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Receipt
-        return (
-          <GlassCard key={e.id ?? e.label} radius={16}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 13, background: 'rgba(251,191,36,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon size={16} color="var(--aurora-amber)" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
-                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, padding: '3px 8px', borderRadius: 8, flexShrink: 0 }}>{badge.text}</span>
-                </div>
-                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{cat?.name ?? '—'}</div>
-              </div>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-rose)', flexShrink: 0 }}>{formatAmount(e.amount)}</span>
-            </div>
-          </GlassCard>
-        )
-      })}
     </div>
   )
 
@@ -470,12 +416,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                     <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.expenses.fixed.noPaymentsThisDay}</p>
                   ) : dayPayments.map(e => {
                     const cat = getCat(e.categoryId)
-                    const icon = cat?.icon ?? FALLBACK_ICON
+                    const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag
                     const color = cat?.color ?? FALLBACK_COLOR
                     return (
                       <div key={e.id ?? e.label} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => openEdit(e)}>
-                        <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-                          {icon}
+                        <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon size={15} color={color} strokeWidth={1.8} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 500, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
@@ -540,8 +486,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Category filter pills */}
           {usedCategoryIds.filter(id => id !== '').length >= 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ position: 'relative', minWidth: 0 }}>
-                <div ref={catPillsRef} style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', flexWrap: 'nowrap' }}>
                   <button type="button" onClick={() => setActiveCat(null)} style={pillStyle(activeCat === null)}>
                     {t.expenses.fixed.allCategories}
                   </button>
@@ -556,7 +502,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                     )
                   })}
                 </div>
-                <ScrollFadeOverlay visible={catPillsShowFade} background="var(--bg)" />
               </div>
             </div>
           )}
@@ -572,16 +517,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               </div>
             )}
           </div>
-
-          {/* Mobile: Nadchádzajúce preview */}
-          {upcomingPayments.length > 0 && (
-            <div className="lg:hidden">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.expenses.fixed.upcoming}</h3>
-              </div>
-              {upcomingContent}
-            </div>
-          )}
 
           {/* Expense list — upcoming/past split (mobile: hidden while calendar view is active) */}
           <div className={mobileView === 'list' ? undefined : 'hidden lg:block'}>
@@ -603,7 +538,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
             const renderCard = (expense: typeof filtered[0], isPast = false) => {
               const cat = getCat(expense.categoryId)
-              const icon = cat?.icon ?? FALLBACK_ICON
+              const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag
               const color = cat?.color ?? FALLBACK_COLOR
               const daysUntil = ((expense.dayOfMonth - (calendarToday > 0 ? calendarToday : new Date().getDate()) + 31) % 31)
               const badge = countdownBadge(daysUntil)
@@ -628,8 +563,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                       <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 9, fontWeight: 600, color: 'var(--aurora-faint)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{monthAbbr}</span>
                     </div>
                     {/* Category icon */}
-                    <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-                      {icon}
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={15} color={color} strokeWidth={1.8} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 500, color: isPast ? 'var(--aurora-lo)' : 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.label}</div>
@@ -687,10 +622,6 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.yearly}</p>
             {yearlyContent}
           </GlassCard>
-          <div>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: paymentSeverity === 'red' ? 'var(--aurora-rose)' : paymentSeverity === 'warning' ? 'var(--aurora-amber)' : 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.upcoming}</p>
-            {upcomingContent}
-          </div>
           {vsContent && (
             <GlassCard radius={16}>
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</p>
