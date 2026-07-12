@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="UTF-8"><title>Finvu — Detail sporenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060B; --hi:#F5F3FF; --lo:#A79FC9; --faint:#5B5578;
+  --violet:#8B5CF6; --fuchsia:#EC4899; --cyan:#22D3EE;
+  --emerald:#34D399; --rose:#FB7185; --amber:#FBBF24;
+  --glass:rgba(255,255,255,.06); --gline:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;display:flex;justify-content:center;padding:40px 16px;font-family:'Manrope',sans-serif;}
+.frame{width:390px;background:var(--bg);border-radius:42px;border:8px solid #000;overflow:hidden;box-shadow:0 40px 90px rgba(139,92,246,.25);position:relative;}
+.status{display:flex;justify-content:space-between;padding:18px 26px 4px;color:var(--hi);font-size:14px;font-weight:600;}
+.screen{padding:6px 20px;filter:blur(3px) brightness(.5);}
+.header{display:flex;justify-content:space-between;align-items:center;margin:14px 0 20px;}
+.mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:16px;}
+.hero{border-radius:28px;padding:24px;background:var(--glass);border:1px solid var(--gline);}
+.bal{font-family:'Outfit';font-weight:800;font-size:38px;color:var(--hi);}
+
+.overlay{position:absolute;inset:0;background:rgba(4,3,8,.6);display:flex;align-items:center;justify-content:center;z-index:10;padding:0 20px;}
+.modalcard{width:100%;max-height:82vh;overflow-y:auto;background:#14121C;border:1px solid var(--gline);border-radius:26px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.6);}
+.mhead{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.micon{width:42px;height:42px;border-radius:14px;background:rgba(52,211,153,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--emerald);}
+.mtitle-wrap{flex:1;}
+.mtitle{font-family:'Outfit';font-size:16px;font-weight:700;color:var(--hi);}
+.msub{font-size:11px;color:var(--faint);margin-top:2px;}
+.xicon{width:30px;height:30px;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;color:var(--lo);flex-shrink:0;}
+
+.ringrow{display:flex;align-items:center;gap:18px;margin-bottom:20px;}
+.ringwrap{position:relative;width:104px;height:104px;flex-shrink:0;}
+.ringwrap svg{transform:rotate(-90deg);}
+.ringtext{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ringtext .pct{font-family:'Outfit';font-weight:800;font-size:20px;color:var(--hi);}
+.ringtext .lbl{font-size:9px;color:var(--faint);text-transform:uppercase;font-weight:700;}
+.amountbig{font-family:'IBM Plex Mono';font-weight:600;font-size:22px;color:var(--hi);}
+.amountbig span{color:var(--faint);font-size:15px;}
+
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.statbox{background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:10px 12px;}
+.statbox .l{font-size:9px;color:var(--faint);text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.statbox .v{font-family:'Outfit';font-size:14px;font-weight:700;color:var(--hi);}
+.statbox.g .v{color:var(--emerald);}
+
+.actionrow{display:flex;gap:8px;margin-bottom:20px;}
+.btn-deposit{flex:1;background:linear-gradient(135deg,var(--emerald),var(--cyan));border-radius:14px;padding:13px;text-align:center;color:#052e21;font-family:'Outfit';font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.iconbtn2{width:44px;height:44px;border-radius:14px;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;color:var(--lo);flex-shrink:0;}
+.iconbtn2.danger{color:var(--rose);}
+
+.sectionlabel{font-size:10px;color:var(--faint);text-transform:uppercase;font-weight:700;letter-spacing:.06em;margin:0 0 10px 2px;}
+.rulerow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--gline);}
+.rulerow:last-child{border-bottom:none;}
+.ricon{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;color:var(--lo);flex-shrink:0;}
+.rmid{flex:1;}
+.rmid .rt{font-size:12.5px;color:var(--hi);font-weight:600;}
+.rmid .rs{font-size:10.5px;color:var(--faint);margin-top:1px;}
+.rval{font-family:'Outfit';font-size:12.5px;font-weight:700;color:var(--hi);}
+
+.emptydeposits{text-align:center;padding:24px 0;color:var(--faint);}
+.emptydeposits .ic{margin-bottom:8px;}
+.emptydeposits .t{font-size:12px;}
+</style></head>
+<body>
+<div class="frame">
+  <div class="status"><span>18:02</span><span>●●●● 70%</span></div>
+  <div class="screen">
+    <div class="header"><div class="mark">Fv</div></div>
+    <div class="hero"><div class="bal">0,00 €</div></div>
+  </div>
+  <div class="overlay">
+    <div class="modalcard">
+      <div class="mhead">
+        <div class="micon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="mtitle-wrap"><div class="mtitle">Test</div><div class="msub">Cieľ do 31. 7. 2026</div></div>
+        <div class="xicon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+      </div>
+
+      <div class="ringrow">
+        <div class="ringwrap">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle cx="52" cy="52" r="44" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+            <circle cx="52" cy="52" r="44" fill="none" stroke="url(#g1)" stroke-width="10" stroke-dasharray="0 276" stroke-linecap="round"/>
+            <defs><linearGradient id="g1"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#EC4899"/></linearGradient></defs>
+          </svg>
+          <div class="ringtext"><div class="pct">0%</div><div class="lbl">naplnené</div></div>
+        </div>
+        <div>
+          <div class="amountbig">0,00 € <span>/ 1 000,00 €</span></div>
+          <div style="font-size:11px;color:var(--faint);margin-top:6px;">Zostáva 1 000,00 €</div>
+        </div>
+      </div>
+
+      <div class="statgrid">
+        <div class="statbox g"><div class="l">Mesačne</div><div class="v">+1 000,00 €</div></div>
+        <div class="statbox"><div class="l">Mesiacov</div><div class="v">—</div></div>
+      </div>
+
+      <div class="actionrow">
+        <div class="btn-deposit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#052e21" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Vložiť</div>
+        <div class="iconbtn2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+        <div class="iconbtn2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></div>
+        <div class="iconbtn2 danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg></div>
+      </div>
+
+      <div class="sectionlabel">Automatické pravidlá</div>
+      <div style="background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:2px 14px;margin-bottom:18px;">
+        <div class="rulerow">
+          <div class="ricon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <div class="rmid"><div class="rt">Mesačný prevod</div><div class="rs">1. dňa v mesiaci</div></div>
+          <div class="rval">1 000,00 €</div>
+        </div>
+        <div class="rulerow">
+          <div class="ricon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div class="rmid"><div class="rt">Cieľová suma</div><div class="rs">Zostáva 1 000,00 €</div></div>
+          <div class="rval">1 000,00 €</div>
+        </div>
+        <div class="rulerow">
+          <div class="ricon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+          <div class="rmid"><div class="rt">Pripomienka</div><div class="rs">Keď splnenie pod 70%</div></div>
+          <div class="rval" style="color:var(--faint);">—</div>
+        </div>
+      </div>
+
+      <div class="sectionlabel">Posledné vklady</div>
+      <div style="background:var(--glass);border:1px solid var(--gline);border-radius:16px;">
+        <div class="emptydeposits">
+          <div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.6" style="margin:0 auto;"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+          <div class="t">Zatiaľ žiadne vklady</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

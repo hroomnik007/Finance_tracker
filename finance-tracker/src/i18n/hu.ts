@@ -640,6 +640,7 @@ export const hu: Translations = {
     pauseBtn: 'Szüneteltetés',
     resumeBtn: 'Folytatás',
     pausedBadge: 'SZÜNETELTETVE',
+    goalUntil: 'Cél eddig:',
   },
   notifications: {
     title: 'Értesítések',

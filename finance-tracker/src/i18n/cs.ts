@@ -640,6 +640,7 @@ export const cs: Translations = {
     pauseBtn: 'Pozastavit',
     resumeBtn: 'Obnovit',
     pausedBadge: 'POZASTAVENO',
+    goalUntil: 'Cíl do',
   },
   notifications: {
     title: 'Oznámení',

@@ -640,6 +640,7 @@ export const pl: Translations = {
     pauseBtn: 'Wstrzymaj',
     resumeBtn: 'Wznów',
     pausedBadge: 'WSTRZYMANE',
+    goalUntil: 'Cel do',
   },
   notifications: {
     title: 'Powiadomienia',

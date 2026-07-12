@@ -640,6 +640,7 @@ export const en: Translations = {
     pauseBtn: 'Pause',
     resumeBtn: 'Resume',
     pausedBadge: 'PAUSED',
+    goalUntil: 'Goal by',
   },
   notifications: {
     title: 'Notifications',

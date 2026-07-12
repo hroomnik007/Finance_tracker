@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, Crown, Users } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { QRCodeSVG } from 'qrcode.react'
 import { MemberAvatar } from '../components/MemberAvatar'
 import { BottomSheet } from '../components/BottomSheet'
@@ -47,9 +46,6 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
   const [leavePending, setLeavePending] = useState(false)
   const [leaveLoading, setLeaveLoading] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [chartMounted, setChartMounted] = useState(false)
-
-  useEffect(() => { if (!loading) setChartMounted(true) }, [loading])
 
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
@@ -101,21 +97,6 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
   const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0
   const memberCount = householdData?.members.length ?? 0
   const animatedBalance = useCountUp(balance, 800)
-
-  const householdPieData = useMemo(() => {
-    const totals = new Map<string, { name: string; value: number; color: string }>()
-    for (const member of stats?.per_member ?? []) {
-      for (const c of member.category_breakdown) {
-        if (c.amount <= 0) continue
-        const key = c.category_id ?? c.name
-        const existing = totals.get(key)
-        if (existing) existing.value += c.amount
-        else totals.set(key, { name: c.name, value: c.amount, color: c.color ?? CAT_COLORS[totals.size % CAT_COLORS.length] })
-      }
-    }
-    return [...totals.values()].sort((a, b) => b.value - a.value)
-  }, [stats])
-  const householdPieTotal = householdPieData.reduce((s, d) => s + d.value, 0)
 
   if (!householdEnabled) {
     return (
@@ -202,39 +183,6 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
         </div>
       </HeroCard>
 
-      {/* ── Household-wide category donut ── */}
-      {householdPieData.length > 0 && (
-        <GlassCard radius={20}>
-          <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{ht.expenseBreakdown}</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="grid grid-cols-1 md:grid-cols-2" style={{ flex: 1, minWidth: 0, rowGap: 6, columnGap: 12, alignContent: 'center' }}>
-              {householdPieData.slice(0, 6).map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
-                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-lo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', flexShrink: 0 }}>{householdPieTotal > 0 ? Math.round((item.value / householdPieTotal) * 100) : 0}%</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ position: 'relative', flexShrink: 0, width: 150, height: 150 }}>
-              {chartMounted && (
-                <ResponsiveContainer width={150} height={150}>
-                  <PieChart>
-                    <Pie data={householdPieData} cx="50%" cy="50%" innerRadius={44} outerRadius={70} paddingAngle={3} dataKey="value" startAngle={90} endAngle={-270}>
-                      {householdPieData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: 0 }}>{formatAmount(householdPieTotal)}</p>
-                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
-              </div>
-            </div>
-          </div>
-        </GlassCard>
-      )}
-
       {/* ── ČLENOVIA section header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-lo)', flexShrink: 0, margin: 0 }}>{ht.membersSection} ({memberCount})</p>
@@ -274,7 +222,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
 
       {/* ── Member cards grid ── */}
       {householdData && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 14 }}>
           {householdData.members.map((m, mi) => {
             const memberStats = stats?.per_member.find(p => p.user_id === m.id)
             const inc = memberStats?.income ?? 0

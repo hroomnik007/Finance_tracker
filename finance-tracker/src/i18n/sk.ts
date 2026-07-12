@@ -638,6 +638,7 @@ export const sk = {
     pauseBtn: 'Pozastaviť',
     resumeBtn: 'Obnoviť',
     pausedBadge: 'POZASTAVENÉ',
+    goalUntil: 'Cieľ do',
   },
   notifications: {
     title: 'Notifikácie',
