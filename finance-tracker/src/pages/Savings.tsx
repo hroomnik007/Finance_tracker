@@ -3,8 +3,11 @@ import { Plus, PiggyBank } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
 import { SwipeableRow } from '../components/SwipeableRow'
+import { GlassCard } from '../components/GlassCard'
+import { HeroCard } from '../components/HeroCard'
 import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
+import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation } from '../i18n'
 import { listDeposits, addDeposit, deleteDeposit } from '../api/savings'
 import { getSummaryCards } from '../api/transactions'
@@ -105,6 +108,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   const incomePercent = monthlyIncome && monthlyIncome > 0
     ? Math.round(monthlyAmount / monthlyIncome * 100)
     : null
+  const animatedTotalSaved = useCountUp(totalSaved, 800)
 
   function openAdd() {
     setSelectedGoal(null)
@@ -349,72 +353,59 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       <div style={{ padding: 20, minHeight: '100%' }}>
 
         {/* Hero wallet card */}
-        <div style={{
-          background: 'linear-gradient(135deg,#082626 0%,#0d4d4d 45%,#082626 100%)',
-          borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
-          boxShadow: '0 18px 50px -16px rgba(13,77,77,0.42),0 0 0 1px rgba(20,184,166,0.22)',
-          flexShrink: 0, marginBottom: 20,
-        }}>
-          <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(20,184,166,0.35),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
-          <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
-          <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(20,184,166,0.18)',border:'1px solid rgba(20,184,166,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <PiggyBank size={18} color="#5eead4"/>
+        <HeroCard variant="income" style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+            {t.savings.totalSavingsLabel} · {goalCount} aktívnych cieľov
           </div>
-          <div style={{position:'relative'}}>
-            <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
-              <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>SPORENIE</span>
-              <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
-              <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{goalCount} aktívnych cieľov</span>
-            </div>
-            <p style={{fontSize:10.5,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:6,letterSpacing:'0.12em',textTransform:'uppercase' as const}}>{t.savings.totalSavingsLabel.toUpperCase()}</p>
-            <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:14,flexWrap:'wrap'}}>
-              <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalSaved).toLocaleString('sk-SK')}</span>
-              <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalSaved%1)*100)).padStart(2,'0')}</span>
-              <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
-              {totalTarget > 0 && (
-                <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 9px',borderRadius:99,background:'rgba(20,184,166,0.18)',color:'#5eead4',border:'1px solid rgba(20,184,166,0.3)'}}>
-                  {overallPct}% z {Math.round(totalTarget)} €
-                </span>
-              )}
+          <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const, gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline' }}>
+              <span style={{
+                fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
+                background: 'linear-gradient(120deg, #fff, var(--aurora-emerald))',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>
+                {Math.floor(animatedTotalSaved).toLocaleString('sk-SK')}
+              </span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+                ,{String(Math.round((animatedTotalSaved % 1) * 100)).padStart(2, '0')}&nbsp;€
+              </span>
             </div>
             {totalTarget > 0 && (
-              <div style={{height:8,borderRadius:99,background:'rgba(255,255,255,0.1)',overflow:'hidden',marginBottom:12}}>
-                <div style={{height:'100%',width:`${Math.min(overallPct,100)}%`,background:'linear-gradient(90deg,#5eead4,#34d399)',borderRadius:99,transition:'width 1s cubic-bezier(0.4,0,0.2,1)',boxShadow:'0 0 12px rgba(94,234,212,0.5)'}}/>
-              </div>
+              <span style={{ marginLeft: 'auto', fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: 'rgba(52,211,153,0.15)', color: 'var(--aurora-emerald)', border: '1px solid rgba(52,211,153,0.3)' }}>
+                {overallPct}% z {Math.round(totalTarget)} €
+              </span>
             )}
-            <div style={{display:'flex',gap:0,paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
-              <div style={{flex:1}}>
-                <p style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.07em',marginBottom:3}}>{t.savings.monthlyLabel.toUpperCase()}</p>
-                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:13,color:'#5eead4'}}>+{formatAmount(monthlyAmount)}</p>
-              </div>
-              <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
-              <div style={{flex:1,paddingLeft:10}}>
-                <p style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.07em',marginBottom:3}}>{t.savings.remainingTotal.toUpperCase()}</p>
-                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:13,color:'white'}}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</p>
-              </div>
-              <div style={{width:1,background:'rgba(255,255,255,0.12)'}}/>
-              <div style={{flex:1,paddingLeft:10}}>
-                <p style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:600,textTransform:'uppercase' as const,letterSpacing:'0.07em',marginBottom:3}}>% Z PRÍJMOV</p>
-                <p style={{fontFamily:"'DM Mono',monospace",fontWeight:600,fontSize:13,color:'#a78bfa'}}>
-                  {incomePercent !== null ? `${incomePercent}%` : '—'}
-                </p>
+          </div>
+          {totalTarget > 0 && (
+            <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginTop: 12 }}>
+              <div style={{ height: '100%', width: `${Math.min(overallPct, 100)}%`, background: 'linear-gradient(90deg,var(--aurora-emerald),var(--aurora-cyan))', borderRadius: 99, transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }} />
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.savings.monthlyLabel}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-emerald)' }}>+{formatAmount(monthlyAmount)}</div>
+            </div>
+            <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.savings.remainingTotal}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(Math.max(0, totalTarget - totalSaved))}</div>
+            </div>
+            <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>% Z PRÍJMOV</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>
+                {incomePercent !== null ? `${incomePercent}%` : '—'}
               </div>
             </div>
           </div>
-        </div>
-
-
+        </HeroCard>
 
         {/* Goals grid */}
         {goals.length === 0 ? (
-          <div style={{
-            background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20,
-            padding: '48px 24px', textAlign: 'center',
-          }}>
-            <p style={{ fontSize: 40, marginBottom: 12, animation: 'float 3s ease-in-out infinite' }}>🐷</p>
-            <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: '0 0 6px' }}>{t.savings.noGoals}</p>
-            <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.savings.noGoalsSubtitle}</p>
-          </div>
+          <GlassCard radius={20} style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <PiggyBank size={40} color="var(--aurora-faint)" style={{ marginBottom: 12 }} />
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>{t.savings.noGoals}</p>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.savings.noGoalsSubtitle}</p>
+          </GlassCard>
         ) : (
           <>
             {/* Mobile: vertical list with swipe-to-delete */}
@@ -486,23 +477,29 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
 }
 
 
-function MiniRing({ pct, color, size, accent, label }: {
-  pct: number; color: string; size: number; accent: string; label: string
+function MiniRing({ pct, size, label, gradientId }: {
+  pct: number; size: number; label: string; gradientId: string
 }) {
   const sw = 3
   const r = (size - sw * 2) / 2
   const circ = 2 * Math.PI * r
   const offset = circ * (1 - Math.min(pct, 100) / 100)
   const c = size / 2
-  const trackColor = pct === 0 ? `${accent}33` : 'var(--bg4)'
+  const trackColor = pct === 0 ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.08)'
   return (
     <svg width={size} height={size} style={{ flexShrink: 0 }}>
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="var(--aurora-violet)" />
+          <stop offset="100%" stopColor="var(--aurora-fuchsia)" />
+        </linearGradient>
+      </defs>
       <circle cx={c} cy={c} r={r} fill="none" stroke={trackColor} strokeWidth={sw} />
-      <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={sw}
+      <circle cx={c} cy={c} r={r} fill="none" stroke={`url(#${gradientId})`} strokeWidth={sw}
         strokeDasharray={`${circ} ${circ}`} strokeDashoffset={offset}
         strokeLinecap="round" transform={`rotate(-90 ${c} ${c})`} />
       <text x={c} y={c} textAnchor="middle" dominantBaseline="central"
-        fill="var(--text)" fontSize={11} fontWeight={600} fontFamily="'DM Mono', monospace">
+        fill="var(--aurora-hi)" fontSize={11} fontWeight={700} fontFamily="'Outfit', sans-serif">
         {label}
       </text>
     </svg>
@@ -523,7 +520,6 @@ function GoalCard({
   const pct = Math.min(100, rawPct)
   const isCompleted = pct >= 100
   const accent = goal.color ?? '#7C3AED'
-  const barColor = isCompleted ? 'var(--green)' : accent
   const monthly = goalMonthly(goal)
 
   const pctFixed = pct.toFixed(1)
@@ -535,40 +531,41 @@ function GoalCard({
     const days = daysUntil(goal.deadline)
     if (days < 0) {
       deadlineEl = (
-        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--red)', background: 'color-mix(in srgb, var(--red) 12%, transparent)', padding: '2px 6px', borderRadius: 20 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--aurora-rose)', background: 'rgba(251,113,133,0.12)', padding: '2px 6px', borderRadius: 20 }}>
           {t.overdue}
         </span>
       )
     } else {
-      deadlineEl = <span style={{ fontSize: 12, color: 'var(--text3)' }}>do {goal.deadline}</span>
+      deadlineEl = <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>do {goal.deadline}</span>
     }
   }
 
   return (
-    <div
+    <GlassCard
+      radius={18}
       onClick={onClick}
-      onPointerDown={() => setActive(true)}
-      onPointerUp={() => setActive(false)}
-      onPointerLeave={() => setActive(false)}
       style={{
-        background: 'var(--bg2)',
-        border: active ? `1px solid ${accent}` : '1px solid var(--border)',
-        borderRadius: 16,
+        border: active ? '1px solid var(--aurora-violet)' : '1px solid var(--aurora-gline)',
         padding: '12px 16px',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        boxSizing: 'border-box',
         transition: 'border-color 0.12s',
         ...(desktop ? { height: '100%' } : {}),
       }}
     >
+      <div
+        onPointerDown={() => setActive(true)}
+        onPointerUp={() => setActive(false)}
+        onPointerLeave={() => setActive(false)}
+        style={{ display: 'contents' }}
+      >
       {/* Top row: icon + name/deadline + ring */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+            width: 36, height: 36, borderRadius: 12, flexShrink: 0,
             background: `${accent}26`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
           }}>
@@ -576,34 +573,35 @@ function GoalCard({
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</p>
               {goal.paused && (
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.35)', color: '#fb923c', letterSpacing: '0.05em', flexShrink: 0 }}>{t.pausedBadge}</span>
               )}
             </div>
             {isCompleted ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--green)' }}>{t.completed}</span>
+              <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 700, color: 'var(--aurora-emerald)' }}>{t.completed}</span>
             ) : deadlineEl}
           </div>
         </div>
-        <MiniRing pct={pct} color={barColor} size={ringSize} accent={accent} label={pctLabel} />
+        <MiniRing pct={pct} size={ringSize} label={pctLabel} gradientId={`ring-grad-${goal.id ?? 'new'}`} />
       </div>
 
       {/* Amounts */}
       <div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.5px' }}>
             {formatAmount(goal.savedAmount)}
           </span>
-          <span style={{ fontSize: 13, color: 'var(--text3)' }}>/ {formatAmount(goal.targetAmount)}</span>
+          <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>/ {formatAmount(goal.targetAmount)}</span>
         </div>
         {!isCompleted && (
-          <p style={{ fontSize: 12, color: 'var(--text3)', margin: '2px 0 0' }}>
+          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: '2px 0 0' }}>
             {t.remaining} {formatAmount(Math.max(0, goal.targetAmount - goal.savedAmount))}
             {monthly > 0 && ` · auto +${formatAmount(monthly)}/mes.`}
           </p>
         )}
       </div>
-    </div>
+      </div>
+    </GlassCard>
   )
 }

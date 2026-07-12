@@ -25,6 +25,7 @@ export function HeroCard({ children, variant = 'neutral', style, className }: He
         borderRadius: 28,
         padding: 24,
         overflow: 'hidden',
+        flexShrink: 0,
         background: 'var(--aurora-glass)',
         border: '1px solid var(--aurora-gline)',
         backdropFilter: 'blur(20px)',

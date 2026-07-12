@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Repeat, Edit2, Trash2, Calendar, Plus, TrendingUp } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Calendar, Plus, CalendarDays, PiggyBank } from 'lucide-react'
 
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
+import { GlassCard } from '../components/GlassCard'
+import { HeroCard } from '../components/HeroCard'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFormatters } from '../hooks/useFormatters'
+import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation, getLocalizedDayNames, getLocalizedMonthNames } from '../i18n'
 import type { Translations } from '../i18n'
 import { todayISO } from '../utils/format'
@@ -160,6 +163,8 @@ export function IncomePage({ month, year }: IncomePageProps) {
   const rawMonthName = monthNames[month - 1] ?? ''
   const MONTH_NAME = rawMonthName.charAt(0).toLocaleUpperCase(locale) + rawMonthName.slice(1)
 
+  const animatedTotal = useCountUp(totalAmount, 800)
+
   const dayGroups = sorted.reduce<Array<{ date: string; dayNum: number; dayName: string; monthName: string; items: Income[]; dayTotal: number }>>((acc, income) => {
     const last = acc[acc.length - 1]
     if (last?.date === income.date) {
@@ -182,136 +187,132 @@ export function IncomePage({ month, year }: IncomePageProps) {
         <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Hero wallet card */}
-          <div style={{
-            background: 'linear-gradient(135deg,#0a2920 0%,#0f4d2f 45%,#0a2920 100%)',
-            borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
-            boxShadow: '0 18px 50px -16px rgba(15,77,47,0.4),0 0 0 1px rgba(52,211,153,0.18)',
-            flexShrink: 0, marginBottom: 0,
-          }}>
-            <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(52,211,153,0.35),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(52,211,153,0.18)',border:'1px solid rgba(52,211,153,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <TrendingUp size={18} color="#86efac"/>
+          <HeroCard variant="income">
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+              {t.income.title} · {MONTH_NAME} {year}
             </div>
-            <div style={{position:'relative'}}>
-              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
-                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>PRÍJMY</span>
-                <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
-                <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{MONTH_NAME} {year}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
+              <span style={{
+                fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
+                background: 'linear-gradient(120deg, #fff, var(--aurora-emerald))',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>
+                +{Math.floor(animatedTotal).toLocaleString('sk-SK')}
+              </span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+                ,{String(Math.round((animatedTotal % 1) * 100)).padStart(2, '0')}&nbsp;€
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.income.recurringLabel}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(recurringTotal)}</div>
               </div>
-              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
-                <span style={{fontSize:14,fontWeight:500,color:'#86efac',marginRight:4}}>+</span>
-                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(totalAmount).toLocaleString('sk-SK')}</span>
-                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((totalAmount%1)*100)).padStart(2,'0')}</span>
-                <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
-              </div>
-              <div style={{display:'flex',gap:14,fontSize:11.5,color:'rgba(255,255,255,0.7)',paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
-                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>↻</span>{t.income.recurringLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(recurringTotal)}</span></div>
-                <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
-                <div><span style={{color:'#86efac',fontWeight:700,marginRight:5}}>1×</span>{t.income.oneTimeLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(oneTimeTotal)}</span></div>
+              <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.income.oneTimeLabel}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(oneTimeTotal)}</div>
               </div>
             </div>
-          </div>
+          </HeroCard>
 
           {/* Ročný príjem */}
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--card-shadow)' }}>
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>📅 {t.income.yearlyIncomeTitle} {year}</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 22, color: 'var(--green)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.income.yearlyIncomeDesc} {year}</div>
-          </div>
+          <GlassCard radius={18}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Manrope', sans-serif", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-faint)', fontWeight: 700, marginBottom: 10 }}>
+              <CalendarDays size={12} /> {t.income.yearlyIncomeTitle} {year}
+            </div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 22, color: 'var(--aurora-emerald)', marginBottom: 4 }}>{formatAmount(yearlyIncome)}</div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{t.income.yearlyIncomeDesc} {year}</div>
+          </GlassCard>
 
           {/* List / empty state */}
           {sorted.length === 0 ? (
-            <div className="card">
+            <GlassCard radius={18}>
               <div className="empty-state">
-                <span className="empty-state-emoji">💰</span>
-                <p className="empty-state-title">{t.income.noIncome}</p>
-                <p className="empty-state-subtitle">{t.income.noIncomeSubtitle}</p>
+                <PiggyBank size={40} color="var(--aurora-faint)" style={{ marginBottom: 4 }} />
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.income.noIncome}</p>
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.income.noIncomeSubtitle}</p>
               </div>
-            </div>
+            </GlassCard>
           ) : (
             <>
-              {/* Mobile: day-grouped flat rows */}
+              {/* Mobile: day-grouped GlassCard rows */}
               <div className="lg:hidden" style={{ paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
                 {dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
                   <div key={date} style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 2px 8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{dayName}, {monthName}</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)' }}>{dayNum}</span>
+                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{dayName}, {monthName}</span>
                       </div>
-                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · +{formatAmount(dayTotal)}</span>
+                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{items.length} tx · +{formatAmount(dayTotal)}</span>
                     </div>
-                    <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
-                    {items.map((income, idx) => (
-                      <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
-                        <div
-                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none' }}
-                          onClick={() => openEdit(income)}
-                        >
-                          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Calendar size={17} color="var(--green)" />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</span>
-                              {income.recurring && (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                  <Repeat size={8} /> {t.income.recurringBadge}
-                                </span>
-                              )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {items.map(income => (
+                        <SwipeableRow key={income.id} onDelete={() => setConfirmId(income.id!)} isOpen={openSwipeId === income.id} onOpen={() => setOpenSwipeId(income.id!)}>
+                          <GlassCard radius={18} onClick={() => openEdit(income)} style={{ cursor: 'pointer' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ width: 38, height: 38, borderRadius: 13, background: 'rgba(52,211,153,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                {income.recurring ? <Repeat size={17} color="var(--aurora-emerald)" /> : <Calendar size={17} color="var(--aurora-emerald)" />}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</span>
+                                  {income.recurring && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--aurora-violet)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                      <Repeat size={8} /> {t.income.recurringBadge}
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{formatDate(income.date)}</div>
+                              </div>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 15, color: 'var(--aurora-emerald)', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
                             </div>
-                            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
-                          </div>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--green)', flexShrink: 0 }}>+{formatAmount(income.amount)}</span>
-                        </div>
-                      </SwipeableRow>
-                    ))}
+                          </GlassCard>
+                        </SwipeableRow>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* Desktop: day-grouped flat rows */}
+              {/* Desktop: day-grouped GlassCard rows */}
               <div className="hidden lg:block">
                 {dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
-                  <div key={date} style={{ marginBottom: 24 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 6 }}>
+                  <div key={date} style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 2px 8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{dayName}, {monthName}</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)' }}>{dayNum}</span>
+                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{dayName}, {monthName}</span>
                       </div>
-                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · +{formatAmount(dayTotal)}</span>
+                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{items.length} tx · +{formatAmount(dayTotal)}</span>
                     </div>
-                    <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
-                    {items.map((income, idx) => (
-                      <div
-                        key={income.id}
-                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 8px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none', borderRadius: 10, transition: 'background 0.1s' }}
-                        onClick={() => openEdit(income)}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg3)'}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                      >
-                        <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Calendar size={17} color="var(--green)" />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</span>
-                            {income.recurring && (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                <Repeat size={8} /> {t.income.recurringBadge}
-                              </span>
-                            )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {items.map(income => (
+                        <GlassCard key={income.id} radius={18} onClick={() => openEdit(income)} style={{ cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 38, height: 38, borderRadius: 13, background: 'rgba(52,211,153,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {income.recurring ? <Repeat size={17} color="var(--aurora-emerald)" /> : <Calendar size={17} color="var(--aurora-emerald)" />}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{income.label}</span>
+                                {income.recurring && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--aurora-violet)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                    <Repeat size={8} /> {t.income.recurringBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{formatDate(income.date)}</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 15, color: 'var(--aurora-emerald)', marginRight: 8 }}>+{formatAmount(income.amount)}</span>
+                              <button onClick={() => openEdit(income)} className="btn-icon" style={{ color: 'var(--aurora-faint)' }}><Edit2 size={13} /></button>
+                              <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ color: 'var(--aurora-faint)' }}><Trash2 size={13} /></button>
+                            </div>
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDate(income.date)}</div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--green)', marginRight: 8 }}>+{formatAmount(income.amount)}</span>
-                          <button onClick={() => openEdit(income)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>
-                          <button onClick={() => setConfirmId(income.id!)} className="btn-icon" style={{ color: 'var(--text3)' }}><Trash2 size={13} /></button>
-                        </div>
-                      </div>
-                    ))}
+                        </GlassCard>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>

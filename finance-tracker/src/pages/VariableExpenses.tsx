@@ -5,10 +5,13 @@ import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
+import { GlassCard } from '../components/GlassCard'
+import { HeroCard } from '../components/HeroCard'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
+import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation, getLocalizedDayNames, getLocalizedMonthNames } from '../i18n'
 import { todayISO } from '../utils/format'
 import type { VariableExpense, BudgetStatus } from '../types'
@@ -41,12 +44,12 @@ const getBudgetBarColor = (pct: number, autoLimit = false) => {
 
 const pillStyle = (active: boolean): React.CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '6px 14px', borderRadius: 50, fontSize: 13,
-  fontWeight: active ? 600 : 500, cursor: 'pointer',
-  border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
-  background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-  color: active ? 'var(--violet)' : 'var(--text2)',
-  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
+  padding: '8px 14px', borderRadius: 14, fontSize: 12,
+  fontWeight: 600, cursor: 'pointer',
+  border: active ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+  background: active ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
+  color: active ? '#fff' : 'var(--aurora-lo)',
+  fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
   flexShrink: 0,
 })
 
@@ -137,6 +140,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
       : variableExpenses
     ).reduce((sum, e) => sum + e.amount, 0)
   , [variableExpenses, activeCategory])
+  const animatedFilteredTotal = useCountUp(filteredTotal, 800)
 
   const categoriesWithExpenses = useMemo(
     () => categories.filter(c => variableExpenses.some(e => e.categoryId === c.id)),
@@ -178,7 +182,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{title}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 10 }}>{title}</div>
       {children}
     </div>
   )
@@ -195,45 +199,30 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Hero wallet card */}
-          <div style={{
-            background: 'linear-gradient(135deg,#2a0d10 0%,#5e1a22 45%,#2a0d10 100%)',
-            borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
-            boxShadow: '0 18px 50px -16px rgba(94,26,34,0.4),0 0 0 1px rgba(248,113,113,0.2)',
-            flexShrink: 0,
-          }}>
-            <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(248,113,113,0.32),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(248,113,113,0.18)',border:'1px solid rgba(248,113,113,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <Receipt size={18} color="#fca5a5"/>
+          <HeroCard variant="expense">
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+              {t.expenses.variable.title} · {MONTH_NAME_VAR} {year}
             </div>
-            <div style={{position:'relative'}}>
-              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
-                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>VARIABILNÉ VÝDAVKY</span>
-                <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
-                <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{MONTH_NAME_VAR} {year}</span>
-              </div>
-              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:12,flexWrap:'wrap'}}>
-                <span style={{fontSize:14,fontWeight:500,color:'#fca5a5',marginRight:4}}>−</span>
-                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(filteredTotal).toLocaleString('sk-SK')}</span>
-                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((filteredTotal%1)*100)).padStart(2,'0')}</span>
-                <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€</span>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
               <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 20, padding: '5px 14px', fontSize: 12,
-                color: 'rgba(168,158,201,0.9)', cursor: 'default',
-                fontFamily: "'DM Mono',monospace",
+                fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
+                background: 'linear-gradient(120deg, #fff, var(--aurora-rose))',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}>
-                <span>≡</span>
-                <span>{filteredSorted.length} transakcií tento mesiac</span>
+                −{Math.floor(animatedFilteredTotal).toLocaleString('sk-SK')}
+              </span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+                ,{String(Math.round((animatedFilteredTotal % 1) * 100)).padStart(2, '0')}&nbsp;€
               </span>
             </div>
-          </div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-lo)', marginTop: 12 }}>
+              {filteredSorted.length} transakcií tento mesiac
+            </div>
+          </HeroCard>
 
           {/* Search bar */}
           <div style={{ position: 'relative' }}>
-            <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: searchFocused ? 'var(--violet)' : 'var(--text3)', pointerEvents: 'none', transition: 'color 0.15s' }}>
+            <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: searchFocused ? 'var(--aurora-violet)' : 'var(--aurora-faint)', pointerEvents: 'none', transition: 'color 0.15s' }}>
               <Search size={15} />
             </div>
             <input
@@ -244,9 +233,10 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               style={{
-                width: '100%', height: 40, paddingLeft: 36, paddingRight: searchQuery ? 36 : 14,
-                borderRadius: 12, background: 'var(--bg3)', border: `1px solid ${searchFocused ? 'var(--violet)' : 'var(--border)'}`,
-                color: 'var(--text)', fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: 'none',
+                width: '100%', height: 42, paddingLeft: 38, paddingRight: searchQuery ? 36 : 16,
+                borderRadius: 16, background: 'var(--aurora-glass)', border: `1px solid ${searchFocused ? 'var(--aurora-violet)' : 'var(--aurora-gline)'}`,
+                color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 boxShadow: searchFocused ? '0 0 0 3px rgba(139,92,246,0.18)' : 'none',
                 transition: 'border-color 0.15s, box-shadow 0.15s',
                 boxSizing: 'border-box',
@@ -255,7 +245,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', padding: 2 }}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', display: 'flex', alignItems: 'center', padding: 2 }}
               >
                 <X size={14} />
               </button>
@@ -280,100 +270,101 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             </div>
           )}
 
-          {/* Mobile: day-grouped flat rows */}
+          {/* Mobile: day-grouped GlassCard rows */}
           <div className="lg:hidden" style={{ paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
             {searchFiltered.length === 0 ? (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '48px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
-                <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>💸</span>
-                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
-                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
-              </div>
+              <GlassCard radius={18}>
+                <div className="empty-state">
+                  <Receipt size={40} color="var(--aurora-faint)" style={{ marginBottom: 4 }} />
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
+                </div>
+              </GlassCard>
             ) : (
               dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => {
                 return (
                   <div key={date} style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 2px 8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{dayName}, {monthName}</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)' }}>{dayNum}</span>
+                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{dayName}, {monthName}</span>
                       </div>
-                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
+                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
                     </div>
-                    <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
-                    {items.map((e, idx) => {
-                      const cat = getCategoryById(e.categoryId)
-                      const name = e.note || cat?.name || t.expenses.variable.defaultExpense
-                      const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
-                      return (
-                        <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
-                          <div
-                            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none' }}
-                            onClick={() => openEdit(e)}
-                          >
-                            <div style={{ width: 38, height: 38, borderRadius: 10, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                              {cat?.icon ?? '📦'}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
-                              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
-                            </div>
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)', flexShrink: 0 }}>-{formatAmount(e.amount)}</span>
-                          </div>
-                        </SwipeableRow>
-                      )
-                    })}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {items.map(e => {
+                        const cat = getCategoryById(e.categoryId)
+                        const name = e.note || cat?.name || t.expenses.variable.defaultExpense
+                        const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
+                        return (
+                          <SwipeableRow key={e.id} onDelete={() => setConfirmId(e.id!)} isOpen={openSwipeId === e.id} onOpen={() => setOpenSwipeId(e.id!)}>
+                            <GlassCard radius={18} onClick={() => openEdit(e)} style={{ cursor: 'pointer' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ width: 38, height: 38, borderRadius: 13, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                                  {cat?.icon ?? '📦'}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
+                                  <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
+                                </div>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 15, color: 'var(--aurora-rose)', flexShrink: 0 }}>-{formatAmount(e.amount)}</span>
+                              </div>
+                            </GlassCard>
+                          </SwipeableRow>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               })
             )}
           </div>
 
-          {/* Desktop: day-grouped flat rows */}
+          {/* Desktop: day-grouped GlassCard rows */}
           <div className="hidden lg:block">
             {searchFiltered.length === 0 ? (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
-                <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>💸</span>
-                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
-                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
-              </div>
+              <GlassCard radius={20}>
+                <div className="empty-state">
+                  <Receipt size={40} color="var(--aurora-faint)" style={{ marginBottom: 4 }} />
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{searchQuery ? 'Žiadne výsledky' : t.expenses.variable.noExpenses}</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{searchQuery ? 'Skús iný výraz' : t.expenses.variable.noExpensesSubtitle}</p>
+                </div>
+              </GlassCard>
             ) : (
               dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
-                <div key={date} style={{ marginBottom: 24 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 6 }}>
+                <div key={date} style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 2px 8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>{dayNum}</span>
-                      <span style={{ fontSize: 12, color: 'var(--text3)' }}>{dayName}, {monthName}</span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)' }}>{dayNum}</span>
+                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{dayName}, {monthName}</span>
                     </div>
-                    <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>{items.length} tx · -{formatAmount(dayTotal)}</span>
                   </div>
-                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 2 }} />
-                  {items.map((e, idx) => {
-                    const cat = getCategoryById(e.categoryId)
-                    const name = e.note || cat?.name || t.expenses.variable.defaultExpense
-                    const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
-                    return (
-                      <div
-                        key={e.id}
-                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 8px', cursor: 'pointer', borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none', borderRadius: 10, transition: 'background 0.1s' }}
-                        onClick={() => openEdit(e)}
-                        onMouseEnter={el => { (el.currentTarget as HTMLElement).style.background = 'var(--bg3)' }}
-                        onMouseLeave={el => { (el.currentTarget as HTMLElement).style.background = 'transparent' }}
-                      >
-                        <div style={{ width: 38, height: 38, borderRadius: 10, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                          {cat?.icon ?? '📦'}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
-                          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, fontFamily: "'DM Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: 'var(--red)', marginRight: 8 }}>-{formatAmount(e.amount)}</span>
-                          <button onClick={() => openEdit(e)} className="btn-icon" style={{ color: 'var(--text3)' }}><Edit2 size={13} /></button>
-                          <button onClick={() => setConfirmId(e.id!)} className="btn-icon" style={{ color: 'var(--text3)' }}><Trash2 size={13} /></button>
-                        </div>
-                      </div>
-                    )
-                  })}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {items.map(e => {
+                      const cat = getCategoryById(e.categoryId)
+                      const name = e.note || cat?.name || t.expenses.variable.defaultExpense
+                      const subtitle = e.note ? `${cat?.name ?? '—'} · ${formatDate(e.date)}` : formatDate(e.date)
+                      return (
+                        <GlassCard key={e.id} radius={18} onClick={() => openEdit(e)} style={{ cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 38, height: 38, borderRadius: 13, background: (cat?.color ?? '#9D84D4') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                              {cat?.icon ?? '📦'}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{name}</span>
+                              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 15, color: 'var(--aurora-rose)', marginRight: 8 }}>-{formatAmount(e.amount)}</span>
+                              <button onClick={() => openEdit(e)} className="btn-icon" style={{ color: 'var(--aurora-faint)' }}><Edit2 size={13} /></button>
+                              <button onClick={() => setConfirmId(e.id!)} className="btn-icon" style={{ color: 'var(--aurora-faint)' }}><Trash2 size={13} /></button>
+                            </div>
+                          </div>
+                        </GlassCard>
+                      )
+                    })}
+                  </div>
                 </div>
               ))
             )}
@@ -382,10 +373,10 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         </div>
 
         {/* Right panel — desktop only */}
-        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--bg2)' }}>
+        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--aurora-gline)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 20, background: 'var(--aurora-glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           {rpSection(t.expenses.variable.categoriesAndBudget,
             budgetStatuses.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text3)', fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--aurora-faint)', fontSize: 13, fontFamily: "'Manrope', sans-serif" }}>
                 <div>{t.dashboard.noLimits}</div>
                 <div style={{ fontSize: 11, marginTop: 4 }}>{t.dashboard.setInCategories}</div>
               </div>
@@ -396,20 +387,20 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                   const barColor = getBudgetBarColor(bs.percentage, bsCat?.autoLimit ?? false)
                   const pct = Math.min(bs.percentage, 100)
                   return (
-                    <div key={bs.categoryId} style={{ background: 'var(--bg3)', border: bs.isOver ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--border)', borderRadius: 12, padding: '12px 14px' }}>
+                    <GlassCard key={bs.categoryId} radius={12} style={{ padding: '12px 14px', border: bs.isOver ? '1px solid rgba(251,113,133,0.35)' : '1px solid var(--aurora-gline)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
                           <span style={{ width: 24, height: 24, borderRadius: 8, background: bs.categoryColor + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>{bs.categoryIcon}</span>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bs.categoryName}</span>
+                          <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 500, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bs.categoryName}</span>
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: barColor, background: barColor + '20', padding: '2px 6px', borderRadius: 20, flexShrink: 0, marginLeft: 6 }}>{Math.round(bs.percentage)}%</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: barColor, background: barColor + '20', padding: '2px 6px', borderRadius: 20, flexShrink: 0, marginLeft: 6 }}>{Math.round(bs.percentage)}%</span>
                       </div>
-                      <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden', marginBottom: 6 }}>
+                      <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: 6 }}>
                         <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: barColor }} />
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: "'DM Mono', monospace" }}>{formatAmount(bs.spent)} / {formatAmount(bs.limit)}</div>
-                      {bs.isOver && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 2, fontWeight: 500 }}>{t.dashboard.limitExceeded}</div>}
-                    </div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{formatAmount(bs.spent)} / {formatAmount(bs.limit)}</div>
+                      {bs.isOver && <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-rose)', marginTop: 2, fontWeight: 500 }}>{t.dashboard.limitExceeded}</div>}
+                    </GlassCard>
                   )
                 })}
               </div>
