@@ -1,4 +1,4 @@
-import { isPhotoUrl, avatarSrc } from '../utils/avatar'
+import { isPhotoUrl, avatarSrc, monogramGradientFor } from '../utils/avatar'
 
 const GRADIENTS = [
   'linear-gradient(135deg,#8B5CF6,#6D28D9)',
@@ -23,8 +23,9 @@ interface AvatarProps {
 
 export function Avatar({ name, avatarUrl, size = 34 }: AvatarProps) {
   const isPhoto = isPhotoUrl(avatarUrl)
-  const isEmoji = !!(avatarUrl && !isPhoto)
-  const gradient = GRADIENTS[hashName(name || '?') % GRADIENTS.length]
+  const monogram = monogramGradientFor(avatarUrl)
+  const isEmoji = !!(avatarUrl && !isPhoto && !monogram)
+  const gradient = monogram ? `linear-gradient(135deg,${monogram[0]},${monogram[1]})` : GRADIENTS[hashName(name || '?') % GRADIENTS.length]
 
   return (
     <div style={{

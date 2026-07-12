@@ -80,6 +80,21 @@ function SettingRow({ label, sublabel, children }: { label: string; sublabel?: R
   )
 }
 
+// Desktop-only cell for the Financie "Všeobecné" 2-column grid — label stacked
+// above its control so each cell stays self-contained instead of stretching
+// label/control to opposite edges of a half-width row (which looked broken).
+function CompactSettingCell({ label, sublabel, children }: { label: string; sublabel?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{label}</p>
+        {sublabel && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{sublabel}</p>}
+      </div>
+      <div>{children}</div>
+    </div>
+  )
+}
+
 function ChevronRow({ icon: Icon, iconColor, iconBg, label, sublabel, onClick }: {
   icon: LucideIcon; iconColor: string; iconBg: string; label: string; sublabel?: React.ReactNode; onClick: () => void
 }) {
@@ -773,7 +788,8 @@ export function SettingsPage() {
               <div className="settings-general-compact">
               <SectionCard>
                 <SectionHeader icon={User} label={t.settings.generalSection} />
-                <div className="divide-y divide-white/[0.04] lg:divide-y-0 lg:grid lg:grid-cols-2 lg:gap-x-4">
+                {/* Mobile: single column, unchanged */}
+                <div className="lg:hidden divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.currency}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <select
@@ -828,7 +844,64 @@ export function SettingsPage() {
                       ))}
                     </div>
                   </SettingRow>
+                </div>
 
+                {/* Desktop: self-contained 2x2 grid cells, label stacked above control */}
+                <div className="hidden lg:grid lg:grid-cols-2">
+                  <CompactSettingCell label={t.settings.currency}>
+                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                      <select
+                        value={settings.currency}
+                        onChange={e => updateSettings({ currency: e.target.value })}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                      >
+                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: '#14121C' }}>{c.label}</option>)}
+                      </select>
+                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
+                    </div>
+                  </CompactSettingCell>
+
+                  <CompactSettingCell label={t.settings.language} sublabel={t.settings.languageNote}>
+                    <LanguageSwitcher
+                      variant="full"
+                      onLanguageChange={lang => {
+                        updateUserSettings({ language: lang }).catch(() => { /* non-critical */ })
+                      }}
+                    />
+                  </CompactSettingCell>
+
+                  <CompactSettingCell label={t.settings.dateFormat}>
+                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                      <select
+                        value={settings.dateFormat}
+                        onChange={e => updateSettings({ dateFormat: e.target.value })}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                      >
+                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: '#14121C' }}>{f.label}</option>)}
+                      </select>
+                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
+                    </div>
+                  </CompactSettingCell>
+
+                  <CompactSettingCell label={t.settings.firstDayOfWeek}>
+                    <div style={{ display: 'flex', background: 'var(--aurora-glass)', borderRadius: 10, padding: 3, border: '1px solid var(--aurora-gline)', width: 'fit-content' }}>
+                      {(['monday', 'sunday'] as const).map((day, i) => (
+                        <button
+                          key={day}
+                          onClick={() => updateSettings({ firstDayOfWeek: day })}
+                          style={{
+                            padding: '5px 16px', borderRadius: 7, fontSize: 13,
+                            fontWeight: settings.firstDayOfWeek === day ? 600 : 400,
+                            background: settings.firstDayOfWeek === day ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
+                            color: settings.firstDayOfWeek === day ? 'white' : 'var(--aurora-lo)',
+                            border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s',
+                          }}
+                        >
+                          {i === 0 ? t.daysShort[0] : t.daysShort[6]}
+                        </button>
+                      ))}
+                    </div>
+                  </CompactSettingCell>
                 </div>
               </SectionCard>
               </div>

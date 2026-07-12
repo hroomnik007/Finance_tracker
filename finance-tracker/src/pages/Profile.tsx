@@ -15,10 +15,8 @@ import { ACHIEVEMENTS } from '../data/achievements'
 import { AchievementDetailModal } from '../components/AchievementDetailModal'
 import { GlassCard } from '../components/GlassCard'
 import { useSettingsContext } from '../context/SettingsContext'
-import { isPhotoUrl, avatarSrc } from '../utils/avatar'
+import { isPhotoUrl, avatarSrc, MONOGRAM_PREFIX, MONOGRAM_GRADIENTS, monogramGradientFor } from '../utils/avatar'
 import { useAuth } from '../context/AuthContext'
-
-const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
 
 const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
   first_transaction: Target,
@@ -268,6 +266,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
     ? Math.floor((Date.now() - new Date(user.tracking_start_date).getTime()) / 86400000)
     : null
 
+  const initial = (user?.name || ctxName)?.[0]?.toUpperCase() ?? '?'
+  const avatarMonogram = !photoUrl
+    ? monogramGradientFor(user?.avatarUrl && !isPhotoUrl(user.avatarUrl) ? user.avatarUrl : profileAvatarDraft)
+    : null
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -315,17 +318,19 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Avatar — LEFT */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div
-                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
+                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : avatarMonogram ? `linear-gradient(135deg,${avatarMonogram[0]},${avatarMonogram[1]})` : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
                 onClick={handlePhotoUpload}
               >
                 {photoUrl ? (
                   <img src={avatarSrc(photoUrl)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                ) : avatarMonogram ? (
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 26, fontFamily: "'Outfit', sans-serif" }}>{initial}</span>
                 ) : user?.avatarUrl && !isPhotoUrl(user.avatarUrl) ? (
                   <span style={{ fontSize: 32, lineHeight: 1 }}>{user.avatarUrl}</span>
                 ) : profileAvatarDraft && !isPhotoUrl(profileAvatarDraft) ? (
                   <span style={{ fontSize: 32, lineHeight: 1 }}>{profileAvatarDraft}</span>
                 ) : (
-                  <span style={{ color: 'white', fontWeight: 700, fontSize: 26, fontFamily: "'Outfit', sans-serif" }}>{(user?.name || ctxName)?.[0]?.toUpperCase() ?? '?'}</span>
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 26, fontFamily: "'Outfit', sans-serif" }}>{initial}</span>
                 )}
               </div>
               <div
@@ -369,32 +374,31 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             </div>
           </div>
 
-          {/* Horizontal emoji picker strip */}
+          {/* Horizontal monogram avatar picker strip */}
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto' }}>
-            {AVATAR_OPTIONS.map(em => (
-              <button
-                key={em}
-                onClick={async () => {
-                  setProfileAvatarDraft(em)
-                  setPhotoUrl(null)
-                  try { await updateAvatar(em); await refreshUser() } catch { /* non-critical */ }
-                }}
-                style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: (profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.18)' : 'var(--aurora-glass)', border: `1px solid ${(profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.35)' : 'var(--aurora-gline)'}`, fontSize: 17, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                {em}
-              </button>
-            ))}
-            <button
-              onClick={async () => {
-                setProfileAvatarDraft('')
-                setPhotoUrl(null)
-                try { await updateAvatar(''); await refreshUser() } catch { /* non-critical */ }
-              }}
-              title="Bez emoji — iniciálka"
-              style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px dashed var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {(user?.name || ctxName)?.[0]?.toUpperCase()}
-            </button>
+            {MONOGRAM_GRADIENTS.map(([key, [c1, c2]]) => {
+              const value = MONOGRAM_PREFIX + key
+              const active = !photoUrl && (profileAvatarDraft ? profileAvatarDraft === value : user?.avatarUrl === value)
+              return (
+                <button
+                  key={key}
+                  onClick={async () => {
+                    setProfileAvatarDraft(value)
+                    setPhotoUrl(null)
+                    try { await updateAvatar(value); await refreshUser() } catch { /* non-critical */ }
+                  }}
+                  style={{
+                    flexShrink: 0, width: 32, height: 32, borderRadius: '50%',
+                    background: `linear-gradient(135deg,${c1},${c2})`,
+                    border: active ? '2px solid rgba(255,255,255,0.75)' : '1px solid var(--aurora-gline)',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 13, fontFamily: "'Outfit', sans-serif" }}>{initial}</span>
+                </button>
+              )
+            })}
           </div>
 
           {/* Stats strip */}

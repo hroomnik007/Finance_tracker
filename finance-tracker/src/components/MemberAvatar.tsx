@@ -1,4 +1,4 @@
-import { isPhotoUrl, avatarSrc } from '../utils/avatar'
+import { isPhotoUrl, avatarSrc, monogramGradientFor } from '../utils/avatar'
 
 const MEMBER_COLORS = [
   'linear-gradient(135deg, #7C3AED, #6D28D9)',
@@ -40,6 +40,29 @@ export function MemberAvatar({ userId, userName, size = 24, avatarUrl }: MemberA
           flexShrink: 0,
         }}
       />
+    )
+  }
+
+  const monogram = monogramGradientFor(avatarUrl)
+  if (monogram) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: `linear-gradient(135deg,${monogram[0]},${monogram[1]})`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: size * 0.42,
+          fontWeight: 700,
+          color: 'white',
+          flexShrink: 0,
+        }}
+      >
+        {initials}
+      </div>
     )
   }
 

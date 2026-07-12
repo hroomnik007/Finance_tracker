@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { updateUserSettings } from '../api/auth'
-import { isPhotoUrl, avatarSrc } from '../utils/avatar'
+import { isPhotoUrl, avatarSrc, monogramGradientFor } from '../utils/avatar'
 import { NotificationCenter } from './NotificationCenter'
 
 const MONTH_PAGES: Page[] = ['dashboard', 'income', 'variable-expenses', 'fixed-expenses', 'household']
@@ -134,13 +134,19 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     </div>
   )
 
+  const avatarMonogram = monogramGradientFor(user?.avatarUrl)
+
   const avatarEl = (size: number) => (
     <button
       onClick={onOpenProfile}
-      style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', border: '1px solid var(--aurora-gline)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', background: isPhotoUrl(user?.avatarUrl) ? 'transparent' : avatarMonogram ? `linear-gradient(135deg,${avatarMonogram[0]},${avatarMonogram[1]})` : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', border: '1px solid var(--aurora-gline)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       {isPhotoUrl(user?.avatarUrl) ? (
         <img src={avatarSrc(user!.avatarUrl!)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : avatarMonogram ? (
+        <span style={{ color: '#fff', fontSize: size * 0.38, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+          {user?.name?.[0]?.toUpperCase() ?? '?'}
+        </span>
       ) : user?.avatarUrl ? (
         <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{user.avatarUrl}</span>
       ) : (
