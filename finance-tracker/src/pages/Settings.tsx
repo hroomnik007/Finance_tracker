@@ -19,8 +19,6 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
-import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
-import { useScrollFade } from '../hooks/useScrollFade'
 import type { ApiTransaction, UserSession } from '../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -189,7 +187,6 @@ export function SettingsPage() {
 
   const securityRef = useRef<HTMLDivElement>(null)
   const dataRef = useRef<HTMLDivElement>(null)
-  const { ref: tabsScrollRef, showFade: tabsShowFade } = useScrollFade<HTMLDivElement>()
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
 
@@ -633,38 +630,70 @@ export function SettingsPage() {
       {/* Settings page header */}
       <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', margin: '0 0 16px' }}>{t.settings.title}</h1>
 
-      {/* Tab row: compact pill tabs, same at every breakpoint */}
-      <div style={{ position: 'relative', minWidth: 0, marginBottom: 16 }}>
-        <div ref={tabsScrollRef} className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-          {SECTIONS.map(s => {
-            const Icon = s.icon
-            const isActive = activeSection === s.id
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px 14px', borderRadius: 14, flexShrink: 0,
-                  background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
-                  border: isActive ? '1px solid transparent' : '1px solid var(--aurora-gline)',
-                  color: isActive ? '#fff' : 'var(--aurora-lo)',
-                  fontFamily: "'Manrope', sans-serif",
-                  fontSize: 12.5, fontWeight: 600,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                <Icon size={13} strokeWidth={2} />
-                {sectionLabels[s.id]}
-              </button>
-            )
-          })}
-        </div>
-        <ScrollFadeOverlay visible={tabsShowFade} background="var(--aurora-bg)" />
-      </div>
+      <div className="settings-grid">
 
-      {/* Content */}
-      <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 640 }}>
+        {/* Desktop-only: vertical tab list, left rail */}
+        <div className="hidden lg:block" style={{ position: 'sticky', top: 0 }}>
+          <GlassCard radius={18} style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {SECTIONS.map(s => {
+              const Icon = s.icon
+              const isActive = activeSection === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSection(s.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '10px 14px', borderRadius: 12,
+                    background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
+                    border: '1px solid transparent',
+                    color: isActive ? '#fff' : 'var(--aurora-lo)',
+                    fontFamily: "'Manrope', sans-serif",
+                    fontSize: 13, fontWeight: 600, textAlign: 'left',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  <Icon size={14} strokeWidth={2} />
+                  {sectionLabels[s.id]}
+                </button>
+              )
+            })}
+          </GlassCard>
+        </div>
+
+        <div style={{ minWidth: 0 }}>
+
+          {/* Mobile-only: horizontal pill tab row */}
+          <div className="lg:hidden" style={{ minWidth: 0, marginBottom: 16 }}>
+            <div className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+              {SECTIONS.map(s => {
+                const Icon = s.icon
+                const isActive = activeSection === s.id
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveSection(s.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 14px', borderRadius: 14, flexShrink: 0,
+                      background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
+                      border: isActive ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+                      color: isActive ? '#fff' : 'var(--aurora-lo)',
+                      fontFamily: "'Manrope', sans-serif",
+                      fontSize: 12.5, fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                  >
+                    <Icon size={13} strokeWidth={2} />
+                    {sectionLabels[s.id]}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* ── APPEARANCE SECTION ── */}
           {activeSection === 'appearance' && (
@@ -744,7 +773,7 @@ export function SettingsPage() {
               <div className="settings-general-compact">
               <SectionCard>
                 <SectionHeader icon={User} label={t.settings.generalSection} />
-                <div className="divide-y divide-white/[0.04]">
+                <div className="divide-y divide-white/[0.04] lg:divide-y-0 lg:grid lg:grid-cols-2 lg:gap-x-4">
                   <SettingRow label={t.settings.currency}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <select
@@ -1166,6 +1195,10 @@ export function SettingsPage() {
           )}
 
         </div>
+
+        </div>
+
+      </div>
 
       {/* ── PIN REMOVE MODAL ── */}
       {pinRemoveOpen && (
