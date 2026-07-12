@@ -745,6 +745,15 @@ select:focus-visible {
   outline: none !important;
 }
 
+/* Recharts wraps interactive sectors in a11y groups that pick up the
+   browser's default focus ring on click; since that ring isn't tied to
+   our own selection state, it looks "stuck" on whichever sector was
+   clicked first instead of following the current selection. */
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
+  outline: none !important;
+}
+
 /* === COMPACT MODE === */
 html:not(.compact) {
   --card-padding: 20px;

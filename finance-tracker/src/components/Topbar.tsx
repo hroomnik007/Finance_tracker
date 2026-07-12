@@ -213,7 +213,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           )}
           {themeToggleBtn}
           <NotificationCenter onNavigate={onNavigate} />
-          {avatarEl(34)}
+          {avatarEl(46)}
         </div>
       </div>
 
@@ -225,7 +225,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
           <div style={{ flex: 1 }} />
           {themeToggleBtn}
           <NotificationCenter />
-          {avatarEl(32)}
+          {avatarEl(44)}
         </div>
 
         {/* Row 2: month nav + toggle — only on relevant pages */}
