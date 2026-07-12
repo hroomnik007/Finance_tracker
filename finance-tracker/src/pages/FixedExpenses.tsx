@@ -22,7 +22,6 @@ import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 import React from 'react'
 
-const FALLBACK_ICON = '📦'
 const FALLBACK_COLOR = '#6b7280'
 
 // Category icons are one of a fixed emoji preset (see Categories.tsx PRESET_ICONS) — map
@@ -319,7 +318,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               }}>
                 {Math.floor(animatedFilteredTotal).toLocaleString('sk-SK')}
               </span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--aurora-hi)' }}>
                 ,{String(Math.round((animatedFilteredTotal % 1) * 100)).padStart(2, '0')}&nbsp;€/mes.
               </span>
             </div>
@@ -494,9 +493,10 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                   {usedCategoryIds.filter(id => id !== '').map(catId => {
                     const cat = getCat(catId)
                     const isActive = activeCat === catId
+                    const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag
                     return (
                       <button key={catId} type="button" onClick={() => setActiveCat(isActive ? null : catId)} style={pillStyle(isActive)}>
-                        <span style={{ fontSize: 15, lineHeight: 1 }}>{cat?.icon ?? FALLBACK_ICON}</span>
+                        <Icon size={14} color="currentColor" strokeWidth={1.8} />
                         <span>{cat?.name ?? '—'}</span>
                       </button>
                     )

@@ -234,7 +234,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               }}>
                 −{Math.floor(animatedFilteredTotal).toLocaleString('sk-SK')}
               </span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)' }}>
                 ,{String(Math.round((animatedFilteredTotal % 1) * 100)).padStart(2, '0')}&nbsp;€
               </span>
             </div>
@@ -250,12 +250,15 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                 <button type="button" onClick={() => setActiveCategory(null)} style={pillStyle(activeCategory === null)}>
                   {t.expenses.variable.allCategories}
                 </button>
-                {categoriesWithExpenses.map(c => (
-                  <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
-                    <span style={{ fontSize: 15, lineHeight: 1 }}>{c.icon}</span>
-                    <span>{c.name}</span>
-                  </button>
-                ))}
+                {categoriesWithExpenses.map(c => {
+                  const Icon = CATEGORY_ICON_MAP[c.icon ?? ''] ?? Tag
+                  return (
+                    <button key={c.id} type="button" onClick={() => setActiveCategory(activeCategory === c.id ? null : (c.id ?? null))} style={pillStyle(activeCategory === c.id)}>
+                      <Icon size={14} color="currentColor" strokeWidth={1.8} />
+                      <span>{c.name}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}

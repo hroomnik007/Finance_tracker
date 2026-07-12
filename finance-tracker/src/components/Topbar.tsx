@@ -79,10 +79,11 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         width: size, height: size, borderRadius: size * 0.34, flexShrink: 0, cursor: 'pointer',
         background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: '#fff', fontSize: size * 0.42,
       }}
     >
-      Fv
+      <svg width={size * 0.47} height={size * 0.47} viewBox="0 0 24 24" fill="none">
+        <path d="M4 20V10M11 20V4M18 20v-7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+      </svg>
     </div>
   )
 

@@ -366,7 +366,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
               }}>
                 {Math.floor(animatedTotalSaved).toLocaleString('sk-SK')}
               </span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)' }}>
                 ,{String(Math.round((animatedTotalSaved % 1) * 100)).padStart(2, '0')}&nbsp;€
               </span>
             </div>

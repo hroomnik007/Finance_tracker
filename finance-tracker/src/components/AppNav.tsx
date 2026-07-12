@@ -121,8 +121,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
             width: 34, height: 34, borderRadius: 11, flexShrink: 0,
             background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: '#fff', fontSize: 14,
-          }}>Fv</div>
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M4 20V10M11 20V4M18 20v-7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+          </div>
           {isExpanded && (
             <div>
               <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>Finvu</span>

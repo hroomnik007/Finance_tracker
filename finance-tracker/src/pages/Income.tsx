@@ -190,7 +190,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
               }}>
                 +{Math.floor(animatedTotal).toLocaleString('sk-SK')}
               </span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)' }}>
                 ,{String(Math.round((animatedTotal % 1) * 100)).padStart(2, '0')}&nbsp;€
               </span>
             </div>

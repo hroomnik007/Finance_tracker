@@ -13,13 +13,13 @@ interface ExpenseHeatmapProps {
   onNavigate?: (page: 'variable-expenses') => void
 }
 
-function getDayColor(amount: number, maxAmount: number): string {
-  if (amount === 0) return 'var(--aurora-gline)'
-  const ratio = amount / maxAmount
-  if (ratio < 0.25) return '#4C3A8A'
-  if (ratio < 0.5) return '#6D28D9'
-  if (ratio < 0.75) return '#8B5CF6'
-  return '#C4B5FD'
+// Same small/stredné/veľké severity thresholds and colors as the Fixné
+// výdavky "Kalendár mesiaca" widget (FixedExpenses.tsx), applied to the
+// day's total variable-expense amount instead of fixed-expense amount.
+function severityColor(amount: number): string {
+  if (amount >= 100) return 'rgba(251,113,133,0.6)'
+  if (amount >= 20) return 'rgba(251,191,36,0.55)'
+  return 'rgba(139,92,246,0.5)'
 }
 
 type TooltipState = {
@@ -37,8 +37,6 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const [lastClickedDay, setLastClickedDay] = useState<string | null>(null)
 
   const daysInMonth = new Date(year, month, 0).getDate()
-  const firstDayOfMonth = new Date(year, month - 1, 1).getDay()
-  const startOffset = (firstDayOfMonth + 6) % 7
 
   const dailyTotals: Record<string, number> = {}
   const dailyExpenses: Record<string, VariableExpense[]> = {}
@@ -48,18 +46,9 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
     dailyExpenses[exp.date].push(exp)
   }
 
-  const maxAmount = Math.max(...Object.values(dailyTotals), 1)
-
-  const cells: (number | null)[] = Array(startOffset).fill(null)
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(d)
-  }
-  while (cells.length % 7 !== 0) cells.push(null)
-
-  const weeks: (number | null)[][] = []
-  for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7))
-  }
+  const todayStr = new Date().toISOString().split('T')[0]
+  const isCurrentMonth = todayStr.startsWith(`${year}-${String(month).padStart(2, '0')}`)
+  const todayDay = isCurrentMonth ? new Date().getDate() : 0
 
   const getCatIcon = (categoryId: string) =>
     categories.find(c => c.id === categoryId)?.icon ?? '📦'
@@ -69,105 +58,97 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
 
   return (
     <GlassCard radius={16} style={{ padding: 20, height: '100%', boxSizing: 'border-box' }}>
-      <h3 className="text-center lg:text-left" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)', marginBottom: 4 }}>
+      <h3 className="text-center lg:text-left" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
         {t.dashboard.heatmapTitle}
       </h3>
       <p className="text-center lg:text-left" style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginBottom: 12, textTransform: 'capitalize' }}>
         {monthLabel}
       </p>
 
-      {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
-        {t.daysShort.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', fontWeight: 600, padding: '2px 0' }}>
-            {d}
-          </div>
-        ))}
-      </div>
+      {/* Day-strip — wrapping row of day pills, color-coded by daily spend severity */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const day = i + 1
+          const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const amount = dailyTotals[dateStr] || 0
+          const hasSpend = amount > 0
+          const isToday = todayDay === day
+          const isPast = todayDay > 0 && day < todayDay
+          const isSelected = lastClickedDay === dateStr
 
-      {/* Weeks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, position: 'relative', maxHeight: 160, overflow: 'hidden' }}>
-        {weeks.map((week, wi) => (
-          <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
-            {week.map((day, di) => {
-              if (day === null) {
-                return <div key={di} style={{ height: 12, borderRadius: 3 }} />
-              }
-              const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-              const amount = dailyTotals[dateStr] || 0
-              const color = getDayColor(amount, maxAmount)
-              const isToday = dateStr === new Date().toISOString().split('T')[0]
-              const isSelected = lastClickedDay === dateStr
-
-              return (
-                <div
-                  key={di}
-                  style={{
-                    height: 12,
-                    borderRadius: 6,
-                    backgroundColor: color,
-                    cursor: amount > 0 ? 'pointer' : 'default',
-                    border: isSelected ? '1px solid #F59E0B' : isToday ? '1px solid #A78BFA' : '1px solid transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 9,
-                    color: amount > 0 ? 'rgba(255,255,255,0.6)' : 'var(--aurora-faint)',
-                    fontWeight: 500,
-                    position: 'relative',
-                    transition: 'filter 0.15s',
-                  }}
-                  onMouseEnter={e => {
-                    if (amount > 0) {
-                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                      setTooltip({
-                        date: dateStr,
-                        amount,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top - 8,
-                        dayExpenses: dailyExpenses[dateStr] ?? [],
-                      })
-                    }
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                  onClick={() => {
-                    if (amount === 0) return
-                    if (lastClickedDay === dateStr) {
-                      if (onNavigate) onNavigate('variable-expenses')
-                      setLastClickedDay(null)
-                    } else {
-                      setLastClickedDay(dateStr)
-                    }
-                  }}
-                  onTouchStart={e => {
-                    if (amount > 0) {
-                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                      setTooltip({
-                        date: dateStr,
-                        amount,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top - 8,
-                        dayExpenses: dailyExpenses[dateStr] ?? [],
-                      })
-                      setTimeout(() => setTooltip(null), 2500)
-                    }
-                  }}
-                >
-                  {day}
-                </div>
-              )
-            })}
-          </div>
-        ))}
+          return (
+            <div
+              key={day}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: hasSpend ? severityColor(amount) : 'var(--aurora-glass)',
+                cursor: hasSpend ? 'pointer' : 'default',
+                border: isSelected ? '1.5px solid #F59E0B' : isToday ? '1.5px solid var(--aurora-violet)' : '1px solid var(--aurora-gline)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                fontWeight: 600,
+                fontFamily: "'Outfit', sans-serif",
+                color: hasSpend ? 'white' : isToday ? 'var(--aurora-violet)' : 'var(--aurora-faint)',
+                opacity: isPast ? 0.55 : 1,
+                position: 'relative',
+                transition: 'transform 0.12s',
+              }}
+              onMouseEnter={e => {
+                if (hasSpend) {
+                  (e.currentTarget as HTMLElement).style.transform = 'scale(1.12)'
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                  setTooltip({
+                    date: dateStr,
+                    amount,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top - 8,
+                    dayExpenses: dailyExpenses[dateStr] ?? [],
+                  })
+                }
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.transform = 'scale(1)'
+                setTooltip(null)
+              }}
+              onClick={() => {
+                if (amount === 0) return
+                if (lastClickedDay === dateStr) {
+                  if (onNavigate) onNavigate('variable-expenses')
+                  setLastClickedDay(null)
+                } else {
+                  setLastClickedDay(dateStr)
+                }
+              }}
+              onTouchStart={e => {
+                if (amount > 0) {
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                  setTooltip({
+                    date: dateStr,
+                    amount,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top - 8,
+                    dayExpenses: dailyExpenses[dateStr] ?? [],
+                  })
+                  setTimeout(() => setTooltip(null), 2500)
+                }
+              }}
+            >
+              {day}
+            </div>
+          )
+        })}
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
-        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{t.dashboard.heatmapLess}</span>
-        {['var(--aurora-gline)', '#4C3A8A', '#6D28D9', '#8B5CF6', '#C4B5FD'].map(c => (
-          <div key={c} style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: c }} />
-        ))}
-        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{t.dashboard.heatmapMore}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 12, flexWrap: 'wrap' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(139,92,246,0.5)', display: 'inline-block' }} />malé</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(251,191,36,0.55)', display: 'inline-block' }} />stredné</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(251,113,133,0.6)', display: 'inline-block' }} />veľké (≥100€)</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'transparent', border: '1.5px solid var(--aurora-violet)', display: 'inline-block' }} />dnes</span>
       </div>
 
       {/* Tooltip — portaled to <body> because GlassCard's backdrop-filter

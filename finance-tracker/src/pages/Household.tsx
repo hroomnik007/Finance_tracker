@@ -154,7 +154,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
             }}>
               {balance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}
             </span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)' }}>
               ,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}&nbsp;€
             </span>
           </div>
@@ -313,7 +313,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
               Live
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 8 }}>
             {activityFeed.map((a, i) => {
               const member = householdData?.members.find(m => m.id === a.created_by)
               const name = a.created_by_name ?? member?.name ?? '?'

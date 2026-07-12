@@ -388,14 +388,18 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     try { await updateAvatar(value); await refreshUser() } catch { /* non-critical */ }
                   }}
                   style={{
-                    flexShrink: 0, width: 32, height: 32, borderRadius: '50%',
-                    background: `linear-gradient(135deg,${c1},${c2})`,
-                    border: active ? '2px solid var(--aurora-violet)' : '1px solid var(--aurora-gline)',
+                    position: 'relative', flexShrink: 0, width: 32, height: 32, borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: `color-mix(in srgb, ${c1} 18%, var(--aurora-bg))`,
+                    border: active ? '2px solid var(--aurora-hi)' : '1px solid var(--aurora-gline)',
+                    boxShadow: active ? '0 0 0 3px rgba(139,92,246,.25)' : 'none',
                     cursor: 'pointer', transition: 'all 0.15s',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
-                  <span style={{ color: 'white', fontWeight: 700, fontSize: 13, fontFamily: "'Outfit', sans-serif" }}>{initial}</span>
+                  <div style={{ position: 'absolute', width: 26, height: 26, borderRadius: '50%', background: c1, filter: 'blur(8px)', top: -5, left: -5 }} />
+                  <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: c2, filter: 'blur(8px)', bottom: -6, right: -4 }} />
+                  <span style={{ position: 'relative', zIndex: 2, color: 'white', fontWeight: 700, fontSize: 13, fontFamily: "'Outfit', sans-serif", textShadow: '0 1px 3px rgba(0,0,0,.25)' }}>{initial}</span>
                 </button>
               )
             })}

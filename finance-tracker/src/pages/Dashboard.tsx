@@ -334,7 +334,7 @@ const upcomingFixed = useMemo(() => {
         }}>
           {heroBalance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}
         </span>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)' }}>
           ,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}&nbsp;€
         </span>
       </div>
@@ -532,7 +532,7 @@ const upcomingFixed = useMemo(() => {
     <>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-          <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.dashboard.upcomingPayments}</h3>
+          <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: 'var(--aurora-hi)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{t.dashboard.upcomingPayments}</h3>
           {upcomingFixed.length > 0 && (
             <button
               onClick={() => onNavigate('fixed-expenses')}
