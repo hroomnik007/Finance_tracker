@@ -50,6 +50,7 @@ import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { TrackingDateOnboarding } from './components/TrackingDateOnboarding'
 import { CommandPalette } from './components/CommandPalette'
 import { updateUserSettings, sessionCheck } from './api/auth'
+import { resolveTheme, type ThemePreference } from './utils/theme'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -60,8 +61,8 @@ import { updateUserSettings, sessionCheck } from './api/auth'
     const compactKey = isMobile ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
     const compactDefault = isMobile ? 'true' : 'false'
     const compact = JSON.parse(localStorage.getItem(compactKey) ?? compactDefault) as boolean
-    const theme = localStorage.getItem('theme_preference') ?? 'dark'
-    const resolvedTheme = theme === 'system' ? 'dark' : theme
+    const theme = (localStorage.getItem('theme_preference') ?? 'dark') as ThemePreference
+    const resolvedTheme = resolveTheme(theme)
     if (accent) html.style.setProperty('--accent-color', accent)
     html.classList.toggle('compact', compact)
     html.setAttribute('data-theme', resolvedTheme)
@@ -337,6 +338,19 @@ function App() {
     updateUserSettings({ theme: next }).catch(() => {})
   }
 
+  // Keep data-theme in sync with the OS preference while "system" is selected
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: light)')
+    const handler = () => {
+      const pref = (localStorage.getItem('theme_preference') ?? 'dark') as ThemePreference
+      if (pref === 'system') {
+        document.documentElement.setAttribute('data-theme', resolveTheme('system'))
+      }
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
   const handleLogout = async () => {
     hasNavigated.current = false
     setPage('dashboard')
@@ -466,6 +480,7 @@ function App() {
           onOpenProfile={() => setIsProfileOpen(true)}
           onOpenAdd={() => { if (page === 'savings') setSavingsFabTrigger(v => v + 1); else setFabTrigger(v => v + 1) }}
           onNavigate={setPage}
+          onToggleTheme={handleToggleTheme}
         />
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <Suspense fallback={null}>

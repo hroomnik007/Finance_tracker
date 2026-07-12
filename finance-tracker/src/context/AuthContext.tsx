@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { setAccessToken, setInitializingAuth } from '../api/client'
+import { resolveTheme, type ThemePreference } from '../utils/theme'
 import {
   login as apiLogin,
   register as apiRegister,
@@ -101,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (me.theme) {
           try {
             localStorage.setItem('theme_preference', me.theme)
-            document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
+            document.documentElement.setAttribute('data-theme', resolveTheme(me.theme as ThemePreference))
           } catch { /* ignore */ }
         }
         if (me.language) applyLanguageSetting(me.language)
@@ -137,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (sessionId) localStorage.setItem('finvu_session_id', sessionId)
       if (me.theme) {
         localStorage.setItem('theme_preference', me.theme)
-        document.documentElement.setAttribute('data-theme', me.theme !== 'system' ? me.theme : 'dark')
+        document.documentElement.setAttribute('data-theme', resolveTheme(me.theme as ThemePreference))
       }
       if (me.language) applyLanguageSetting(me.language)
     } catch { /* ignore */ }

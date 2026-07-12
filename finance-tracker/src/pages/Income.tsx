@@ -185,7 +185,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
               <span style={{
                 fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-                background: 'linear-gradient(120deg, #fff, var(--aurora-emerald))',
+                background: 'linear-gradient(120deg, var(--aurora-hi), var(--aurora-emerald))',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}>
                 +{Math.floor(animatedTotal).toLocaleString('sk-SK')}

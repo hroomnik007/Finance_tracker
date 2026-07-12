@@ -19,13 +19,17 @@ interface TopbarProps {
   onOpenProfile: () => void
   onOpenAdd?: () => void
   onNavigate?: (page: Page) => void
+  onToggleTheme: () => void
 }
 
-export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd, onNavigate }: TopbarProps) {
+export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewChange, onOpenProfile, onOpenAdd, onNavigate, onToggleTheme }: TopbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
+    try {
+      const current = document.documentElement.getAttribute('data-theme')
+      return current === 'light' ? 'light' : 'dark'
+    } catch { return 'dark' }
   })
 
   useEffect(() => {
@@ -88,7 +92,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         onClick={prevMonth}
         disabled={!canGoPrev}
         style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: canGoPrev ? 'pointer' : 'default', color: canGoPrev ? 'var(--aurora-lo)' : 'var(--aurora-faint)', borderRadius: 7 }}
-        onMouseEnter={e => { if (canGoPrev) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.08)' }}
+        onMouseEnter={e => { if (canGoPrev) (e.currentTarget as HTMLElement).style.background = 'var(--aurora-hover)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
         <ChevronLeft size={14} />
@@ -97,7 +101,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         {t.months[month - 1]} {year}
       </span>
       <button onClick={nextMonth} style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-lo)', borderRadius: 7 }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.08)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--aurora-hover)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
         <ChevronRight size={14} />
@@ -148,23 +152,19 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     </button>
   )
 
-  // Light theme isn't implemented yet — the toggle is disabled rather than
-  // left clickable-but-broken. Restore an onClick + toggleTheme() once a
-  // real light theme ships.
   const themeToggleBtn = (
     <button
-      disabled
+      onClick={onToggleTheme}
       style={{
         width: 36, height: 36, borderRadius: '50%',
         background: 'var(--aurora-glass)',
         border: '1px solid var(--aurora-gline)',
-        cursor: 'not-allowed', display: 'flex',
+        cursor: 'pointer', display: 'flex',
         alignItems: 'center', justifyContent: 'center',
-        color: 'var(--aurora-faint)', flexShrink: 0,
-        opacity: 0.5,
+        color: 'var(--aurora-lo)', flexShrink: 0,
       }}
-      title="Svetlý režim čoskoro"
-      aria-label="Svetlý režim čoskoro"
+      title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
+      aria-label={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
     >
       {theme === 'dark' ? <Sun size={16} strokeWidth={1.8} /> : <Moon size={16} strokeWidth={1.8} />}
     </button>

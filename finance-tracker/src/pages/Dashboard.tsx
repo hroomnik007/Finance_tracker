@@ -329,7 +329,7 @@ const upcomingFixed = useMemo(() => {
       <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
         <span style={{
           fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-          background: `linear-gradient(120deg, #fff, ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
+          background: `linear-gradient(120deg, var(--aurora-hi), ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
           WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
         }}>
           {heroBalance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}
@@ -341,7 +341,7 @@ const upcomingFixed = useMemo(() => {
       <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
         <div
           onClick={() => onNavigate('income')}
-          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.1)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--aurora-hover)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--aurora-glass)' }}
           style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0, cursor: 'pointer', transition: 'background 0.15s' }}
         >
@@ -350,7 +350,7 @@ const upcomingFixed = useMemo(() => {
         </div>
         <div
           onClick={() => onNavigate('variable-expenses')}
-          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.1)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--aurora-hover)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--aurora-glass)' }}
           style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0, cursor: 'pointer', transition: 'background 0.15s' }}
         >
@@ -392,7 +392,7 @@ const upcomingFixed = useMemo(() => {
                     endAngle={-270}
                     isAnimationActive={false}
                   >
-                    <Cell fill="rgba(255,255,255,.08)" />
+                    <Cell fill="var(--aurora-gline)" />
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
@@ -585,7 +585,7 @@ const upcomingFixed = useMemo(() => {
                 </span>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: barColor }}>{Math.round(b.percentage)}%</span>
               </div>
-              <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+              <div style={{ height: 6, borderRadius: 99, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', borderRadius: 99, width: `${Math.min(b.percentage, 100)}%`, background: barColor }} />
               </div>
             </div>
@@ -620,7 +620,7 @@ const upcomingFixed = useMemo(() => {
           )}
           {monthChallengeTarget > 0 && (
             <>
-              <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+              <div style={{ height: 8, borderRadius: 99, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
                 <div
                   style={{
                     height: '100%', borderRadius: 99,
@@ -672,7 +672,7 @@ const upcomingFixed = useMemo(() => {
                     </span>
                     <span style={{ fontSize: 11, fontFamily: "'Outfit', sans-serif", color: 'var(--aurora-faint)', flexShrink: 0, marginLeft: 8 }}>{pctLabel}</span>
                   </div>
-                  <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+                  <div style={{ height: 6, borderRadius: 99, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: goal.color ?? 'var(--aurora-violet)', transition: 'width 0.4s' }} />
                   </div>
                 </div>
@@ -747,7 +747,7 @@ const upcomingFixed = useMemo(() => {
           style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) setShowTrackingModal(false) }}
         >
-          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
               <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>{t.dashboard.trackingFromTitle}</h3>
               <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.dashboard.trackingFromNote}</p>
@@ -762,7 +762,7 @@ const upcomingFixed = useMemo(() => {
                   background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
                   borderRadius: 10, padding: '12px 14px', fontSize: 14,
                   color: 'var(--aurora-hi)', width: '100%', outline: 'none',
-                  fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box', colorScheme: 'dark',
+                  fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box', colorScheme: 'var(--aurora-color-scheme)',
                 }}
               />
             </div>

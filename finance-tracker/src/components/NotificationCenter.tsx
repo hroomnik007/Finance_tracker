@@ -227,7 +227,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         aria-label={t.notifications.ariaLabel}
         style={{
           width: 36, height: 36, borderRadius: '50%',
-          background: open ? 'rgba(255,255,255,.1)' : 'var(--aurora-glass)',
+          background: open ? 'var(--aurora-hover)' : 'var(--aurora-glass)',
           border: '1px solid var(--aurora-gline)',
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--aurora-lo)', flexShrink: 0, position: 'relative',

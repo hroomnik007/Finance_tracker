@@ -229,7 +229,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
               <span style={{
                 fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-                background: 'linear-gradient(120deg, #fff, var(--aurora-rose))',
+                background: 'linear-gradient(120deg, var(--aurora-hi), var(--aurora-rose))',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}>
                 −{Math.floor(animatedFilteredTotal).toLocaleString('sk-SK')}
@@ -387,7 +387,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
                         </div>
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: barColor, background: barColor + '20', padding: '2px 6px', borderRadius: 20, flexShrink: 0, marginLeft: 6 }}>{Math.round(bs.percentage)}%</span>
                       </div>
-                      <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: 6 }}>
+                      <div style={{ height: 4, borderRadius: 2, background: 'var(--aurora-gline)', overflow: 'hidden', marginBottom: 6 }}>
                         <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: barColor }} />
                       </div>
                       <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{formatAmount(bs.spent)} / {formatAmount(bs.limit)}</div>
@@ -449,7 +449,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
               <span>{liveBudget?.categoryName}</span>
               <span>{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
             </div>
-            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
               <div style={{ height: '100%', borderRadius: 2, width: `${livePct}%`, background: liveBudgetBarColor }} />
             </div>
           </div>

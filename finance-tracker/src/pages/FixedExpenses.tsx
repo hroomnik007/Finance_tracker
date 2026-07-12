@@ -254,7 +254,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               </Pie>
               <Tooltip
                 formatter={(v: number) => [formatAmount(v)]}
-                contentStyle={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 8, fontSize: 12, fontFamily: "'Manrope', sans-serif", color: 'var(--aurora-hi)' }}
+                contentStyle={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 8, fontSize: 12, fontFamily: "'Manrope', sans-serif", color: 'var(--aurora-hi)' }}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -314,7 +314,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
               <span style={{
                 fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-                background: 'linear-gradient(120deg, #fff, var(--aurora-amber))',
+                background: 'linear-gradient(120deg, var(--aurora-hi), var(--aurora-amber))',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}>
                 {Math.floor(animatedFilteredTotal).toLocaleString('sk-SK')}
@@ -691,14 +691,14 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             <button
               type="button"
               onClick={() => setDayOfMonth(d => String(Math.max(1, parseInt(d || '1') - 1)))}
-              style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--aurora-gline)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >−</button>
             <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-lo)', fontWeight: 600 }}>{t.expenses.fixed.dueDay}</span>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)', minWidth: 14, textAlign: 'center' }}>{dayOfMonth}</span>
             <button
               type="button"
               onClick={() => setDayOfMonth(d => String(Math.min(28, parseInt(d || '1') + 1)))}
-              style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--aurora-gline)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >+</button>
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#FBBF24,#f59e0b)', border: '1px solid transparent', borderRadius: 12, padding: '8px 11px', fontSize: 11, color: '#fff', fontWeight: 600, fontFamily: "'Manrope', sans-serif" }}>

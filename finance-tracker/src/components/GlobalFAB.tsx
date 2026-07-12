@@ -305,7 +305,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
         >
           <div
             className="modal-in"
-            style={{ width: '100%', maxWidth: 380, background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 26, padding: 20, boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}
+            style={{ width: '100%', maxWidth: 380, background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 26, padding: 20, boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
@@ -386,7 +386,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
               <span>{liveBudget?.categoryName}</span>
               <span>{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
             </div>
-            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
               <div style={{ height: '100%', borderRadius: 2, width: `${livePct}%`, background: livePctColor }} />
             </div>
           </div>
@@ -474,14 +474,14 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
             <button
               type="button"
               onClick={() => setFixDay(d => String(Math.max(1, parseInt(d || '1') - 1)))}
-              style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--aurora-gline)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >−</button>
             <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-lo)', fontWeight: 600 }}>{t.expenses.fixed.dayLabel}</span>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)', minWidth: 14, textAlign: 'center' }}>{fixDay}</span>
             <button
               type="button"
               onClick={() => setFixDay(d => String(Math.min(31, parseInt(d || '1') + 1)))}
-              style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--aurora-gline)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >+</button>
           </div>
           <div style={pillChipStyle(true, '#FBBF24', '#f59e0b')}>
@@ -539,7 +539,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
               style={{
                 width: 22, height: 22, borderRadius: '50%', background: c,
                 border: 'none', cursor: 'pointer', flexShrink: 0,
-                boxShadow: catColor === c ? `0 0 0 2px #14121C, 0 0 0 4px ${c}` : 'none',
+                boxShadow: catColor === c ? `0 0 0 2px var(--aurora-panel), 0 0 0 4px ${c}` : 'none',
                 transition: 'box-shadow 0.15s',
               }}
             />

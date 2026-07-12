@@ -16,7 +16,7 @@
    touching the existing v3 (DM Sans) palette used
    by routes not yet migrated.
 ───────────────────────────────────────── */
-:root {
+:root, :root[data-theme="dark"] {
   --aurora-bg:      #07060B;
   --aurora-hi:      #F5F3FF;
   --aurora-lo:      #A79FC9;
@@ -29,6 +29,49 @@
   --aurora-amber:   #FBBF24;
   --aurora-glass:   rgba(255,255,255,.06);
   --aurora-gline:   rgba(255,255,255,.12);
+  --aurora-hover:   rgba(255,255,255,.08);
+
+  /* Hero card treatment — glow-based in dark, shadow-based in light */
+  --aurora-hero-bg:      var(--aurora-glass);
+  --aurora-blob-opacity:      .55;
+  --aurora-blob-opacity-soft: .35;
+  --aurora-card-shadow:  none;
+  --aurora-hero-shadow:  none;
+
+  /* Solid (non-glass) elevated surface — modals, dropdowns, sidebar, tooltips */
+  --aurora-panel:         #14121C;
+  --aurora-color-scheme:  dark;
+}
+
+/* ─────────────────────────────────────────
+   AURORA GLASS — LIGHT THEME
+   Warm cream surface, deepened accents for
+   contrast, glassmorphism inverted to a soft
+   drop shadow instead of the dark glow.
+───────────────────────────────────────── */
+[data-theme="light"] {
+  --aurora-bg:      #FBF7EF;
+  --aurora-hi:      #221A2E;
+  --aurora-lo:      #6E6580;
+  --aurora-faint:   #9A93AC;
+  --aurora-violet:  #7C5CE0;
+  --aurora-fuchsia: #DB2777;
+  --aurora-cyan:    #0891A8;
+  --aurora-emerald: #059669;
+  --aurora-rose:    #E11D48;
+  --aurora-amber:   #B45309;
+  --aurora-glass:   rgba(255,255,255,.72);
+  --aurora-gline:   rgba(34,26,46,.09);
+  --aurora-hover:   rgba(34,26,46,.05);
+
+  --aurora-hero-bg:      linear-gradient(145deg,#fff,#F3ECDD);
+  --aurora-blob-opacity:      .22;
+  --aurora-blob-opacity-soft: .14;
+  --aurora-card-shadow:  0 1px 3px rgba(34,26,46,.05);
+  --aurora-hero-shadow:  0 4px 20px rgba(34,26,46,.06);
+
+  --aurora-panel:         #FFFDF8;
+  --aurora-color-scheme:  light;
 }
 
 /* === RESET === */
@@ -755,9 +798,9 @@ html.compact .card { padding: var(--card-padding); }
 [data-theme="light"] .input-field::placeholder { color: var(--text3) !important; }
 
 [data-theme="light"] .bottom-nav-bar {
-  background: var(--bg2) !important;
-  border-color: var(--border) !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12) !important;
+  background: rgba(255,253,248,.85) !important;
+  border-color: var(--aurora-gline) !important;
+  box-shadow: 0 2px 12px rgba(34,26,46,0.10) !important;
 }
 
 [data-theme="light"] aside nav button { color: var(--text2); }

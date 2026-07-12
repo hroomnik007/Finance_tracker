@@ -20,6 +20,7 @@ export function GlassCard({ children, style, className, onClick, radius = 20, bl
         borderRadius: radius,
         backdropFilter: `blur(${blur}px)`,
         WebkitBackdropFilter: `blur(${blur}px)`,
+        boxShadow: 'var(--aurora-card-shadow)',
         padding: 16,
         ...style,
       }}

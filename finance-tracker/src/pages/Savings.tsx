@@ -361,7 +361,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
             <div style={{ display: 'flex', alignItems: 'baseline' }}>
               <span style={{
                 fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-                background: 'linear-gradient(120deg, #fff, var(--aurora-emerald))',
+                background: 'linear-gradient(120deg, var(--aurora-hi), var(--aurora-emerald))',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}>
                 {Math.floor(animatedTotalSaved).toLocaleString('sk-SK')}
@@ -377,7 +377,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
             )}
           </div>
           {totalTarget > 0 && (
-            <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginTop: 12 }}>
+            <div style={{ height: 8, borderRadius: 99, background: 'var(--aurora-gline)', overflow: 'hidden', marginTop: 12 }}>
               <div style={{ height: '100%', width: `${Math.min(overallPct, 100)}%`, background: 'linear-gradient(90deg,var(--aurora-emerald),var(--aurora-cyan))', borderRadius: 99, transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }} />
             </div>
           )}
@@ -485,7 +485,7 @@ function MiniRing({ pct, size, label, gradientId }: {
   const circ = 2 * Math.PI * r
   const offset = circ * (1 - Math.min(pct, 100) / 100)
   const c = size / 2
-  const trackColor = pct === 0 ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.08)'
+  const trackColor = pct === 0 ? 'rgba(139,92,246,0.2)' : 'var(--aurora-gline)'
   return (
     <svg width={size} height={size} style={{ flexShrink: 0 }}>
       <defs>

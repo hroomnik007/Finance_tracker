@@ -53,7 +53,7 @@ export function CompactModal({
         className="modal-in"
         style={{
           width: '100%', maxWidth,
-          background: '#14121C',
+          background: 'var(--aurora-panel)',
           border: '1px solid var(--aurora-gline)',
           borderRadius: 26,
           padding: 20,

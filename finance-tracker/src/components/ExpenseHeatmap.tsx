@@ -14,7 +14,7 @@ interface ExpenseHeatmapProps {
 }
 
 function getDayColor(amount: number, maxAmount: number): string {
-  if (amount === 0) return 'rgba(255,255,255,.05)'
+  if (amount === 0) return 'var(--aurora-gline)'
   const ratio = amount / maxAmount
   if (ratio < 0.25) return '#4C3A8A'
   if (ratio < 0.5) return '#6D28D9'
@@ -112,7 +112,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 9,
-                    color: amount > 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)',
+                    color: amount > 0 ? 'rgba(255,255,255,0.6)' : 'var(--aurora-faint)',
                     fontWeight: 500,
                     position: 'relative',
                     transition: 'filter 0.15s',
@@ -164,7 +164,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
       {/* Legend */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{t.dashboard.heatmapLess}</span>
-        {['rgba(255,255,255,.05)', '#4C3A8A', '#6D28D9', '#8B5CF6', '#C4B5FD'].map(c => (
+        {['var(--aurora-gline)', '#4C3A8A', '#6D28D9', '#8B5CF6', '#C4B5FD'].map(c => (
           <div key={c} style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: c }} />
         ))}
         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{t.dashboard.heatmapMore}</span>
@@ -181,7 +181,7 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
             left: tooltip.x,
             top: tooltip.y,
             transform: 'translateX(-50%) translateY(-100%)',
-            background: '#14121C',
+            background: 'var(--aurora-panel)',
             border: legendBorder,
             borderRadius: 10,
             padding: '8px 12px',

@@ -30,7 +30,7 @@ export function ForecastCard({
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ position: 'relative', width: SIZE, height: SIZE, flexShrink: 0 }}>
           <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={STROKE} />
+            <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="var(--aurora-gline)" strokeWidth={STROKE} />
             <circle
               cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none"
               stroke="var(--aurora-violet)" strokeWidth={STROKE} strokeLinecap="round"

@@ -149,7 +149,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
           <div style={{ display: 'flex', alignItems: 'baseline' }}>
             <span style={{
               fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-              background: `linear-gradient(120deg, #fff, ${balance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
+              background: `linear-gradient(120deg, var(--aurora-hi), ${balance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
               WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
             }}>
               {balance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}

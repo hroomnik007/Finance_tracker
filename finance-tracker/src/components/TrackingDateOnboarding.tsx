@@ -72,7 +72,7 @@ export function TrackingDateOnboarding({ onDone }: Props) {
               outline: 'none',
               fontFamily: 'inherit',
               boxSizing: 'border-box',
-              colorScheme: 'dark',
+              colorScheme: 'var(--aurora-color-scheme)',
             }}
           />
           <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>

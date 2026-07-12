@@ -59,7 +59,7 @@ export function DateInput({ value, onChange, compact }: DateInputProps) {
           type="date"
           value={value}
           onChange={e => { if (e.target.value) onChange(e.target.value) }}
-          style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer', fontSize: 0, border: 'none', background: 'none', colorScheme: 'dark' }}
+          style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer', fontSize: 0, border: 'none', background: 'none', colorScheme: 'var(--aurora-color-scheme)' }}
         />
       </div>
     )
@@ -73,7 +73,7 @@ export function DateInput({ value, onChange, compact }: DateInputProps) {
         position: 'relative',
         width: '100%',
         height: '52px',
-        background: 'rgba(255,255,255,0.05)',
+        background: 'var(--aurora-glass)',
         border: '1px solid #4C3A8A',
         borderRadius: '14px',
         display: 'flex',
@@ -109,7 +109,7 @@ export function DateInput({ value, onChange, compact }: DateInputProps) {
           fontSize: 0,
           border: 'none',
           background: 'none',
-          colorScheme: 'dark',
+          colorScheme: 'var(--aurora-color-scheme)',
         }}
       />
     </div>

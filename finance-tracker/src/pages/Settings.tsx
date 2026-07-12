@@ -13,6 +13,7 @@ import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
+import { resolveTheme } from '../utils/theme'
 import { useSettingsContext } from '../context/SettingsContext'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { useTranslation } from '../i18n'
@@ -102,7 +103,7 @@ function ChevronRow({ icon: Icon, iconColor, iconBg, label, sublabel, onClick }:
     <button
       onClick={onClick}
       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 20px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--aurora-hover)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
     >
       <div style={{ width: 34, height: 34, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -223,14 +224,16 @@ export function SettingsPage() {
   }, [])
 
   // ── Section 2: Appearance ─────────────────────────────────────────────────
+  // theme_preference is stored as a raw string (not JSON-encoded) since
+  // App.tsx's pre-render init script and Topbar both read/write it that way.
   const [theme, setThemeState] = useState<'dark' | 'light' | 'system'>(() =>
-    loadLocalPref<'dark' | 'light' | 'system'>('theme_preference', 'dark')
+    (localStorage.getItem('theme_preference') as 'dark' | 'light' | 'system' | null) ?? 'dark'
   )
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      const current = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | 'system'
-      if (current) setThemeState(current)
+      const pref = (localStorage.getItem('theme_preference') as 'dark' | 'light' | 'system' | null) ?? 'dark'
+      setThemeState(pref)
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
@@ -245,9 +248,9 @@ export function SettingsPage() {
 
   function handleThemeChange(next: 'dark' | 'light' | 'system') {
     setThemeState(next)
-    saveLocalPref('theme_preference', next)
+    localStorage.setItem('theme_preference', next)
     const html = document.documentElement
-    html.setAttribute('data-theme', next !== 'system' ? next : 'dark')
+    html.setAttribute('data-theme', resolveTheme(next))
     updateUserSettings({ theme: next }).catch(() => { /* non-critical */ })
   }
 
@@ -797,7 +800,7 @@ export function SettingsPage() {
                         onChange={e => updateSettings({ currency: e.target.value })}
                         style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
                       >
-                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: '#14121C' }}>{c.label}</option>)}
+                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)' }}>{c.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -819,7 +822,7 @@ export function SettingsPage() {
                         onChange={e => updateSettings({ dateFormat: e.target.value })}
                         style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
                       >
-                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: '#14121C' }}>{f.label}</option>)}
+                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)' }}>{f.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -855,7 +858,7 @@ export function SettingsPage() {
                         onChange={e => updateSettings({ currency: e.target.value })}
                         style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
                       >
-                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: '#14121C' }}>{c.label}</option>)}
+                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)' }}>{c.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -877,7 +880,7 @@ export function SettingsPage() {
                         onChange={e => updateSettings({ dateFormat: e.target.value })}
                         style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
                       >
-                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: '#14121C' }}>{f.label}</option>)}
+                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)' }}>{f.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -1056,7 +1059,7 @@ export function SettingsPage() {
                       <ChevronRow
                         icon={Hash}
                         iconColor={hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)'}
-                        iconBg={hasPin ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.05)'}
+                        iconBg={hasPin ? 'rgba(52,211,153,0.12)' : 'var(--aurora-glass)'}
                         label={t.settings.pinCodeLabel}
                         sublabel={hasPin ? <span style={{ color: 'var(--aurora-emerald)', fontWeight: 600 }}>{t.settings.pinIsActive}</span> : t.settings.pinAppLock}
                         onClick={() => setPinSetupOpen(true)}
@@ -1082,11 +1085,11 @@ export function SettingsPage() {
                         disabled={autoLockSaving || !hasPin}
                         style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
                       >
-                        <option value="never" style={{ background: '#14121C' }}>{t.settings.autoLockNever}</option>
-                        <option value="0" style={{ background: '#14121C' }}>Ihneď</option>
-                        <option value="1" style={{ background: '#14121C' }}>{t.settings.autoLock1min}</option>
-                        <option value="5" style={{ background: '#14121C' }}>{t.settings.autoLock5min}</option>
-                        <option value="15" style={{ background: '#14121C' }}>{t.settings.autoLock15min}</option>
+                        <option value="never" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLockNever}</option>
+                        <option value="0" style={{ background: 'var(--aurora-panel)' }}>Ihneď</option>
+                        <option value="1" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLock1min}</option>
+                        <option value="5" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLock5min}</option>
+                        <option value="15" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLock15min}</option>
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -1277,7 +1280,7 @@ export function SettingsPage() {
       {pinRemoveOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
           <div
-            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
+            style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
             className="modal-in"
           >
             <div className="flex items-center justify-between mb-4">
@@ -1307,8 +1310,8 @@ export function SettingsPage() {
                       onClick={() => handlePinRemoveKey(k)}
                       style={{
                         width: 60, height: 60, borderRadius: '50%',
-                        background: k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)',
-                        border: k === '⌫' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                        background: k === '⌫' ? 'transparent' : 'var(--aurora-hover)',
+                        border: k === '⌫' ? 'none' : '1px solid var(--aurora-gline)',
                         color: 'var(--aurora-hi)', fontSize: k === '⌫' ? 16 : 20, fontWeight: 600,
                         cursor: pinRemoveLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1328,7 +1331,7 @@ export function SettingsPage() {
       {/* ── DANGER CONFIRM MODAL ── */}
       {dangerAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>
                 {dangerAction === 'transactions' ? 'Vymazať všetky transakcie' : t.settings.dangerResetTitle}
@@ -1376,7 +1379,7 @@ export function SettingsPage() {
       {/* ── DEACTIVATE ACCOUNT MODAL ── */}
       {deactivateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.deactivateAccount}</h2>
               <button onClick={() => setDeactivateOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}><X size={16} /></button>
@@ -1423,7 +1426,7 @@ export function SettingsPage() {
       {/* ── DELETE ACCOUNT MODAL ── */}
       {deleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.deleteAccount}</h2>
               <button onClick={() => setDeleteOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}><X size={16} /></button>
@@ -1475,7 +1478,7 @@ export function SettingsPage() {
       {/* ── CHANGE PASSWORD MODAL ── */}
       {changePwOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setChangePwOpen(false)}>
-          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 }} className="modal-in" onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 }} className="modal-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>Zmeniť heslo</h2>
               <button onClick={() => setChangePwOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
@@ -1508,7 +1511,7 @@ export function SettingsPage() {
       {/* ── ACTIVE SESSIONS MODAL ── */}
       {sessionsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setSessionsModalOpen(false)}>
-          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420, maxHeight: '80vh', overflowY: 'auto' }} className="modal-in" onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420, maxHeight: '80vh', overflowY: 'auto' }} className="modal-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.activeSessions}</h2>
               <button onClick={() => setSessionsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
@@ -1568,7 +1571,7 @@ export function SettingsPage() {
       {/* ── DEACTIVATION MODAL ── */}
       {deactivationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setDeactivationModalOpen(false)}>
-          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420 }} className="modal-in" onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420 }} className="modal-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.deactivationSection.charAt(0) + t.settings.deactivationSection.slice(1).toLowerCase()}</h2>
               <button onClick={() => setDeactivationModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
@@ -1602,7 +1605,7 @@ export function SettingsPage() {
       {/* ── TRACKING DATE MODAL ── */}
       {trackingModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setTrackingModalOpen(false)}>
-          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 380 }} className="modal-in" onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 380 }} className="modal-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>Sledovanie od dátumu</h2>
               <button onClick={() => setTrackingModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
@@ -1622,7 +1625,7 @@ export function SettingsPage() {
                   background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
                   borderRadius: 10, padding: '11px 14px', fontSize: 14,
                   color: 'var(--aurora-hi)', width: '100%', outline: 'none',
-                  fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box', colorScheme: 'dark',
+                  fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box', colorScheme: 'var(--aurora-color-scheme)',
                 }}
               />
             </div>

@@ -27,16 +27,17 @@ export function HeroCard({ children, variant = 'neutral', style, className }: He
         padding: 24,
         overflow: 'hidden',
         flexShrink: 0,
-        background: 'var(--aurora-glass)',
+        background: 'var(--aurora-hero-bg)',
         border: '1px solid var(--aurora-gline)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: 'var(--aurora-hero-shadow)',
         ...style,
       }}
     >
-      <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.55, zIndex: 0, width: 180, height: 180, background: b1, top: -70, left: -50 }} />
-      <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.55, zIndex: 0, width: 150, height: 150, background: b2, bottom: -60, right: -40 }} />
-      <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.35, zIndex: 0, width: 110, height: 110, background: 'var(--aurora-cyan)', top: 20, right: 20 }} />
+      <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 'var(--aurora-blob-opacity)', zIndex: 0, width: 180, height: 180, background: b1, top: -70, left: -50 }} />
+      <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 'var(--aurora-blob-opacity)', zIndex: 0, width: 150, height: 150, background: b2, bottom: -60, right: -40 }} />
+      <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 'var(--aurora-blob-opacity-soft)', zIndex: 0, width: 110, height: 110, background: 'var(--aurora-cyan)', top: 20, right: 20 }} />
       <div style={{ position: 'relative', zIndex: 2 }}>
         {children}
       </div>

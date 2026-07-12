@@ -129,7 +129,7 @@ function SortableGridCard({ cat, status, formatAmount, t, onEdit, onDelete, seve
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 700, color: 'var(--aurora-rose)', marginBottom: 8 }}>
             -{formatAmount(status?.spent ?? 0)}
           </div>
-          <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: 6 }}>
+          <div style={{ height: 5, borderRadius: 3, background: 'var(--aurora-gline)', overflow: 'hidden', marginBottom: 6 }}>
             <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>
@@ -183,7 +183,7 @@ function SortableListCard(props: CardProps) {
       </div>
       {cat.budgetLimit != null && status && (
         <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: 5, borderRadius: 3, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -254,14 +254,14 @@ function SortableMobileCard({ cat, status, formatAmount, t, onEdit, onDelete, is
               {...listeners}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
+              style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--aurora-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
             >
               <GripVertical size={14} color="var(--aurora-faint)" />
             </div>
           </div>
           {cat.budgetLimit != null && status && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ height: 5, borderRadius: 3, background: 'var(--aurora-gline)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 0.3s' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -443,7 +443,7 @@ export function CategoriesPage() {
               <div style={{ display: 'flex', alignItems: 'baseline' }}>
                 <span style={{
                   fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-                  background: 'linear-gradient(120deg, #fff, var(--aurora-violet))',
+                  background: 'linear-gradient(120deg, var(--aurora-hi), var(--aurora-violet))',
                   WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
                 }}>
                   {Math.floor(animatedHeroSpent).toLocaleString('sk-SK')}
@@ -459,7 +459,7 @@ export function CategoriesPage() {
               )}
             </div>
             {heroTotalLimit > 0 && (
-              <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginTop: 12 }}>
+              <div style={{ height: 8, borderRadius: 99, background: 'var(--aurora-gline)', overflow: 'hidden', marginTop: 12 }}>
                 <div style={{ height: '100%', width: `${Math.min(heroOverallPct, 100)}%`, background: heroBarColor, borderRadius: 99, transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }} />
               </div>
             )}
@@ -653,7 +653,7 @@ export function CategoriesPage() {
               style={{
                 width: 22, height: 22, borderRadius: '50%', background: c,
                 border: 'none', cursor: 'pointer', flexShrink: 0,
-                boxShadow: color === c ? `0 0 0 2px #14121C, 0 0 0 4px ${c}` : 'none',
+                boxShadow: color === c ? `0 0 0 2px var(--aurora-panel), 0 0 0 4px ${c}` : 'none',
                 transition: 'box-shadow 0.15s',
               }}
             />
@@ -724,7 +724,7 @@ export function CategoriesPage() {
         >
           <div
             className="modal-in"
-            style={{ width: '100%', maxWidth: 380, background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 26, padding: 20, boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}
+            style={{ width: '100%', maxWidth: 380, background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 26, padding: 20, boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}
             onClick={e => e.stopPropagation()}
           >
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 10px' }}>Prepísať limit?</p>

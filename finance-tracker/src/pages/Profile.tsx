@@ -80,7 +80,7 @@ function AchievementsTab() {
               <span style={{ position: 'absolute', top: 7, right: 9, fontSize: 12, userSelect: 'none', lineHeight: 1, animation: 'sparkle 0.3s ease' }}>✨</span>
             )}
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'rgba(255,255,255,0.05)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'var(--aurora-glass)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={17} color={a.unlocked ? a.color : 'var(--aurora-faint)'} strokeWidth={2} />
               </div>
               <div style={{ minWidth: 0 }}>
@@ -280,7 +280,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         style={{
           borderRadius: 22,
           overflow: 'hidden',
-          background: '#14121C',
+          background: 'var(--aurora-panel)',
           border: '1px solid var(--aurora-gline)',
           width: '100%',
           maxWidth: 520,
@@ -301,14 +301,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           flexShrink: 0,
         }}>
           {/* Atmosphere blobs */}
-          <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.55, zIndex: 0, width: 180, height: 180, background: 'var(--aurora-violet)', top: -70, left: -50 }} />
-          <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.55, zIndex: 0, width: 150, height: 150, background: 'var(--aurora-fuchsia)', top: -40, right: -40 }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 'var(--aurora-blob-opacity)', zIndex: 0, width: 180, height: 180, background: 'var(--aurora-violet)', top: -70, left: -50 }} />
+          <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 'var(--aurora-blob-opacity)', zIndex: 0, width: 150, height: 150, background: 'var(--aurora-fuchsia)', top: -40, right: -40 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,var(--aurora-glass) 50%,transparent 70%)', pointerEvents: 'none' }} />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}
+            style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}
           >
             <X size={16} />
           </button>
@@ -318,7 +318,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Avatar — LEFT */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div
-                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : avatarMonogram ? `linear-gradient(135deg,${avatarMonogram[0]},${avatarMonogram[1]})` : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
+                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : avatarMonogram ? `linear-gradient(135deg,${avatarMonogram[0]},${avatarMonogram[1]})` : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px var(--aurora-bg), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
                 onClick={handlePhotoUpload}
               >
                 {photoUrl ? (
@@ -334,7 +334,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 )}
               </div>
               <div
-                style={{ position: 'absolute', bottom: -2, right: -2, width: 26, height: 26, borderRadius: '50%', background: '#14121C', border: '2px solid var(--aurora-fuchsia)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', cursor: 'pointer' }}
+                style={{ position: 'absolute', bottom: -2, right: -2, width: 26, height: 26, borderRadius: '50%', background: 'var(--aurora-panel)', border: '2px solid var(--aurora-fuchsia)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', cursor: 'pointer' }}
                 onClick={handlePhotoUpload}
               >
                 <Pencil size={10} style={{ color: 'var(--aurora-hi)' }} />
@@ -350,7 +350,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     autoFocus
                     onChange={e => setProfileNameDraft(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { handleSaveProfile(); setEditMode(false) } }}
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 10px', color: 'white', fontSize: 18, fontWeight: 700, outline: 'none', width: '100%', fontFamily: "'Outfit', sans-serif" }}
+                    style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 8, padding: '4px 10px', color: 'var(--aurora-hi)', fontSize: 18, fontWeight: 700, outline: 'none', width: '100%', fontFamily: "'Outfit', sans-serif" }}
                   />
                 ) : (
                   <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0, letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -390,7 +390,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   style={{
                     flexShrink: 0, width: 32, height: 32, borderRadius: '50%',
                     background: `linear-gradient(135deg,${c1},${c2})`,
-                    border: active ? '2px solid rgba(255,255,255,0.75)' : '1px solid var(--aurora-gline)',
+                    border: active ? '2px solid var(--aurora-violet)' : '1px solid var(--aurora-gline)',
                     cursor: 'pointer', transition: 'all 0.15s',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
@@ -581,7 +581,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   <button
                     onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
                     style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--aurora-gline)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--aurora-hover)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><KeyRound size={17} color="var(--aurora-violet)" /></div>
@@ -599,7 +599,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       else { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }
                     }}
                     style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--aurora-hover)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: hasPin ? 'rgba(52,211,153,0.12)' : 'rgba(100,116,139,0.12)', border: `1px solid ${hasPin ? 'rgba(52,211,153,0.2)' : 'rgba(100,116,139,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Hash size={17} color={hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)'} /></div>
@@ -643,7 +643,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
         >
           <div
-            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
+            style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
             onClick={e => e.stopPropagation()}
           >
             {!pinVerified ? (
@@ -735,7 +735,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         >
           <div
             className="rounded-2xl w-full max-w-[360px]"
-            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)' }}
+            style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -795,7 +795,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           onClick={() => setLogoutConfirm(false)}
         >
           <div
-            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
+            style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>

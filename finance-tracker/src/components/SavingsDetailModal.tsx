@@ -189,7 +189,7 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDel
         className="modal-in"
         style={{
           width: '100%', maxWidth: 440,
-          background: '#14121C', border: '1px solid var(--aurora-gline)',
+          background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)',
           borderRadius: 26, padding: 22,
           maxHeight: '90vh', overflowY: 'auto',
           boxShadow: '0 30px 70px rgba(0,0,0,0.6)',
@@ -229,7 +229,7 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDel
                   <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={color} floodOpacity="0.4" />
                 </filter>
               </defs>
-              <circle cx={R_SIZE / 2} cy={R_SIZE / 2} r={R_R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={R_SW} />
+              <circle cx={R_SIZE / 2} cy={R_SIZE / 2} r={R_R} fill="none" stroke="var(--aurora-gline)" strokeWidth={R_SW} />
               <circle cx={R_SIZE / 2} cy={R_SIZE / 2} r={R_R} fill="none" stroke={`url(#ring-${glowId})`} strokeWidth={R_SW}
                 strokeLinecap="round" strokeDasharray={`${R_CIRC}`} strokeDashoffset={`${ringOffset}`}
                 style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1)', filter: `url(#glow-${glowId})` }}
@@ -301,7 +301,7 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDel
             const Icon = r.icon
             return (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderTop: i > 0 ? '1px solid var(--aurora-gline)' : 'none' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--aurora-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={15} color="var(--aurora-lo)" strokeWidth={1.8} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
