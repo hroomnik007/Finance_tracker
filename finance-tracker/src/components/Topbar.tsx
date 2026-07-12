@@ -4,7 +4,6 @@ import type { Page } from '../App'
 import { ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
-import { updateUserSettings } from '../api/auth'
 import { isPhotoUrl, avatarSrc, monogramGradientFor } from '../utils/avatar'
 import { NotificationCenter } from './NotificationCenter'
 
@@ -37,14 +36,6 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem('theme_preference', next)
-    document.documentElement.setAttribute('data-theme', next)
-    updateUserSettings({ theme: next }).catch(() => {})
-  }
 
   const householdEnabled = user?.household_enabled ?? false
   const showMonth = MONTH_PAGES.includes(page)
@@ -157,19 +148,23 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
     </button>
   )
 
+  // Light theme isn't implemented yet — the toggle is disabled rather than
+  // left clickable-but-broken. Restore an onClick + toggleTheme() once a
+  // real light theme ships.
   const themeToggleBtn = (
     <button
-      onClick={toggleTheme}
+      disabled
       style={{
         width: 36, height: 36, borderRadius: '50%',
         background: 'var(--aurora-glass)',
         border: '1px solid var(--aurora-gline)',
-        cursor: 'pointer', display: 'flex',
+        cursor: 'not-allowed', display: 'flex',
         alignItems: 'center', justifyContent: 'center',
-        color: 'var(--aurora-lo)', flexShrink: 0,
+        color: 'var(--aurora-faint)', flexShrink: 0,
+        opacity: 0.5,
       }}
-      title={theme === 'dark' ? 'Svetlý režim' : 'Tmavý režim'}
-      aria-label={theme === 'dark' ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
+      title="Svetlý režim čoskoro"
+      aria-label="Svetlý režim čoskoro"
     >
       {theme === 'dark' ? <Sun size={16} strokeWidth={1.8} /> : <Moon size={16} strokeWidth={1.8} />}
     </button>

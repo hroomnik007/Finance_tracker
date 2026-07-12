@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { VariableExpense, Category } from '../types'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
@@ -169,8 +170,11 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
         <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{t.dashboard.heatmapMore}</span>
       </div>
 
-      {/* Tooltip */}
-      {tooltip && (
+      {/* Tooltip — portaled to <body> because GlassCard's backdrop-filter
+          establishes a containing block for position:fixed descendants,
+          which would otherwise place this at the wrong on-screen spot
+          instead of anchored to the hovered cell. */}
+      {tooltip && createPortal(
         <div
           style={{
             position: 'fixed',
@@ -211,7 +215,8 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
               + {tooltip.dayExpenses.length - 3} ďalších
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </GlassCard>
   )
