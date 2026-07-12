@@ -1,5 +1,11 @@
 import { useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Tag, GripVertical } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Plus, Pencil, Trash2, Tag, GripVertical,
+  UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
+  Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
+  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
+} from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -17,7 +23,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { BottomSheet } from '../components/BottomSheet'
+import { CompactModal } from '../components/CompactModal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { GlassCard } from '../components/GlassCard'
@@ -43,6 +49,16 @@ const PRESET_ICONS = [
   '✈️', '🎮', '🐾', '💇', '🏋️', '📱', '💡', '🍕',
   '☕', '🎬', '🛻', '🏥', '🎓', '🌿', '🧴', '💰',
 ]
+
+// Category icons are one of the fixed emoji preset above — map each to a
+// matching lucide outline icon for the compact-modal icon picker.
+const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
+  '🍔': UtensilsCrossed, '🛒': ShoppingCart, '🚗': Car, '🏠': Home, '💊': Pill,
+  '🎉': PartyPopper, '👕': Shirt, '📚': BookOpen, '✈️': Plane, '🎮': Gamepad2,
+  '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
+  '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
+  '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
+}
 
 type BudgetStatus = { categoryId: string; spent: number; percentage: number; limit: number }
 
@@ -562,199 +578,175 @@ export function CategoriesPage() {
       )}
 
       {/* Edit/Add sheet */}
-      <BottomSheet
+      <CompactModal
         open={sheetOpen}
         onClose={closeSheet}
+        icon={Tag} iconColor="#8B5CF6" iconBg="rgba(139,92,246,.16)"
         title={editing ? t.expenses.categories.editTitle : t.expenses.categories.newTitle}
-        footer={
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={closeSheet}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'transparent', color: '#9D84D4', fontSize: '14px', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              {t.common.cancel}
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!name.trim()}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: name.trim() ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : 'rgba(124,58,237,0.35)', fontSize: '16px', fontWeight: 600, color: 'white', border: 'none', cursor: name.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {editing ? t.common.save : t.common.add}
-            </button>
-          </div>
-        }
+        accent="#8B5CF6" accent2="#EC4899"
+        onSubmit={handleSave}
+        submitDisabled={!name.trim()}
       >
-        <div className="flex flex-col gap-5">
-          <div>
-            <label className="form-label">{t.expenses.categories.nameLabel}</label>
-            <input
-              className="input-field"
-              placeholder={t.expenses.categories.namePlaceholder}
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
-          </div>
+        <input
+          type="text"
+          placeholder={t.expenses.categories.namePlaceholder}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          style={{ width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '11px 14px', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none', boxSizing: 'border-box' }}
+        />
 
-          {!editing && (
-            <div className="hidden lg:block">
-              <label className="form-label">{t.expenses.categories.type}</label>
-              <div className="flex gap-2">
-                {(['expense', 'income'] as const).map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setCatType(type)}
-                    className="flex-1 py-2 rounded-xl text-sm font-medium transition-all"
-                    style={{
-                      background: catType === type ? (type === 'expense' ? '#EF444420' : '#10B98120') : 'var(--bg-elevated)',
-                      color: catType === type ? (type === 'expense' ? '#EF4444' : '#10B981') : '#9D84D4',
-                      border: catType === type ? `1px solid ${type === 'expense' ? '#EF4444' : '#10B981'}40` : '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    {type === 'expense' ? t.expenses.categories.typeExpense : t.expenses.categories.typeIncome}
-                  </button>
-                ))}
-              </div>
+        {!editing && (
+          <div className="hidden lg:flex" style={{ gap: 8 }}>
+            {(['expense', 'income'] as const).map(type => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setCatType(type)}
+                style={{
+                  flex: 1, padding: '9px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s',
+                  background: catType === type ? (type === 'expense' ? '#EF444420' : '#10B98120') : 'var(--aurora-glass)',
+                  color: catType === type ? (type === 'expense' ? '#EF4444' : '#10B981') : 'var(--aurora-lo)',
+                  border: catType === type ? `1px solid ${type === 'expense' ? '#EF4444' : '#10B981'}40` : '1px solid var(--aurora-gline)',
+                }}
+              >
+                {type === 'expense' ? t.expenses.categories.typeExpense : t.expenses.categories.typeIncome}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '2px 2px 4px' }}>
+          {PRESET_ICONS.map(em => {
+            const Icon = CATEGORY_ICON_MAP[em] ?? Tag
+            const selected = icon === em
+            return (
+              <button
+                key={em}
+                type="button"
+                onClick={() => setIcon(em)}
+                style={{
+                  width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: selected ? color : 'var(--aurora-glass)',
+                  border: selected ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+                  cursor: 'pointer', transition: 'all 0.12s',
+                }}
+              >
+                <Icon size={17} color={selected ? '#fff' : 'var(--aurora-lo)'} strokeWidth={1.8} />
+              </button>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 10, color: 'var(--aurora-faint)', fontWeight: 700, textTransform: 'uppercase', fontFamily: "'Manrope', sans-serif", marginRight: 2 }}>{t.expenses.categories.colorLabel}</span>
+          {PRESET_COLORS.map(c => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              style={{
+                width: 22, height: 22, borderRadius: '50%', background: c,
+                border: 'none', cursor: 'pointer', flexShrink: 0,
+                boxShadow: color === c ? `0 0 0 2px #14121C, 0 0 0 4px ${c}` : 'none',
+                transition: 'box-shadow 0.15s',
+              }}
+            />
+          ))}
+        </div>
+
+        <div>
+          {editing?.hasFixedExpenses && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: autoLimit ? 'var(--aurora-violet)' : 'var(--aurora-lo)', fontWeight: 600, fontFamily: "'Manrope', sans-serif" }}>
+                {t.expenses.categories.autoLimit}
+              </span>
+              <button
+                type="button"
+                onClick={() => setAutoLimit(v => !v)}
+                style={{
+                  width: 38, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
+                  background: autoLimit ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
+                  position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                }}
+                aria-label={t.expenses.categories.autoLimit}
+              >
+                <span style={{
+                  position: 'absolute', top: 3, left: autoLimit ? 19 : 3,
+                  width: 16, height: 16, borderRadius: '50%', background: 'white',
+                  transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }} />
+              </button>
             </div>
           )}
-
-          <div>
-            <label className="form-label">
-              {t.expenses.categories.iconLabel} <span className="text-[#E2D9F3] ml-2 text-sm not-uppercase">{icon}</span>
-            </label>
-            <div className="grid grid-cols-8 gap-1.5">
-              {PRESET_ICONS.map(em => (
-                <button
-                  key={em}
-                  onClick={() => setIcon(em)}
-                  className="h-10 w-full rounded-xl text-lg flex items-center justify-center transition-all duration-150"
-                  style={{
-                    backgroundColor: icon === em ? color + '30' : 'var(--bg-elevated)',
-                    border: icon === em ? `1px solid ${color}60` : '1px solid var(--border-subtle)',
-                  }}
-                >
-                  {em}
-                </button>
-              ))}
+          {editing?.hasFixedExpenses && autoLimit ? (
+            <div style={{
+              padding: '10px 14px', borderRadius: 12,
+              background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)',
+              fontSize: 12, color: 'var(--aurora-violet)', fontFamily: "'Manrope', sans-serif", lineHeight: 1.4,
+            }}>
+              {editing?.budgetLimit != null && editing.budgetLimit > 0
+                ? t.expenses.categories.autoLimitComputed.replace('{amount}', String(editing.budgetLimit))
+                : t.expenses.categories.autoLimitDesc}
             </div>
-          </div>
-
-          <div>
-            <label className="form-label">{t.expenses.categories.colorLabel}</label>
-            <div className="flex flex-wrap gap-2.5">
-              {PRESET_COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-110"
-                  style={{
-                    backgroundColor: c,
-                    boxShadow: color === c ? `0 0 0 3px var(--bg-elevated), 0 0 0 5px ${c}` : 'none',
-                  }}
-                >
-                  {color === c && <span className="text-white text-xs font-bold">✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <label className="form-label" style={{ margin: 0 }}>
-                {t.expenses.categories.limitLabel}{' '}
-                <span className="text-[#9D84D4]/60 font-normal normal-case tracking-normal">{t.expenses.categories.limitOptional}</span>
-              </label>
-              {editing?.hasFixedExpenses && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 12, color: autoLimit ? 'var(--violet)' : 'var(--text3)', fontWeight: 600 }}>
-                    {t.expenses.categories.autoLimit}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setAutoLimit(v => !v)}
-                    style={{
-                      width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
-                      background: autoLimit ? 'var(--violet)' : 'var(--bg4)',
-                      position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                    }}
-                    aria-label={t.expenses.categories.autoLimit}
-                  >
-                    <span style={{
-                      position: 'absolute', top: 3, left: autoLimit ? 21 : 3,
-                      width: 16, height: 16, borderRadius: '50%', background: 'white',
-                      transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                    }} />
-                  </button>
-                </div>
-              )}
-            </div>
-            {editing?.hasFixedExpenses && autoLimit ? (
-              <div style={{
-                padding: '10px 14px', borderRadius: 12,
-                background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)',
-                fontSize: 13, color: 'var(--violet)', display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span>⚡</span>
-                <span>
-                  {editing?.budgetLimit != null && editing.budgetLimit > 0
-                    ? t.expenses.categories.autoLimitComputed.replace('{amount}', String(editing.budgetLimit))
-                    : t.expenses.categories.autoLimitDesc}
-                </span>
-              </div>
-            ) : (
-              <input
-                className="input-field"
-                type="text"
-                inputMode="decimal"
-                placeholder={t.expenses.categories.limitPlaceholder}
-                value={budgetLimit}
-                onChange={e => {
-                  const raw = e.target.value.replace(/[^0-9,]/g, '')
-                  if ((raw.match(/,/g) || []).length > 1) return
-                  setBudgetLimit(raw)
-                }}
-                onKeyDown={e => {
-                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                  if (!allowed.includes(e.key)) e.preventDefault()
-                }}
-              />
-            )}
-          </div>
+          ) : (
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder={`${t.expenses.categories.limitLabel} · ${t.expenses.categories.limitOptional}`}
+              value={budgetLimit}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^0-9,]/g, '')
+                if ((raw.match(/,/g) || []).length > 1) return
+                setBudgetLimit(raw)
+              }}
+              onKeyDown={e => {
+                const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+                if (!allowed.includes(e.key)) e.preventDefault()
+              }}
+              style={{ width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '11px 14px', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none', boxSizing: 'border-box' }}
+            />
+          )}
         </div>
-      </BottomSheet>
+      </CompactModal>
 
       {/* Auto-limit overwrite warning */}
-      <BottomSheet
-        open={autoLimitWarning}
-        onClose={() => setAutoLimitWarning(false)}
-        title="Prepísať limit?"
-        footer={
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={async () => {
-                setAutoLimitWarning(false)
-                await doSave(false)
-              }}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'transparent', color: '#9D84D4', fontSize: '14px', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              Nie — ponechať manuálny
-            </button>
-            <button
-              onClick={async () => {
-                setAutoLimitWarning(false)
-                await doSave()
-              }}
-              style={{ flex: 1, height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', fontSize: '15px', fontWeight: 600, color: 'white', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              Áno — prepísať
-            </button>
+      {autoLimitWarning && (
+        <div
+          className="fade-in"
+          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(4,3,8,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setAutoLimitWarning(false)}
+        >
+          <div
+            className="modal-in"
+            style={{ width: '100%', maxWidth: 380, background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 26, padding: 20, boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 10px' }}>Prepísať limit?</p>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)', lineHeight: 1.5, margin: '0 0 18px' }}>
+              Táto kategória má manuálne nastavený limit <strong style={{ color: 'var(--aurora-hi)' }}>{editing?.budgetLimit} €</strong>.
+              Prepísať automatickým výpočtom zo súčtu fixných výdavkov?
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={async () => { setAutoLimitWarning(false); await doSave(false) }}
+                style={{ flex: 1, height: 44, borderRadius: 14, background: 'var(--aurora-glass)', color: 'var(--aurora-lo)', fontSize: 12.5, fontWeight: 600, border: '1px solid var(--aurora-gline)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
+              >
+                Nie — ponechať
+              </button>
+              <button
+                type="button"
+                onClick={async () => { setAutoLimitWarning(false); await doSave() }}
+                style={{ flex: 1, height: 44, borderRadius: 14, background: 'linear-gradient(135deg,#8B5CF6,#EC4899)', fontSize: 12.5, fontWeight: 700, color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
+              >
+                Áno — prepísať
+              </button>
+            </div>
           </div>
-        }
-      >
-        <p className="text-sm text-[#B8A3E8] leading-relaxed">
-          Táto kategória má manuálne nastavený limit <strong style={{ color: 'var(--text)' }}>{editing?.budgetLimit} €</strong>.
-          Prepísať automatickým výpočtom zo súčtu fixných výdavkov?
-        </p>
-      </BottomSheet>
+        </div>
+      )}
 
       <ConfirmDialog
         open={deleteId !== null}

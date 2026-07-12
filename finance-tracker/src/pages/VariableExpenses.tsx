@@ -1,7 +1,13 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Edit2, Trash2, Plus, Receipt, Search, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Edit2, Trash2, Plus, Receipt, Search, X, ArrowDown, Tag,
+  UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
+  Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
+  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
+} from 'lucide-react'
 
-import { BottomSheet } from '../components/BottomSheet'
+import { CompactModal } from '../components/CompactModal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
@@ -52,6 +58,37 @@ const pillStyle = (active: boolean): React.CSSProperties => ({
   fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
   flexShrink: 0,
 })
+
+// Category icons are one of a fixed emoji preset — map each to a matching
+// lucide outline icon for the compact-modal category picker (see
+// FixedExpenses.tsx for the same established trick).
+const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
+  '🍔': UtensilsCrossed, '🛒': ShoppingCart, '🚗': Car, '🏠': Home, '💊': Pill,
+  '🎉': PartyPopper, '👕': Shirt, '📚': BookOpen, '✈️': Plane, '🎮': Gamepad2,
+  '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
+  '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
+  '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
+}
+
+function CategoryCircle({ icon: Icon, label, selected, accent, onClick }: {
+  icon: LucideIcon; label: string; selected: boolean; accent: string; onClick: () => void
+}) {
+  return (
+    <button
+      type="button" onClick={onClick}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: 52 }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: selected ? accent : 'var(--aurora-glass)',
+        border: selected ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+      }}>
+        <Icon size={18} color={selected ? '#fff' : 'var(--aurora-lo)'} strokeWidth={1.8} />
+      </div>
+      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 9, fontWeight: 600, color: selected ? 'var(--aurora-hi)' : 'var(--aurora-lo)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 52 }}>{label}</span>
+    </button>
+  )
+}
 
 
 export function VariableExpensesPage({ month, year, showToast }: VariableExpensesPageProps) {
@@ -421,137 +458,96 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         </button>
       )}
 
-      <BottomSheet
+      <CompactModal
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
+        icon={ArrowDown} iconColor="#FB7185" iconBg="rgba(251,113,133,.16)"
         title={editing ? t.expenses.variable.editTitle : t.expenses.variable.addTitle}
+        accent="#FB7185" accent2="#f43f5e"
+        onSubmit={handleSave}
+        submitDisabled={newCatMode ? !newCatName.trim() || !form.amount : !form.categoryId || !form.amount}
         onImportCsv={editing ? undefined : () => { setSheetOpen(false); setTimeout(() => setCsvOpen(true), 150) }}
-        footer={
-          <button
-            type="button"
-            onClick={handleSave}
-            style={{
-              width: '100%', padding: '15px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-              color: 'white', fontSize: 15, fontWeight: 700,
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
-            }}
-          >
-            {editing ? t.common.save : t.common.add}
-          </button>
-        }
       >
-        <div className="flex flex-col gap-5">
-          <div>
-            <label className="form-label">{t.expenses.variable.amount}</label>
-            <div className="amount-input-wrap">
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="0,00"
-                value={form.amount}
-                onChange={e => {
-                  const raw = e.target.value.replace(/[^0-9,]/g, '')
-                  if ((raw.match(/,/g) || []).length > 1) return
-                  setForm(f => ({ ...f, amount: raw }))
-                }}
-                onKeyDown={e => {
-                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                  if (!allowed.includes(e.key)) e.preventDefault()
-                }}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '10px 14px' }}>
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0"
+            value={form.amount}
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9,]/g, '')
+              if ((raw.match(/,/g) || []).length > 1) return
+              setForm(f => ({ ...f, amount: raw }))
+            }}
+            onKeyDown={e => {
+              const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+              if (!allowed.includes(e.key)) e.preventDefault()
+            }}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 26, width: '100%', minWidth: 0 }}
+          />
+          <span style={{ fontSize: 15, color: 'var(--aurora-lo)', fontFamily: "'Manrope', sans-serif", flexShrink: 0 }}>€</span>
+        </div>
+
+        {livePct !== null && liveLimit && (
+          <div style={{ borderRadius: 12, padding: '10px 12px', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 6, color: 'var(--aurora-lo)', fontFamily: "'Manrope', sans-serif" }}>
+              <span>{liveBudget?.categoryName}</span>
+              <span>{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
+            </div>
+            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 2, width: `${livePct}%`, background: liveBudgetBarColor }} />
+            </div>
+          </div>
+        )}
+
+        {!newCatMode ? (
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '2px 2px 4px' }}>
+            {categories.map(c => (
+              <CategoryCircle
+                key={c.id}
+                icon={CATEGORY_ICON_MAP[c.icon ?? ''] ?? Tag}
+                label={c.name}
+                selected={form.categoryId === c.id}
+                accent={c.color}
+                onClick={() => setForm(f => ({ ...f, categoryId: c.id ?? '' }))}
               />
-              <span className="currency">€</span>
-            </div>
+            ))}
+            <CategoryCircle
+              icon={Plus} label={t.expenses.variable.newCategory}
+              selected={false} accent="#FB7185"
+              onClick={() => setNewCatMode(true)}
+            />
           </div>
-
-          {livePct !== null && liveLimit && (
-            <div style={{ borderRadius: 14, padding: '12px 14px', background: 'var(--bg3)', border: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8, color: 'var(--text2)' }}>
-                <span>{t.expenses.variable.budgetLabel}: {liveBudget?.categoryName}</span>
-                <span style={{ fontFamily: "'DM Mono', monospace" }}>{formatAmount(liveSpent)} / {formatAmount(liveLimit)}</span>
-              </div>
-              <div style={{ height: 4, borderRadius: 2, background: 'var(--bg4)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 2, width: `${livePct}%`, background: liveBudgetBarColor }} />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="form-label">{t.expenses.variable.category}</label>
-            {!newCatMode ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                {categories.map(c => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, categoryId: c.id ?? '' }))}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '5px 11px', borderRadius: 99, border: 'none',
-                      fontSize: 12.5, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-                      background: form.categoryId === c.id ? `${c.color}22` : 'var(--bg3)',
-                      color: form.categoryId === c.id ? c.color : 'var(--text2)',
-                      outline: form.categoryId === c.id ? `1.5px solid ${c.color}55` : 'none',
-                      transition: 'all 0.12s',
-                    }}
-                  >{c.icon} {c.name}</button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setNewCatMode(true)}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '5px 11px', borderRadius: 99,
-                    border: '1px dashed var(--border2)',
-                    background: 'transparent', color: 'var(--text3)',
-                    fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-                    transition: 'all 0.12s',
-                  }}
-                >+ {t.expenses.variable.newCategory}</button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="text"
-                  placeholder={t.expenses.variable.newCategoryName}
-                  value={newCatName}
-                  onChange={e => setNewCatName(e.target.value)}
-                  className="input-field"
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => { setNewCatMode(false); setNewCatName('') }}
-                  style={{
-                    padding: '0 14px', borderRadius: 10, border: '1px solid var(--border2)',
-                    background: 'var(--bg3)', color: 'var(--text2)', cursor: 'pointer', flexShrink: 0,
-                  }}
-                >✕</button>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="form-label">{t.expenses.variable.note}</label>
+        ) : (
+          <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="text"
-              placeholder={t.expenses.variable.notePlaceholder}
-              value={form.note}
-              onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-              className="input-field"
+              placeholder={t.expenses.variable.newCategoryName}
+              value={newCatName}
+              onChange={e => setNewCatName(e.target.value)}
+              style={{ flex: 1, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '11px 14px', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none' }}
             />
+            <button
+              type="button"
+              onClick={() => { setNewCatMode(false); setNewCatName('') }}
+              style={{ width: 38, borderRadius: 12, border: '1px solid var(--aurora-gline)', background: 'var(--aurora-glass)', color: 'var(--aurora-lo)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <X size={14} />
+            </button>
           </div>
+        )}
 
-          <div>
-            <label className="form-label">{t.expenses.variable.date}</label>
-            <DateInput
-              value={form.date}
-              onChange={date => setForm(f => ({ ...f, date }))}
-            />
-          </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <DateInput compact value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
+          <input
+            type="text"
+            placeholder={t.expenses.variable.notePlaceholder}
+            value={form.note}
+            onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+            style={{ flex: 1, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 12, padding: '8px 12px', color: 'var(--aurora-hi)', fontSize: 11.5, fontFamily: "'Manrope', sans-serif", outline: 'none', minWidth: 100 }}
+          />
         </div>
-      </BottomSheet>
+      </CompactModal>
 
       <ConfirmDialog
         open={confirmId !== null}

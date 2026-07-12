@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Repeat, Edit2, Trash2, Calendar, Plus, CalendarDays, PiggyBank } from 'lucide-react'
+import { Repeat, Edit2, Trash2, Calendar, Plus, CalendarDays, PiggyBank, ArrowUp } from 'lucide-react'
 
-import { BottomSheet } from '../components/BottomSheet'
+import { CompactModal } from '../components/CompactModal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateInput } from '../components/DateInput'
 import { CsvImportModal } from '../components/CsvImportModal'
@@ -45,60 +45,51 @@ interface FormBodyProps {
 
 function FormBody({ form, setForm, t }: FormBodyProps) {
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <label className="form-label">{t.income.amount}</label>
-        <div className="amount-input-wrap">
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="0,00"
-            value={form.amount}
-            onChange={e => {
-              const raw = e.target.value.replace(/[^0-9,]/g, '')
-              if ((raw.match(/,/g) || []).length > 1) return
-              setForm(f => ({ ...f, amount: raw }))
-            }}
-            onKeyDown={e => {
-              const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-              if (!allowed.includes(e.key)) e.preventDefault()
-            }}
-          />
-          <span className="currency">€</span>
-        </div>
-      </div>
-      <div>
-        <label className="form-label">{t.income.description}</label>
+    <>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '10px 14px' }}>
         <input
           type="text"
-          placeholder={t.income.descriptionPlaceholder}
-          value={form.label}
-          onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
-          className="input-field"
+          inputMode="decimal"
+          placeholder="0"
+          value={form.amount}
+          onChange={e => {
+            const raw = e.target.value.replace(/[^0-9,]/g, '')
+            if ((raw.match(/,/g) || []).length > 1) return
+            setForm(f => ({ ...f, amount: raw }))
+          }}
+          onKeyDown={e => {
+            const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+            if (!allowed.includes(e.key)) e.preventDefault()
+          }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 26, width: '100%', minWidth: 0 }}
         />
+        <span style={{ fontSize: 15, color: 'var(--aurora-lo)', fontFamily: "'Manrope', sans-serif", flexShrink: 0 }}>€</span>
       </div>
-      <div>
-        <label className="form-label">{t.income.date}</label>
-        <DateInput value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)' }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{t.income.recurringToggle}</span>
+      <input
+        type="text"
+        placeholder={t.income.descriptionPlaceholder}
+        value={form.label}
+        onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
+        style={{ width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '11px 14px', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none', boxSizing: 'border-box' }}
+      />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <DateInput compact value={form.date} onChange={date => setForm(f => ({ ...f, date }))} />
         <button
+          type="button"
           onClick={() => setForm(f => ({ ...f, recurring: !f.recurring }))}
           style={{
-            width: 44, height: 24, borderRadius: 99, cursor: 'pointer', flexShrink: 0, position: 'relative',
-            background: form.recurring ? 'var(--violet)' : 'var(--bg4)',
-            border: 'none', transition: 'background 0.2s',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: form.recurring ? 'linear-gradient(135deg,#34D399,#22D3EE)' : 'var(--aurora-glass)',
+            border: form.recurring ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+            borderRadius: 12, padding: '8px 11px',
+            fontSize: 11, color: form.recurring ? '#fff' : 'var(--aurora-hi)', fontWeight: 600,
+            fontFamily: "'Manrope', sans-serif", cursor: 'pointer', flexShrink: 0,
           }}
         >
-          <div style={{
-            position: 'absolute', top: 2, left: form.recurring ? 22 : 2,
-            width: 20, height: 20, borderRadius: '50%', background: 'white',
-            transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-          }} />
+          <Repeat size={12} /> {t.income.recurringToggle}
         </button>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -335,23 +326,18 @@ export function IncomePage({ month, year }: IncomePageProps) {
 
       <CsvImportModal open={csvOpen} onClose={() => setCsvOpen(false)} filterType="income" />
 
-      <BottomSheet
+      <CompactModal
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
+        icon={ArrowUp} iconColor="#34D399" iconBg="rgba(52,211,153,.16)"
         title={editing ? t.income.editTitle : t.income.addTitle}
+        accent="#34D399" accent2="#22D3EE"
+        onSubmit={handleSave}
+        submitDisabled={!form.label.trim() || !form.amount}
         onImportCsv={editing ? undefined : () => { setSheetOpen(false); setTimeout(() => setCsvOpen(true), 150) }}
-        footer={
-          <button
-            type="button"
-            onClick={handleSave}
-            style={{ width: '100%', padding: '15px', borderRadius: 14, background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}
-          >
-            {editing ? t.income.saveChanges : t.income.add}
-          </button>
-        }
       >
         <FormBody form={form} setForm={setForm} t={t} />
-      </BottomSheet>
+      </CompactModal>
 
       <ConfirmDialog
         open={confirmId !== null}

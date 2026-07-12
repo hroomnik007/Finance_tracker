@@ -1,16 +1,15 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon, CheckCircle2,
+  Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon, CheckCircle2, Tag, Repeat,
   UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
   Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
   Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet, Receipt,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { BottomSheet } from '../components/BottomSheet'
+import { CompactModal } from '../components/CompactModal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CsvImportModal } from '../components/CsvImportModal'
-import { CategorySelect } from '../components/CategorySelect'
 import { GlassCard } from '../components/GlassCard'
 import { HeroCard } from '../components/HeroCard'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
@@ -52,6 +51,26 @@ const pillStyle = (active: boolean): React.CSSProperties => ({
   fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
   flexShrink: 0,
 })
+
+function CategoryCircle({ icon: Icon, label, selected, accent, onClick }: {
+  icon: LucideIcon; label: string; selected: boolean; accent: string; onClick: () => void
+}) {
+  return (
+    <button
+      type="button" onClick={onClick}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: 52 }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: selected ? accent : 'var(--aurora-glass)',
+        border: selected ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+      }}>
+        <Icon size={18} color={selected ? '#fff' : 'var(--aurora-lo)'} strokeWidth={1.8} />
+      </div>
+      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 9, fontWeight: 600, color: selected ? 'var(--aurora-hi)' : 'var(--aurora-lo)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 52 }}>{label}</span>
+    </button>
+  )
+}
 
 interface FixedExpensesPageProps {
   month: number
@@ -683,106 +702,97 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       </div>
 
       {/* Edit/Add sheet */}
-      <BottomSheet
+      <CompactModal
         open={sheetOpen}
         onClose={closeSheet}
+        icon={Lock} iconColor="#FBBF24" iconBg="rgba(251,191,36,.16)"
         title={editing ? t.expenses.fixed.editTitle : t.expenses.fixed.newTitle}
+        accent="#FBBF24" accent2="#f59e0b"
+        onSubmit={handleSave}
+        submitDisabled={!label.trim() || !amount}
         onImportCsv={editing ? undefined : () => { closeSheet(); setTimeout(() => setCsvOpen(true), 150) }}
-        footer={
+      >
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '10px 14px' }}>
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0"
+            value={amount}
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9,]/g, '')
+              if ((raw.match(/,/g) || []).length > 1) return
+              setAmount(raw)
+            }}
+            onKeyDown={e => {
+              const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
+              if (!allowed.includes(e.key)) e.preventDefault()
+            }}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 26, width: '100%', minWidth: 0 }}
+          />
+          <span style={{ fontSize: 15, color: 'var(--aurora-lo)', fontFamily: "'Manrope', sans-serif", flexShrink: 0 }}>€</span>
+        </div>
+
+        <input
+          type="text"
+          placeholder={t.expenses.fixed.namePlaceholder}
+          value={label}
+          onChange={e => setLabel(e.target.value)}
+          style={{ width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '11px 14px', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none', boxSizing: 'border-box' }}
+        />
+
+        {expenseCategories.length > 0 && (
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '2px 2px 4px' }}>
+            {expenseCategories.map(c => (
+              <CategoryCircle
+                key={c.id}
+                icon={CATEGORY_ICON_MAP[c.icon ?? ''] ?? Tag}
+                label={c.name}
+                selected={categoryId === c.id}
+                accent={c.color}
+                onClick={() => setCategoryId(prev => prev === c.id ? '' : (c.id ?? ''))}
+              />
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 12, padding: '6px 10px' }}>
+            <button
+              type="button"
+              onClick={() => setDayOfMonth(d => String(Math.max(1, parseInt(d || '1') - 1)))}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >−</button>
+            <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-lo)', fontWeight: 600 }}>{t.expenses.fixed.dueDay}</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)', minWidth: 14, textAlign: 'center' }}>{dayOfMonth}</span>
+            <button
+              type="button"
+              onClick={() => setDayOfMonth(d => String(Math.min(28, parseInt(d || '1') + 1)))}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >+</button>
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#FBBF24,#f59e0b)', border: '1px solid transparent', borderRadius: 12, padding: '8px 11px', fontSize: 11, color: '#fff', fontWeight: 600, fontFamily: "'Manrope', sans-serif" }}>
+            <Repeat size={12} /> {t.expenses.fixed.recurringMonthly}
+          </div>
+        </div>
+
+        <input
+          type="text"
+          placeholder={`${t.expenses.fixed.noteLabel} · ${t.common.optional}`}
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          style={{ width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 14, padding: '11px 14px', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope', sans-serif", outline: 'none', boxSizing: 'border-box' }}
+        />
+
+        {editing && (
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!label.trim() || !amount}
-            style={{
-              width: '100%', padding: '15px', borderRadius: 14,
-              background: (label.trim() && amount) ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)' : 'rgba(139,92,246,0.3)',
-              color: 'white', fontSize: 15, fontWeight: 700,
-              border: 'none', cursor: (label.trim() && amount) ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit',
-              boxShadow: (label.trim() && amount) ? '0 4px 20px rgba(139,92,246,0.4)' : 'none',
-            }}
+            onClick={() => { closeSheet(); setDeleteId(editing.id!) }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', padding: '8px 12px', borderRadius: 12, background: 'rgba(251,113,133,0.12)', color: 'var(--aurora-rose)', border: '1px solid rgba(251,113,133,0.25)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 600 }}
           >
-            {editing ? t.common.save : t.common.add}
+            <Trash2 size={12} /> {t.common.delete}
           </button>
-        }
-      >
-        <div className="flex flex-col gap-5">
-          <div>
-            <label className="form-label">{t.expenses.fixed.amountLabel}</label>
-            <div className="amount-input-wrap">
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="0,00"
-                value={amount}
-                onChange={e => {
-                  const raw = e.target.value.replace(/[^0-9,]/g, '')
-                  if ((raw.match(/,/g) || []).length > 1) return
-                  setAmount(raw)
-                }}
-                onKeyDown={e => {
-                  const allowed = ['0','1','2','3','4','5','6','7','8','9',',','Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter']
-                  if (!allowed.includes(e.key)) e.preventDefault()
-                }}
-              />
-              <span className="currency">€</span>
-            </div>
-          </div>
-          <div>
-            <label className="form-label">{t.expenses.fixed.nameLabel}</label>
-            <input
-              className="input-field"
-              placeholder={t.expenses.fixed.namePlaceholder}
-              value={label}
-              onChange={e => setLabel(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="form-label">{t.expenses.fixed.dueDay}</label>
-            <input
-              className="input-field"
-              type="number"
-              inputMode="numeric"
-              placeholder="1"
-              min="1"
-              max="28"
-              value={dayOfMonth}
-              onChange={e => setDayOfMonth(e.target.value)}
-            />
-          </div>
-          {expenseCategories.length > 0 && (
-            <div>
-              <label className="form-label">{t.expenses.fixed.categoryLabel}</label>
-              <CategorySelect
-                categories={expenseCategories}
-                value={categoryId}
-                onChange={setCategoryId}
-                placeholder="— Bez kategórie —"
-              />
-            </div>
-          )}
-          <div>
-            <label className="form-label">
-              {t.expenses.fixed.noteLabel}{' '}
-              <span style={{ color: 'var(--text3)', fontWeight: 400 }}>{t.common.optional}</span>
-            </label>
-            <input
-              className="input-field"
-              placeholder="..."
-              value={note}
-              onChange={e => setNote(e.target.value)}
-            />
-          </div>
-          {editing && (
-            <button
-              onClick={() => { closeSheet(); setDeleteId(editing.id!) }}
-              style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '14px', fontWeight: 500 }}
-            >
-              {t.common.delete}
-            </button>
-          )}
-        </div>
-      </BottomSheet>
+        )}
+      </CompactModal>
 
       <ConfirmDialog
         open={deleteId !== null}

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, X } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
 import { getAuthMethods } from '../api/auth'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
+import { PinKeypad } from '../components/PinKeypad'
 
 interface LoginPageProps {
   onNavigateRegister: () => void
@@ -124,289 +125,263 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     return () => clearTimeout(timer)
   }, [pinValue, handlePinLogin])
 
+  const handlePinKey = useCallback((k: string) => {
+    if (pinLoading) return
+    const now = Date.now()
+    if (now - lastPinTapRef.current < 80) return
+    lastPinTapRef.current = now
+    if (k === 'backspace') { setPinValue(v => v.slice(0, -1)); setPinError(null); return }
+    setPinValue(prev => (prev.length >= 4 ? prev : prev + k))
+  }, [pinLoading])
+
   useEffect(() => {
     if (!pinModalOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (pinLoading) return
-      if (e.key >= '0' && e.key <= '9') {
-        setPinValue(prev => (prev.length >= 4 ? prev : prev + e.key))
-      } else if (e.key === 'Backspace') {
-        setPinValue(v => v.slice(0, -1))
-        setPinError(null)
-      }
+      if (e.key >= '0' && e.key <= '9') handlePinKey(e.key)
+      else if (e.key === 'Backspace') handlePinKey('backspace')
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [pinModalOpen, pinLoading])
+  }, [pinModalOpen, handlePinKey])
 
-  const inp = (name: string): React.CSSProperties => ({
+  const pillInput = (name: string): React.CSSProperties => ({
     width: '100%',
-    background: 'var(--bg3)',
-    color: 'var(--text)',
-    borderRadius: 13,
-    padding: name === 'password' ? '0 44px 0 16px' : '0 16px',
-    height: 50,
-    fontSize: 15,
-    fontFamily: "'DM Sans', sans-serif",
-    border: `1.5px solid ${focused === name ? 'var(--violet)' : 'var(--border2)'}`,
+    background: 'var(--aurora-glass)',
+    color: 'var(--aurora-hi)',
+    borderRadius: 16,
+    padding: name === 'password' ? '14px 44px 14px 16px' : '14px 16px',
+    fontSize: 14,
+    fontFamily: "'Manrope', sans-serif",
+    border: `1px solid ${focused === name ? 'var(--aurora-violet)' : 'var(--aurora-gline)'}`,
     outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
-    boxShadow: focused === name ? '0 0 0 3px rgba(139,92,246,0.1)' : 'none',
+    boxShadow: focused === name ? '0 0 0 3px rgba(139,92,246,0.15)' : 'none',
     boxSizing: 'border-box' as const,
   })
 
   const labelStyle: React.CSSProperties = {
-    fontSize: 10.5,
-    fontWeight: 600,
+    fontSize: 11,
+    fontWeight: 700,
     textTransform: 'uppercase',
-    letterSpacing: '0.12em',
-    color: 'var(--text3)',
+    letterSpacing: '0.05em',
+    color: 'var(--aurora-lo)',
+    fontFamily: "'Manrope', sans-serif",
+  }
+
+  const altPillStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
+    borderRadius: 14, padding: '12px 8px',
+    color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif",
+    fontWeight: 600, fontSize: 12.5, cursor: 'pointer',
   }
 
   return (
-    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: 'var(--aurora-bg)', position: 'relative', overflow: 'hidden' }}>
 
       {/* Atmospheric blob */}
-      <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 70%)', pointerEvents: 'none' }} />
 
       {/* Top controls: language switcher + theme toggle */}
       <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, zIndex: 100 }}>
         <LanguageSwitcher />
         <button
           onClick={toggleTheme}
-          style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}
+          style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}
           title={theme === 'dark' ? t.auth.lightMode : t.auth.darkMode}
         >
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
       </div>
 
-      <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 24, position: 'relative' }}>
+      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', padding: '20px 24px 28px', position: 'relative', zIndex: 1 }}>
 
-        {/* Logo + title */}
-        <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="Finvu" style={{ width: 72, height: 72, borderRadius: 18 }} />
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', lineHeight: 1, margin: 0 }}>{t.nav.appName}</h1>
-            <p style={{ fontSize: 12, marginTop: 5, marginBottom: 0, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.04em' }}>{t.nav.appTagline.toUpperCase()}</p>
+        {/* Brand row */}
+        <div className="fade-up" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
+          <img src="/logo.svg" alt="Finvu" style={{ width: 38, height: 38, borderRadius: 13, flexShrink: 0 }} />
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)' }}>{t.nav.appName}</span>
+        </div>
+
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 27, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>{t.auth.welcomeBackTitle}</h1>
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)', margin: '0 0 32px' }}>{t.auth.welcomeBackSubtitle}</p>
+
+        {error && (
+          <div style={{ borderRadius: 14, padding: '10px 14px', fontSize: 13, background: 'rgba(251,113,133,0.12)', color: 'var(--aurora-rose)', border: '1px solid rgba(251,113,133,0.3)', marginBottom: 14, fontFamily: "'Manrope', sans-serif" }}>
+            {error}
+          </div>
+        )}
+
+        {/* Email */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ ...labelStyle, display: 'block', marginBottom: 8 }}>{t.auth.email}</label>
+          <input
+            type="email"
+            placeholder="vas@email.com"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            onFocus={() => setFocused('email')}
+            onBlur={() => setFocused(null)}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            style={pillInput('email')}
+          />
+        </div>
+
+        {/* Password */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <label style={labelStyle}>{t.auth.password}</label>
+            <button
+              type="button"
+              onClick={onNavigateForgotPassword}
+              style={{ fontSize: 12, color: 'var(--aurora-violet)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", padding: 0 }}
+            >
+              {t.auth.forgotPasswordLink}
+            </button>
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onFocus={() => setFocused('password')}
+              onBlur={() => setFocused(null)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              style={pillInput('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              tabIndex={-1}
+              style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-lo)', display: 'flex', alignItems: 'center', padding: 2 }}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
         </div>
 
-        {/* Form card */}
-        <div className="fu" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, padding: 26, boxShadow: 'var(--shadow-elevated)', display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-          {error && (
-            <div style={{ borderRadius: 11, padding: '10px 14px', fontSize: 13, background: 'rgba(248,113,113,0.12)', color: 'var(--red)', border: '1px solid rgba(248,113,113,0.3)' }}>
-              {error}
-            </div>
+        {/* Login button */}
+        <button
+          onClick={handleLogin}
+          disabled={isLoading || !email || !password}
+          style={{
+            height: 48, width: '100%', marginTop: 8,
+            background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
+            color: 'white', border: 'none', borderRadius: 16,
+            fontSize: 14, fontWeight: 700, cursor: isLoading || !email || !password ? 'not-allowed' : 'pointer',
+            boxShadow: isLoading || !email || !password ? 'none' : '0 4px 20px rgba(139,92,246,0.4)',
+            opacity: isLoading || !email || !password ? 0.6 : 1,
+            transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontFamily: "'Outfit', sans-serif",
+          }}
+        >
+          {isLoading ? (
+            <>
+              <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', animation: 'spin 0.7s linear infinite' }} />
+              {t.auth.loggingInDots}
+            </>
+          ) : (
+            <>{t.auth.login} <ArrowRight size={14} /></>
           )}
+        </button>
 
-          {/* Email */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={labelStyle}>{t.auth.email}</label>
-            <input
-              type="email"
-              placeholder="vas@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              style={inp('email')}
-            />
-          </div>
+        {/* Alt sign-in methods */}
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, margin: '24px 0 10px' }}>{t.auth.continueWithLabel}</p>
 
-          {/* Password */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={labelStyle}>{t.auth.password}</label>
-              <button
-                type="button"
-                onClick={onNavigateForgotPassword}
-                style={{ fontSize: 12, color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
-              >
-                {t.auth.forgotPasswordLink}
-              </button>
-            </div>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused(null)}
-                onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                style={inp('password')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(v => !v)}
-                tabIndex={-1}
-                style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', padding: 2 }}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Login button */}
-          <button
-            onClick={handleLogin}
-            disabled={isLoading || !email || !password}
-            style={{
-              height: 50, width: '100%',
-              background: 'linear-gradient(135deg,#8B5CF6 0%,#6D28D9 100%)',
-              color: 'white', border: 'none', borderRadius: 14,
-              fontSize: 15, fontWeight: 700, cursor: isLoading || !email || !password ? 'not-allowed' : 'pointer',
-              boxShadow: isLoading || !email || !password ? 'none' : '0 4px 20px rgba(139,92,246,0.4)',
-              opacity: isLoading || !email || !password ? 0.6 : 1,
-              transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: 'inherit',
-            }}
-          >
-            {isLoading ? (
-              <>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', animation: 'spin 0.7s linear infinite' }} />
-                {t.auth.loggingInDots}
-              </>
-            ) : t.auth.loginArrow}
-          </button>
-
-          {/* PIN login */}
-          {authMethods.pin && (
+        {authMethods.pin ? (
+          <div style={{ display: 'flex', gap: 10 }}>
             <button
               type="button"
               onClick={() => { setPinModalOpen(true); setPinValue(''); setPinError(null) }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg4)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg3)')}
-              style={{
-                height: 46, width: '100%',
-                background: 'var(--bg3)', border: '1.5px solid rgba(139,92,246,0.35)',
-                borderRadius: 14, fontSize: 14, fontWeight: 600, color: 'var(--violet)',
-                cursor: 'pointer', fontFamily: 'inherit',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'background 0.15s',
-              }}
+              style={{ ...altPillStyle, flex: 1 }}
             >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M7 10V7a5 5 0 0110 0v3"/></svg>
               {t.auth.loginWithPin}
             </button>
-          )}
-
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-            <span style={{ fontSize: 11, color: 'var(--text3)' }}>{t.auth.orDivider}</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            <button
+              type="button"
+              onClick={() => googleLogin()}
+              disabled={isGoogleLoading}
+              style={{ ...altPillStyle, flex: 1, opacity: isGoogleLoading ? 0.6 : 1 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22 12.2c0-.7-.06-1.4-.19-2H12v3.8h5.6a4.8 4.8 0 01-2.08 3.15v2.6h3.36c1.97-1.8 3.1-4.47 3.1-7.55z"/>
+                <path fill="#34A853" d="M12 22c2.8 0 5.15-.93 6.87-2.5l-3.36-2.6c-.93.63-2.13 1-3.5 1-2.7 0-4.98-1.8-5.8-4.24H2.7v2.65A10 10 0 0012 22z"/>
+                <path fill="#FBBC05" d="M6.2 13.66a6 6 0 010-3.84V7.17H2.7a10 10 0 000 8.98z"/>
+                <path fill="#EA4335" d="M12 6.4c1.5 0 2.85.5 3.9 1.5l2.9-2.9C16.94 3.3 14.6 2.4 12 2.4a10 10 0 00-9.3 5.77l3.5 2.65C6.02 8.4 8.3 6.4 12 6.4z"/>
+              </svg>
+              Google
+            </button>
           </div>
-
-          {/* Google button */}
+        ) : (
           <button
             type="button"
             onClick={() => googleLogin()}
             disabled={isGoogleLoading}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg4)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg3)')}
-            style={{
-              height: 46, width: '100%',
-              background: 'var(--bg3)', border: '1px solid var(--border2)',
-              borderRadius: 14, fontSize: 14, fontWeight: 500, color: 'var(--text)',
-              cursor: 'pointer', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              opacity: isGoogleLoading ? 0.6 : 1, transition: 'background 0.15s',
-            }}
+            style={{ ...altPillStyle, width: '100%', opacity: isGoogleLoading ? 0.6 : 1 }}
           >
             {isGoogleLoading ? (
               <span>{t.auth.loggingIn}</span>
             ) : (
               <>
-                <svg width="17" height="17" viewBox="0 0 18 18">
-                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                  <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                <svg width="15" height="15" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22 12.2c0-.7-.06-1.4-.19-2H12v3.8h5.6a4.8 4.8 0 01-2.08 3.15v2.6h3.36c1.97-1.8 3.1-4.47 3.1-7.55z"/>
+                  <path fill="#34A853" d="M12 22c2.8 0 5.15-.93 6.87-2.5l-3.36-2.6c-.93.63-2.13 1-3.5 1-2.7 0-4.98-1.8-5.8-4.24H2.7v2.65A10 10 0 0012 22z"/>
+                  <path fill="#FBBC05" d="M6.2 13.66a6 6 0 010-3.84V7.17H2.7a10 10 0 000 8.98z"/>
+                  <path fill="#EA4335" d="M12 6.4c1.5 0 2.85.5 3.9 1.5l2.9-2.9C16.94 3.3 14.6 2.4 12 2.4a10 10 0 00-9.3 5.77l3.5 2.65C6.02 8.4 8.3 6.4 12 6.4z"/>
                 </svg>
-                {t.auth.continueWithGoogle}
+                Google
               </>
             )}
           </button>
+        )}
 
-          {/* Register link */}
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text3)', margin: 0 }}>
-            Nemáte účet?{' '}
-            <button
-              type="button"
-              onClick={onNavigateRegister}
-              style={{ color: 'var(--violet)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}
-            >
-              {t.auth.registerArrow}
-            </button>
-          </p>
+        <div style={{ flex: 1, minHeight: 24 }} />
 
-        </div>
+        {/* Register link — anchored to bottom */}
+        <p style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--aurora-lo)', margin: 0, fontFamily: "'Manrope', sans-serif" }}>
+          {t.auth.noAccount}{' '}
+          <button
+            type="button"
+            onClick={onNavigateRegister}
+            style={{ color: 'var(--aurora-violet)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5 }}
+          >
+            {t.auth.registerArrow}
+          </button>
+        </p>
+
       </div>
 
       {/* PIN modal */}
       {pinModalOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.6)', zIndex: 200 }}
+          className="fade-in"
+          style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(4,3,8,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', zIndex: 200 }}
           onClick={() => setPinModalOpen(false)}
         >
           <div
-            style={{ width: '100%', maxWidth: 320, padding: 24, borderRadius: 24, background: 'var(--bg2)', border: '1px solid var(--border2)', display: 'flex', flexDirection: 'column', gap: 20 }}
+            className="modal-in"
+            style={{ width: '100%', maxWidth: 340, padding: 24, borderRadius: 26, background: '#14121C', border: '1px solid var(--aurora-gline)', boxShadow: '0 30px 70px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: 40 }}>🔢</span>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 8, marginBottom: 0, color: 'var(--text)' }}>{t.auth.enterPinTitle}</h2>
-              <p style={{ fontSize: 13, marginTop: 4, marginBottom: 0, color: 'var(--text3)' }}>{t.auth.pin4Digit}</p>
+            <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: 20 }}>
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.auth.enterPinTitle}</p>
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-lo)', margin: '4px 0 0' }}>{t.auth.pin4Digit}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPinModalOpen(false)}
+                aria-label="Zavrieť"
+                style={{ position: 'absolute', top: 24, right: 24, width: 28, height: 28, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--aurora-lo)', cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-              {[0,1,2,3].map(i => (
-                <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: i < pinValue.length ? 'var(--violet)' : 'var(--border2)', transition: 'background 0.15s' }} />
-              ))}
-            </div>
+            <PinKeypad length={4} digits={pinValue.length} disabled={pinLoading} onKey={handlePinKey} />
 
-            {pinError && <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--red)', margin: 0 }}>{pinError}</p>}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
-                <button
-                  key={idx}
-                  disabled={k === '' || pinLoading}
-                  onClick={() => {
-                    const now = Date.now()
-                    if (now - lastPinTapRef.current < 80) return
-                    lastPinTapRef.current = now
-                    if (k === '⌫') { setPinValue(v => v.slice(0, -1)); setPinError(null); return }
-                    if (k === '') return
-                    setPinValue(prev => (prev.length >= 4 ? prev : prev + String(k)))
-                  }}
-                  style={{
-                    height: 52, borderRadius: 12,
-                    background: k === '' ? 'transparent' : 'var(--bg3)',
-                    color: 'var(--text)', fontSize: 18, fontWeight: 600,
-                    border: k === '' ? 'none' : '1px solid var(--border2)',
-                    cursor: k === '' ? 'default' : 'pointer',
-                    opacity: pinLoading || k === '' ? (k === '' ? 0 : 0.6) : 1,
-                    fontFamily: 'inherit',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { if (k !== '') (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
-                  onMouseLeave={e => { if (k !== '') (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg3)' }}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setPinModalOpen(false)}
-              style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
-            >
-              Zrušiť
-            </button>
+            {pinError && <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--aurora-rose)', margin: '16px 0 0', fontFamily: "'Manrope', sans-serif" }}>{pinError}</p>}
           </div>
         </div>
       )}

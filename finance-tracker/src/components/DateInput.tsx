@@ -5,6 +5,7 @@ import { useSettingsContext } from '../context/SettingsContext'
 interface DateInputProps {
   value: string // always YYYY-MM-DD
   onChange: (value: string) => void
+  compact?: boolean
 }
 
 function formatForDisplay(dateStr: string, fmt: string): string {
@@ -24,7 +25,7 @@ function formatForDisplay(dateStr: string, fmt: string): string {
   }
 }
 
-export function DateInput({ value, onChange }: DateInputProps) {
+export function DateInput({ value, onChange, compact }: DateInputProps) {
   const hiddenRef = useRef<HTMLInputElement>(null)
   const { settings } = useSettingsContext()
   const displayValue = formatForDisplay(value, settings.dateFormat)
@@ -36,6 +37,32 @@ export function DateInput({ value, onChange }: DateInputProps) {
     } catch {
       hiddenRef.current.click()
     }
+  }
+
+  if (compact) {
+    return (
+      <div
+        onClick={openPicker}
+        style={{
+          position: 'relative', flexShrink: 0,
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
+          borderRadius: 12, padding: '8px 12px', cursor: 'pointer',
+        }}
+      >
+        <Calendar size={13} color="var(--aurora-lo)" style={{ flexShrink: 0 }} />
+        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11.5, fontWeight: 600, color: 'var(--aurora-hi)', userSelect: 'none', whiteSpace: 'nowrap' }}>
+          {displayValue || 'DD.MM.RRRR'}
+        </span>
+        <input
+          ref={hiddenRef}
+          type="date"
+          value={value}
+          onChange={e => { if (e.target.value) onChange(e.target.value) }}
+          style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer', fontSize: 0, border: 'none', background: 'none', colorScheme: 'dark' }}
+        />
+      </div>
+    )
   }
 
   return (
