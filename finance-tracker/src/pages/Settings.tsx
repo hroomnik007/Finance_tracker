@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet, ExternalLink } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet, ExternalLink,
+  CalendarClock, Users, PiggyBank, ScrollText, KeyRound, Hash, ChevronRight, Check, Sun, Moon, SunMoon,
+  AlertTriangle, Trash2, RotateCcw, UserX, Ban,
+} from 'lucide-react'
 import { CsvImportModal } from '../components/CsvImportModal'
+import { GlassCard } from '../components/GlassCard'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
 import { updateWeeklyEmail, updateUserSettings, changePassword, savePin, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
 import { getTransactions, deleteTransaction } from '../api/transactions'
@@ -47,17 +53,18 @@ const ACCENT_COLORS = [
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
+    <GlassCard radius={18} style={{ padding: 0, overflow: 'hidden' }}>
       {children}
-    </div>
+    </GlassCard>
   )
 }
 
-function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
+function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div style={{ borderBottom: '1px solid var(--border)', padding: '14px 20px' }}>
-      <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
-        {emoji} {label}
+    <div style={{ borderBottom: '1px solid var(--aurora-gline)', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <Icon size={13} color="var(--aurora-faint)" />
+      <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--aurora-faint)', fontWeight: 700, margin: 0 }}>
+        {label}
       </p>
     </div>
   )
@@ -65,13 +72,35 @@ function SectionHeader({ emoji, label }: { emoji: string; label: string }) {
 
 function SettingRow({ label, sublabel, children }: { label: string; sublabel?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '13px 20px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 8, gap: 16, padding: '13px 20px' }}>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', margin: 0 }}>{label}</p>
-        {sublabel && <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{sublabel}</p>}
+        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 500, color: 'var(--aurora-hi)', margin: 0 }}>{label}</p>
+        {sublabel && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginTop: 2 }}>{sublabel}</p>}
       </div>
       <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
+  )
+}
+
+function ChevronRow({ icon: Icon, iconColor, iconBg, label, sublabel, onClick }: {
+  icon: LucideIcon; iconColor: string; iconBg: string; label: string; sublabel?: React.ReactNode; onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 20px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+    >
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={16} color={iconColor} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 500, color: 'var(--aurora-hi)' }}>{label}</div>
+        {sublabel && <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginTop: 2 }}>{sublabel}</div>}
+      </div>
+      <ChevronRight size={16} style={{ color: 'var(--aurora-faint)', flexShrink: 0 }} />
+    </button>
   )
 }
 
@@ -561,6 +590,9 @@ export function SettingsPage() {
   const [trackingDate, setTrackingDate] = useState(() => user?.tracking_start_date ?? '')
   const [trackingSaving, setTrackingSaving] = useState(false)
   const [trackingOk, setTrackingOk] = useState(false)
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false)
+  const [sessionsModalOpen, setSessionsModalOpen] = useState(false)
+  const [deactivationModalOpen, setDeactivationModalOpen] = useState(false)
 
   async function handleSaveTrackingDate() {
     setTrackingSaving(true)
@@ -599,16 +631,11 @@ export function SettingsPage() {
     <div className="w-full" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 20px))' }}>
 
       {/* Settings page header */}
-      <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-        <p className="t-label" style={{ marginBottom: 6 }}>{t.settings.title}</p>
-        <p style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0 }}>{t.settings.subtitle}</p>
-      </div>
+      <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', margin: '0 0 16px' }}>{t.settings.title}</h1>
 
-      {/* 2-col grid: left nav + right content */}
-      <div className="grid gap-5 items-start lg:grid-cols-[200px_1fr]">
-
-        {/* Left nav — desktop only */}
-        <div className="hidden lg:block" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', position: 'sticky', top: 20 }}>
+      {/* Tab row: compact pill tabs, same at every breakpoint */}
+      <div style={{ position: 'relative', minWidth: 0, marginBottom: 16 }}>
+        <div ref={tabsScrollRef} className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
           {SECTIONS.map(s => {
             const Icon = s.icon
             const isActive = activeSection === s.id
@@ -617,80 +644,55 @@ export function SettingsPage() {
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  width: '100%', padding: '13px 16px',
-                  background: isActive ? 'rgba(139,92,246,0.1)' : 'transparent',
-                  border: 'none', borderLeft: isActive ? '3px solid var(--violet)' : '3px solid transparent',
-                  color: isActive ? 'var(--violet)' : 'var(--text2)',
-                  fontSize: 14, fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  transition: 'all 0.15s', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 14, flexShrink: 0,
+                  background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
+                  border: isActive ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+                  color: isActive ? '#fff' : 'var(--aurora-lo)',
+                  fontFamily: "'Manrope', sans-serif",
+                  fontSize: 12.5, fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >
-                <Icon size={16} strokeWidth={isActive ? 2 : 1.8} />
+                <Icon size={13} strokeWidth={2} />
                 {sectionLabels[s.id]}
               </button>
             )
           })}
         </div>
+        <ScrollFadeOverlay visible={tabsShowFade} background="var(--aurora-bg)" />
+      </div>
 
-        {/* Mobile: horizontal scroll chips */}
-        <div className="lg:hidden" style={{ position: 'relative', gridColumn: '1 / -1', minWidth: 0 }}>
-          <div ref={tabsScrollRef} className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-            {SECTIONS.map(s => {
-              const isActive = activeSection === s.id
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveSection(s.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '8px 14px', borderRadius: 99, flexShrink: 0,
-                    background: isActive ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-                    border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border)',
-                    color: isActive ? 'var(--violet)' : 'var(--text2)',
-                    fontSize: 13, fontWeight: isActive ? 600 : 500,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  {sectionLabels[s.id]}
-                </button>
-              )
-            })}
-          </div>
-          <ScrollFadeOverlay visible={tabsShowFade} background="var(--bg)" />
-        </div>
-
-        {/* Right content */}
-        <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Content */}
+      <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 640 }}>
 
           {/* ── APPEARANCE SECTION ── */}
           {activeSection === 'appearance' && (
             <>
               {/* Card 1: Téma */}
               <SectionCard>
-                <SectionHeader emoji="🎨" label={t.settings.theme} />
+                <SectionHeader icon={Palette} label={t.settings.theme} />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {([
-                        { id: 'dark', icon: '🌙', label: 'Dark' },
-                        { id: 'light', icon: '☀️', label: 'Light' },
-                        { id: 'system', icon: '⚙️', label: 'System' },
-                      ] as const).map(({ id, icon, label }) => (
+                        { id: 'dark', icon: Moon, label: 'Dark' },
+                        { id: 'light', icon: Sun, label: 'Light' },
+                        { id: 'system', icon: SunMoon, label: 'System' },
+                      ] as const).map(({ id, icon: Icon, label }) => (
                         <button
                           key={id}
                           onClick={() => handleThemeChange(id)}
                           style={{
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                             padding: '8px 12px', borderRadius: 12, cursor: 'pointer',
-                            border: theme === id ? '2px solid var(--violet)' : '1px solid var(--border)',
-                            background: theme === id ? 'rgba(124,58,237,0.12)' : 'var(--bg3)',
-                            color: theme === id ? 'var(--violet)' : 'var(--text2)',
-                            minWidth: 56, transition: 'all 0.15s',
+                            border: theme === id ? '2px solid var(--aurora-violet)' : '1px solid var(--aurora-gline)',
+                            background: theme === id ? 'rgba(139,92,246,0.12)' : 'var(--aurora-glass)',
+                            color: theme === id ? 'var(--aurora-violet)' : 'var(--aurora-lo)',
+                            minWidth: 56, transition: 'all 0.15s', fontFamily: "'Manrope', sans-serif",
                           }}
                         >
-                          <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+                          <Icon size={16} />
                           <span style={{ fontSize: 11, fontWeight: theme === id ? 600 : 400 }}>{label}</span>
                         </button>
                       ))}
@@ -704,9 +706,9 @@ export function SettingsPage() {
 
               {/* Card 2: Akcentová farba */}
               <SectionCard>
-                <SectionHeader emoji="🎨" label={t.settings.accentColor} />
+                <SectionHeader icon={Palette} label={t.settings.accentColor} />
                 <div style={{ padding: '12px 20px 16px' }}>
-                  <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 14, marginTop: 0 }}>Použije sa pre tlačidlá, ikony a grafy</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginBottom: 14, marginTop: 0 }}>Použije sa pre tlačidlá, ikony a grafy</p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {ACCENT_COLORS.map(c => (
                       <button
@@ -741,16 +743,19 @@ export function SettingsPage() {
               {/* Section 1: Všeobecné */}
               <div className="settings-general-compact">
               <SectionCard>
-                <SectionHeader emoji="👤" label={t.settings.generalSection} />
+                <SectionHeader icon={User} label={t.settings.generalSection} />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.currency}>
-                    <select
-                      value={settings.currency}
-                      onChange={e => updateSettings({ currency: e.target.value })}
-                      className="select-field"
-                    >
-                      {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                    </select>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <select
+                        value={settings.currency}
+                        onChange={e => updateSettings({ currency: e.target.value })}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                      >
+                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: '#14121C' }}>{c.label}</option>)}
+                      </select>
+                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
+                    </div>
                   </SettingRow>
 
                   <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
@@ -763,27 +768,30 @@ export function SettingsPage() {
                   </SettingRow>
 
                   <SettingRow label={t.settings.dateFormat}>
-                    <select
-                      value={settings.dateFormat}
-                      onChange={e => updateSettings({ dateFormat: e.target.value })}
-                      className="select-field"
-                    >
-                      {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                    </select>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <select
+                        value={settings.dateFormat}
+                        onChange={e => updateSettings({ dateFormat: e.target.value })}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                      >
+                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: '#14121C' }}>{f.label}</option>)}
+                      </select>
+                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
+                    </div>
                   </SettingRow>
 
                   <SettingRow label={t.settings.firstDayOfWeek}>
-                    <div style={{ display: 'flex', background: 'var(--bg3)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', background: 'var(--aurora-glass)', borderRadius: 10, padding: 3, border: '1px solid var(--aurora-gline)' }}>
                       {(['monday', 'sunday'] as const).map((day, i) => (
                         <button
                           key={day}
                           onClick={() => updateSettings({ firstDayOfWeek: day })}
                           style={{
-                            padding: '5px 16px', borderRadius: 6, fontSize: 13,
+                            padding: '5px 16px', borderRadius: 7, fontSize: 13,
                             fontWeight: settings.firstDayOfWeek === day ? 600 : 400,
-                            background: settings.firstDayOfWeek === day ? 'var(--accent-color)' : 'transparent',
-                            color: settings.firstDayOfWeek === day ? 'white' : 'var(--text2)',
-                            border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                            background: settings.firstDayOfWeek === day ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
+                            color: settings.firstDayOfWeek === day ? 'white' : 'var(--aurora-lo)',
+                            border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s',
                           }}
                         >
                           {i === 0 ? t.daysShort[0] : t.daysShort[6]}
@@ -798,56 +806,19 @@ export function SettingsPage() {
 
               {/* Section: Sledovanie od dátumu */}
               <SectionCard>
-                <SectionHeader emoji="📅" label="Sledovanie od dátumu" />
-                <div style={{ padding: '4px 20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0, lineHeight: 1.5 }}>
-                    Nastav dátum, od ktorého chceš sledovať financie. Príjmy a výdavky pred týmto dátumom sa nebudú zobrazovať v histórii.
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      Sledovanie od
-                    </label>
-                    <input
-                      type="date"
-                      value={trackingDate}
-                      onChange={e => setTrackingDate(e.target.value)}
-                      style={{
-                        background: 'var(--bg3)', border: '1px solid var(--border)',
-                        borderRadius: 10, padding: '11px 14px', fontSize: 14,
-                        color: 'var(--text)', width: '100%', outline: 'none',
-                        fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark',
-                      }}
-                    />
-                  </div>
-                  {trackingOk && (
-                    <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Dátum bol uložený</p>
-                  )}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={handleSaveTrackingDate}
-                      disabled={trackingSaving}
-                      className="btn-primary py-2 text-sm"
-                      style={{ opacity: trackingSaving ? 0.6 : 1 }}
-                    >
-                      {trackingSaving ? 'Ukladám...' : 'Uložiť'}
-                    </button>
-                    {(user?.tracking_start_date) && (
-                      <button
-                        onClick={handleClearTrackingDate}
-                        disabled={trackingSaving}
-                        className="btn-secondary py-2 text-sm"
-                        style={{ opacity: trackingSaving ? 0.6 : 1 }}
-                      >
-                        Vymazať
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <ChevronRow
+                  icon={CalendarClock}
+                  iconColor="var(--aurora-violet)"
+                  iconBg="rgba(139,92,246,0.12)"
+                  label="Sledovanie od dátumu"
+                  sublabel={user?.tracking_start_date ? new Date(user.tracking_start_date).toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Nenastavené'}
+                  onClick={() => setTrackingModalOpen(true)}
+                />
               </SectionCard>
 
               {/* Section: Rodinné financie */}
               <SectionCard>
-                <SectionHeader emoji="👨‍👩‍👧" label={t.settings.householdTitle} />
+                <SectionHeader icon={Users} label={t.settings.householdTitle} />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.householdTitle} sublabel={householdId ? t.settings.householdSubtitleJoined : t.settings.householdSubtitleNew}>
                     <Toggle checked={householdEnabled} onChange={householdId ? () => {} : handleHouseholdToggle} disabled={householdToggling || !!householdId} />
@@ -858,39 +829,39 @@ export function SettingsPage() {
                   <div className="p-5 flex flex-col gap-4 border-t border-white/[0.06]">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Vytvor domácnosť */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--text3)]">{t.settings.householdCreate}</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 12, padding: 16 }}>
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--aurora-faint)', fontFamily: "'Outfit', sans-serif" }}>{t.settings.householdCreate}</p>
                         <input
                           type="text"
                           placeholder={t.settings.householdCreatePlaceholder}
                           value={createName}
                           onChange={e => setCreateName(e.target.value)}
-                          style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
+                          style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
                         />
                         <button
                           onClick={handleCreateHousehold}
                           disabled={createLoading || !createName.trim()}
-                          style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (createLoading || !createName.trim()) ? 0.4 : 1 }}
+                          style={{ background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: "'Outfit', sans-serif", opacity: (createLoading || !createName.trim()) ? 0.4 : 1 }}
                         >
                           {createLoading ? t.settings.householdCreating : t.settings.householdCreateBtn}
                         </button>
                       </div>
 
                       {/* Pripoj sa */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--text3)]">{t.settings.householdJoin}</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 12, padding: 16 }}>
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--aurora-faint)', fontFamily: "'Outfit', sans-serif" }}>{t.settings.householdJoin}</p>
                         <input
                           type="text"
                           placeholder={t.settings.householdJoinPlaceholder}
                           value={joinCode}
                           onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(null) }}
-                          style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: 'inherit' }}
+                          style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', padding: '12px 14px', fontSize: 14, outline: 'none', width: '100%', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
                         />
                         {joinError && <p className="text-xs text-red-400">{joinError}</p>}
                         <button
                           onClick={handleJoinHousehold}
                           disabled={joinLoading || !joinCode.trim()}
-                          style={{ background: 'var(--violet)', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: 'inherit', opacity: (joinLoading || !joinCode.trim()) ? 0.4 : 1 }}
+                          style={{ background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', fontFamily: "'Outfit', sans-serif", opacity: (joinLoading || !joinCode.trim()) ? 0.4 : 1 }}
                         >
                           {joinLoading ? t.settings.householdJoining : t.settings.householdJoinBtn}
                         </button>
@@ -902,7 +873,7 @@ export function SettingsPage() {
 
               {/* Section: Sporenie */}
               <SectionCard>
-                <SectionHeader emoji="🐷" label={t.settings.savingsTitle} />
+                <SectionHeader icon={PiggyBank} label={t.settings.savingsTitle} />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.savingsTitle} sublabel={t.settings.savingsSubtitle}>
                     <Toggle checked={savingsEnabled} onChange={handleSavingsToggle} disabled={savingsToggling} />
@@ -916,7 +887,7 @@ export function SettingsPage() {
           {activeSection === 'notifications' && (
             <>
               <SectionCard>
-                <SectionHeader emoji="🔔" label={t.settings.notificationsSection} />
+                <SectionHeader icon={Bell} label={t.settings.notificationsSection} />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.fixedReminders} sublabel={t.settings.fixedRemindersSubtitle}>
                     <Toggle checked={notificationsEnabled} onChange={handleNotificationsToggle} />
@@ -953,7 +924,7 @@ export function SettingsPage() {
                   </SettingRow>
                 </div>
                 <div className="border-t border-white/[0.04]" style={{ padding: '10px var(--card-padding, 20px)' }}>
-                  <p className="text-xs text-[color:var(--text3)]">{t.settings.notificationsNote}</p>
+                  <p className="text-xs" style={{ color: 'var(--aurora-faint)', fontFamily: "'Manrope', sans-serif" }}>{t.settings.notificationsNote}</p>
                 </div>
               </SectionCard>
             </>
@@ -964,151 +935,87 @@ export function SettingsPage() {
             <>
               <div ref={securityRef} id="bezpecnost-section">
               <SectionCard>
-                <SectionHeader emoji="🔐" label={t.settings.sectionSecurity} />
+                <SectionHeader icon={Shield} label={t.settings.sectionSecurity} />
                 <div className="divide-y divide-white/[0.04]">
 
                   {/* Zmeniť heslo */}
-                  <div>
-                    <SettingRow label="Zmeniť heslo" sublabel="Aktualizovať prihlasovacie heslo">
+                  <ChevronRow
+                    icon={KeyRound}
+                    iconColor="var(--aurora-violet)"
+                    iconBg="rgba(139,92,246,0.12)"
+                    label="Zmeniť heslo"
+                    sublabel="Aktualizovať prihlasovacie heslo"
+                    onClick={() => { setChangePwOpen(true); setChangePwError(null); setChangePwOk(false) }}
+                  />
+
+                  {/* PIN */}
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <ChevronRow
+                        icon={Hash}
+                        iconColor={hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)'}
+                        iconBg={hasPin ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.05)'}
+                        label={t.settings.pinCodeLabel}
+                        sublabel={hasPin ? <span style={{ color: 'var(--aurora-emerald)', fontWeight: 600 }}>{t.settings.pinIsActive}</span> : t.settings.pinAppLock}
+                        onClick={() => setPinSetupOpen(true)}
+                      />
+                    </div>
+                    {hasPin && (
                       <button
-                        onClick={() => { setChangePwOpen(o => !o); setChangePwError(null) }}
-                        className="btn-settings"
+                        onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--aurora-faint)', cursor: 'pointer', padding: 8, marginRight: 8, flexShrink: 0 }}
+                        title={t.common.remove}
                       >
-                        {changePwOpen ? 'Zavrieť' : 'Zmeniť'}
+                        <Trash2 size={15} />
                       </button>
-                    </SettingRow>
-                    {changePwOpen && (
-                      <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {changePwError && <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{changePwError}</p>}
-                        {changePwOk && <p style={{ fontSize: 12, color: '#34D399', margin: 0 }}>✓ Heslo zmenené</p>}
-                        <input type="password" placeholder="Aktuálne heslo" value={currentPw} onChange={e => setCurrentPw(e.target.value)} className="input-field text-sm" />
-                        <input type="password" placeholder="Nové heslo (min. 8 znakov)" value={newPw} onChange={e => setNewPw(e.target.value)} className="input-field text-sm" />
-                        <input type="password" placeholder="Potvrď nové heslo" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChangePassword()} className="input-field text-sm" />
-                        <button onClick={handleChangePassword} disabled={changePwLoading} className="btn-primary py-2 text-sm justify-center disabled:opacity-40">
-                          {changePwLoading ? 'Ukladám...' : 'Uložiť heslo'}
-                        </button>
-                      </div>
                     )}
                   </div>
 
-                  {/* PIN */}
-                  <SettingRow
-                    label={t.settings.pinCodeLabel}
-                    sublabel={hasPin ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{t.settings.pinIsActive}</span> : t.settings.pinAppLock}
-                  >
-                    {hasPin ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => setPinSetupOpen(true)} className="btn-settings">{t.settings.change}</button>
-                        <button onClick={() => { setPinRemoveOpen(true); setPinRemoveInput(''); setPinRemoveError(null) }} className="btn-settings-danger">{t.common.remove}</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setPinSetupOpen(true)} className="btn-settings">{t.settings.setup}</button>
-                    )}
-                  </SettingRow>
-
                   {/* Automatické uzamknutie */}
                   <SettingRow label={t.settings.autoLock} sublabel={t.settings.autoLockSubtitle}>
-                    <select
-                      value={autoLockMinutes ?? 'never'}
-                      onChange={e => handleAutoLockChange(e.target.value === 'never' ? null : Number(e.target.value))}
-                      disabled={autoLockSaving || !hasPin}
-                      className="select-field"
-                      style={{ opacity: (!hasPin) ? 0.4 : 1 }}
-                    >
-                      <option value="never">{t.settings.autoLockNever}</option>
-                      <option value="0">Ihneď</option>
-                      <option value="1">{t.settings.autoLock1min}</option>
-                      <option value="5">{t.settings.autoLock5min}</option>
-                      <option value="15">{t.settings.autoLock15min}</option>
-                    </select>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', opacity: !hasPin ? 0.4 : 1 }}>
+                      <select
+                        value={autoLockMinutes ?? 'never'}
+                        onChange={e => handleAutoLockChange(e.target.value === 'never' ? null : Number(e.target.value))}
+                        disabled={autoLockSaving || !hasPin}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                      >
+                        <option value="never" style={{ background: '#14121C' }}>{t.settings.autoLockNever}</option>
+                        <option value="0" style={{ background: '#14121C' }}>Ihneď</option>
+                        <option value="1" style={{ background: '#14121C' }}>{t.settings.autoLock1min}</option>
+                        <option value="5" style={{ background: '#14121C' }}>{t.settings.autoLock5min}</option>
+                        <option value="15" style={{ background: '#14121C' }}>{t.settings.autoLock15min}</option>
+                      </select>
+                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
+                    </div>
                   </SettingRow>
 
                 </div>
               </SectionCard>
               </div>
 
-              {/* Aktívne relácie */}
+              {/* Aktívne relácie — collapsed summary row */}
               <SectionCard>
-                <SectionHeader emoji="🖥️" label={t.settings.activeSessions} />
-                <div style={{ padding: '4px 0 8px' }}>
-                  {sessionsLoading ? (
-                    <p style={{ fontSize: 13, color: 'var(--text3)', padding: '12px 20px' }}>Načítavam...</p>
-                  ) : sessions.length === 0 ? (
-                    <p style={{ fontSize: 13, color: 'var(--text3)', padding: '12px 20px' }}>{t.settings.activeSessionsSubtitle}</p>
-                  ) : (
-                    <div className="divide-y divide-white/[0.04]">
-                      {sessions.map(session => {
-                        const isCurrent = session.id === (typeof window !== 'undefined' ? localStorage.getItem('finvu_session_id') : null)
-                        const DeviceIcon = /iPhone|iPad/i.test(session.deviceName ?? '') ? Smartphone
-                          : /Android Phone/i.test(session.deviceName ?? '') ? Smartphone
-                          : /Tablet/i.test(session.deviceName ?? '') ? Tablet
-                          : /Mac|Windows|Linux/i.test(session.deviceName ?? '') ? Laptop
-                          : Monitor
-                        return (
-                          <div key={session.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px' }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <DeviceIcon size={18} strokeWidth={1.5} color="var(--text2)" />
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', margin: 0 }}>{session.deviceName ?? 'Neznáme zariadenie'}</p>
-                                {isCurrent && (
-                                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(52,211,153,0.15)', color: '#34D399', fontFamily: "'DM Mono',monospace", letterSpacing: '0.05em' }}>
-                                    {t.settings.currentSessionBadge}
-                                  </span>
-                                )}
-                              </div>
-                              <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>
-                                {session.browser ?? ''}{session.location ? ` · ${session.location}` : ''}{session.ip ? ` · ${session.ip}` : ''}
-                              </p>
-                              <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, fontFamily: "'DM Mono',monospace" }}>
-                                {new Date(session.createdAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
-                              </p>
-                            </div>
-                            {!isCurrent && (
-                              <button
-                                onClick={() => handleDeleteSession(session.id)}
-                                disabled={sessionDeletingId === session.id}
-                                className="btn-settings-danger"
-                                style={{ flexShrink: 0 }}
-                              >
-                                {t.settings.logoutSession}
-                              </button>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
+                <ChevronRow
+                  icon={Monitor}
+                  iconColor="var(--aurora-lo)"
+                  iconBg="var(--aurora-glass)"
+                  label={t.settings.activeSessions}
+                  sublabel={sessionsLoading ? 'Načítavam...' : `${sessions.length} ${sessions.length === 1 ? 'relácia' : sessions.length < 5 ? 'relácie' : 'relácií'}`}
+                  onClick={() => setSessionsModalOpen(true)}
+                />
               </SectionCard>
 
-              {/* DEAKTIVÁCIA */}
+              {/* DEAKTIVÁCIA — collapsed summary row */}
               <SectionCard>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", fontWeight: 600, margin: 0 }}>
-                    ⚠️ {t.settings.deactivationSection}
-                  </p>
-                </div>
-                <div className="divide-y divide-white/[0.04]">
-                  <SettingRow label="Vymazať všetky transakcie" sublabel="Nevratná operácia — všetky tx budú odstránené">
-                    <button onClick={() => { setDangerAction('transactions'); setDangerConfirmText('') }} className="btn-settings-danger">Vymazať</button>
-                  </SettingRow>
-                  <SettingRow label="Resetovať aplikáciu" sublabel="Vymaže všetky dáta a nastavenia">
-                    <button onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }} className="btn-settings-danger">Reset</button>
-                  </SettingRow>
-                  <SettingRow label="Deaktivovať účet" sublabel="Účet bude skrytý, dáta zostanú 30 dní">
-                    <button onClick={() => { setDeactivateOpen(true); setDeactivateConfirm(''); setDeactivateError(null) }} className="btn-settings-danger">Deaktivovať</button>
-                  </SettingRow>
-                  <SettingRow label="Zmazať účet" sublabel="Trvale odstráni účet a všetky dáta — táto akcia je nezvratná">
-                    <button
-                      onClick={() => { setDeleteOpen(true); setDeleteConfirm(''); setDeleteError(null) }}
-                      style={{ background: '#DC2626', border: 'none', color: 'white', borderRadius: 8, padding: '6px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      Zmazať účet
-                    </button>
-                  </SettingRow>
-                </div>
+                <ChevronRow
+                  icon={AlertTriangle}
+                  iconColor="var(--aurora-rose)"
+                  iconBg="rgba(251,113,133,0.12)"
+                  label={t.settings.deactivationSection.charAt(0) + t.settings.deactivationSection.slice(1).toLowerCase()}
+                  sublabel="Vymazanie dát, deaktivácia alebo zmazanie účtu"
+                  onClick={() => setDeactivationModalOpen(true)}
+                />
               </SectionCard>
             </>
           )}
@@ -1118,27 +1025,39 @@ export function SettingsPage() {
             <>
               <div ref={dataRef} id="data-section">
               <SectionCard>
-                <SectionHeader emoji="💾" label="Export a import" />
+                <SectionHeader icon={Database} label="Export a import" />
                 <div className="divide-y divide-white/[0.04]">
                   <SettingRow label="Exportovať dáta" sublabel="Stiahnuť všetky transakcie a kategórie">
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={handleExportJSON} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>JSON</button>
-                      <button onClick={handleExportCSV} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>CSV</button>
-                      <button onClick={handleExportPDF} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>PDF</button>
-                      <button onClick={handleExportXLSX} className="btn-settings" style={{ padding: '5px 12px', fontSize: 12 }}>XLSX</button>
+                      {[
+                        { label: 'JSON', onClick: handleExportJSON },
+                        { label: 'CSV', onClick: handleExportCSV },
+                        { label: 'PDF', onClick: handleExportPDF },
+                        { label: 'XLSX', onClick: handleExportXLSX },
+                      ].map(f => (
+                        <button
+                          key={f.label}
+                          onClick={f.onClick}
+                          style={{ padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
                     </div>
                   </SettingRow>
-                  <SettingRow label="Importovať CSV" sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP">
-                    <button onClick={() => setCsvImportOpen(true)} className="btn-settings">
-                      <Upload size={13} />
-                      Vybrať súbor
-                    </button>
-                  </SettingRow>
+                  <ChevronRow
+                    icon={Upload}
+                    iconColor="var(--aurora-lo)"
+                    iconBg="var(--aurora-glass)"
+                    label="Importovať CSV"
+                    sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP"
+                    onClick={() => setCsvImportOpen(true)}
+                  />
                 </div>
-                <div style={{ borderTop: '1px solid var(--border)', padding: '10px 20px' }}>
-                  <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>{t.settings.dataNote}</p>
+                <div style={{ borderTop: '1px solid var(--aurora-gline)', padding: '10px 20px' }}>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>{t.settings.dataNote}</p>
                 </div>
-                {exportError && <p style={{ fontSize: 12, color: '#F87171', padding: '0 20px 12px', margin: 0 }}>{exportError}</p>}
+                {exportError && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-rose)', padding: '0 20px 12px', margin: 0 }}>{exportError}</p>}
               </SectionCard>
               </div>
             </>
@@ -1149,7 +1068,7 @@ export function SettingsPage() {
             <>
               <SectionCard>
                 {/* App header row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--aurora-gline)' }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img
                       src="/logo.svg"
@@ -1162,13 +1081,13 @@ export function SettingsPage() {
                         if (fallback) fallback.style.display = 'flex'
                       }}
                     />
-                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--accent-color)', display: 'none', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ color: 'white', fontWeight: 700, fontSize: 22 }}>F</span>
+                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'none', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ color: 'white', fontWeight: 700, fontSize: 22, fontFamily: "'Outfit', sans-serif" }}>F</span>
                     </div>
                   </div>
                   <div>
-                    <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Finvu</p>
-                    <p style={{ fontSize: 12, color: 'var(--text3)', fontFamily: "'DM Mono',monospace", margin: '3px 0 0' }}>
+                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>Finvu</p>
+                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: '3px 0 0' }}>
                       v1.1.0{buildDate ? ` · build ${buildDate}` : ''}
                     </p>
                   </div>
@@ -1180,29 +1099,29 @@ export function SettingsPage() {
                       href="https://finvu.pedani.eu"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--violet)', textDecoration: 'none', fontWeight: 500 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-violet)', textDecoration: 'none', fontWeight: 500 }}
                     >
                       finvu.pedani.eu <ExternalLink size={12} />
                     </a>
                   </SettingRow>
                   <SettingRow label="Zásady ochrany">
-                    <span style={{ fontSize: 13, color: 'var(--text3)' }}>Otvoriť →</span>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Otvoriť →</span>
                   </SettingRow>
                   <SettingRow label="Podmienky používania">
-                    <span style={{ fontSize: 13, color: 'var(--text3)' }}>Otvoriť →</span>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Otvoriť →</span>
                   </SettingRow>
                   <SettingRow label="Licencie a poďakovania">
-                    <span style={{ fontSize: 13, color: 'var(--text3)' }}>Otvoriť →</span>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Otvoriť →</span>
                   </SettingRow>
                 </div>
-                <div style={{ borderTop: '1px solid var(--border)', padding: '10px 20px' }}>
-                  <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, textAlign: 'center' }}>© 2024–2026 Finvu · pedani.eu</p>
+                <div style={{ borderTop: '1px solid var(--aurora-gline)', padding: '10px 20px' }}>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', margin: 0, textAlign: 'center' }}>© 2024–2026 Finvu · pedani.eu</p>
                 </div>
               </SectionCard>
 
               {/* Changelog — static grouped by version */}
               <SectionCard>
-                <SectionHeader emoji="📋" label="Changelog" />
+                <SectionHeader icon={ScrollText} label="Changelog" />
                 <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {[
                     {
@@ -1224,17 +1143,17 @@ export function SettingsPage() {
                       ],
                     },
                   ].map((release, ri) => (
-                    <div key={release.version} style={ri > 0 ? { marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' } : {}}>
+                    <div key={release.version} style={ri > 0 ? { marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--aurora-gline)' } : {}}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                        <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--violet)' }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--aurora-violet)' }}>
                           {release.version}
                         </span>
-                        <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", color: 'var(--text3)' }}>{release.date}</span>
+                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{release.date}</span>
                       </div>
                       <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {release.items.map(item => (
-                          <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text2)' }}>
-                            <span style={{ color: 'var(--violet)', flexShrink: 0, marginTop: 1 }}>·</span>
+                          <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)' }}>
+                            <span style={{ color: 'var(--aurora-violet)', flexShrink: 0, marginTop: 1 }}>·</span>
                             {item}
                           </li>
                         ))}
@@ -1247,20 +1166,19 @@ export function SettingsPage() {
           )}
 
         </div>
-      </div>
 
       {/* ── PIN REMOVE MODAL ── */}
       {pinRemoveOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
           <div
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
+            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
             className="modal-in"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.profile.removePin}</h2>
-              <button onClick={() => setPinRemoveOpen(false)} className="btn-icon"><X size={16} /></button>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{t.profile.removePin}</h2>
+              <button onClick={() => setPinRemoveOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}><X size={16} /></button>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>{t.settings.removePinConfirm}</p>
+            <p style={{ fontSize: 13, color: 'var(--aurora-faint)', marginBottom: 20 }}>{t.settings.removePinConfirm}</p>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
               <div style={{ display: 'flex', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
                 {[0,1,2,3].map(i => (
@@ -1273,7 +1191,7 @@ export function SettingsPage() {
                 ))}
               </div>
               {pinRemoveError && (
-                <p style={{ fontSize: 12, color: 'var(--red)', margin: 0 }}>{pinRemoveError}</p>
+                <p style={{ fontSize: 12, color: 'var(--aurora-rose)', margin: 0 }}>{pinRemoveError}</p>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gap: 8 }}>
                 {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((k, i) => (
@@ -1285,7 +1203,7 @@ export function SettingsPage() {
                         width: 60, height: 60, borderRadius: '50%',
                         background: k === '⌫' ? 'transparent' : 'rgba(255,255,255,0.04)',
                         border: k === '⌫' ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                        color: 'var(--text)', fontSize: k === '⌫' ? 16 : 20, fontWeight: 600,
+                        color: 'var(--aurora-hi)', fontSize: k === '⌫' ? 16 : 20, fontWeight: 600,
                         cursor: pinRemoveLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         opacity: pinRemoveLoading ? 0.5 : 1,
@@ -1304,16 +1222,16 @@ export function SettingsPage() {
       {/* ── DANGER CONFIRM MODAL ── */}
       {dangerAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>
                 {dangerAction === 'transactions' ? 'Vymazať všetky transakcie' : t.settings.dangerResetTitle}
               </h2>
-              <button onClick={() => setDangerAction(null)} className="btn-icon">
+              <button onClick={() => setDangerAction(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}>
                 <X size={16} />
               </button>
             </div>
-            <p className="text-sm text-[color:var(--text3)] mb-5">
+            <p className="text-sm text-[color:var(--aurora-faint)] mb-5">
               {dangerAction === 'reset' ? t.settings.dangerResetDesc : t.settings.dangerDeleteDesc}
             </p>
             {dangerAction === 'reset' && (
@@ -1326,14 +1244,14 @@ export function SettingsPage() {
                   placeholder="VYMAZAŤ"
                   value={dangerConfirmText}
                   onChange={e => setDangerConfirmText(e.target.value)}
-                  className="input-field"
+                  style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
                 />
               </div>
             )}
             <div className="flex gap-3">
               <button
                 onClick={() => setDangerAction(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--aurora-faint)] hover:bg-white/10 transition-colors cursor-pointer"
               >
                 {t.common.cancel}
               </button>
@@ -1352,14 +1270,14 @@ export function SettingsPage() {
       {/* ── DEACTIVATE ACCOUNT MODAL ── */}
       {deactivateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.settings.deactivateAccount}</h2>
-              <button onClick={() => setDeactivateOpen(false)} className="btn-icon"><X size={16} /></button>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.deactivateAccount}</h2>
+              <button onClick={() => setDeactivateOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}><X size={16} /></button>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>{t.settings.deactivateAccountDesc}</p>
+            <p style={{ fontSize: 13, color: 'var(--aurora-faint)', marginBottom: 16 }}>{t.settings.deactivateAccountDesc}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--red)' }}>
+              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--aurora-rose)' }}>
                 {t.settings.deactivateAccountConfirmLabel}
               </label>
               <input
@@ -1367,12 +1285,12 @@ export function SettingsPage() {
                 placeholder="DEAKTIVOVAŤ"
                 value={deactivateConfirm}
                 onChange={e => { setDeactivateConfirm(e.target.value); setDeactivateError(null) }}
-                className="input-field"
+                style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
               />
             </div>
-            {deactivateError && <p style={{ fontSize: 12, color: 'var(--red)', marginBottom: 8 }}>{deactivateError}</p>}
+            {deactivateError && <p style={{ fontSize: 12, color: 'var(--aurora-rose)', marginBottom: 8 }}>{deactivateError}</p>}
             <div className="flex gap-3">
-              <button onClick={() => setDeactivateOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer">
+              <button onClick={() => setDeactivateOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--aurora-faint)] hover:bg-white/10 transition-colors cursor-pointer">
                 {t.common.cancel}
               </button>
               <button
@@ -1399,14 +1317,14 @@ export function SettingsPage() {
       {/* ── DELETE ACCOUNT MODAL ── */}
       {deleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in">
-          <div style={{ background: 'var(--bg2)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
+          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 384 }} className="modal-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.settings.deleteAccount}</h2>
-              <button onClick={() => setDeleteOpen(false)} className="btn-icon"><X size={16} /></button>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.deleteAccount}</h2>
+              <button onClick={() => setDeleteOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}><X size={16} /></button>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>{t.settings.deleteAccountDesc}</p>
+            <p style={{ fontSize: 13, color: 'var(--aurora-faint)', marginBottom: 16 }}>{t.settings.deleteAccountDesc}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--red)' }}>
+              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--aurora-rose)' }}>
                 {t.settings.deleteAccountConfirmLabel}
               </label>
               <input
@@ -1414,12 +1332,12 @@ export function SettingsPage() {
                 placeholder="ZMAZAŤ"
                 value={deleteConfirm}
                 onChange={e => { setDeleteConfirm(e.target.value); setDeleteError(null) }}
-                className="input-field"
+                style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
               />
             </div>
-            {deleteError && <p style={{ fontSize: 12, color: 'var(--red)', marginBottom: 8 }}>{deleteError}</p>}
+            {deleteError && <p style={{ fontSize: 12, color: 'var(--aurora-rose)', marginBottom: 8 }}>{deleteError}</p>}
             <div className="flex gap-3">
-              <button onClick={() => setDeleteOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--text3)] hover:bg-white/10 transition-colors cursor-pointer">
+              <button onClick={() => setDeleteOpen(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 border border-white/10 text-[color:var(--aurora-faint)] hover:bg-white/10 transition-colors cursor-pointer">
                 {t.common.cancel}
               </button>
               <button
@@ -1443,6 +1361,185 @@ export function SettingsPage() {
               >
                 {isDeleting ? 'Mažem...' : t.settings.deleteAccountConfirmBtn}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CHANGE PASSWORD MODAL ── */}
+      {changePwOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setChangePwOpen(false)}>
+          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 }} className="modal-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>Zmeniť heslo</h2>
+              <button onClick={() => setChangePwOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {changePwError && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-rose)', margin: 0 }}>{changePwError}</p>}
+              {changePwOk ? (
+                <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'var(--aurora-emerald)', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                  <Check size={15} /> Heslo zmenené
+                </div>
+              ) : (
+                <>
+                  <input type="password" placeholder="Aktuálne heslo" value={currentPw} onChange={e => setCurrentPw(e.target.value)} style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }} />
+                  <input type="password" placeholder="Nové heslo (min. 8 znakov)" value={newPw} onChange={e => setNewPw(e.target.value)} style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }} />
+                  <input type="password" placeholder="Potvrď nové heslo" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChangePassword()} style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }} />
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={changePwLoading}
+                    style={{ height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white', border: 'none', cursor: changePwLoading ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif", opacity: changePwLoading ? 0.7 : 1, marginTop: 4 }}
+                  >
+                    {changePwLoading ? 'Ukladám...' : 'Uložiť heslo'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ACTIVE SESSIONS MODAL ── */}
+      {sessionsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setSessionsModalOpen(false)}>
+          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420, maxHeight: '80vh', overflowY: 'auto' }} className="modal-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.activeSessions}</h2>
+              <button onClick={() => setSessionsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
+            </div>
+            {sessionsLoading ? (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Načítavam...</p>
+            ) : sessions.length === 0 ? (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>{t.settings.activeSessionsSubtitle}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {sessions.map(session => {
+                  const isCurrent = session.id === (typeof window !== 'undefined' ? localStorage.getItem('finvu_session_id') : null)
+                  const DeviceIcon = /iPhone|iPad/i.test(session.deviceName ?? '') ? Smartphone
+                    : /Android Phone/i.test(session.deviceName ?? '') ? Smartphone
+                    : /Tablet/i.test(session.deviceName ?? '') ? Tablet
+                    : /Mac|Windows|Linux/i.test(session.deviceName ?? '') ? Laptop
+                    : Monitor
+                  return (
+                    <GlassCard key={session.id} radius={14} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <DeviceIcon size={18} strokeWidth={1.5} color="var(--aurora-lo)" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 500, color: 'var(--aurora-hi)', margin: 0 }}>{session.deviceName ?? 'Neznáme zariadenie'}</p>
+                          {isCurrent && (
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(52,211,153,0.15)', color: 'var(--aurora-emerald)', letterSpacing: '0.05em' }}>
+                              {t.settings.currentSessionBadge}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>
+                          {session.browser ?? ''}{session.location ? ` · ${session.location}` : ''}{session.ip ? ` · ${session.ip}` : ''}
+                        </p>
+                        <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', margin: 0 }}>
+                          {new Date(session.createdAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                      {!isCurrent && (
+                        <button
+                          onClick={() => handleDeleteSession(session.id)}
+                          disabled={sessionDeletingId === session.id}
+                          style={{ flexShrink: 0, background: 'rgba(251,113,133,0.1)', border: '1px solid rgba(251,113,133,0.25)', color: 'var(--aurora-rose)', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
+                        >
+                          {t.settings.logoutSession}
+                        </button>
+                      )}
+                    </GlassCard>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── DEACTIVATION MODAL ── */}
+      {deactivationModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setDeactivationModalOpen(false)}>
+          <div style={{ background: '#14121C', border: '1px solid rgba(251,113,133,0.3)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420 }} className="modal-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.deactivationSection.charAt(0) + t.settings.deactivationSection.slice(1).toLowerCase()}</h2>
+              <button onClick={() => setDeactivationModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <ChevronRow
+                icon={Trash2} iconColor="var(--aurora-rose)" iconBg="rgba(251,113,133,0.12)"
+                label="Vymazať všetky transakcie" sublabel="Nevratná operácia — všetky tx budú odstránené"
+                onClick={() => { setDangerAction('transactions'); setDangerConfirmText('') }}
+              />
+              <ChevronRow
+                icon={RotateCcw} iconColor="var(--aurora-rose)" iconBg="rgba(251,113,133,0.12)"
+                label="Resetovať aplikáciu" sublabel="Vymaže všetky dáta a nastavenia"
+                onClick={() => { setDangerAction('reset'); setDangerConfirmText('') }}
+              />
+              <ChevronRow
+                icon={Ban} iconColor="var(--aurora-rose)" iconBg="rgba(251,113,133,0.12)"
+                label="Deaktivovať účet" sublabel="Účet bude skrytý, dáta zostanú 30 dní"
+                onClick={() => { setDeactivateOpen(true); setDeactivateConfirm(''); setDeactivateError(null) }}
+              />
+              <ChevronRow
+                icon={UserX} iconColor="var(--aurora-rose)" iconBg="rgba(251,113,133,0.12)"
+                label="Zmazať účet" sublabel="Trvale odstráni účet a všetky dáta — nezvratné"
+                onClick={() => { setDeleteOpen(true); setDeleteConfirm(''); setDeleteError(null) }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TRACKING DATE MODAL ── */}
+      {trackingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setTrackingModalOpen(false)}>
+          <div style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 380 }} className="modal-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>Sledovanie od dátumu</h2>
+              <button onClick={() => setTrackingModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
+            </div>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: '0 0 16px', lineHeight: 1.5 }}>
+              Nastav dátum, od ktorého chceš sledovať financie. Príjmy a výdavky pred týmto dátumom sa nebudú zobrazovať v histórii.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              <label style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 700, color: 'var(--aurora-faint)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Sledovanie od
+              </label>
+              <input
+                type="date"
+                value={trackingDate}
+                onChange={e => setTrackingDate(e.target.value)}
+                style={{
+                  background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
+                  borderRadius: 10, padding: '11px 14px', fontSize: 14,
+                  color: 'var(--aurora-hi)', width: '100%', outline: 'none',
+                  fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box', colorScheme: 'dark',
+                }}
+              />
+            </div>
+            {trackingOk && (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-emerald)', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}><Check size={13} /> Dátum bol uložený</p>
+            )}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={handleSaveTrackingDate}
+                disabled={trackingSaving}
+                style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", opacity: trackingSaving ? 0.6 : 1 }}
+              >
+                {trackingSaving ? 'Ukladám...' : 'Uložiť'}
+              </button>
+              {user?.tracking_start_date && (
+                <button
+                  onClick={handleClearTrackingDate}
+                  disabled={trackingSaving}
+                  style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", opacity: trackingSaving ? 0.6 : 1 }}
+                >
+                  Vymazať
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Check, Pencil, Delete, ChevronRight, LogOut } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  X, Check, Pencil, Delete, ChevronRight, LogOut, Crown, KeyRound, Hash,
+  Target, Flame, PiggyBank, BarChart3, Trophy, Zap, Users, Gem,
+} from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { PinSetupModal } from '../components/PinSetupModal'
 import { usePinLockContext } from '../context/PinLockContext'
@@ -9,11 +13,23 @@ import { getSavingsGoals } from '../api/savings'
 import { getAchievements, type AchievementState } from '../api/achievements'
 import { ACHIEVEMENTS } from '../data/achievements'
 import { AchievementDetailModal } from '../components/AchievementDetailModal'
+import { GlassCard } from '../components/GlassCard'
 import { useSettingsContext } from '../context/SettingsContext'
 import { isPhotoUrl, avatarSrc } from '../utils/avatar'
 import { useAuth } from '../context/AuthContext'
 
 const AVATAR_OPTIONS = ['👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','🦊','🐱','🐶','🦁','🐼','🐨']
+
+const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
+  first_transaction: Target,
+  week_streak: Flame,
+  first_savings_goal: PiggyBank,
+  first_report: BarChart3,
+  budget_met: Trophy,
+  speedster: Zap,
+  team_player: Users,
+  veteran: Gem,
+}
 
 function AchievementsTab() {
   const { t } = useTranslation()
@@ -42,21 +58,18 @@ function AchievementsTab() {
 
   return (
     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em' }}>{t.profile.achievementsUnlocked.toUpperCase()} ({countLabel})</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: 'var(--aurora-faint)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t.profile.achievementsUnlocked} ({countLabel})</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, opacity: loaded ? 1 : 0.5, transition: 'opacity 0.2s' }}>
-        {items.map((a, i) => (
-          <div
+        {items.map((a, i) => {
+          const Icon = ACHIEVEMENT_ICONS[a.key] ?? Target
+          return (
+          <GlassCard
             key={i}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
+            radius={16}
             onClick={() => setSelected(i)}
             style={{
-              background: 'var(--bg3)',
-              border: a.unlocked ? `1px solid ${a.color}40` : '1px solid var(--border)',
-              borderRadius: 12,
-              padding: '12px 14px',
+              border: a.unlocked ? `1px solid ${a.color}40` : '1px solid var(--aurora-gline)',
               opacity: a.unlocked ? 1 : 0.45,
-              filter: a.unlocked ? 'none' : 'grayscale(0.7)',
               cursor: 'pointer',
               position: 'relative',
               transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.2s',
@@ -64,20 +77,23 @@ function AchievementsTab() {
               boxShadow: hovered === i && a.unlocked ? '0 0 0 1px rgba(139,92,246,0.4), 0 4px 16px rgba(139,92,246,0.15)' : 'none',
             }}
           >
+            <div onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)} style={{ display: 'contents' }}>
             {hovered === i && a.unlocked && (
               <span style={{ position: 'absolute', top: 7, right: 9, fontSize: 12, userSelect: 'none', lineHeight: 1, animation: 'sparkle 0.3s ease' }}>✨</span>
             )}
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'var(--bg4)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                {a.emoji}
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: a.unlocked ? `${a.color}20` : 'rgba(255,255,255,0.05)', border: a.unlocked ? `1px solid ${a.color}30` : '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon size={17} color={a.unlocked ? a.color : 'var(--aurora-faint)'} strokeWidth={2} />
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{a.desc}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 1 }}>{a.desc}</div>
               </div>
             </div>
-          </div>
-        ))}
+            </div>
+          </GlassCard>
+          )
+        })}
       </div>
 
       {selected !== null && (
@@ -261,8 +277,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         style={{
           borderRadius: 22,
           overflow: 'hidden',
-          background: 'var(--bg2)',
-          border: '1px solid var(--border)',
+          background: '#14121C',
+          border: '1px solid var(--aurora-gline)',
           width: '100%',
           maxWidth: 520,
           maxHeight: '90vh',
@@ -274,7 +290,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
       >
         {/* ── Hero header ── */}
         <div style={{
-          background: 'linear-gradient(135deg,#1a1235 0%,#3d2a82 50%,#1a1235 100%)',
+          background: 'var(--aurora-glass)',
           padding: '28px 24px 0',
           position: 'relative',
           overflow: 'hidden',
@@ -282,7 +298,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           flexShrink: 0,
         }}>
           {/* Atmosphere blobs */}
-          <div style={{ position: 'absolute', top: -80, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.4),transparent 65%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.55, zIndex: 0, width: 180, height: 180, background: 'var(--aurora-violet)', top: -70, left: -50 }} />
+          <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.55, zIndex: 0, width: 150, height: 150, background: 'var(--aurora-fuchsia)', top: -40, right: -40 }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)', pointerEvents: 'none' }} />
 
           {/* Close button */}
@@ -298,7 +315,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             {/* Avatar — LEFT */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div
-                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,#8B5CF6,#6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
+                style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: photoUrl ? 'transparent' : 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 3px rgba(255,255,255,0.15), 0 6px 20px rgba(58,42,130,0.5)', cursor: 'pointer', opacity: photoUploading ? 0.6 : 1 }}
                 onClick={handlePhotoUpload}
               >
                 {photoUrl ? (
@@ -308,14 +325,14 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 ) : profileAvatarDraft && !isPhotoUrl(profileAvatarDraft) ? (
                   <span style={{ fontSize: 32, lineHeight: 1 }}>{profileAvatarDraft}</span>
                 ) : (
-                  <span style={{ color: 'white', fontWeight: 700, fontSize: 26 }}>{(user?.name || ctxName)?.[0]?.toUpperCase() ?? '?'}</span>
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 26, fontFamily: "'Outfit', sans-serif" }}>{(user?.name || ctxName)?.[0]?.toUpperCase() ?? '?'}</span>
                 )}
               </div>
               <div
-                style={{ position: 'absolute', bottom: -2, right: -2, width: 26, height: 26, borderRadius: '50%', background: 'var(--bg2)', border: '2px solid #3d2a82', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', cursor: 'pointer' }}
+                style={{ position: 'absolute', bottom: -2, right: -2, width: 26, height: 26, borderRadius: '50%', background: '#14121C', border: '2px solid var(--aurora-fuchsia)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', cursor: 'pointer' }}
                 onClick={handlePhotoUpload}
               >
-                <Pencil size={10} style={{ color: 'var(--text)' }} />
+                <Pencil size={10} style={{ color: 'var(--aurora-hi)' }} />
               </div>
             </div>
 
@@ -328,32 +345,32 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                     autoFocus
                     onChange={e => setProfileNameDraft(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { handleSaveProfile(); setEditMode(false) } }}
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 10px', color: 'white', fontSize: 18, fontWeight: 700, outline: 'none', width: '100%' }}
+                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 10px', color: 'white', fontSize: 18, fontWeight: 700, outline: 'none', width: '100%', fontFamily: "'Outfit', sans-serif" }}
                   />
                 ) : (
-                  <h2 style={{ fontSize: 20, fontWeight: 700, color: 'white', margin: 0, letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0, letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {user?.name || ctxName || t.profile.defaultUser}
                   </h2>
                 )}
                 <button
                   onClick={() => { if (editMode) { handleSaveProfile(); setEditMode(false) } else setEditMode(true) }}
-                  style={{ padding: 4, borderRadius: 6, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                  style={{ padding: 4, borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--aurora-lo)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                 >
-                  {editMode ? <Check size={13} style={{ color: '#34d399' }} /> : <Pencil size={13} />}
+                  {editMode ? <Check size={13} style={{ color: 'var(--aurora-emerald)' }} /> : <Pencil size={13} />}
                 </button>
               </div>
-              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.65)', margin: 0 }}>{user?.email}</p>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12.5, color: 'var(--aurora-lo)', margin: 0 }}>{user?.email}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,191,36,0.18)', color: '#fde68a', border: '1px solid rgba(251,191,36,0.3)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 3 }}>👑 Pro</span>
+                <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(251,191,36,0.18)', color: '#fde68a', border: '1px solid rgba(251,191,36,0.3)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 3 }}><Crown size={10} /> Pro</span>
                 {user?.createdAt && (
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{t.profile.memberSince.replace('{date}', new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' }))}</span>
+                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{t.profile.memberSince.replace('{date}', new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' }))}</span>
                 )}
               </div>
             </div>
           </div>
 
           {/* Horizontal emoji picker strip */}
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)', display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto' }}>
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto' }}>
             {AVATAR_OPTIONS.map(em => (
               <button
                 key={em}
@@ -362,7 +379,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                   setPhotoUrl(null)
                   try { await updateAvatar(em); await refreshUser() } catch { /* non-critical */ }
                 }}
-                style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: (profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)', border: `1px solid ${(profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.10)'}`, fontSize: 17, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: (profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.18)' : 'var(--aurora-glass)', border: `1px solid ${(profileAvatarDraft === em && !photoUrl) ? 'rgba(255,255,255,0.35)' : 'var(--aurora-gline)'}`, fontSize: 17, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 {em}
               </button>
@@ -374,46 +391,49 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 try { await updateAvatar(''); await refreshUser() } catch { /* non-critical */ }
               }}
               title="Bez emoji — iniciálka"
-              style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.20)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ flexShrink: 0, width: 32, height: 32, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px dashed var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {(user?.name || ctxName)?.[0]?.toUpperCase()}
             </button>
           </div>
 
           {/* Stats strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.15)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid var(--aurora-gline)', background: 'rgba(0,0,0,0.15)' }}>
             {[
-              { label: t.profile.transactionsStat, value: txnCount !== null ? String(txnCount) : '—', color: 'rgba(255,255,255,0.9)' },
-              { label: t.profile.savingsStat, value: savingsTotal !== null ? `${savingsTotal.toLocaleString('sk-SK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €` : '—', color: '#34d399' },
-              { label: t.profile.streakStat, value: `${user?.currentStreak ?? 0} 🔥`, color: '#FB923C' },
-              { label: t.profile.trackingStat, value: trackingDays !== null ? `${trackingDays} ${t.profile.days}` : '—', color: '#8B5CF6' },
+              { label: t.profile.transactionsStat, value: txnCount !== null ? String(txnCount) : '—', color: 'var(--aurora-hi)', icon: null },
+              { label: t.profile.savingsStat, value: savingsTotal !== null ? `${savingsTotal.toLocaleString('sk-SK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €` : '—', color: 'var(--aurora-emerald)', icon: null },
+              { label: t.profile.streakStat, value: String(user?.currentStreak ?? 0), color: '#FB923C', icon: Flame },
+              { label: t.profile.trackingStat, value: trackingDays !== null ? `${trackingDays} ${t.profile.days}` : '—', color: 'var(--aurora-violet)', icon: null },
             ].map((stat, i) => (
-              <div key={i} style={{ padding: '12px 8px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: stat.color, fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>{stat.value}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+              <div key={i} style={{ padding: '12px 8px', textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--aurora-gline)' : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: stat.color, marginBottom: 2 }}>
+                  {stat.value}{stat.icon && <stat.icon size={11} color={stat.color} fill={stat.color} />}
+                </div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
               </div>
             ))}
           </div>
 
           {/* Tab bar */}
-          <div style={{ display: 'flex', gap: 0, marginTop: 4 }}>
+          <div style={{ display: 'flex', gap: 6, padding: '10px 0 12px' }}>
             {(['profile', 'account', 'achievements'] as const).map((tabKey) => {
               const labels: Record<Tab, string> = { profile: t.profile.tabProfile, account: t.profile.tabAccount, achievements: t.profile.tabAchievements }
+              const isActive = tab === tabKey
               return (
                 <button
                   key={tabKey}
                   onClick={() => { setTab(tabKey); setEditMode(false) }}
                   style={{
                     flex: 1,
-                    padding: '12px 0',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: tab === tabKey ? '2px solid var(--violet)' : '2px solid transparent',
-                    color: tab === tabKey ? 'white' : 'rgba(255,255,255,0.45)',
+                    padding: '8px 0',
+                    borderRadius: 12,
+                    background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
+                    border: isActive ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+                    color: isActive ? '#fff' : 'var(--aurora-lo)',
+                    fontFamily: "'Manrope', sans-serif",
                     fontSize: 13,
-                    fontWeight: tab === tabKey ? 600 : 500,
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    fontFamily: 'inherit',
                     transition: 'all 0.15s',
                   }}
                 >
@@ -432,11 +452,11 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
             <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* OSOBNÉ ÚDAJE section */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>{t.profile.personalData.toUpperCase()}</div>
-                <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: 'var(--aurora-faint)', letterSpacing: '0.12em', marginBottom: 8, textTransform: 'uppercase' }}>{t.profile.personalData}</div>
+                <GlassCard radius={14} style={{ padding: 0, overflow: 'hidden' }}>
                   {/* Meno row */}
-                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.settings.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--aurora-gline)' }}>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', width: 80, flexShrink: 0 }}>{t.settings.name}</span>
                     {editMode ? (
                       <input
                         type="text"
@@ -444,27 +464,27 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                         onChange={e => setProfileNameDraft(e.target.value)}
                         autoFocus
                         onKeyDown={e => { if (e.key === 'Enter') { handleSaveProfile(); setEditMode(false) } }}
-                        style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: 'inherit', padding: 0 }}
+                        style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', fontFamily: 'inherit', padding: 0 }}
                       />
                     ) : (
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{user?.name || ctxName || '—'}</span>
+                      <span style={{ flex: 1, fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{user?.name || ctxName || '—'}</span>
                     )}
                     <button
                       onClick={() => { if (editMode) { handleSaveProfile(); setEditMode(false) } else setEditMode(true) }}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: editMode ? '#34d399' : 'var(--text3)', padding: 4, display: 'flex', alignItems: 'center' }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: editMode ? 'var(--aurora-emerald)' : 'var(--aurora-faint)', padding: 4, display: 'flex', alignItems: 'center' }}
                     >
                       {editMode ? <Check size={14} /> : <Pencil size={13} />}
                     </button>
                   </div>
                   {/* Email row */}
-                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.auth.email}</span>
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email ?? '—'}</span>
-                    <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(52,211,153,0.12)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)', letterSpacing: '0.06em', flexShrink: 0, marginLeft: 6 }}>VERIF.</span>
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid var(--aurora-gline)' }}>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', width: 80, flexShrink: 0 }}>{t.auth.email}</span>
+                    <span style={{ flex: 1, fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email ?? '—'}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(52,211,153,0.12)', color: 'var(--aurora-emerald)', border: '1px solid rgba(52,211,153,0.25)', letterSpacing: '0.06em', flexShrink: 0, marginLeft: 6 }}>VERIF.</span>
                   </div>
                   {/* Krajina row */}
                   <div style={{ display: 'flex', alignItems: 'center', padding: '13px 16px' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text3)', width: 80, flexShrink: 0 }}>{t.profile.country}</span>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', width: 80, flexShrink: 0 }}>{t.profile.country}</span>
                     <select
                       value={country}
                       onChange={async e => {
@@ -472,7 +492,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                         setCountry(val)
                         try { await updateProfile({ country: val }); await refreshUser() } catch { /* non-critical */ }
                       }}
-                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: 'inherit', padding: 0, cursor: 'pointer', appearance: 'none' as const }}
+                      style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', fontFamily: 'inherit', padding: 0, cursor: 'pointer', appearance: 'none' as const }}
                     >
                       <option value="SK">🇸🇰 Slovensko</option>
                       <option value="CZ">🇨🇿 Česko</option>
@@ -481,16 +501,16 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       <option value="GB">🇬🇧 Veľká Británia</option>
                     </select>
                   </div>
-                </div>
+                </GlassCard>
               </div>
 
               {/* PREDVOLENÁ STRÁNKA */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 8 }}>{t.profile.defaultPage.toUpperCase()}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: 'var(--aurora-faint)', letterSpacing: '0.12em', marginBottom: 8, textTransform: 'uppercase' }}>{t.profile.defaultPage}</div>
                 <select
                   value={defaultPageDraft}
                   onChange={e => setDefaultPageDraft(e.target.value)}
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', fontSize: 13, fontFamily: "'DM Sans',sans-serif", outline: 'none', cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--aurora-gline)', background: 'var(--aurora-glass)', color: 'var(--aurora-hi)', fontSize: 13, fontFamily: "'Manrope',sans-serif", outline: 'none', cursor: 'pointer' }}
                 >
                   <option value="dashboard">{t.nav.overview}</option>
                   <option value="income">{t.nav.income}</option>
@@ -504,7 +524,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               {/* Footer buttons */}
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                 {defaultPageSaveOk ? (
-                  <div style={{ flex: 2, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                  <div style={{ flex: 2, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'var(--aurora-emerald)', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
                     <Check size={15} /> Uložené
                   </div>
                 ) : (
@@ -516,7 +536,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                         setTimeout(() => setDefaultPageSaveOk(false), 2000)
                       } catch { /* non-critical */ }
                     }}
-                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'white', background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     {t.profile.saveChanges}
                   </button>
@@ -524,8 +544,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 {onLogout && (
                   <button
                     onClick={() => setLogoutConfirm(true)}
-                    className="btn-settings-danger"
-                    style={{ flex: 1, height: 44, justifyContent: 'center', borderRadius: 10, fontSize: 13, fontWeight: 500, gap: 6 }}
+                    style={{ flex: 1, height: 44, justifyContent: 'center', display: 'flex', alignItems: 'center', borderRadius: 10, fontSize: 13, fontWeight: 500, gap: 6, background: 'transparent', border: '1px solid rgba(251,113,133,0.3)', color: 'var(--aurora-rose)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
                   >
                     <LogOut size={14} strokeWidth={2} />
                     {t.auth.logout}
@@ -539,34 +558,34 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           {tab === 'account' && (
             <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Plan card */}
-              <div style={{ borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,215,100,0.15)', border: '1px solid rgba(255,215,100,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>👑</div>
+              <GlassCard radius={14} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,215,100,0.15)', border: '1px solid rgba(255,215,100,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Crown size={19} color="#fde68a" /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Finvu Pro</div>
-                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>
+                  <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>Finvu Pro</div>
+                  <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)' }}>
                     {user?.createdAt ? t.profile.memberSince.replace('{date}', new Date(user.createdAt).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })) : t.profile.allFeaturesUnlocked}
                   </div>
                 </div>
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,215,100,0.15)', color: '#fde68a', border: '1px solid rgba(255,215,100,0.3)', letterSpacing: '0.06em', flexShrink: 0 }}>{t.profile.active.toUpperCase()}</span>
-              </div>
+              </GlassCard>
 
               {/* BEZPEČNOSŤ */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.12em', marginBottom: 10 }}>{t.profile.security.toUpperCase()}</div>
-                <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: 'var(--aurora-faint)', letterSpacing: '0.12em', marginBottom: 10, textTransform: 'uppercase' }}>{t.profile.security}</div>
+                <GlassCard radius={14} style={{ padding: 0, overflow: 'hidden' }}>
                   {/* Row 1: Zmeniť heslo */}
                   <button
                     onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--aurora-gline)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                   >
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔐</div>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><KeyRound size={17} color="var(--aurora-violet)" /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t.profile.changePwTitle}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{t.profile.passwordProtection}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{t.profile.changePwTitle}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 1 }}>{t.profile.passwordProtection}</div>
                     </div>
-                    <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                    <ChevronRight size={15} style={{ color: 'var(--aurora-faint)', flexShrink: 0 }} />
                   </button>
 
                   {/* Row 2: PIN */}
@@ -576,23 +595,23 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       else { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }
                     }}
                     style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg4)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                   >
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: hasPin ? 'rgba(16,185,129,0.12)' : 'rgba(100,116,139,0.12)', border: `1px solid ${hasPin ? 'rgba(16,185,129,0.2)' : 'rgba(100,116,139,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔢</div>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: hasPin ? 'rgba(52,211,153,0.12)' : 'rgba(100,116,139,0.12)', border: `1px solid ${hasPin ? 'rgba(52,211,153,0.2)' : 'rgba(100,116,139,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Hash size={17} color={hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)'} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t.profile.pinAccess}</div>
-                      <div style={{ fontSize: 11, marginTop: 1, color: hasPin ? '#34d399' : 'var(--text3)' }}>{hasPin ? t.profile.pinActive : t.profile.pinInactive}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{t.profile.pinAccess}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, marginTop: 1, color: hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)' }}>{hasPin ? t.profile.pinActive : t.profile.pinInactive}</div>
                     </div>
-                    <ChevronRight size={15} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                    <ChevronRight size={15} style={{ color: 'var(--aurora-faint)', flexShrink: 0 }} />
                   </button>
-                </div>
+                </GlassCard>
               </div>
 
               {/* Export data */}
               <button
                 onClick={() => { localStorage.setItem('settings_open_section', 'data'); window.location.hash = 'settings'; onClose() }}
-                style={{ width: '100%', height: 44, borderRadius: 12, fontSize: 13, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                style={{ width: '100%', height: 44, borderRadius: 12, fontSize: 13, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontWeight: 500 }}
               >
                 {t.profile.exportData}
               </button>
@@ -620,24 +639,26 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
         >
           <div
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
+            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
             onClick={e => e.stopPropagation()}
           >
             {!pinVerified ? (
               <>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>🔢</div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>{t.profile.enterPin}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.profile.pinVerification}</p>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                    <Hash size={24} color="var(--aurora-violet)" />
+                  </div>
+                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 4px' }}>{t.profile.enterPin}</h3>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.profile.pinVerification}</p>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
                   {[0,1,2,3].map(i => (
-                    <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: i < pinRemoveInput.length ? 'var(--violet)' : 'transparent', border: '2px solid ' + (i < pinRemoveInput.length ? 'var(--violet)' : 'var(--border2)'), transition: 'all 0.15s' }} />
+                    <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: i < pinRemoveInput.length ? 'var(--aurora-violet)' : 'transparent', border: '2px solid ' + (i < pinRemoveInput.length ? 'var(--aurora-violet)' : 'var(--aurora-gline)'), transition: 'all 0.15s' }} />
                   ))}
                 </div>
 
-                {pinRemoveError && <p style={{ textAlign: 'center', fontSize: 13, color: '#f87171', margin: 0 }}>{pinRemoveError}</p>}
+                {pinRemoveError && <p style={{ textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-rose)', margin: 0 }}>{pinRemoveError}</p>}
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
@@ -654,12 +675,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                       }}
                       style={{
                         height: 52, borderRadius: 12,
-                        background: k === '' ? 'transparent' : 'var(--bg3)',
-                        color: 'var(--text)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
-                        border: k === '' ? 'none' : '1px solid var(--border2)',
+                        background: k === '' ? 'transparent' : 'var(--aurora-glass)',
+                        color: 'var(--aurora-hi)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
+                        border: k === '' ? 'none' : '1px solid var(--aurora-gline)',
                         cursor: k === '' ? 'default' : 'pointer',
                         opacity: k === '' ? 0 : pinRemoveLoading ? 0.5 : 1,
-                        fontFamily: 'inherit',
+                        fontFamily: "'Outfit', sans-serif",
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
                     >
@@ -670,29 +691,29 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
                 <button
                   onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
-                  style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+                  style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center' }}
                 >
                   {t.common.cancel}
                 </button>
               </>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <h3 style={{ textAlign: 'center', fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t.profile.whatToDo}</h3>
+                <h3 style={{ textAlign: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.profile.whatToDo}</h3>
                 <button
                   onClick={() => { setPinRemoveConfirm(false); setPinVerified(false); setPinSetupOpen(true) }}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-hi)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontWeight: 500 }}
                 >
                   {t.profile.changePin}
                 </button>
                 <button
                   onClick={async () => { await removePin(); setPinRemoveConfirm(false); setPinVerified(false) }}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.3)', color: 'var(--aurora-rose)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontWeight: 500 }}
                 >
                   {t.profile.removePin}
                 </button>
                 <button
                   onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text3)', fontFamily: 'inherit', padding: '8px 0', textAlign: 'center', width: '100%' }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--aurora-faint)', fontFamily: "'Manrope', sans-serif", padding: '8px 0', textAlign: 'center', width: '100%' }}
                 >
                   {t.common.cancel}
                 </button>
@@ -710,12 +731,12 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         >
           <div
             className="rounded-2xl w-full max-w-[360px]"
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}
+            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{t.profile.changePwTitle}</h3>
-              <button onClick={() => setChangePasswordOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4 }}><X size={16} /></button>
+              <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.profile.changePwTitle}</h3>
+              <button onClick={() => setChangePasswordOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {([t.profile.currentPassword, t.profile.newPassword, t.profile.confirmNewPassword]).map((label, idx) => {
@@ -723,37 +744,36 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
                 const setter = idx === 0 ? setCurrentPw : idx === 1 ? setNewPw : setConfirmPw
                 return (
                   <div key={label}>
-                    <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text2)', display: 'block', marginBottom: 4 }}>{label}</label>
+                    <label style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 500, color: 'var(--aurora-lo)', display: 'block', marginBottom: 4 }}>{label}</label>
                     <input
                       type="password"
                       value={val}
                       onChange={e => setter(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') handleChangePassword() }}
-                      className="input-field"
-                      style={{ height: 42, width: '100%' }}
+                      style={{ height: 42, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
                     />
                   </div>
                 )
               })}
               {changePwError && (
-                <p style={{ fontSize: 13, color: '#f87171', margin: 0 }}>{changePwError}</p>
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-rose)', margin: 0 }}>{changePwError}</p>
               )}
               {changePwOk ? (
-                <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'var(--aurora-emerald)', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
                   <Check size={15} /> {t.profile.passwordChanged}
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <button
                     onClick={() => setChangePasswordOpen(false)}
-                    style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'inherit' }}
+                    style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
                   >
                     {t.common.cancel}
                   </button>
                   <button
                     onClick={handleChangePassword}
                     disabled={changePwLoading}
-                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', border: 'none', cursor: changePwLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: changePwLoading ? 0.7 : 1 }}
+                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white', border: 'none', cursor: changePwLoading ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif", opacity: changePwLoading ? 0.7 : 1 }}
                   >
                     {changePwLoading ? t.profile.saving : t.profile.changePwTitle}
                   </button>
@@ -771,26 +791,28 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           onClick={() => setLogoutConfirm(false)}
         >
           <div
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
+            style={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 340 }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 12 }}>👋</div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', textAlign: 'center', margin: '0 0 8px' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <LogOut size={22} color="var(--aurora-violet)" />
+            </div>
+            <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', textAlign: 'center', margin: '0 0 8px' }}>
               {t.profile.logoutTitle}
             </h3>
-            <p style={{ fontSize: 14, color: 'var(--text3)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, color: 'var(--aurora-faint)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
               {t.profile.logoutRedirect}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
               <button
                 onClick={() => setLogoutConfirm(false)}
-                style={{ flex: 1, height: 48, borderRadius: 14, background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ flex: 1, height: 48, borderRadius: 14, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
               >
                 {t.common.cancel}
               </button>
               <button
                 onClick={() => { setLogoutConfirm(false); onLogout?.() }}
-                style={{ flex: 1, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ flex: 1, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
               >
                 {t.auth.logout}
               </button>
