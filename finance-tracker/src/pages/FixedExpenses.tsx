@@ -1,24 +1,42 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon, CheckCircle2,
+  UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
+  Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
+  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet, Receipt,
+} from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { CategorySelect } from '../components/CategorySelect'
+import { GlassCard } from '../components/GlassCard'
+import { HeroCard } from '../components/HeroCard'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
+import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation } from '../i18n'
 import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { ScrollFadeOverlay } from '../components/ScrollFadeOverlay'
 import { useScrollFade } from '../hooks/useScrollFade'
-import { severityCardStyle } from '../utils/severityCardStyle'
 import React from 'react'
 
 const FALLBACK_ICON = '📦'
 const FALLBACK_COLOR = '#6b7280'
+
+// Category icons are one of a fixed emoji preset (see Categories.tsx PRESET_ICONS) — map
+// each to a matching lucide outline icon for the "Nadchádzajúce" widget per the mockup.
+const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
+  '🍔': UtensilsCrossed, '🛒': ShoppingCart, '🚗': Car, '🏠': Home, '💊': Pill,
+  '🎉': PartyPopper, '👕': Shirt, '📚': BookOpen, '✈️': Plane, '🎮': Gamepad2,
+  '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
+  '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
+  '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
+}
 
 function catBg(color: string) {
   return color + '26'
@@ -26,12 +44,12 @@ function catBg(color: string) {
 
 const pillStyle = (active: boolean): React.CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '6px 14px', borderRadius: 50, fontSize: 13,
-  fontWeight: active ? 600 : 500, cursor: 'pointer',
-  border: active ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border2)',
-  background: active ? 'rgba(139,92,246,0.12)' : 'var(--bg3)',
-  color: active ? 'var(--violet)' : 'var(--text2)',
-  fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
+  padding: '8px 14px', borderRadius: 14, fontSize: 12,
+  fontWeight: 600, cursor: 'pointer',
+  border: active ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+  background: active ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
+  color: active ? '#fff' : 'var(--aurora-lo)',
+  fontFamily: "'Manrope', sans-serif", transition: 'all 0.15s', whiteSpace: 'nowrap',
   flexShrink: 0,
 })
 
@@ -81,6 +99,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
     activeCat === null ? total : fixedExpenses.filter(e => (e.categoryId ?? '') === activeCat).reduce((s, e) => s + e.amount, 0)
   , [fixedExpenses, activeCat, total])
   const variableTotal = useMemo(() => variableExpenses.reduce((s, e) => s + e.amount, 0), [variableExpenses])
+  const animatedFilteredTotal = useCountUp(filteredTotal, 800)
 
   const filtered = useMemo(
     () => activeCat === null
@@ -135,11 +154,19 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   }, [monthStartWeekday, daysInCurrentMonth])
 
   function countdownBadge(daysUntil: number) {
-    if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' }
+    if (daysUntil === 0) return { text: t.expenses.fixed.countdown.today, color: 'var(--aurora-violet)', bg: 'rgba(139,92,246,0.15)' }
     const text = t.expenses.fixed.countdown.days.replace('{n}', String(daysUntil))
-    if (daysUntil <= 3) return { text, color: '#f97316', bg: 'rgba(249,115,22,0.15)' }
-    if (daysUntil <= 7) return { text, color: '#eab308', bg: 'rgba(234,179,8,0.15)' }
-    return { text, color: '#22c55e', bg: 'rgba(34,197,94,0.15)' }
+    if (daysUntil <= 3) return { text, color: 'var(--aurora-rose)', bg: 'rgba(251,113,133,0.15)' }
+    if (daysUntil <= 7) return { text, color: 'var(--aurora-amber)', bg: 'rgba(251,191,36,0.15)' }
+    return { text, color: 'var(--aurora-emerald)', bg: 'rgba(52,211,153,0.15)' }
+  }
+
+  // Simple 2-tier badge for the "Nadchádzajúce" GlassCard widget (mockup only shows soon/ok)
+  function upcomingBadge(daysUntil: number) {
+    const text = daysUntil === 0 ? t.expenses.fixed.countdown.today : t.expenses.fixed.countdown.days.replace('{n}', String(daysUntil))
+    return daysUntil <= 2
+      ? { text, color: 'var(--aurora-rose)', bg: 'rgba(251,113,133,0.16)' }
+      : { text, color: 'var(--aurora-emerald)', bg: 'rgba(52,211,153,0.16)' }
   }
 
   function openAdd() {
@@ -188,8 +215,8 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
   const yearlyContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace", letterSpacing: '-0.5px' }}>{formatAmount(total * 12)}</div>
-      <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>{formatAmount(total)} × 12 {t.expenses.fixed.monthly.toLowerCase()}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.5px' }}>{formatAmount(total * 12)}</div>
+      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginBottom: 8 }}>{formatAmount(total)} × 12 {t.expenses.fixed.monthly.toLowerCase()}</div>
       {categoryTotals.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
           {categoryTotals.map(({ id, amount: catAmt }) => {
@@ -198,13 +225,13 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             const name = cat?.name ?? '—'
             return (
               <div key={id || '__none__'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+                <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-lo)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
                   <span style={{ flexShrink: 0 }}>{icon}</span>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, marginLeft: 8 }}>
-                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: 'var(--text2)' }}>{formatAmount(catAmt)}<span style={{ fontSize: 10, color: 'var(--text3)' }}>/mes.</span></span>
-                  <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: 'var(--text3)' }}>{formatAmount(catAmt * 12)} / rok</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-lo)' }}>{formatAmount(catAmt)}<span style={{ fontSize: 10, color: 'var(--aurora-faint)' }}>/mes.</span></span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: 'var(--aurora-faint)' }}>{formatAmount(catAmt * 12)} / rok</span>
                 </div>
               </div>
             )
@@ -215,25 +242,29 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
   )
 
   const upcomingContent = upcomingPayments.length === 0 ? (
-    <div style={{ color: 'var(--text3)', fontSize: 13 }}>—</div>
+    <div style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--aurora-faint)', fontSize: 13 }}>—</div>
   ) : (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {upcomingPayments.map(e => {
-        const badge = countdownBadge(e.daysUntil)
+        const badge = upcomingBadge(e.daysUntil)
         const cat = getCat(e.categoryId)
-        const icon = cat?.icon ?? FALLBACK_ICON
-        const color = cat?.color ?? FALLBACK_COLOR
+        const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Receipt
         return (
-          <div key={e.id ?? e.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-              {icon}
+          <GlassCard key={e.id ?? e.label} radius={16}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 13, background: 'rgba(251,191,36,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon size={16} color="var(--aurora-amber)" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
+                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, padding: '3px 8px', borderRadius: 8, flexShrink: 0 }}>{badge.text}</span>
+                </div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{cat?.name ?? '—'}</div>
+              </div>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-rose)', flexShrink: 0 }}>{formatAmount(e.amount)}</span>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 6px', borderRadius: 20 }}>{badge.text}</span>
-            </div>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--red)', flexShrink: 0 }}>{formatAmount(e.amount)}</span>
-          </div>
+          </GlassCard>
         )
       })}
     </div>
@@ -253,12 +284,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 cx="50%" cy="50%" innerRadius={28} outerRadius={46}
                 paddingAngle={2} dataKey="value" startAngle={90} endAngle={-270}
               >
-                <Cell fill="#f97316" />
-                <Cell fill="#7c3aed" />
+                <Cell fill="var(--aurora-amber)" />
+                <Cell fill="var(--aurora-violet)" />
               </Pie>
               <Tooltip
                 formatter={(v: number) => [formatAmount(v)]}
-                contentStyle={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}
+                contentStyle={{ background: '#14121C', border: '1px solid var(--aurora-gline)', borderRadius: 8, fontSize: 12, fontFamily: "'Manrope', sans-serif", color: 'var(--aurora-hi)' }}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -266,21 +297,21 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f97316', flexShrink: 0 }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--aurora-amber)', flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.nav.fixed}</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{formatAmount(total)}</div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{t.nav.fixed}</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(total)}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#7c3aed', flexShrink: 0 }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--aurora-violet)', flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t.nav.variable}</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{formatAmount(variableTotal)}</div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{t.nav.variable}</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(variableTotal)}</div>
           </div>
         </div>
         {(total + variableTotal) > 0 && (
-          <div style={{ fontSize: 11, color: '#f97316', fontWeight: 700, marginTop: 8 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-amber)', fontWeight: 700, marginTop: 8 }}>
             {t.nav.fixed} {Math.round((total / (total + variableTotal)) * 100)}%
           </div>
         )}
@@ -311,67 +342,68 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <div style={{ flex: 1, overflowY: 'auto', paddingTop: 20, paddingLeft: 20, paddingRight: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Hero wallet card */}
-          <div style={{
-            background: 'linear-gradient(135deg,#2a1d05 0%,#5d3f10 45%,#2a1d05 100%)',
-            borderRadius: 24, padding: '24px 26px 20px', position: 'relative', overflow: 'hidden', color: 'white',
-            boxShadow: '0 18px 50px -16px rgba(93,63,16,0.4),0 0 0 1px rgba(251,191,36,0.22)',
-            flexShrink: 0,
-          }}>
-            <div style={{position:'absolute',top:-90,right:-50,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(251,191,36,0.32),transparent 65%)',filter:'blur(40px)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',inset:0,background:'linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',top:22,right:22,width:38,height:38,borderRadius:11,background:'rgba(251,191,36,0.18)',border:'1px solid rgba(251,191,36,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <Lock size={18} color="#fde68a"/>
+          <HeroCard variant="fixed">
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+              {t.expenses.fixed.title} · {t.expenses.fixed.recurringMonthly}
             </div>
-            <div style={{position:'relative'}}>
-              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:14}}>
-                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.15em',color:'rgba(255,255,255,0.9)'}}>FIXNÉ VÝDAVKY</span>
-                <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/>
-                <span style={{fontSize:11,letterSpacing:'0.05em',color:'rgba(255,255,255,0.55)'}}>{t.expenses.fixed.recurringMonthly}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
+              <span style={{
+                fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
+                background: 'linear-gradient(120deg, #fff, var(--aurora-amber))',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>
+                {Math.floor(animatedFilteredTotal).toLocaleString('sk-SK')}
+              </span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--aurora-lo)' }}>
+                ,{String(Math.round((animatedFilteredTotal % 1) * 100)).padStart(2, '0')}&nbsp;€/mes.
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.fixed.yearlyLabel}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(filteredTotal * 12)}</div>
               </div>
-              <div style={{display:'flex',alignItems:'baseline',gap:2,marginBottom:16,flexWrap:'wrap'}}>
-                <span style={{fontSize:14,fontWeight:500,color:'#fde68a',marginRight:4}}>−</span>
-                <span style={{fontSize:46,fontWeight:300,color:'white',letterSpacing:'-1.8px',lineHeight:1}}>{Math.floor(filteredTotal).toLocaleString('sk-SK')}</span>
-                <span style={{fontSize:22,fontWeight:300,color:'rgba(255,255,255,0.78)',letterSpacing:'-0.4px',marginLeft:1}}>,{String(Math.round((filteredTotal%1)*100)).padStart(2,'0')}</span>
-                <span style={{fontSize:22,fontWeight:400,color:'rgba(255,255,255,0.55)',marginLeft:6}}>€/mes.</span>
-              </div>
-              <div style={{display:'flex',gap:18,fontSize:11.5,color:'rgba(255,255,255,0.7)',paddingTop:14,borderTop:'1px solid rgba(255,255,255,0.10)'}}>
-                <div>{t.expenses.fixed.yearlyLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{formatAmount(filteredTotal * 12)}</span></div>
-                <span style={{color:'rgba(255,255,255,0.2)'}}>·</span>
-                <div>{t.expenses.fixed.installmentsLabel}: <span style={{fontFamily:"'DM Mono',monospace",fontWeight:600,color:'white'}}>{filtered.length}</span></div>
+              <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.fixed.installmentsLabel}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{filtered.length}</div>
               </div>
             </div>
-          </div>
+          </HeroCard>
 
           {/* View toggle — mobile only (desktop always shows calendar + list stacked) */}
           <div className="lg:hidden">
-            <div style={{ display: 'inline-flex', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 11, padding: 3, gap: 2 }}>
-              {(['list', 'calendar'] as const).map(v => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setMobileView(v)}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-                    borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
-                    transition: 'all 0.15s', background: mobileView === v ? 'var(--bg2)' : 'transparent',
-                    color: mobileView === v ? 'var(--text)' : 'var(--text3)',
-                    boxShadow: mobileView === v ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-                  }}
-                >
-                  {v === 'list' ? <ListIcon size={14} /> : <Calendar size={14} />}
-                  {v === 'list' ? t.expenses.fixed.viewList : t.expenses.fixed.viewCalendar}
-                </button>
-              ))}
+            <div style={{ display: 'flex', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: 4, gap: 2 }}>
+              {(['list', 'calendar'] as const).map(v => {
+                const isActive = mobileView === v
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setMobileView(v)}
+                    style={{
+                      flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0',
+                      borderRadius: 12, fontSize: 12.5, fontWeight: 600, border: 'none', cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
+                      color: isActive ? '#fff' : 'var(--aurora-lo)',
+                      fontFamily: "'Manrope', sans-serif",
+                    }}
+                  >
+                    {v === 'list' ? <ListIcon size={14} /> : <Calendar size={14} />}
+                    {v === 'list' ? t.expenses.fixed.viewList : t.expenses.fixed.viewCalendar}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {/* Compact month-grid calendar — mobile only */}
           <div className={mobileView === 'calendar' ? 'lg:hidden' : 'hidden'}>
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
+            <GlassCard radius={18}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
                 {t.daysShort.map(d => (
-                  <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--text3)' }}>{d}</div>
+                  <div key={d} style={{ textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontSize: 10, fontWeight: 600, color: 'var(--aurora-faint)' }}>{d}</div>
                 ))}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
@@ -392,11 +424,11 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                       style={{
                         aspectRatio: '1',
                         borderRadius: 10,
-                        background: isSelected ? 'rgba(139,92,246,0.15)' : 'var(--bg3)',
-                        border: isToday ? '1.5px solid var(--violet)' : isSelected ? '1px solid rgba(139,92,246,0.4)' : '1px solid transparent',
+                        background: isSelected ? 'rgba(139,92,246,0.15)' : 'var(--aurora-glass)',
+                        border: isToday ? '1.5px solid var(--aurora-violet)' : isSelected ? '1px solid rgba(139,92,246,0.4)' : '1px solid var(--aurora-gline)',
                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                        fontSize: 12, fontWeight: 600, fontFamily: "'DM Mono', monospace",
-                        color: isPast ? 'var(--text3)' : isToday ? 'var(--violet)' : 'var(--text2)',
+                        fontSize: 12, fontWeight: 600, fontFamily: "'Outfit', sans-serif",
+                        color: isPast ? 'var(--aurora-faint)' : isToday ? 'var(--aurora-violet)' : 'var(--aurora-lo)',
                         opacity: isPast ? 0.6 : 1,
                         cursor: hasPayment ? 'pointer' : 'default',
                         padding: 0,
@@ -408,15 +440,15 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                   )
                 })}
               </div>
-            </div>
+            </GlassCard>
 
             {/* Inline expansion — payments due on the selected day */}
             {selectedCalendarDay !== null && (() => {
               const dayPayments = fixedExpenses.filter(f => f.dayOfMonth === selectedCalendarDay)
               return (
-                <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 14, marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <GlassCard radius={16} style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {dayPayments.length === 0 ? (
-                    <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.fixed.noPaymentsThisDay}</p>
+                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.expenses.fixed.noPaymentsThisDay}</p>
                   ) : dayPayments.map(e => {
                     const cat = getCat(e.categoryId)
                     const icon = cat?.icon ?? FALLBACK_ICON
@@ -427,22 +459,22 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                           {icon}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text3)' }}>{cat?.name ?? '—'}</div>
+                          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 500, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
+                          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{cat?.name ?? '—'}</div>
                         </div>
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: 'var(--red)', flexShrink: 0 }}>{formatAmount(e.amount)}</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, color: 'var(--aurora-amber)', flexShrink: 0 }}>{formatAmount(e.amount)}</span>
                       </div>
                     )
                   })}
-                </div>
+                </GlassCard>
               )
             })()}
           </div>
 
           {/* Calendar strip — desktop only */}
           <div className="hidden lg:block">
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: 18, boxShadow: 'var(--card-shadow)', flexShrink: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.09em', color: 'var(--text3)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
+          <GlassCard radius={18}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(31, 1fr)', gap: 2, marginBottom: 8 }}>
               {Array.from({ length: daysInCurrentMonth }, (_, i) => {
                 const day = i + 1
@@ -459,12 +491,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                       aspectRatio: '1',
                       borderRadius: 6,
                       background: hasPayment
-                        ? (sum >= 100 ? 'rgba(248,113,113,0.6)' : sum >= 20 ? 'rgba(251,191,36,0.55)' : 'rgba(124,58,237,0.5)')
-                        : 'var(--bg3)',
+                        ? (sum >= 100 ? 'rgba(251,113,133,0.6)' : sum >= 20 ? 'rgba(251,191,36,0.55)' : 'rgba(139,92,246,0.5)')
+                        : 'var(--aurora-glass)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 9, fontWeight: 600,
-                      color: hasPayment ? 'white' : isToday ? 'var(--violet)' : 'var(--text3)',
-                      border: isToday ? '1.5px solid var(--violet)' : '1px solid transparent',
+                      fontSize: 9, fontWeight: 600, fontFamily: "'Outfit', sans-serif",
+                      color: hasPayment ? 'white' : isToday ? 'var(--aurora-violet)' : 'var(--aurora-faint)',
+                      border: isToday ? '1.5px solid var(--aurora-violet)' : '1px solid var(--aurora-gline)',
                       opacity: isPast ? 0.55 : 1,
                       cursor: hasPayment ? 'pointer' : 'default',
                       transition: 'transform 0.12s',
@@ -477,13 +509,13 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 )
               })}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, color: 'var(--text3)', marginTop: 6, flexWrap: 'wrap' as const }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(124,58,237,0.5)', display: 'inline-block' }} />malé</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 6, flexWrap: 'wrap' as const }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(139,92,246,0.5)', display: 'inline-block' }} />malé</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(251,191,36,0.55)', display: 'inline-block' }} />stredné</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(248,113,113,0.6)', display: 'inline-block' }} />veľké (≥100€)</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'transparent', border: '1.5px solid var(--violet)', display: 'inline-block' }} />dnes</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'rgba(251,113,133,0.6)', display: 'inline-block' }} />veľké (≥100€)</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}><span style={{ width: 9, height: 9, borderRadius: 3, background: 'transparent', border: '1.5px solid var(--aurora-violet)', display: 'inline-block' }} />dnes</span>
             </div>
-          </div>
+          </GlassCard>
           </div>
 
           {/* Category filter pills */}
@@ -513,25 +545,39 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Mobile: vs variable card */}
           <div className="lg:hidden">
             {vsContent && (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px', boxShadow: 'var(--card-shadow)' }}>
-                <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>{t.expenses.fixed.vsVariable}</div>
-                {vsContent}
+              <div>
+                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</h3>
+                <GlassCard radius={18}>
+                  {vsContent}
+                </GlassCard>
               </div>
             )}
           </div>
 
+          {/* Mobile: Nadchádzajúce preview */}
+          {upcomingPayments.length > 0 && (
+            <div className="lg:hidden">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.expenses.fixed.upcoming}</h3>
+              </div>
+              {upcomingContent}
+            </div>
+          )}
+
           {/* Expense list — upcoming/past split (mobile: hidden while calendar view is active) */}
           <div className={mobileView === 'list' ? undefined : 'hidden lg:block'}>
           {fixedExpenses.length === 0 ? (
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, boxShadow: 'var(--card-shadow)' }}>
-              <span style={{ fontSize: 40, animation: 'float 3s ease-in-out infinite', display: 'block' }}>🔒</span>
-              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.expenses.fixed.emptyTitle}</p>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.fixed.emptySubtitle}</p>
-            </div>
+            <GlassCard radius={18}>
+              <div className="empty-state">
+                <Lock size={40} color="var(--aurora-faint)" style={{ marginBottom: 4 }} />
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.expenses.fixed.emptyTitle}</p>
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.expenses.fixed.emptySubtitle}</p>
+              </div>
+            </GlassCard>
           ) : filtered.length === 0 ? (
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--card-shadow)' }}>
-              <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.expenses.fixed.filteredEmpty}</p>
-            </div>
+            <GlassCard radius={18} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.expenses.fixed.filteredEmpty}</p>
+            </GlassCard>
           ) : (() => {
             const upcomingList = filtered.filter(e => calendarToday === -1 || e.dayOfMonth >= calendarToday).sort((a, b) => a.dayOfMonth - b.dayOfMonth)
             const pastList = calendarToday === -1 ? [] : filtered.filter(e => e.dayOfMonth < calendarToday).sort((a, b) => b.dayOfMonth - a.dayOfMonth)
@@ -546,52 +592,55 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
               return (
                 <SwipeableRow key={expense.id} onDelete={() => setDeleteId(expense.id!)} isOpen={openSwipeId === expense.id} onOpen={() => setOpenSwipeId(expense.id!)}>
 
-                  <div
-                    className="expense-row"
-                    style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 0, padding: '14px 16px', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'border-color 0.15s', opacity: isPast ? 0.65 : 1 }}
+                  <GlassCard
+                    radius={16}
                     onClick={() => openEdit(expense)}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+                    className="expense-row"
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', opacity: isPast ? 0.65 : 1 }}
                   >
                     {/* Date tile */}
                     <div style={{
                       width: 46, height: 46, borderRadius: 12, flexShrink: 0,
-                      background: isPast ? 'var(--bg3)' : daysUntil === 0 ? 'rgba(139,92,246,0.14)' : daysUntil <= 3 ? 'rgba(249,115,22,0.12)' : 'var(--bg3)',
-                      border: `1px solid ${isPast ? 'var(--border)' : daysUntil === 0 ? 'rgba(139,92,246,0.28)' : daysUntil <= 3 ? 'rgba(249,115,22,0.25)' : 'var(--border)'}`,
+                      background: isPast ? 'var(--aurora-glass)' : daysUntil === 0 ? 'rgba(139,92,246,0.14)' : daysUntil <= 3 ? 'rgba(251,113,133,0.12)' : 'var(--aurora-glass)',
+                      border: `1px solid ${isPast ? 'var(--aurora-gline)' : daysUntil === 0 ? 'rgba(139,92,246,0.28)' : daysUntil <= 3 ? 'rgba(251,113,133,0.25)' : 'var(--aurora-gline)'}`,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
                     }}>
-                      <span style={{ fontSize: 17, fontWeight: 700, color: isPast ? 'var(--text3)' : daysUntil <= 3 ? badge.color : 'var(--text)', fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{expense.dayOfMonth}</span>
-                      <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text3)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em', textTransform: 'uppercase' }}>{monthAbbr}</span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: isPast ? 'var(--aurora-faint)' : daysUntil <= 3 ? badge.color : 'var(--aurora-hi)', lineHeight: 1 }}>{expense.dayOfMonth}</span>
+                      <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 9, fontWeight: 600, color: 'var(--aurora-faint)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{monthAbbr}</span>
                     </div>
                     {/* Category icon */}
                     <div style={{ width: 34, height: 34, borderRadius: 10, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
                       {icon}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: isPast ? 'var(--text2)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>{cat?.name ?? '—'}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 500, color: isPast ? 'var(--aurora-lo)' : 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.label}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{cat?.name ?? '—'}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: isPast ? 'var(--text3)' : 'var(--red)' }}>{formatAmount(expense.amount)}</span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: isPast ? 'var(--aurora-faint)' : 'var(--aurora-rose)' }}>{formatAmount(expense.amount)}</span>
                       {!isPast && <span style={{ fontSize: 10, fontWeight: 600, color: badge.color, background: badge.bg, padding: '2px 7px', borderRadius: 20 }}>{badge.text}</span>}
-                      {isPast && <span style={{ fontSize: 12, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', padding: '2px 8px', borderRadius: 20 }}>✓ Zaplatené</span>}
+                      {isPast && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: 'var(--aurora-emerald)', background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', padding: '2px 8px', borderRadius: 20 }}>
+                          <CheckCircle2 size={11} /> Zaplatené
+                        </span>
+                      )}
                     </div>
                     <div className="expense-actions hidden lg:flex" style={{ alignItems: 'center', gap: 2, flexShrink: 0 }} onClick={ev => ev.stopPropagation()}>
-                      <button onClick={() => openEdit(expense)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={13} /></button>
-                      <button onClick={() => setDeleteId(expense.id!)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
+                      <button onClick={() => openEdit(expense)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={13} /></button>
+                      <button onClick={() => setDeleteId(expense.id!)} style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={13} /></button>
                     </div>
-                  </div>
+                  </GlassCard>
                 </SwipeableRow>
               )
             }
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
                 {upcomingList.length > 0 && (
                   <>
                     {calendarToday > 0 && (
-                      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 2, marginTop: 4 }}>
-                        Nadchádzajúce
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 2, marginTop: 4 }}>
+                        {t.expenses.fixed.upcoming}
                       </div>
                     )}
                     {upcomingList.map(e => renderCard(e, false))}
@@ -599,7 +648,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 )}
                 {pastList.length > 0 && (
                   <>
-                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 2, marginTop: 8 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 2, marginTop: 8 }}>
                       Zaplatené tento mesiac
                     </div>
                     {pastList.map(e => renderCard(e, true))}
@@ -614,20 +663,20 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         </div>
 
         {/* Right panel — desktop only */}
-        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 12, background: 'var(--bg2)' }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.expenses.fixed.yearly}</p>
+        <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--aurora-gline)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 16, background: 'var(--aurora-glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+          <GlassCard radius={16}>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.yearly}</p>
             {yearlyContent}
-          </div>
-          <div style={severityCardStyle(paymentSeverity)}>
-            <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text3)', fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>{t.expenses.fixed.upcoming}</div>
+          </GlassCard>
+          <div>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: paymentSeverity === 'red' ? 'var(--aurora-rose)' : paymentSeverity === 'warning' ? 'var(--aurora-amber)' : 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.upcoming}</p>
             {upcomingContent}
           </div>
           {vsContent && (
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text3)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</p>
+            <GlassCard radius={16}>
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</p>
               {vsContent}
-            </div>
+            </GlassCard>
           )}
         </div>
 

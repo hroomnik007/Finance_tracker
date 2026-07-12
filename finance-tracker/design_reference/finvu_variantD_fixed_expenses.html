@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="sk"><head><meta charset="UTF-8"><title>Finvu — Fixné výdavky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060B; --hi:#F5F3FF; --lo:#A79FC9; --faint:#5B5578;
+  --violet:#8B5CF6; --fuchsia:#EC4899; --cyan:#22D3EE;
+  --emerald:#34D399; --rose:#FB7185; --amber:#FBBF24;
+  --glass:rgba(255,255,255,.06); --gline:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;display:flex;justify-content:center;padding:40px 16px;font-family:'Manrope',sans-serif;}
+.frame{width:390px;background:var(--bg);border-radius:42px;border:8px solid #000;overflow:hidden;box-shadow:0 40px 90px rgba(139,92,246,.25);position:relative;}
+.status{display:flex;justify-content:space-between;padding:18px 26px 4px;color:var(--hi);font-size:14px;font-weight:600;}
+.screen{padding:6px 20px 100px;position:relative;z-index:1;}
+.header{display:flex;justify-content:space-between;align-items:center;margin:14px 0 20px;}
+.mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));display:flex;align-items:center;justify-content:center;font-family:'Outfit';font-weight:800;color:#fff;font-size:16px;}
+.acts{display:flex;gap:8px;}
+.ibtn{width:36px;height:36px;border-radius:50%;background:var(--glass);border:1px solid var(--gline);display:flex;align-items:center;justify-content:center;color:var(--lo);}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a3f8c,#c93d9a);border:1px solid rgba(255,255,255,.15);}
+.rowbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.pill{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--gline);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--hi);font-weight:600;}
+.pill .a{color:var(--faint);}
+.hero{position:relative;border-radius:28px;padding:24px;margin-bottom:18px;overflow:hidden;background:var(--glass);border:1px solid var(--gline);backdrop-filter:blur(20px);flex-shrink:0;}
+.blob{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;z-index:0;}
+.b1{width:180px;height:180px;background:var(--amber);top:-70px;left:-50px;}
+.b2{width:150px;height:150px;background:#f59e0b;bottom:-60px;right:-40px;}
+.heroin{position:relative;z-index:2;}
+.eyebrow{font-size:11px;letter-spacing:.08em;color:var(--lo);text-transform:uppercase;font-weight:700;margin-bottom:8px;}
+.bal{font-family:'Outfit';font-weight:800;font-size:42px;line-height:1;background:linear-gradient(120deg,#fff,var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.bal span{font-size:20px;-webkit-text-fill-color:var(--lo);color:var(--lo);}
+.chipsrow{display:flex;gap:8px;margin-top:16px;}
+.mchip{background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:10px 12px;flex:1;}
+.mchip .l{font-size:10px;color:var(--lo);text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.mchip .v{font-family:'Outfit';font-size:14px;color:var(--hi);font-weight:700;}
+.viewtoggle{display:flex;background:var(--glass);border:1px solid var(--gline);border-radius:16px;padding:4px;margin-bottom:14px;}
+.viewtoggle div{flex:1;text-align:center;padding:9px;border-radius:12px;font-size:12.5px;font-weight:600;color:var(--lo);display:flex;align-items:center;justify-content:center;gap:6px;}
+.viewtoggle div.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:#fff;}
+.chipsscroll{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;}
+.fchip{flex-shrink:0;background:var(--glass);border:1px solid var(--gline);border-radius:14px;padding:8px 14px;font-size:12px;color:var(--lo);font-weight:600;display:flex;align-items:center;gap:6px;}
+.fchip.on{background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:#fff;border-color:transparent;}
+.section{margin-bottom:18px;}
+.shead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.shead h3{font-family:'Outfit';font-size:16px;color:var(--hi);font-weight:700;}
+.shead a{font-size:11px;color:var(--cyan);font-weight:600;}
+.card{background:var(--glass);border:1px solid var(--gline);border-radius:18px;padding:14px 16px;margin-bottom:10px;backdrop-filter:blur(12px);}
+.donutwrap{display:flex;align-items:center;gap:18px;}
+.leg .it{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--hi);font-weight:500;margin-bottom:9px;}
+.leg .dot{width:8px;height:8px;border-radius:50%;}
+.leg .v{color:var(--hi);font-family:'Outfit';font-weight:700;}
+.brow{display:flex;align-items:center;gap:12px;}
+.chip{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--amber);background:rgba(251,191,36,.14);}
+.mid{flex:1;} .mid .nm{font-size:13px;color:var(--hi);font-weight:600;}
+.mid .sm{font-size:11px;color:var(--faint);margin-top:2px;}
+.duebadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;margin-left:8px;}
+.duebadge.soon{background:rgba(251,113,133,.16);color:var(--rose);}
+.duebadge.ok{background:rgba(52,211,153,.16);color:var(--emerald);}
+.amt{font-family:'Outfit';font-size:14px;font-weight:700;color:var(--rose);}
+</style></head>
+<body>
+<div class="frame">
+<div class="status"><span>18:01</span><span>●●●● 70%</span></div>
+<div class="screen">
+  <div class="header">
+    <div class="mark">Fv</div>
+    <div class="acts"><div class="ibtn">☀</div><div class="ibtn">🔔</div><div class="av"></div></div>
+  </div>
+
+  <div class="rowbar"><div class="pill"><span class="a">‹</span> Júl 2026 <span class="a">›</span></div></div>
+
+  <div class="hero">
+    <div class="blob b1"></div><div class="blob b2"></div>
+    <div class="heroin">
+      <div class="eyebrow">Fixné výdavky · opakujúce každý mesiac</div>
+      <div class="bal">895<span>,12 €/mes.</span></div>
+      <div class="chipsrow">
+        <div class="mchip"><div class="l">Ročne</div><div class="v">10 741,44 €</div></div>
+        <div class="mchip"><div class="l">Splátok</div><div class="v">10</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="viewtoggle">
+    <div class="on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>Zoznam</div>
+    <div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Kalendár</div>
+  </div>
+
+  <div class="chipsscroll">
+    <div class="fchip on">Všetky</div>
+    <div class="fchip">📱 Telekomunikácie</div>
+    <div class="fchip">⚡ Energie</div>
+    <div class="fchip">🏠 Bývanie</div>
+  </div>
+
+  <div class="section">
+    <div class="shead"><h3>Fixné vs variabilné</h3></div>
+    <div class="card">
+      <div class="donutwrap">
+        <svg width="90" height="90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="15"/>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#FBBF24" stroke-width="15" stroke-dasharray="228 301" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#8B5CF6" stroke-width="15" stroke-dasharray="73 301" stroke-dashoffset="-228" transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="leg">
+          <div class="it"><div class="dot" style="background:#FBBF24;"></div>Fixné <span class="v">895,12 €</span></div>
+          <div class="it"><div class="dot" style="background:#8B5CF6;"></div>Variabilné <span class="v">240,36 €</span></div>
+          <div class="it" style="color:var(--amber);font-weight:700;">Fixné 79%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="shead"><h3>Nadchádzajúce</h3><a>Všetky →</a></div>
+    <div class="card brow">
+      <div class="chip"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+      <div class="mid"><div class="nm">Spotify <span class="duebadge soon">o 1 dni</span></div><div class="sm">Predplatné</div></div>
+      <div class="amt">9,99 €</div>
+    </div>
+    <div class="card brow">
+      <div class="chip"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></div>
+      <div class="mid"><div class="nm">Nájom BA <span class="duebadge soon">o 2 dni</span></div><div class="sm">Bývanie</div></div>
+      <div class="amt">300,00 €</div>
+    </div>
+    <div class="card brow">
+      <div class="chip"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>
+      <div class="mid"><div class="nm">SSE <span class="duebadge ok">o 3 dni</span></div><div class="sm">Energie</div></div>
+      <div class="amt">50,00 €</div>
+    </div>
+  </div>
+</div>
+</div>
+</body></html>

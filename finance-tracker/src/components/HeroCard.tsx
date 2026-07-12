@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 
-type HeroCardVariant = 'neutral' | 'income' | 'expense'
+type HeroCardVariant = 'neutral' | 'income' | 'expense' | 'fixed'
 
 interface HeroCardProps {
   children: ReactNode
@@ -13,6 +13,7 @@ const BLOB_COLORS: Record<HeroCardVariant, { b1: string; b2: string }> = {
   neutral: { b1: 'var(--aurora-violet)', b2: 'var(--aurora-fuchsia)' },
   income: { b1: 'var(--aurora-emerald)', b2: 'var(--aurora-cyan)' },
   expense: { b1: 'var(--aurora-rose)', b2: 'var(--aurora-amber)' },
+  fixed: { b1: 'var(--aurora-amber)', b2: '#f59e0b' },
 }
 
 export function HeroCard({ children, variant = 'neutral', style, className }: HeroCardProps) {
