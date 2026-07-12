@@ -3,6 +3,7 @@ import { Home, TrendingUp, Settings, Receipt, Lock, Tag, PiggyBank, MoreHorizont
 import type { Page } from '../App'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
+import { useScrollCollapse } from '../hooks/useScrollCollapse'
 
 interface BottomNavProps {
   current: Page
@@ -25,6 +26,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
 
   const [showExpenseMenu, setShowExpenseMenu] = useState(false)
   const [showViacSheet, setShowViacSheet] = useState(false)
+  const collapsed = useScrollCollapse()
 
   function handleExpenseNav(page: Page) {
     onChange(page)
@@ -168,125 +170,160 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         </>
       )}
 
-      <nav
-        className="bottom-nav-bar"
-        style={{
-          display: 'flex',
-          background: 'rgba(7,6,11,.85)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(255,255,255,.08)',
-          padding: '8px 0',
-          paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-        }}
-      >
-        <NavTab
-          active={current === 'dashboard'}
-          icon={<Home size={20} />}
-          label={t.nav.overview}
-          onClick={() => { setShowExpenseMenu(false); onChange('dashboard') }}
-        />
-        <NavTab
-          active={current === 'income'}
-          icon={<TrendingUp size={20} />}
-          label={t.nav.income}
-          onClick={() => { setShowExpenseMenu(false); onChange('income') }}
-        />
-        <NavTab
-          active={expensesActive || showExpenseMenu}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="2"/>
-              <line x1="2" y1="10" x2="22" y2="10"/>
-            </svg>
-          }
-          label={t.nav.expenses}
-          onClick={() => { setShowViacSheet(false); setShowExpenseMenu(s => !s) }}
-        />
-        <NavTab
-          active={current === 'settings'}
-          icon={<Settings size={20} />}
-          label={t.nav.settings}
-          onClick={() => { setShowExpenseMenu(false); setShowViacSheet(false); onChange('settings') }}
-        />
-        {showViac && (
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, display: 'flex', justifyContent: 'center' }}>
+        <nav
+          className="bottom-nav-bar"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(7,6,11,.85)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: collapsed ? '1px solid rgba(255,255,255,.08)' : 'none',
+            borderTop: '1px solid rgba(255,255,255,.08)',
+            padding: collapsed ? '6px 10px' : '8px 0',
+            paddingBottom: collapsed ? 'max(10px, env(safe-area-inset-bottom, 10px))' : 'max(20px, env(safe-area-inset-bottom, 20px))',
+            width: collapsed ? 'auto' : '100%',
+            maxWidth: collapsed ? 320 : '100%',
+            borderRadius: collapsed ? 999 : 0,
+            marginBottom: collapsed ? 10 : 0,
+            boxShadow: collapsed ? '0 10px 30px rgba(0,0,0,0.45)' : 'none',
+            transition: 'max-width 0.35s cubic-bezier(0.4,0,0.2,1), border-radius 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.35s cubic-bezier(0.4,0,0.2,1), margin-bottom 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease',
+          }}
+        >
           <NavTab
-            active={viacActive || showViacSheet}
-            icon={<MoreHorizontal size={20} />}
-            label={t.nav.more}
-            onClick={() => { setShowExpenseMenu(false); setShowViacSheet(s => !s) }}
+            active={current === 'dashboard'}
+            collapsed={collapsed}
+            icon={<Home size={20} />}
+            label={t.nav.overview}
+            onClick={() => { setShowExpenseMenu(false); onChange('dashboard') }}
           />
-        )}
-        {showOnlySavings && (
           <NavTab
-            active={current === 'savings'}
-            icon={<PiggyBank size={20} />}
-            label={t.nav.savings}
-            onClick={() => { setShowExpenseMenu(false); onChange('savings') }}
+            active={current === 'income'}
+            collapsed={collapsed}
+            icon={<TrendingUp size={20} />}
+            label={t.nav.income}
+            onClick={() => { setShowExpenseMenu(false); onChange('income') }}
           />
-        )}
-        {showOnlyHousehold && (
           <NavTab
-            active={current === 'household'}
+            active={expensesActive || showExpenseMenu}
+            collapsed={collapsed}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
               </svg>
             }
-            label={t.nav.household}
-            onClick={() => { setShowExpenseMenu(false); onChange('household') }}
+            label={t.nav.expenses}
+            onClick={() => { setShowViacSheet(false); setShowExpenseMenu(s => !s) }}
           />
-        )}
-      </nav>
+          <NavTab
+            active={current === 'settings'}
+            collapsed={collapsed}
+            icon={<Settings size={20} />}
+            label={t.nav.settings}
+            onClick={() => { setShowExpenseMenu(false); setShowViacSheet(false); onChange('settings') }}
+          />
+          {showViac && (
+            <NavTab
+              active={viacActive || showViacSheet}
+              collapsed={collapsed}
+              icon={<MoreHorizontal size={20} />}
+              label={t.nav.more}
+              onClick={() => { setShowExpenseMenu(false); setShowViacSheet(s => !s) }}
+            />
+          )}
+          {showOnlySavings && (
+            <NavTab
+              active={current === 'savings'}
+              collapsed={collapsed}
+              icon={<PiggyBank size={20} />}
+              label={t.nav.savings}
+              onClick={() => { setShowExpenseMenu(false); onChange('savings') }}
+            />
+          )}
+          {showOnlyHousehold && (
+            <NavTab
+              active={current === 'household'}
+              collapsed={collapsed}
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              }
+              label={t.nav.household}
+              onClick={() => { setShowExpenseMenu(false); onChange('household') }}
+            />
+          )}
+        </nav>
+      </div>
     </>
   )
 }
 
 function NavTab({
   active,
+  collapsed,
   icon,
   label,
   onClick,
 }: {
   active: boolean
+  collapsed: boolean
   icon: React.ReactNode
   label: string
   onClick: () => void
 }) {
+  // Collapsed + active: the prominent pill (icon+label, side by side, gradient
+  // fill) — the single most eye-catching element, matching the reference.
+  // Collapsed + inactive: icon shrinks/fades, label collapses to width 0.
+  // Not collapsed: identical to the original always-expanded layout.
+  const showLabel = !collapsed || active
+  const shrinkIcon = collapsed && !active
   return (
     <button
       onClick={onClick}
       style={{
-        flex: 1,
+        flex: collapsed ? '0 0 auto' : 1,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: collapsed && active ? 'row' : 'column',
         alignItems: 'center',
-        gap: 3,
-        padding: '4px 0',
+        justifyContent: 'center',
+        gap: collapsed && active ? 7 : 3,
+        padding: collapsed && active ? '8px 16px' : collapsed ? '4px 8px' : '4px 0',
+        borderRadius: 999,
         fontSize: 10,
         fontWeight: 500,
-        color: active ? 'var(--aurora-hi)' : 'var(--aurora-faint)',
+        color: active ? (collapsed ? '#fff' : 'var(--aurora-hi)') : 'var(--aurora-faint)',
         cursor: 'pointer',
         fontFamily: "'Manrope', sans-serif",
-        background: 'none',
+        background: collapsed && active ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
         border: 'none',
+        whiteSpace: 'nowrap',
+        transition: 'flex-basis 0.3s cubic-bezier(0.4,0,0.2,1), padding 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s ease, color 0.2s ease, gap 0.3s ease',
       }}
     >
       <div style={{
         width: 32, height: 32,
         borderRadius: 10,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'color 0.15s',
+        flexShrink: 0,
+        transform: shrinkIcon ? 'scale(0.72)' : 'scale(1)',
+        opacity: shrinkIcon ? 0.6 : 1,
+        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease',
       }}>
         {icon}
       </div>
-      <span>{label}</span>
+      <span style={{
+        display: 'inline-block',
+        maxWidth: showLabel ? 'none' : 0,
+        opacity: showLabel ? 1 : 0,
+        overflow: 'hidden',
+        transition: 'max-width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+      }}>
+        {label}
+      </span>
     </button>
   )
 }
