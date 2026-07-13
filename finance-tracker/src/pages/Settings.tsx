@@ -803,9 +803,9 @@ export function SettingsPage() {
                       <select
                         value={settings.currency}
                         onChange={e => updateSettings({ currency: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
                       >
-                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)' }}>{c.label}</option>)}
+                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{c.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -825,9 +825,9 @@ export function SettingsPage() {
                       <select
                         value={settings.dateFormat}
                         onChange={e => updateSettings({ dateFormat: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
                       >
-                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)' }}>{f.label}</option>)}
+                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{f.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -861,9 +861,9 @@ export function SettingsPage() {
                       <select
                         value={settings.currency}
                         onChange={e => updateSettings({ currency: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
                       >
-                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)' }}>{c.label}</option>)}
+                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{c.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -883,9 +883,9 @@ export function SettingsPage() {
                       <select
                         value={settings.dateFormat}
                         onChange={e => updateSettings({ dateFormat: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
                       >
-                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)' }}>{f.label}</option>)}
+                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{f.label}</option>)}
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
@@ -927,7 +927,8 @@ export function SettingsPage() {
                 />
               </SectionCard>
 
-              {/* Section: Rodinné financie */}
+              {/* Section: Rodinné financie + Sporenie — side by side on desktop */}
+              <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-start">
               <SectionCard>
                 <SectionHeader icon={Users} label={t.settings.householdTitle} />
                 <div className="divide-y divide-white/[0.04]">
@@ -991,6 +992,7 @@ export function SettingsPage() {
                   </SettingRow>
                 </div>
               </SectionCard>
+              </div>
             </>
           )}
 
@@ -1089,13 +1091,13 @@ export function SettingsPage() {
                         value={autoLockMinutes ?? 'never'}
                         onChange={e => handleAutoLockChange(e.target.value === 'never' ? null : Number(e.target.value))}
                         disabled={autoLockSaving || !hasPin}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18 }}
+                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
                       >
-                        <option value="never" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLockNever}</option>
-                        <option value="0" style={{ background: 'var(--aurora-panel)' }}>Ihneď</option>
-                        <option value="1" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLock1min}</option>
-                        <option value="5" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLock5min}</option>
-                        <option value="15" style={{ background: 'var(--aurora-panel)' }}>{t.settings.autoLock15min}</option>
+                        <option value="never" style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{t.settings.autoLockNever}</option>
+                        <option value="0" style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>Ihneď</option>
+                        <option value="1" style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{t.settings.autoLock1min}</option>
+                        <option value="5" style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{t.settings.autoLock5min}</option>
+                        <option value="15" style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{t.settings.autoLock15min}</option>
                       </select>
                       <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
                     </div>
