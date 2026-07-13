@@ -200,13 +200,13 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', padding: '20px 24px 28px', position: 'relative', zIndex: 1 }}>
 
         {/* Brand row */}
-        <div className="fade-up" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
-          <img src="/logo.svg" alt="Finvu" style={{ width: 38, height: 38, borderRadius: 13, flexShrink: 0 }} />
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)' }}>{t.nav.appName}</span>
+        <div className="fade-up" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 32 }}>
+          <img src="/logo.svg" alt="Finvu" style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0 }} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 27, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>{t.auth.welcomeBackTitle}</h1>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)', margin: 0 }}>{t.auth.welcomeBackSubtitle}</p>
+          </div>
         </div>
-
-        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 27, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>{t.auth.welcomeBackTitle}</h1>
-        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)', margin: '0 0 32px' }}>{t.auth.welcomeBackSubtitle}</p>
 
         {error && (
           <div style={{ borderRadius: 14, padding: '10px 14px', fontSize: 13, background: 'rgba(251,113,133,0.12)', color: 'var(--aurora-rose)', border: '1px solid rgba(251,113,133,0.3)', marginBottom: 14, fontFamily: "'Manrope', sans-serif" }}>

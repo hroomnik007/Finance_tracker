@@ -20,7 +20,7 @@
   --aurora-bg:      #07060B;
   --aurora-hi:      #F5F3FF;
   --aurora-lo:      #A79FC9;
-  --aurora-faint:   #5B5578;
+  --aurora-faint:   #9C94B8;
   --aurora-violet:  #8B5CF6;
   --aurora-fuchsia: #EC4899;
   --aurora-cyan:    #22D3EE;
@@ -786,6 +786,11 @@ html.compact .card { padding: var(--card-padding); }
   font-size: 13px;
   padding: 0 12px;
   border-radius: 8px;
+}
+
+/* Desktop: tighter row density across all Settings sections */
+@media (min-width: 1024px) {
+  .settings-row { padding: 10px 20px; }
 }
 
 /* Mobile: center section/card titles */

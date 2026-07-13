@@ -71,7 +71,7 @@ function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string 
 
 function SettingRow({ label, sublabel, children }: { label: string; sublabel?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 8, gap: 16, padding: '13px 20px' }}>
+    <div className="settings-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 8, gap: 16, padding: '13px 20px' }}>
       <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 500, color: 'var(--aurora-hi)', margin: 0 }}>{label}</p>
         {sublabel && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginTop: 2 }}>{sublabel}</p>}
@@ -81,17 +81,13 @@ function SettingRow({ label, sublabel, children }: { label: string; sublabel?: R
   )
 }
 
-// Desktop-only cell for the Financie "Všeobecné" 2-column grid — label stacked
-// above its control so each cell stays self-contained instead of stretching
-// label/control to opposite edges of a half-width row (which looked broken).
-function CompactSettingCell({ label, sublabel, children }: { label: string; sublabel?: React.ReactNode; children: React.ReactNode }) {
+// Desktop-only cell for the 2-column settings grids — uppercase label above,
+// control sits inside a darker sunken box so cells read as compact, aligned units.
+function CompactSettingCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div>
-        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', margin: 0 }}>{label}</p>
-        {sublabel && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 2 }}>{sublabel}</p>}
-      </div>
-      <div>{children}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--aurora-faint)', margin: 0 }}>{label}</p>
+      <div style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid var(--aurora-gline)', borderRadius: 8, padding: '10px 12px' }}>{children}</div>
     </div>
   )
 }
@@ -728,7 +724,7 @@ export function SettingsPage() {
               {/* Card 1: Téma */}
               <SectionCard>
                 <SectionHeader icon={Palette} label={t.settings.theme} />
-                <div className="divide-y divide-white/[0.04]">
+                <div className="divide-y divide-white/[0.04] lg:grid lg:grid-cols-2 lg:gap-x-6 lg:divide-y-0">
                   <SettingRow label={t.settings.theme} sublabel={t.settings.themeSubtitle}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {([
@@ -858,8 +854,8 @@ export function SettingsPage() {
                   </SettingRow>
                 </div>
 
-                {/* Desktop: self-contained 2x2 grid cells, label stacked above control */}
-                <div className="hidden lg:grid lg:grid-cols-2">
+                {/* Desktop: compact 2x2 grid, label above a sunken control box */}
+                <div className="hidden lg:grid lg:grid-cols-2" style={{ gap: 20, padding: 20 }}>
                   <CompactSettingCell label={t.settings.currency}>
                     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
                       <select
@@ -873,7 +869,7 @@ export function SettingsPage() {
                     </div>
                   </CompactSettingCell>
 
-                  <CompactSettingCell label={t.settings.language} sublabel={t.settings.languageNote}>
+                  <CompactSettingCell label={t.settings.language}>
                     <LanguageSwitcher
                       variant="full"
                       onLanguageChange={lang => {
@@ -915,6 +911,7 @@ export function SettingsPage() {
                     </div>
                   </CompactSettingCell>
                 </div>
+                <p className="hidden lg:block" style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0, padding: '0 20px 16px' }}>{t.settings.languageNote}</p>
               </SectionCard>
               </div>
 
@@ -1002,7 +999,7 @@ export function SettingsPage() {
             <>
               <SectionCard>
                 <SectionHeader icon={Bell} label={t.settings.notificationsSection} />
-                <div className="divide-y divide-white/[0.04]">
+                <div className="divide-y divide-white/[0.04] lg:grid lg:grid-cols-2 lg:gap-x-6 lg:divide-y-0">
                   <SettingRow label={t.settings.fixedReminders} sublabel={t.settings.fixedRemindersSubtitle}>
                     <Toggle checked={notificationsEnabled} onChange={handleNotificationsToggle} />
                   </SettingRow>
@@ -1140,7 +1137,7 @@ export function SettingsPage() {
               <div ref={dataRef} id="data-section">
               <SectionCard>
                 <SectionHeader icon={Database} label="Export a import" />
-                <div className="divide-y divide-white/[0.04]">
+                <div className="divide-y divide-white/[0.04] lg:grid lg:grid-cols-2 lg:gap-x-6 lg:divide-y-0">
                   <SettingRow label="Exportovať dáta" sublabel="Stiahnuť všetky transakcie a kategórie">
                     <div style={{ display: 'flex', gap: 6 }}>
                       {[
