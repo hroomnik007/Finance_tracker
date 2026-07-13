@@ -50,7 +50,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           <div
             style={{
               position: 'fixed',
-              bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+              bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
               left: '8px',
               right: '8px',
               background: 'var(--aurora-panel)',
@@ -104,7 +104,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           <div
             style={{
               position: 'fixed',
-              bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+              bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
               left: '8px',
               right: '8px',
               background: 'var(--aurora-panel)',
@@ -179,16 +179,16 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             background: 'rgba(7,6,11,.85)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: collapsed ? '1px solid var(--aurora-gline)' : 'none',
-            borderTop: '1px solid var(--aurora-gline)',
-            padding: collapsed ? '6px 10px' : '8px 0',
-            paddingBottom: collapsed ? 'max(10px, env(safe-area-inset-bottom, 10px))' : 'max(20px, env(safe-area-inset-bottom, 20px))',
-            width: collapsed ? 'auto' : '100%',
-            maxWidth: collapsed ? 320 : '100%',
-            borderRadius: collapsed ? 999 : 0,
-            marginBottom: collapsed ? 10 : 0,
-            boxShadow: collapsed ? '0 10px 30px rgba(0,0,0,0.45)' : 'none',
-            transition: 'max-width 0.35s cubic-bezier(0.4,0,0.2,1), border-radius 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.35s cubic-bezier(0.4,0,0.2,1), margin-bottom 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease',
+            border: '1px solid var(--aurora-gline)',
+            padding: collapsed ? '6px 10px' : '8px 10px',
+            paddingBottom: 'max(10px, env(safe-area-inset-bottom, 10px))',
+            width: collapsed ? 'auto' : 'calc(100% - 32px)',
+            maxWidth: collapsed ? 320 : 480,
+            borderRadius: 999,
+            marginBottom: 12,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
+            gap: collapsed ? 0 : 4,
+            transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), max-width 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.35s cubic-bezier(0.4,0,0.2,1), gap 0.3s ease',
           }}
         >
           <NavTab
@@ -275,10 +275,12 @@ function NavTab({
   label: string
   onClick: () => void
 }) {
+  // Expanded: every tab shows icon-above-label; the active tab additionally
+  // gets the gradient highlight pill behind it.
   // Collapsed + active: the prominent pill (icon+label, side by side, gradient
   // fill) — the single most eye-catching element, matching the reference.
-  // Collapsed + inactive: icon shrinks/fades, label collapses to width 0.
-  // Not collapsed: identical to the original always-expanded layout.
+  // Collapsed + inactive: icon shrinks/fades, label collapses to width 0, no
+  // highlight — plain icons sitting closer together in the narrower pill.
   const showLabel = !collapsed || active
   const shrinkIcon = collapsed && !active
   return (
@@ -291,14 +293,14 @@ function NavTab({
         alignItems: 'center',
         justifyContent: 'center',
         gap: collapsed && active ? 7 : 3,
-        padding: collapsed && active ? '8px 16px' : collapsed ? '4px 8px' : '4px 0',
+        padding: collapsed && active ? '8px 16px' : collapsed ? '4px 8px' : '6px 4px',
         borderRadius: 999,
         fontSize: 10,
         fontWeight: 500,
-        color: active ? (collapsed ? '#fff' : 'var(--aurora-hi)') : 'var(--aurora-faint)',
+        color: active ? '#fff' : 'var(--aurora-faint)',
         cursor: 'pointer',
         fontFamily: "'Manrope', sans-serif",
-        background: collapsed && active ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
+        background: active ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'transparent',
         border: 'none',
         whiteSpace: 'nowrap',
         transition: 'flex-basis 0.3s cubic-bezier(0.4,0,0.2,1), padding 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s ease, color 0.2s ease, gap 0.3s ease',

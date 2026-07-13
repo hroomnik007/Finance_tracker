@@ -227,7 +227,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
           ) : (
             <>
               {/* Mobile: day-grouped GlassCard rows */}
-              <div className="lg:hidden" style={{ paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+              <div className="lg:hidden" style={{ paddingBottom: 196 }} onClick={() => setOpenSwipeId(null)}>
                 {dayGroups.map(({ date, dayNum, dayName, monthName, items, dayTotal }) => (
                   <div key={date} style={{ marginBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 2px 8px' }}>
@@ -318,7 +318,7 @@ export function IncomePage({ month, year }: IncomePageProps) {
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
+          style={{ position: 'fixed', bottom: 'calc(104px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 16px rgba(139,92,246,0.5)' }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>

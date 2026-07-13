@@ -293,7 +293,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', right: 20, bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          style={{ position: 'fixed', right: 20, bottom: 'calc(104px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>
@@ -589,7 +589,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             }
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 180 }} onClick={() => setOpenSwipeId(null)}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 196 }} onClick={() => setOpenSwipeId(null)}>
                 {upcomingList.length > 0 && (
                   <>
                     {calendarToday > 0 && (

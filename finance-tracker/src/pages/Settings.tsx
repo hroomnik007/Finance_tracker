@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet, ExternalLink,
   CalendarClock, Users, PiggyBank, ScrollText, KeyRound, Hash, ChevronRight, Check, Sun, Moon, SunMoon,
-  AlertTriangle, Trash2, RotateCcw, UserX, Ban,
+  AlertTriangle, Trash2, RotateCcw, UserX, Ban, ArrowLeft,
 } from 'lucide-react'
 import { CsvImportModal } from '../components/CsvImportModal'
 import { GlassCard } from '../components/GlassCard'
@@ -205,6 +205,10 @@ export function SettingsPage() {
   const dataRef = useRef<HTMLDivElement>(null)
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
+  // Mobile-only drill-down level: 'list' shows the category rows, 'detail'
+  // shows the selected category's content. Desktop ignores this entirely
+  // and always shows the sidebar + content layout.
+  const [mobileLevel, setMobileLevel] = useState<'list' | 'detail'>('list')
 
   // Apply saved appearance preferences on mount + navigate to section
   useEffect(() => {
@@ -217,8 +221,8 @@ export function SettingsPage() {
     const section = localStorage.getItem('settings_open_section')
     if (section) {
       localStorage.removeItem('settings_open_section')
-      if (section === 'security') setActiveSection('security')
-      else if (section === 'data') setActiveSection('data')
+      if (section === 'security') { setActiveSection('security'); setMobileLevel('detail') }
+      else if (section === 'data') { setActiveSection('data'); setMobileLevel('detail') }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -645,8 +649,27 @@ export function SettingsPage() {
   return (
     <div className="w-full" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 20px))' }}>
 
-      {/* Settings page header */}
-      <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', margin: '0 0 16px' }}>{t.settings.title}</h1>
+      {/* Settings page header — desktop: always the plain title.
+          Mobile: plain title on the level-1 list, back-arrow + category
+          name once drilled into a level-2 sub-page. */}
+      <h1 className="hidden lg:block" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', margin: '0 0 16px' }}>{t.settings.title}</h1>
+
+      <div className="lg:hidden">
+        {mobileLevel === 'list' ? (
+          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', margin: '0 0 16px' }}>{t.settings.title}</h1>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 16px' }}>
+            <button
+              onClick={() => setMobileLevel('list')}
+              aria-label={t.common.back}
+              style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--aurora-hi)', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--aurora-hi)', letterSpacing: '-0.3px', margin: 0 }}>{sectionLabels[activeSection]}</h1>
+          </div>
+        )}
+      </div>
 
       <div className="settings-grid">
 
@@ -681,37 +704,37 @@ export function SettingsPage() {
 
         <div style={{ minWidth: 0 }}>
 
-          {/* Mobile-only: horizontal pill tab row */}
-          <div className="lg:hidden" style={{ minWidth: 0, marginBottom: 16 }}>
-            <div className="flex" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-              {SECTIONS.map(s => {
-                const Icon = s.icon
-                const isActive = activeSection === s.id
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => setActiveSection(s.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '8px 14px', borderRadius: 14, flexShrink: 0,
-                      background: isActive ? 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))' : 'var(--aurora-glass)',
-                      border: isActive ? '1px solid transparent' : '1px solid var(--aurora-gline)',
-                      color: isActive ? '#fff' : 'var(--aurora-lo)',
-                      fontFamily: "'Manrope', sans-serif",
-                      fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                  >
-                    <Icon size={13} strokeWidth={2} />
-                    {sectionLabels[s.id]}
-                  </button>
-                )
-              })}
+          {/* Mobile-only: level-1 grouped category list — hidden once drilled into a sub-page */}
+          {mobileLevel === 'list' && (
+            <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
+              <SectionCard>
+                <div className="divide-y divide-white/[0.04]">
+                  {SECTIONS.filter(s => s.id !== 'about').map(s => (
+                    <ChevronRow
+                      key={s.id}
+                      icon={s.icon}
+                      iconColor="var(--aurora-violet)"
+                      iconBg="rgba(139,92,246,0.12)"
+                      label={sectionLabels[s.id]}
+                      onClick={() => { setActiveSection(s.id); setMobileLevel('detail') }}
+                    />
+                  ))}
+                </div>
+              </SectionCard>
+              <SectionCard>
+                <ChevronRow
+                  icon={Info}
+                  iconColor="var(--aurora-faint)"
+                  iconBg="var(--aurora-glass)"
+                  label={sectionLabels.about}
+                  onClick={() => { setActiveSection('about'); setMobileLevel('detail') }}
+                />
+              </SectionCard>
             </div>
-          </div>
+          )}
 
-          {/* Content */}
-          <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Content — desktop: always visible. Mobile: only once drilled into a level-2 sub-page. */}
+          <div className={`settings-content ${mobileLevel === 'list' ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'}`} style={{ gap: 16 }}>
 
           {/* ── APPEARANCE SECTION ── */}
           {activeSection === 'appearance' && (

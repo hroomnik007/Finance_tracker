@@ -552,7 +552,7 @@ export function CategoriesPage() {
                     items={sortedCategories.map(c => c.id!)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 180 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 196 }}>
                       {sortedCategories.map(cat => {
                         const status = budgetStatuses.find(b => b.categoryId === cat.id)
                         const severity = cat.id === urgentCategoryId ? urgentSeverity : null
@@ -575,7 +575,7 @@ export function CategoriesPage() {
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', right: 20, bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          style={{ position: 'fixed', right: 20, bottom: 'calc(104px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>
