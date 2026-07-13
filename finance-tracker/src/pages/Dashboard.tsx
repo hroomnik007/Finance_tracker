@@ -188,7 +188,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={index === activeIndex ? outerRadius + 6 : outerRadius}
+        outerRadius={index === pieDisplayIndex ? outerRadius + 6 : outerRadius}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -330,7 +330,7 @@ const upcomingFixed = useMemo(() => {
         <span style={{
           fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
           background: `linear-gradient(120deg, var(--aurora-hi), ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
-          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent',
         }}>
           {heroBalance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}
         </span>
@@ -505,13 +505,11 @@ const upcomingFixed = useMemo(() => {
                 </>
               )}
             </div>
-            {/* Invisible click target to deselect */}
-            {clickedIndex !== null && (
-              <div
-                style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 80, height: 80, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
-                onClick={() => setClickedIndex(null)}
-              />
-            )}
+            {/* Center click target — always active, resets selection back to the overall total */}
+            <div
+              style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 104, height: 104, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
+              onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
+            />
           </div>
         </div>
       )}
