@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  X, Upload, Palette, Bell, Shield, Database, Info, User, Monitor, Laptop, Smartphone, Tablet, ExternalLink,
-  CalendarClock, Users, PiggyBank, ScrollText, KeyRound, Hash, ChevronRight, Check, Sun, Moon, SunMoon,
+  X, Upload, Palette, Bell, Shield, Database, User, Monitor, Laptop, Smartphone, Tablet,
+  CalendarClock, Users, PiggyBank, KeyRound, Hash, ChevronRight, Check, Sun, Moon, SunMoon,
   AlertTriangle, Trash2, RotateCcw, UserX, Ban, ArrowLeft,
 } from 'lucide-react'
 import { CsvImportModal } from '../components/CsvImportModal'
@@ -61,8 +61,8 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
     <div style={{ borderBottom: '1px solid var(--aurora-gline)', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Icon size={13} color="var(--aurora-faint)" />
-      <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--aurora-faint)', fontWeight: 700, margin: 0 }}>
+      <Icon size={13} color="var(--aurora-hi)" />
+      <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--aurora-hi)', fontWeight: 700, margin: 0 }}>
         {label}
       </p>
     </div>
@@ -179,7 +179,7 @@ function saveLocalPref(key: string, value: unknown) {
 
 type DangerAction = 'transactions' | 'reset'
 
-type SettingsSection = 'appearance' | 'finance' | 'notifications' | 'security' | 'data' | 'about'
+type SettingsSection = 'appearance' | 'finance' | 'notifications' | 'security' | 'data'
 
 const SECTIONS = [
   { id: 'appearance' as SettingsSection, label: 'Vzhľad', icon: Palette },
@@ -187,7 +187,6 @@ const SECTIONS = [
   { id: 'notifications' as SettingsSection, label: 'Notifikácie', icon: Bell },
   { id: 'security' as SettingsSection, label: 'Bezpečnosť', icon: Shield },
   { id: 'data' as SettingsSection, label: 'Dáta', icon: Database },
-  { id: 'about' as SettingsSection, label: 'O aplikácii', icon: Info },
 ] as const
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -534,9 +533,6 @@ export function SettingsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-
-  const buildDate = import.meta.env.VITE_BUILD_DATE as string | undefined
-
   // ── Savings toggle ────────────────────────────────────────────────────────
   const savingsEnabled = user?.savings_enabled ?? false
   const [savingsToggling, setSavingsToggling] = useState(false)
@@ -641,7 +637,6 @@ export function SettingsPage() {
     notifications: t.settings.sectionNotifications,
     security: t.settings.sectionSecurity,
     data: t.settings.sectionData,
-    about: t.settings.sectionAbout,
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -706,10 +701,10 @@ export function SettingsPage() {
 
           {/* Mobile-only: level-1 grouped category list — hidden once drilled into a sub-page */}
           {mobileLevel === 'list' && (
-            <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
+            <div className="flex lg:hidden" style={{ flexDirection: 'column', gap: 16, marginBottom: 16 }}>
               <SectionCard>
                 <div className="divide-y divide-white/[0.04]">
-                  {SECTIONS.filter(s => s.id !== 'about').map(s => (
+                  {SECTIONS.map(s => (
                     <ChevronRow
                       key={s.id}
                       icon={s.icon}
@@ -720,15 +715,6 @@ export function SettingsPage() {
                     />
                   ))}
                 </div>
-              </SectionCard>
-              <SectionCard>
-                <ChevronRow
-                  icon={Info}
-                  iconColor="var(--aurora-faint)"
-                  iconBg="var(--aurora-glass)"
-                  label={sectionLabels.about}
-                  onClick={() => { setActiveSection('about'); setMobileLevel('detail') }}
-                />
               </SectionCard>
             </div>
           )}
@@ -958,7 +944,7 @@ export function SettingsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Vytvor domácnosť */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 12, padding: 16 }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--aurora-faint)', fontFamily: "'Outfit', sans-serif" }}>{t.settings.householdCreate}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif" }}>{t.settings.householdCreate}</p>
                         <input
                           type="text"
                           placeholder={t.settings.householdCreatePlaceholder}
@@ -977,7 +963,7 @@ export function SettingsPage() {
 
                       {/* Pripoj sa */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 12, padding: 16 }}>
-                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--aurora-faint)', fontFamily: "'Outfit', sans-serif" }}>{t.settings.householdJoin}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif" }}>{t.settings.householdJoin}</p>
                         <input
                           type="text"
                           placeholder={t.settings.householdJoinPlaceholder}
@@ -1188,108 +1174,6 @@ export function SettingsPage() {
                 {exportError && <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-rose)', padding: '0 20px 12px', margin: 0 }}>{exportError}</p>}
               </SectionCard>
               </div>
-            </>
-          )}
-
-          {/* ── ABOUT SECTION ── */}
-          {activeSection === 'about' && (
-            <>
-              <SectionCard>
-                {/* App header row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--aurora-gline)' }}>
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <img
-                      src="/logo.svg"
-                      alt="Finvu"
-                      style={{ width: 48, height: 48, borderRadius: 12 }}
-                      onError={e => {
-                        const el = e.currentTarget as HTMLImageElement
-                        el.style.display = 'none'
-                        const fallback = el.nextElementSibling as HTMLElement | null
-                        if (fallback) fallback.style.display = 'flex'
-                      }}
-                    />
-                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', display: 'none', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ color: 'white', fontWeight: 700, fontSize: 22, fontFamily: "'Outfit', sans-serif" }}>F</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>Finvu</p>
-                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: '3px 0 0' }}>
-                      v1.1.0{buildDate ? ` · build ${buildDate}` : ''}
-                    </p>
-                  </div>
-                </div>
-                {/* Links */}
-                <div className="divide-y divide-white/[0.04]">
-                  <SettingRow label="Webová stránka">
-                    <a
-                      href="https://finvu.pedani.eu"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-violet)', textDecoration: 'none', fontWeight: 500 }}
-                    >
-                      finvu.pedani.eu <ExternalLink size={12} />
-                    </a>
-                  </SettingRow>
-                  <SettingRow label="Zásady ochrany">
-                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Otvoriť →</span>
-                  </SettingRow>
-                  <SettingRow label="Podmienky používania">
-                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Otvoriť →</span>
-                  </SettingRow>
-                  <SettingRow label="Licencie a poďakovania">
-                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Otvoriť →</span>
-                  </SettingRow>
-                </div>
-                <div style={{ borderTop: '1px solid var(--aurora-gline)', padding: '10px 20px' }}>
-                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', margin: 0, textAlign: 'center' }}>© 2024–2026 Finvu · pedani.eu</p>
-                </div>
-              </SectionCard>
-
-              {/* Changelog — static grouped by version */}
-              <SectionCard>
-                <SectionHeader icon={ScrollText} label="Changelog" />
-                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {[
-                    {
-                      version: 'v1.1.0',
-                      date: 'Máj 2026',
-                      items: [
-                        'Podpora 5 jazykov — SK, CS, PL, HU, EN',
-                        'Aktívne relácie zariadení s deduplication',
-                        'Pozastavenie sporiacich cieľov',
-                        'Automatický limit kategórií z fixných výdavkov',
-                      ],
-                    },
-                    {
-                      version: 'v1.0.0',
-                      date: 'Apríl 2026',
-                      items: [
-                        'Dashboard, príjmy, výdavky, sporenie',
-                        'Domácnosť, PWA, push notifikácie',
-                      ],
-                    },
-                  ].map((release, ri) => (
-                    <div key={release.version} style={ri > 0 ? { marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--aurora-gline)' } : {}}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'rgba(139,92,246,0.15)', color: 'var(--aurora-violet)' }}>
-                          {release.version}
-                        </span>
-                        <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)' }}>{release.date}</span>
-                      </div>
-                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {release.items.map(item => (
-                          <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)' }}>
-                            <span style={{ color: 'var(--aurora-violet)', flexShrink: 0, marginTop: 1 }}>·</span>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
             </>
           )}
 

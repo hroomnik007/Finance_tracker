@@ -205,7 +205,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
   const rpSection = (title: string, children: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 10 }}>{title}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', marginBottom: 10 }}>{title}</div>
       {children}
     </div>
   )
@@ -223,7 +223,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
 
           {/* Hero wallet card */}
           <HeroCard variant="expense">
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
               {t.expenses.variable.title} · {MONTH_NAME_VAR} {year}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>

@@ -436,7 +436,7 @@ export function CategoriesPage() {
 
           {/* Hero wallet card */}
           <HeroCard variant="neutral">
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
               {t.expenses.categories.title} · {heroCatCount} aktívnych
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const, gap: 8 }}>
@@ -465,15 +465,15 @@ export function CategoriesPage() {
             )}
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.categories.totalLimit}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.categories.totalLimit}</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(heroTotalLimit)}</div>
               </div>
               <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.categories.remaining}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.categories.remaining}</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(Math.max(0, heroTotalLimit - heroTotalSpent))}</div>
               </div>
               <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.categories.nearLimit}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.categories.nearLimit}</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: heroNearLimitCount > 0 ? 'var(--aurora-rose)' : 'var(--aurora-hi)' }}>{heroNearLimitCount}</div>
               </div>
             </div>

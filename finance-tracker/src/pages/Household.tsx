@@ -142,7 +142,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
           )}
         </div>
 
-        <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+        <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
           {ht.title} · Rodina {householdData?.name ?? ''}
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const, gap: 8 }}>
@@ -169,15 +169,15 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{ht.totalIncomeStat}</div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{ht.totalIncomeStat}</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-emerald)', wordBreak: 'break-word' }}>+{formatAmount(totalIncome)}</div>
           </div>
           <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{ht.totalExpensesStat}</div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{ht.totalExpensesStat}</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--aurora-rose)', wordBreak: 'break-word' }}>−{formatAmount(totalExpenses)}</div>
           </div>
           <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{ht.membersCount}</div>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{ht.membersCount}</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{memberCount}</div>
           </div>
         </div>
@@ -185,7 +185,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
 
       {/* ── ČLENOVIA section header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-lo)', flexShrink: 0, margin: 0 }}>{ht.membersSection} ({memberCount})</p>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-hi)', flexShrink: 0, margin: 0 }}>{ht.membersSection} ({memberCount})</p>
         {householdData && (
           leavePending ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -307,7 +307,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
       {activityFeed.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: 0 }}>{ht.activityLabel}</p>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-hi)', margin: 0 }}>{ht.activityLabel}</p>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Manrope', sans-serif", fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: 'rgba(52,211,153,0.13)', color: 'var(--aurora-emerald)' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--aurora-emerald)', animation: 'pulse-glow 1.5s ease-in-out infinite', display: 'inline-block' }} />
               Live

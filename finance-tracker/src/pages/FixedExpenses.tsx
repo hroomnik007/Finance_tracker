@@ -307,7 +307,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
 
           {/* Hero wallet card */}
           <HeroCard variant="fixed">
-            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
               {t.expenses.fixed.title} · {t.expenses.fixed.recurringMonthly}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
@@ -324,11 +324,11 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.fixed.yearlyLabel}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.fixed.yearlyLabel}</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{formatAmount(filteredTotal * 12)}</div>
               </div>
               <div style={{ background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 16, padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-lo)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.fixed.installmentsLabel}</div>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>{t.expenses.fixed.installmentsLabel}</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)' }}>{filtered.length}</div>
               </div>
             </div>
@@ -364,7 +364,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
           {/* Compact month-grid calendar — mobile only */}
           <div className={mobileView === 'calendar' ? 'lg:hidden' : 'hidden'}>
             <GlassCard radius={18}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-hi)', marginBottom: 14 }}>{t.expenses.fixed.monthCalendar}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
                 {t.daysShort.map(d => (
                   <div key={d} style={{ textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontSize: 10, fontWeight: 600, color: 'var(--aurora-faint)' }}>{d}</div>
@@ -593,7 +593,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 {upcomingList.length > 0 && (
                   <>
                     {calendarToday > 0 && (
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 2, marginTop: 4 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', marginBottom: 2, marginTop: 4 }}>
                         {t.expenses.fixed.upcoming}
                       </div>
                     )}
@@ -602,7 +602,7 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
                 )}
                 {pastList.length > 0 && (
                   <>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', marginBottom: 2, marginTop: 8 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', marginBottom: 2, marginTop: 8 }}>
                       Zaplatené tento mesiac
                     </div>
                     {pastList.map(e => renderCard(e, true))}
@@ -619,12 +619,12 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         {/* Right panel — desktop only */}
         <div className="hidden lg:flex" style={{ width: 280, borderLeft: '1px solid var(--aurora-gline)', overflowY: 'auto', padding: 16, flexDirection: 'column', gap: 16, background: 'var(--aurora-glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           <GlassCard radius={16}>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.yearly}</p>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', margin: '0 0 12px' }}>{t.expenses.fixed.yearly}</p>
             {yearlyContent}
           </GlassCard>
           {vsContent && (
             <GlassCard radius={16}>
-              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-lo)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</p>
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', margin: '0 0 12px' }}>{t.expenses.fixed.vsVariable}</p>
               {vsContent}
             </GlassCard>
           )}

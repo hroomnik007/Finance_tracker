@@ -117,15 +117,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           overflow: 'hidden',
           flexShrink: 0,
         }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 11, flexShrink: 0,
-            background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M4 20V10M11 20V4M18 20v-7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-            </svg>
-          </div>
+          <img src="/logo.svg" alt="Finvu" width={34} height={34} style={{ flexShrink: 0 }} />
           {isExpanded && (
             <div>
               <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>Finvu</span>

@@ -57,8 +57,8 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const legendBorder = '1px solid var(--aurora-gline)'
 
   return (
-    <GlassCard radius={16} style={{ padding: 20, height: '100%', boxSizing: 'border-box' }}>
-      <h3 className="text-center lg:text-left" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--aurora-hi)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+    <GlassCard radius={20} style={{ height: '100%', boxSizing: 'border-box' }}>
+      <h3 className="text-center lg:text-left" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: 'var(--aurora-hi)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
         {t.dashboard.heatmapTitle}
       </h3>
       <p className="text-center lg:text-left" style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginBottom: 12, textTransform: 'capitalize' }}>

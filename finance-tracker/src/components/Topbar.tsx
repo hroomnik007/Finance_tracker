@@ -73,18 +73,12 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   )
 
   const logoMark = (size: number) => (
-    <div
+    <img
+      src="/logo.svg"
+      alt="Finvu"
       onClick={() => { window.location.hash = 'dashboard' }}
-      style={{
-        width: size, height: size, borderRadius: size * 0.34, flexShrink: 0, cursor: 'pointer',
-        background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-    >
-      <svg width={size * 0.47} height={size * 0.47} viewBox="0 0 24 24" fill="none">
-        <path d="M4 20V10M11 20V4M18 20v-7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-      </svg>
-    </div>
+      style={{ width: size, height: size, flexShrink: 0, cursor: 'pointer' }}
+    />
   )
 
   const monthNav = (
