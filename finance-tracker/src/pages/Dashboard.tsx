@@ -192,6 +192,7 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
+        fillOpacity={pieDisplayIndex !== null && index !== pieDisplayIndex ? 0.5 : 1}
       />
     )
   }
@@ -473,8 +474,7 @@ const upcomingFixed = useMemo(() => {
                   dataKey="value"
                   startAngle={90}
                   endAngle={-270}
-                  {...(pieDisplayIndex !== null ? { activeIndex: pieDisplayIndex } : {})}
-                  activeShape={renderPieShape}
+                  shape={renderPieShape}
                   onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
                   onClick={(_: unknown, index: number) => {

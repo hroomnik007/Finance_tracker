@@ -277,23 +277,20 @@ function NavTab({
 }) {
   // Expanded: every tab shows icon-above-label; the active tab additionally
   // gets the gradient highlight pill behind it.
-  // Collapsed + active: the prominent pill (icon+label, side by side, gradient
-  // fill) — the single most eye-catching element, matching the reference.
-  // Collapsed + inactive: icon shrinks/fades, label collapses to width 0, no
-  // highlight — plain icons sitting closer together in the narrower pill.
-  const showLabel = !collapsed || active
-  const shrinkIcon = collapsed && !active
+  // Collapsed: every tab (active or not) shows icon only, all at the same
+  // size — the active tab still stands out via the gradient pill background.
+  const showLabel = !collapsed
   return (
     <button
       onClick={onClick}
       style={{
         flex: collapsed ? '0 0 auto' : 1,
         display: 'flex',
-        flexDirection: collapsed && active ? 'row' : 'column',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: collapsed && active ? 7 : 3,
-        padding: collapsed && active ? '8px 16px' : collapsed ? '4px 8px' : '6px 4px',
+        gap: collapsed ? 0 : 3,
+        padding: collapsed ? '8px' : '6px 4px',
         borderRadius: 999,
         fontSize: 10,
         fontWeight: 500,
@@ -311,9 +308,6 @@ function NavTab({
         borderRadius: 10,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
-        transform: shrinkIcon ? 'scale(0.72)' : 'scale(1)',
-        opacity: shrinkIcon ? 0.6 : 1,
-        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease',
       }}>
         {icon}
       </div>
