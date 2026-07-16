@@ -29,7 +29,6 @@ import type { Page } from '../App'
 import type { ApiSummary } from '../types'
 import type { Translations } from '../i18n/sk'
 
-const FALLBACK_ICON = '📦'
 const FALLBACK_COLOR = '#6b7280'
 
 function catBg(color: string) {
@@ -556,12 +555,12 @@ const upcomingFixed = useMemo(() => {
             {upcomingFixed.map(fe => {
               const badge = countdownBadge(fe.daysUntil)
               const cat = categories.find(c => c.id === fe.categoryId)
-              const icon = cat?.icon ?? FALLBACK_ICON
               const color = cat?.color ?? FALLBACK_COLOR
+              const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag
               return (
                 <GlassCard key={fe.id ?? fe.label} radius={18} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 13, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>
-                    {icon}
+                  <div style={{ width: 38, height: 38, borderRadius: 13, background: catBg(color), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={18} color={color} strokeWidth={1.8} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{fe.label}</div>

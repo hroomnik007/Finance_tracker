@@ -3,7 +3,7 @@ import {
   UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
   Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
   Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
-  Laptop, Zap,
+  Laptop, Zap, Shield, Landmark, TrendingUp,
 } from 'lucide-react'
 
 // Single source of truth mapping a category's emoji icon to a matching lucide
@@ -18,5 +18,5 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
   '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
   '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
-  '💻': Laptop, '⚡': Zap,
+  '💻': Laptop, '⚡': Zap, '🛡️': Shield, '🏦': Landmark, '📈': TrendingUp,
 }
