@@ -16,6 +16,7 @@ import { createHousehold, joinHousehold, toggleHousehold } from '../api/househol
 import { resolveTheme } from '../utils/theme'
 import { useSettingsContext } from '../context/SettingsContext'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
+import { SettingsDropdown } from '../components/SettingsDropdown'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
@@ -835,16 +836,11 @@ export function SettingsPage() {
                 {/* Mobile: single column, unchanged */}
                 <div className="lg:hidden divide-y divide-white/[0.04]">
                   <SettingRow label={t.settings.currency}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <select
-                        value={settings.currency}
-                        onChange={e => updateSettings({ currency: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
-                      >
-                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{c.label}</option>)}
-                      </select>
-                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
-                    </div>
+                    <SettingsDropdown
+                      value={settings.currency}
+                      options={CURRENCIES}
+                      onChange={v => updateSettings({ currency: v })}
+                    />
                   </SettingRow>
 
                   <SettingRow label={t.settings.language} sublabel={t.settings.languageNote}>
@@ -857,16 +853,11 @@ export function SettingsPage() {
                   </SettingRow>
 
                   <SettingRow label={t.settings.dateFormat}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <select
-                        value={settings.dateFormat}
-                        onChange={e => updateSettings({ dateFormat: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
-                      >
-                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{f.label}</option>)}
-                      </select>
-                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
-                    </div>
+                    <SettingsDropdown
+                      value={settings.dateFormat}
+                      options={DATE_FORMATS}
+                      onChange={v => updateSettings({ dateFormat: v })}
+                    />
                   </SettingRow>
 
                   <SettingRow label={t.settings.firstDayOfWeek}>
@@ -893,16 +884,11 @@ export function SettingsPage() {
                 {/* Desktop: compact 2x2 grid, label above a sunken control box */}
                 <div className="hidden lg:grid lg:grid-cols-2" style={{ gap: 20, padding: 20 }}>
                   <CompactSettingCell label={t.settings.currency}>
-                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                      <select
-                        value={settings.currency}
-                        onChange={e => updateSettings({ currency: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
-                      >
-                        {CURRENCIES.map(c => <option key={c.value} value={c.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{c.label}</option>)}
-                      </select>
-                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
-                    </div>
+                    <SettingsDropdown
+                      value={settings.currency}
+                      options={CURRENCIES}
+                      onChange={v => updateSettings({ currency: v })}
+                    />
                   </CompactSettingCell>
 
                   <CompactSettingCell label={t.settings.language}>
@@ -915,16 +901,11 @@ export function SettingsPage() {
                   </CompactSettingCell>
 
                   <CompactSettingCell label={t.settings.dateFormat}>
-                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                      <select
-                        value={settings.dateFormat}
-                        onChange={e => updateSettings({ dateFormat: e.target.value })}
-                        style={{ appearance: 'none' as const, background: 'transparent', border: 'none', outline: 'none', color: 'var(--aurora-hi)', fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', paddingRight: 18, colorScheme: 'var(--aurora-color-scheme)', accentColor: 'var(--accent-color)' }}
-                      >
-                        {DATE_FORMATS.map(f => <option key={f.value} value={f.value} style={{ background: 'var(--aurora-panel)', color: 'var(--aurora-hi)' }}>{f.label}</option>)}
-                      </select>
-                      <ChevronRight size={14} style={{ position: 'absolute', right: 0, color: 'var(--aurora-faint)', pointerEvents: 'none' }} />
-                    </div>
+                    <SettingsDropdown
+                      value={settings.dateFormat}
+                      options={DATE_FORMATS}
+                      onChange={v => updateSettings({ dateFormat: v })}
+                    />
                   </CompactSettingCell>
 
                   <CompactSettingCell label={t.settings.firstDayOfWeek}>
