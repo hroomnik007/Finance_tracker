@@ -258,7 +258,26 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
   if (!matchedRow) { res.status(401).json({ error: "Refresh token not recognized or expired" }); return; }
 
+  if (matchedRow.revokedAt) {
+    // This token was already rotated away — someone is replaying an old
+    // refresh token, which means it was likely stolen. Kill every active
+    // refresh token for the user so both the attacker and the legitimate
+    // user are forced to log in again.
+    await db.delete(refreshTokens).where(eq(refreshTokens.userId, payload.userId));
+    res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path });
+    res.status(401).json({ error: "Refresh token reuse detected — all sessions revoked" });
+    return;
+  }
+
+  // Rotate: revoke the token that was just used and issue a brand new one.
+  await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.id, matchedRow.id));
+
   const accessToken = signAccessToken({ userId: payload.userId, email: payload.email });
+  const newRefreshToken = signRefreshToken({ userId: payload.userId, email: payload.email });
+  const newTokenHash = await hashToken(newRefreshToken);
+  await db.insert(refreshTokens).values({ userId: payload.userId, tokenHash: newTokenHash, expiresAt: refreshTokenExpiry() });
+  res.cookie(REFRESH_COOKIE, newRefreshToken, REFRESH_COOKIE_OPTIONS);
+
   res.json({ accessToken });
 }
 
@@ -567,6 +586,22 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       res.status(401).json({ error: "Neplatný Google token." });
       return;
     }
+
+    if (env.GOOGLE_CLIENT_ID) {
+      const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`);
+      if (!tokenInfoRes.ok) {
+        res.status(401).json({ error: "Neplatný Google token." });
+        return;
+      }
+      const tokenInfo = await tokenInfoRes.json() as { aud?: string; azp?: string };
+      if (tokenInfo.aud !== env.GOOGLE_CLIENT_ID && tokenInfo.azp !== env.GOOGLE_CLIENT_ID) {
+        res.status(401).json({ error: "Google token nebol vydaný pre túto aplikáciu." });
+        return;
+      }
+    } else {
+      console.warn("[googleAuth] GOOGLE_CLIENT_ID nie je nastavené — overenie audience Google tokenu bolo preskočené.");
+    }
+
     googleId = info.sub;
     email = info.email;
     name = info.name || email.split("@")[0];
@@ -598,6 +633,26 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
 
 export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
+  const { currentPassword } = req.body as { currentPassword?: string };
+
+  const [user] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) {
+    res.status(404).json({ error: "Používateľ neexistuje." });
+    return;
+  }
+
+  // Google-only accounts have no password to verify — nothing to check for them.
+  if (user.passwordHash) {
+    if (!currentPassword) {
+      res.status(400).json({ error: "Pre zmazanie účtu zadajte aktuálne heslo." });
+      return;
+    }
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "Nesprávne aktuálne heslo." });
+      return;
+    }
+  }
 
   await deleteAvatarFiles(userId);
   // Cascading deletes handle categories, transactions, refresh_tokens automatically

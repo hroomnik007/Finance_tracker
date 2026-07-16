@@ -60,6 +60,7 @@ export const refreshTokens = pgTable("refresh_tokens", {
   tokenHash: varchar("token_hash", { length: 255 }).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
 }, (t) => [index("refresh_tokens_user_id_idx").on(t.userId)]);
 
 export const households = pgTable("households", {

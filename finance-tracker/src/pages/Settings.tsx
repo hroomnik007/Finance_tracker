@@ -563,6 +563,7 @@ export function SettingsPage() {
 
   // ── Delete account ────────────────────────────────────────────────────────
   const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -1357,6 +1358,18 @@ export function SettingsPage() {
             <p style={{ fontSize: 13, color: 'var(--aurora-faint)', marginBottom: 16 }}>{t.settings.deleteAccountDesc}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
               <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--aurora-rose)' }}>
+                Aktuálne heslo
+              </label>
+              <input
+                type="password"
+                placeholder="Aktuálne heslo"
+                value={deletePassword}
+                onChange={e => { setDeletePassword(e.target.value); setDeleteError(null) }}
+                style={{ height: 44, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--aurora-rose)' }}>
                 {t.settings.deleteAccountConfirmLabel}
               </label>
               <input
@@ -1377,11 +1390,13 @@ export function SettingsPage() {
                 onClick={async () => {
                   setIsDeleting(true)
                   try {
-                    await deleteAccount()
+                    await deleteAccount(deletePassword)
                   } catch (err: unknown) {
                     const status = (err as { response?: { status?: number } })?.response?.status
                     if (status === 502 || status === 501 || status === 404) {
                       setDeleteError(t.settings.deleteAccountUnavailable)
+                    } else if (status === 401 || status === 400) {
+                      setDeleteError('Nesprávne aktuálne heslo.')
                     } else {
                       setDeleteError('Nepodarilo sa zmazať účet. Skúste znova.')
                     }
@@ -1518,7 +1533,7 @@ export function SettingsPage() {
               <ChevronRow
                 icon={UserX} iconColor="var(--aurora-rose)" iconBg="rgba(251,113,133,0.12)"
                 label="Zmazať účet" sublabel="Trvale odstráni účet a všetky dáta — nezvratné"
-                onClick={() => { setDeleteOpen(true); setDeleteConfirm(''); setDeleteError(null) }}
+                onClick={() => { setDeleteOpen(true); setDeleteConfirm(''); setDeletePassword(''); setDeleteError(null) }}
               />
             </div>
           </div>

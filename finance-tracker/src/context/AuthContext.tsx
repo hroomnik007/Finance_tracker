@@ -37,7 +37,7 @@ interface AuthContextValue {
   register: (email: string, password: string, name: string, gdprConsent: boolean) => Promise<void>
   loginAsGuest: () => void
   logout: () => Promise<void>
-  deleteAccount: () => Promise<void>
+  deleteAccount: (currentPassword?: string) => Promise<void>
   refreshUser: () => Promise<void>
   completeOnboarding: () => Promise<void>
   updateMonthlyEmail: (enabled: boolean) => Promise<void>
@@ -225,8 +225,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => doLogout(true), [doLogout])
 
-  const deleteAccount = useCallback(async () => {
-    await apiDeleteAccount()
+  const deleteAccount = useCallback(async (currentPassword?: string) => {
+    await apiDeleteAccount(currentPassword)
     await doLogout(false)
   }, [doLogout])
 

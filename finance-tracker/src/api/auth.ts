@@ -47,8 +47,8 @@ export async function resetPassword(token: string, newPassword: string): Promise
   return data
 }
 
-export async function deleteAccount(): Promise<void> {
-  await apiClient.delete('/api/auth/account')
+export async function deleteAccount(currentPassword?: string): Promise<void> {
+  await apiClient.delete('/api/auth/account', { data: { currentPassword } })
 }
 
 export async function updateAvatar(avatarUrl: string): Promise<{ avatarUrl: string }> {
