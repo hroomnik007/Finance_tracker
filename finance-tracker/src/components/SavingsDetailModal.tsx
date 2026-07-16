@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Pencil, Pause, Play, Plus, Trash2, Calendar, Target, Bell, PiggyBank } from 'lucide-react'
 import type { SavingsGoal, Deposit } from '../types'
 import { useTranslation } from '../i18n'
+import { SAVINGS_ICON_MAP } from '../utils/savingsIcons'
 
 interface SavingsDetailModalProps {
   goal: SavingsGoal | null
@@ -198,8 +199,8 @@ export function SavingsDetailModal({ goal, deposits = [], onClose, onEdit, onDel
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 14, flexShrink: 0, background: `${goal.color ?? '#8B5CF6'}29`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-            {goal.icon ?? '🎯'}
+          <div style={{ width: 42, height: 42, borderRadius: 14, flexShrink: 0, background: `${goal.color ?? '#8B5CF6'}29`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {(() => { const Icon = SAVINGS_ICON_MAP[goal.icon ?? ''] ?? Target; return <Icon size={22} color={goal.color ?? '#8B5CF6'} strokeWidth={1.8} /> })()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>

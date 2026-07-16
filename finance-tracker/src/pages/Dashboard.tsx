@@ -3,13 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer,
 } from 'recharts'
-import { CalendarClock, X } from 'lucide-react'
+import { CalendarClock, X, Tag, Target } from 'lucide-react'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
 import { ForecastCard } from '../components/ForecastCard'
 import { StreakBadge } from '../components/StreakBadge'
 import { StreakModal } from '../components/StreakModal'
 import { GlassCard } from '../components/GlassCard'
 import { HeroCard } from '../components/HeroCard'
+import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
+import { SAVINGS_ICON_MAP } from '../utils/savingsIcons'
 import { useIncomes } from '../hooks/useIncomes'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
@@ -83,6 +85,15 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [legendHoverIndex, setLegendHoverIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
+
+  // Pie selection is derived from three states (clicked > legend hover > pie
+  // hover). On touch devices there is no mouseleave, so tapping a segment
+  // leaves activeIndex/legendHoverIndex set — clearing only clickedIndex would
+  // keep the segment highlighted and the centre stuck off "Celkom". Both
+  // helpers below always reset all three so the centre reliably returns to the
+  // total on mobile as well as desktop.
+  const resetPie = () => { setClickedIndex(null); setLegendHoverIndex(null); setActiveIndex(null) }
+  const selectPie = (index: number | null) => { setClickedIndex(index); setLegendHoverIndex(null); setActiveIndex(null) }
   const [showAllPie, setShowAllPie] = useState(false)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [streakModalOpen, setStreakModalOpen] = useState(false)
@@ -373,7 +384,7 @@ const upcomingFixed = useMemo(() => {
     <GlassCard
       radius={20}
       style={{ position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
-      onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
+      onClick={resetPie}
     >
       <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
       {pieData.length === 0 ? (
@@ -425,7 +436,7 @@ const upcomingFixed = useMemo(() => {
                   onMouseLeave={() => setLegendHoverIndex(null)}
                   onClick={e => {
                     e.stopPropagation()
-                    if (itemPieIdx !== -1) setClickedIndex(prev => prev === itemPieIdx ? null : itemPieIdx)
+                    if (itemPieIdx !== -1) selectPie(clickedIndex === itemPieIdx ? null : itemPieIdx)
                   }}
                 >
                   <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
@@ -478,7 +489,7 @@ const upcomingFixed = useMemo(() => {
                   onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
                   onClick={(_: unknown, index: number) => {
-                    setClickedIndex(prev => prev === index ? null : index)
+                    selectPie(clickedIndex === index ? null : index)
                   }}
                   style={{ cursor: 'pointer' }}
                 >
@@ -508,7 +519,7 @@ const upcomingFixed = useMemo(() => {
             {/* Center click target — always active, resets selection back to the overall total */}
             <div
               style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 104, height: 104, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
-              onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
+              onClick={resetPie}
             />
           </div>
         </div>
@@ -576,8 +587,8 @@ const upcomingFixed = useMemo(() => {
           return (
             <div key={b.categoryId} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-hi)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span>{b.categoryIcon}</span> {b.categoryName}
+                <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-hi)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {(() => { const Icon = CATEGORY_ICON_MAP[b.categoryIcon ?? ''] ?? Tag; return <Icon size={14} color={bCat?.color ?? FALLBACK_COLOR} strokeWidth={1.8} style={{ flexShrink: 0 }} /> })()} {b.categoryName}
                 </span>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: barColor }}>{Math.round(b.percentage)}%</span>
               </div>
@@ -663,7 +674,7 @@ const upcomingFixed = useMemo(() => {
                 <div key={goal.id}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-hi)', display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {goal.icon && <span>{goal.icon}</span>}
+                      {(() => { const Icon = SAVINGS_ICON_MAP[goal.icon ?? ''] ?? Target; return <Icon size={13} color={goal.color ?? 'var(--aurora-violet)'} strokeWidth={1.8} style={{ flexShrink: 0 }} /> })()}
                       {goal.name}
                     </span>
                     <span style={{ fontSize: 11, fontFamily: "'Outfit', sans-serif", color: 'var(--aurora-faint)', flexShrink: 0, marginLeft: 8 }}>{pctLabel}</span>
@@ -848,7 +859,7 @@ const upcomingFixed = useMemo(() => {
     {clickedIndex !== null && (
       <div
         style={{ position: 'fixed', inset: 0, zIndex: 10 }}
-        onClick={() => { setClickedIndex(null); setLegendHoverIndex(null) }}
+        onClick={resetPie}
       />
     )}
     </div>

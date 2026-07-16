@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 import { useSettingsContext } from '../context/SettingsContext'
 
@@ -21,6 +22,7 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [dropPos, setDropPos] = useState<{ top: number; left?: number; right?: number; width: number } | null>(null)
 
   const currentLang = LANGS.find(l => l.code === current) ?? LANGS[0]
@@ -41,7 +43,14 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
   useEffect(() => {
     if (!open) return
     function handleClick(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      // The dropdown is portaled to <body>, so it is not a DOM descendant of
+      // wrapperRef — check both the trigger wrapper and the portaled dropdown
+      // before treating a click as "outside" (otherwise the mousedown would
+      // close the menu before an option's onClick could fire).
+      if (wrapperRef.current?.contains(target)) return
+      if (dropdownRef.current?.contains(target)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -84,8 +93,8 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
         />
       </button>
 
-      {open && dropPos && (
-        <div style={{
+      {open && dropPos && createPortal(
+        <div ref={dropdownRef} style={{
           position: 'fixed',
           top: dropPos.top,
           left: dropPos.left,
@@ -122,7 +131,8 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

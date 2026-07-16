@@ -1,11 +1,7 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import {
-  Plus, X, ArrowUp, ArrowDown, Lock, Tag, Repeat,
-  UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
-  Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
-  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
-} from 'lucide-react'
+import { Plus, X, ArrowUp, ArrowDown, Lock, Tag, Repeat } from 'lucide-react'
+import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
 import { CompactModal } from './CompactModal'
 import { DateInput } from './DateInput'
 import { useIncomes } from '../hooks/useIncomes'
@@ -40,17 +36,6 @@ const PRESET_ICONS = [
   '✈️', '🎮', '🐾', '💇', '🏋️', '📱', '💡', '🍕',
   '☕', '🎬', '🛻', '🏥', '🎓', '🌿', '🧴', '💰',
 ]
-
-// Category icons are one of a fixed emoji preset — map each to a matching
-// lucide outline icon for the compact-modal category pickers (see
-// FixedExpenses.tsx for the same established trick).
-const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
-  '🍔': UtensilsCrossed, '🛒': ShoppingCart, '🚗': Car, '🏠': Home, '💊': Pill,
-  '🎉': PartyPopper, '👕': Shirt, '📚': BookOpen, '✈️': Plane, '🎮': Gamepad2,
-  '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
-  '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
-  '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
-}
 
 const amountFieldStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'baseline', gap: 5,

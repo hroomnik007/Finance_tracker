@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Plus, PiggyBank } from 'lucide-react'
+import { Plus, PiggyBank, Target } from 'lucide-react'
 import { BottomSheet } from '../components/BottomSheet'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
 import { SwipeableRow } from '../components/SwipeableRow'
@@ -9,6 +9,7 @@ import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation } from '../i18n'
+import { SAVINGS_ICON_MAP } from '../utils/savingsIcons'
 import { listDeposits, addDeposit, deleteDeposit } from '../api/savings'
 import { getSummaryCards } from '../api/transactions'
 import type { SavingsGoal, Deposit } from '../types'
@@ -444,10 +445,17 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       {view !== 'edit' && (
         <button
           onClick={openAdd}
-          className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom, 16px))', right: 20, width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', color: 'white', border: 'none', cursor: 'pointer', zIndex: 50, boxShadow: '0 4px 20px rgba(124,58,237,0.5)' }}
+          aria-label={t.savings.addTitle}
+          className="lg:hidden fixed right-4 w-14 h-14 rounded-full flex items-center justify-center text-white cursor-pointer"
+          style={{
+            bottom: 'calc(104px + env(safe-area-inset-bottom, 0px))',
+            zIndex: 40,
+            background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
+            border: 'none',
+            boxShadow: '0 10px 30px rgba(139,92,246,.5)',
+          }}
         >
-          <Plus size={24} strokeWidth={2.5} />
+          <Plus size={26} />
         </button>
       )}
 
@@ -567,9 +575,9 @@ function GoalCard({
           <div style={{
             width: 36, height: 36, borderRadius: 12, flexShrink: 0,
             background: `${accent}26`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            {goal.icon ?? '🎯'}
+            {(() => { const Icon = SAVINGS_ICON_MAP[goal.icon ?? ''] ?? Target; return <Icon size={20} color={accent} strokeWidth={1.8} /> })()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>

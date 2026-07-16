@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { Tag } from 'lucide-react'
 import type { VariableExpense, Category } from '../types'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
 import { GlassCard } from './GlassCard'
+import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
 
 interface ExpenseHeatmapProps {
   expenses: VariableExpense[]
@@ -36,6 +38,22 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const [tooltip, setTooltip] = useState<TooltipState>(null)
   const [lastClickedDay, setLastClickedDay] = useState<string | null>(null)
 
+  // The day-detail popup is anchored to a fixed viewport position captured at
+  // open time, so once the page scrolls it would float detached over unrelated
+  // content ("prilepený"). Dismiss it on any scroll / resize / outside tap.
+  useEffect(() => {
+    if (!tooltip) return
+    const close = () => setTooltip(null)
+    window.addEventListener('scroll', close, { passive: true, capture: true })
+    window.addEventListener('resize', close)
+    window.addEventListener('pointerdown', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+      window.removeEventListener('pointerdown', close)
+    }
+  }, [tooltip])
+
   const daysInMonth = new Date(year, month, 0).getDate()
 
   const dailyTotals: Record<string, number> = {}
@@ -49,9 +67,6 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
   const todayStr = new Date().toISOString().split('T')[0]
   const isCurrentMonth = todayStr.startsWith(`${year}-${String(month).padStart(2, '0')}`)
   const todayDay = isCurrentMonth ? new Date().getDate() : 0
-
-  const getCatIcon = (categoryId: string) =>
-    categories.find(c => c.id === categoryId)?.icon ?? '📦'
 
   const monthLabel = `${t.months[month - 1]} ${year}`
   const legendBorder = '1px solid var(--aurora-gline)'
@@ -180,17 +195,21 @@ export function ExpenseHeatmap({ expenses, month, year, categories = [], onNavig
           <div style={{ color: 'var(--aurora-rose)', fontWeight: 600, marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>
             -{formatAmount(tooltip.amount)}
           </div>
-          {tooltip.dayExpenses.slice(0, 3).map((exp, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-              <span style={{ fontSize: 13 }}>{getCatIcon(exp.categoryId)}</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--aurora-lo)', fontSize: 11 }}>
-                {exp.note || '—'}
-              </span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-rose)', flexShrink: 0 }}>
-                -{formatAmount(exp.amount)}
-              </span>
-            </div>
-          ))}
+          {tooltip.dayExpenses.slice(0, 3).map((exp, i) => {
+            const cat = categories.find(c => c.id === exp.categoryId)
+            const Icon = CATEGORY_ICON_MAP[cat?.icon ?? ''] ?? Tag
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                <Icon size={13} color={cat?.color ?? 'var(--aurora-faint)'} strokeWidth={1.8} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--aurora-lo)', fontSize: 11 }}>
+                  {exp.note || '—'}
+                </span>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-rose)', flexShrink: 0 }}>
+                  -{formatAmount(exp.amount)}
+                </span>
+              </div>
+            )
+          })}
           {tooltip.dayExpenses.length > 3 && (
             <div style={{ color: 'var(--aurora-faint)', fontSize: 10, marginTop: 4 }}>
               + {tooltip.dayExpenses.length - 3} ďalších

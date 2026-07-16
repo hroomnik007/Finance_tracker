@@ -1,11 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import {
-  Edit2, Trash2, Plus, Receipt, X, ArrowDown, Tag,
-  UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
-  Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
-  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
-} from 'lucide-react'
+import { Edit2, Trash2, Plus, Receipt, X, ArrowDown, Tag } from 'lucide-react'
 
 import { CompactModal } from '../components/CompactModal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -22,6 +17,7 @@ import { useTranslation, getLocalizedDayNames, getLocalizedMonthNames } from '..
 import { todayISO } from '../utils/format'
 import type { VariableExpense, BudgetStatus } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
+import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
 import React from 'react'
 
 interface VariableExpensesPageProps {
@@ -57,16 +53,6 @@ const pillStyle = (active: boolean): React.CSSProperties => ({
   flexShrink: 0,
 })
 
-// Category icons are one of a fixed emoji preset — map each to a matching
-// lucide outline icon for the compact-modal category picker (see
-// FixedExpenses.tsx for the same established trick).
-const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
-  '🍔': UtensilsCrossed, '🛒': ShoppingCart, '🚗': Car, '🏠': Home, '💊': Pill,
-  '🎉': PartyPopper, '👕': Shirt, '📚': BookOpen, '✈️': Plane, '🎮': Gamepad2,
-  '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
-  '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
-  '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
-}
 
 function CategoryCircle({ icon: Icon, label, selected, accent, onClick }: {
   icon: LucideIcon; label: string; selected: boolean; accent: string; onClick: () => void
@@ -410,9 +396,9 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', right: 20, bottom: 'calc(104px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          style={{ position: 'fixed', right: 16, bottom: 'calc(104px + env(safe-area-inset-bottom, 0px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 10px 30px rgba(139,92,246,.5)', zIndex: 40 }}
         >
-          <Plus size={24} strokeWidth={2.5} />
+          <Plus size={26} />
         </button>
       )}
 

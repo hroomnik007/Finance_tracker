@@ -1,13 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  X, Check, Pencil, Delete, ChevronRight, LogOut, Crown, KeyRound, Hash,
+  X, Check, Pencil, ChevronRight, LogOut, Crown, KeyRound,
   Target, Flame, PiggyBank, BarChart3, Trophy, Zap, Users, Gem,
 } from 'lucide-react'
 import { useTranslation } from '../i18n'
-import { PinSetupModal } from '../components/PinSetupModal'
-import { usePinLockContext } from '../context/PinLockContext'
-import { updateAvatar, changePassword, updateUserSettings, updateProfile } from '../api/auth'
+import { updateAvatar, updateUserSettings, updateProfile } from '../api/auth'
 import { getTransactions } from '../api/transactions'
 import { getSavingsGoals } from '../api/savings'
 import { getAchievements, type AchievementState } from '../api/achievements'
@@ -130,80 +128,13 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
   )
   const [photoUploading, setPhotoUploading] = useState(false)
 
-  const { setupPin, removePin, hasPin, verifyPin } = usePinLockContext()
-  const [pinSetupOpen, setPinSetupOpen] = useState(false)
-  const [pinVerified, setPinVerified] = useState(false)
-  const [pinRemoveInput, setPinRemoveInput] = useState('')
-  const [pinRemoveError, setPinRemoveError] = useState<string | null>(null)
-  const [pinRemoveShake, setPinRemoveShake] = useState(false)
-  const [pinRemoveLoading, setPinRemoveLoading] = useState(false)
-
   const [txnCount, setTxnCount] = useState<number | null>(null)
   const [savingsTotal, setSavingsTotal] = useState<number | null>(null)
 
   const [logoutConfirm, setLogoutConfirm] = useState(false)
-  const [pinRemoveConfirm, setPinRemoveConfirm] = useState(false)
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
-  const [currentPw, setCurrentPw] = useState('')
-  const [newPw, setNewPw] = useState('')
-  const [confirmPw, setConfirmPw] = useState('')
-  const [changePwLoading, setChangePwLoading] = useState(false)
-  const [changePwError, setChangePwError] = useState<string | null>(null)
-  const [changePwOk, setChangePwOk] = useState(false)
   const [defaultPageDraft, setDefaultPageDraft] = useState<string>(user?.defaultPage ?? 'dashboard')
   const [defaultPageSaveOk, setDefaultPageSaveOk] = useState(false)
   const [country, setCountry] = useState(user?.country ?? 'SK')
-
-  async function handleChangePassword() {
-    setChangePwError(null)
-    if (!currentPw || !newPw || !confirmPw) { setChangePwError(t.profile.fillAllFields); return }
-    if (newPw.length < 8) { setChangePwError(t.profile.passwordMin8); return }
-    if (newPw !== confirmPw) { setChangePwError(t.settings.passwordMismatch); return }
-    setChangePwLoading(true)
-    try {
-      await changePassword(currentPw, newPw)
-      setChangePwOk(true)
-      setCurrentPw(''); setNewPw(''); setConfirmPw('')
-      setTimeout(() => { setChangePwOk(false); setChangePasswordOpen(false) }, 2000)
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-      setChangePwError(msg ?? t.profile.changePwFailed)
-    } finally {
-      setChangePwLoading(false)
-    }
-  }
-
-  const handlePinRemoveVerify = useCallback(async (next: string) => {
-    setPinRemoveLoading(true)
-    const ok = await verifyPin(next)
-    if (ok) {
-      setPinVerified(true)
-      setPinRemoveInput('')
-      setPinRemoveLoading(false)
-    } else {
-      setPinRemoveShake(true)
-      setPinRemoveError(t.profile.incorrectPin)
-      setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
-    }
-  }, [verifyPin, t.profile.incorrectPin])
-
-  useEffect(() => {
-    if (!pinRemoveConfirm || pinVerified) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') {
-        if (pinRemoveInput.length < 4) {
-          const next = pinRemoveInput + e.key
-          setPinRemoveInput(next)
-          if (next.length === 4) handlePinRemoveVerify(next)
-        }
-      } else if (e.key === 'Backspace') {
-        setPinRemoveInput(v => v.slice(0, -1))
-        setPinRemoveError(null)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [pinRemoveConfirm, pinVerified, pinRemoveInput, handlePinRemoveVerify])
 
   useEffect(() => {
     getTransactions({ limit: 1 }).then(({ total }) => setTxnCount(total)).catch(() => {})
@@ -581,35 +512,17 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: 'var(--aurora-faint)', letterSpacing: '0.12em', marginBottom: 10, textTransform: 'uppercase' }}>{t.profile.security}</div>
                 <GlassCard radius={14} style={{ padding: 0, overflow: 'hidden' }}>
-                  {/* Row 1: Zmeniť heslo */}
+                  {/* Single entry point — password & PIN live in Nastavenia → Bezpečnosť */}
                   <button
-                    onClick={() => { setChangePasswordOpen(true); setChangePwError(null); setChangePwOk(false) }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--aurora-gline)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    onClick={() => { localStorage.setItem('settings_open_section', 'security'); window.location.hash = 'settings'; onClose() }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--aurora-hover)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><KeyRound size={17} color="var(--aurora-violet)" /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{t.profile.changePwTitle}</div>
+                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{t.profile.security}</div>
                       <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', marginTop: 1 }}>{t.profile.passwordProtection}</div>
-                    </div>
-                    <ChevronRight size={15} style={{ color: 'var(--aurora-faint)', flexShrink: 0 }} />
-                  </button>
-
-                  {/* Row 2: PIN */}
-                  <button
-                    onClick={() => {
-                      if (!hasPin) { setPinSetupOpen(true) }
-                      else { setPinRemoveConfirm(true); setPinRemoveInput(''); setPinRemoveError(null) }
-                    }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--aurora-hover)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                  >
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: hasPin ? 'rgba(52,211,153,0.12)' : 'rgba(100,116,139,0.12)', border: `1px solid ${hasPin ? 'rgba(52,211,153,0.2)' : 'rgba(100,116,139,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Hash size={17} color={hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)'} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{t.profile.pinAccess}</div>
-                      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, marginTop: 1, color: hasPin ? 'var(--aurora-emerald)' : 'var(--aurora-faint)' }}>{hasPin ? t.profile.pinActive : t.profile.pinInactive}</div>
                     </div>
                     <ChevronRight size={15} style={{ color: 'var(--aurora-faint)', flexShrink: 0 }} />
                   </button>
@@ -632,165 +545,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
           )}
 
         </div>
-
-        <PinSetupModal
-          open={pinSetupOpen}
-          onClose={() => setPinSetupOpen(false)}
-          onSetPin={async (pin) => { await setupPin(pin) }}
-        />
       </div>
-
-      {/* ── PIN remove modal ── */}
-      {pinRemoveConfirm && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
-          onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
-        >
-          <div
-            style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 24, padding: 28, width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 20 }}
-            onClick={e => e.stopPropagation()}
-          >
-            {!pinVerified ? (
-              <>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                    <Hash size={24} color="var(--aurora-violet)" />
-                  </div>
-                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 4px' }}>{t.profile.enterPin}</h3>
-                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.profile.pinVerification}</p>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
-                  {[0,1,2,3].map(i => (
-                    <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: i < pinRemoveInput.length ? 'var(--aurora-violet)' : 'transparent', border: '2px solid ' + (i < pinRemoveInput.length ? 'var(--aurora-violet)' : 'var(--aurora-gline)'), transition: 'all 0.15s' }} />
-                  ))}
-                </div>
-
-                {pinRemoveError && <p style={{ textAlign: 'center', fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-rose)', margin: 0 }}>{pinRemoveError}</p>}
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                  {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k, idx) => (
-                    <button
-                      key={idx}
-                      disabled={k === '' || pinRemoveLoading}
-                      onClick={() => {
-                        if (pinRemoveLoading) return
-                        if (k === '⌫') { setPinRemoveInput(v => v.slice(0, -1)); setPinRemoveError(null); return }
-                        if (k === '' || pinRemoveInput.length >= 4) return
-                        const next = pinRemoveInput + String(k)
-                        setPinRemoveInput(next)
-                        if (next.length === 4) handlePinRemoveVerify(next)
-                      }}
-                      style={{
-                        height: 52, borderRadius: 12,
-                        background: k === '' ? 'transparent' : 'var(--aurora-glass)',
-                        color: 'var(--aurora-hi)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
-                        border: k === '' ? 'none' : '1px solid var(--aurora-gline)',
-                        cursor: k === '' ? 'default' : 'pointer',
-                        opacity: k === '' ? 0 : pinRemoveLoading ? 0.5 : 1,
-                        fontFamily: "'Outfit', sans-serif",
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      {k === '⌫' ? <Delete size={18} /> : k}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
-                  style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center' }}
-                >
-                  {t.common.cancel}
-                </button>
-              </>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <h3 style={{ textAlign: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.profile.whatToDo}</h3>
-                <button
-                  onClick={() => { setPinRemoveConfirm(false); setPinVerified(false); setPinSetupOpen(true) }}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-hi)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontWeight: 500 }}
-                >
-                  {t.profile.changePin}
-                </button>
-                <button
-                  onClick={async () => { await removePin(); setPinRemoveConfirm(false); setPinVerified(false) }}
-                  style={{ width: '100%', height: 52, borderRadius: 12, fontSize: 15, background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.3)', color: 'var(--aurora-rose)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif", fontWeight: 500 }}
-                >
-                  {t.profile.removePin}
-                </button>
-                <button
-                  onClick={() => { setPinRemoveConfirm(false); setPinVerified(false) }}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--aurora-faint)', fontFamily: "'Manrope', sans-serif", padding: '8px 0', textAlign: 'center', width: '100%' }}
-                >
-                  {t.common.cancel}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Change password modal ── */}
-      {changePasswordOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
-          onClick={() => setChangePasswordOpen(false)}
-        >
-          <div
-            className="rounded-2xl w-full max-w-[360px]"
-            style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.profile.changePwTitle}</h3>
-              <button onClick={() => setChangePasswordOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
-            </div>
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {([t.profile.currentPassword, t.profile.newPassword, t.profile.confirmNewPassword]).map((label, idx) => {
-                const val = idx === 0 ? currentPw : idx === 1 ? newPw : confirmPw
-                const setter = idx === 0 ? setCurrentPw : idx === 1 ? setNewPw : setConfirmPw
-                return (
-                  <div key={label}>
-                    <label style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 500, color: 'var(--aurora-lo)', display: 'block', marginBottom: 4 }}>{label}</label>
-                    <input
-                      type="password"
-                      value={val}
-                      onChange={e => setter(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleChangePassword() }}
-                      style={{ height: 42, width: '100%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', borderRadius: 10, color: 'var(--aurora-hi)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: "'Manrope', sans-serif", boxSizing: 'border-box' }}
-                    />
-                  </div>
-                )
-              })}
-              {changePwError && (
-                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-rose)', margin: 0 }}>{changePwError}</p>
-              )}
-              {changePwOk ? (
-                <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'var(--aurora-emerald)', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                  <Check size={15} /> {t.profile.passwordChanged}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <button
-                    onClick={() => setChangePasswordOpen(false)}
-                    style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
-                  >
-                    {t.common.cancel}
-                  </button>
-                  <button
-                    onClick={handleChangePassword}
-                    disabled={changePwLoading}
-                    style={{ flex: 2, height: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', color: 'white', border: 'none', cursor: changePwLoading ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif", opacity: changePwLoading ? 0.7 : 1 }}
-                  >
-                    {changePwLoading ? t.profile.saving : t.profile.changePwTitle}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Logout confirm ── */}
       {logoutConfirm && (

@@ -205,6 +205,42 @@ export function SettingsPage() {
   // and always shows the sidebar + content layout.
   const [mobileLevel, setMobileLevel] = useState<'list' | 'detail'>('list')
 
+  // Mobile drill-down participates in the browser history stack so a hardware
+  // / swipe "back" from a sub-page returns to the section list instead of
+  // skipping a whole level out of Settings. Drilling in pushes one same-hash
+  // history entry (App.tsx routes on `hashchange`, which a same-hash push does
+  // not fire, so the page itself stays put); back / popstate consumes it.
+  const detailPushedRef = useRef(false)
+
+  function openMobileSection(id: SettingsSection) {
+    setActiveSection(id)
+    setMobileLevel('detail')
+    if (!detailPushedRef.current) {
+      window.history.pushState({ finvuSettingsDetail: true }, '')
+      detailPushedRef.current = true
+    }
+  }
+
+  function backToSectionList() {
+    if (detailPushedRef.current) {
+      // Pop the entry we pushed; the popstate handler resets mobileLevel.
+      window.history.back()
+    } else {
+      setMobileLevel('list')
+    }
+  }
+
+  useEffect(() => {
+    function onPopState() {
+      if (detailPushedRef.current) {
+        detailPushedRef.current = false
+        setMobileLevel('list')
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   // Apply saved appearance preferences on mount + navigate to section
   useEffect(() => {
     const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
@@ -216,8 +252,8 @@ export function SettingsPage() {
     const section = localStorage.getItem('settings_open_section')
     if (section) {
       localStorage.removeItem('settings_open_section')
-      if (section === 'security') { setActiveSection('security'); setMobileLevel('detail') }
-      else if (section === 'data') { setActiveSection('data'); setMobileLevel('detail') }
+      if (section === 'security') { openMobileSection('security') }
+      else if (section === 'data') { openMobileSection('data') }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -651,7 +687,7 @@ export function SettingsPage() {
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 16px' }}>
             <button
-              onClick={() => setMobileLevel('list')}
+              onClick={backToSectionList}
               aria-label={t.common.back}
               style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--aurora-hi)', cursor: 'pointer', flexShrink: 0 }}
             >
@@ -707,7 +743,7 @@ export function SettingsPage() {
                       iconColor="var(--aurora-violet)"
                       iconBg="rgba(139,92,246,0.12)"
                       label={sectionLabels[s.id]}
-                      onClick={() => { setActiveSection(s.id); setMobileLevel('detail') }}
+                      onClick={() => openMobileSection(s.id)}
                     />
                   ))}
                 </div>

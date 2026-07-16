@@ -2,9 +2,6 @@ import { useState, useMemo, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Pencil, Trash2, Plus, Lock, Calendar, List as ListIcon, CheckCircle2, Tag, Repeat,
-  UtensilsCrossed, ShoppingCart, Car, Home, Pill, PartyPopper, Shirt, BookOpen,
-  Plane, Gamepad2, PawPrint, Scissors, Dumbbell, Smartphone, Lightbulb, Pizza,
-  Coffee, Clapperboard, Truck, Hospital, GraduationCap, Leaf, Droplet, Wallet,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { CompactModal } from '../components/CompactModal'
@@ -20,19 +17,10 @@ import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation } from '../i18n'
 import type { FixedExpense, Category } from '../types'
 import { SwipeableRow } from '../components/SwipeableRow'
+import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
 import React from 'react'
 
 const FALLBACK_COLOR = '#6b7280'
-
-// Category icons are one of a fixed emoji preset (see Categories.tsx PRESET_ICONS) — map
-// each to a matching lucide outline icon for the "Nadchádzajúce" widget per the mockup.
-const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
-  '🍔': UtensilsCrossed, '🛒': ShoppingCart, '🚗': Car, '🏠': Home, '💊': Pill,
-  '🎉': PartyPopper, '👕': Shirt, '📚': BookOpen, '✈️': Plane, '🎮': Gamepad2,
-  '🐾': PawPrint, '💇': Scissors, '🏋️': Dumbbell, '📱': Smartphone, '💡': Lightbulb,
-  '🍕': Pizza, '☕': Coffee, '🎬': Clapperboard, '🛻': Truck, '🏥': Hospital,
-  '🎓': GraduationCap, '🌿': Leaf, '🧴': Droplet, '💰': Wallet,
-}
 
 function catBg(color: string) {
   return color + '26'
@@ -293,9 +281,9 @@ export function FixedExpensesPage({ month, year }: FixedExpensesPageProps) {
         <button
           onClick={openAdd}
           className="lg:hidden flex items-center justify-center"
-          style={{ position: 'fixed', right: 20, bottom: 'calc(104px + env(safe-area-inset-bottom, 16px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.5)', zIndex: 50 }}
+          style={{ position: 'fixed', right: 16, bottom: 'calc(104px + env(safe-area-inset-bottom, 0px))', width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))', border: 'none', cursor: 'pointer', color: 'white', boxShadow: '0 10px 30px rgba(139,92,246,.5)', zIndex: 40 }}
         >
-          <Plus size={24} strokeWidth={2.5} />
+          <Plus size={26} />
         </button>
       )}
 

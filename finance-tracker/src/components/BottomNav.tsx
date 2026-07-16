@@ -314,9 +314,14 @@ function NavTab({
       <span style={{
         display: 'inline-block',
         maxWidth: showLabel ? 'none' : 0,
+        // Collapse the label's vertical footprint too — otherwise its line box
+        // still occupies height in the icon-only state and the icon is pushed
+        // above the tab's vertical centre.
+        maxHeight: showLabel ? 16 : 0,
+        lineHeight: showLabel ? 1.2 : 0,
         opacity: showLabel ? 1 : 0,
         overflow: 'hidden',
-        transition: 'max-width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+        transition: 'max-width 0.3s cubic-bezier(0.4,0,0.2,1), max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
       }}>
         {label}
       </span>
