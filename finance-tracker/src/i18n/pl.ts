@@ -703,10 +703,13 @@ export const pl: Translations = {
     fixedDesc: 'Czynsz, subskrypcja, rata',
     categoryLabel: 'Kategoria',
     categoryDesc: 'Nowa kategoria wydatków',
+    savingsLabel: 'Oszczędności',
+    savingsDesc: 'Nowy cel oszczędnościowy',
     saveIncome: 'Zapisz przychód',
     saveExpense: 'Zapisz wydatek',
     saveFixed: 'Zapisz stały wydatek',
     saveCategory: 'Utwórz kategorię',
+    saveSavings: 'Utwórz cel',
   },
   pin: {
     pinSet: 'PIN został ustawiony',

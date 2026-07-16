@@ -703,10 +703,13 @@ export const en: Translations = {
     fixedDesc: 'Rent, subscription, installment',
     categoryLabel: 'Category',
     categoryDesc: 'New expense category',
+    savingsLabel: 'Savings',
+    savingsDesc: 'New savings goal',
     saveIncome: 'Save income',
     saveExpense: 'Save expense',
     saveFixed: 'Save fixed expense',
     saveCategory: 'Create category',
+    saveSavings: 'Create goal',
   },
   pin: {
     pinSet: 'PIN has been set',

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Plus, X, ArrowUp, ArrowDown, Lock, Tag, Repeat } from 'lucide-react'
+import { Plus, X, ArrowUp, ArrowDown, Lock, Tag, Repeat, PiggyBank } from 'lucide-react'
 import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
+import { SAVINGS_ICON_MAP } from '../utils/savingsIcons'
 import { CompactModal } from './CompactModal'
 import { DateInput } from './DateInput'
 import { useIncomes } from '../hooks/useIncomes'
@@ -9,11 +10,13 @@ import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
+import { useSavings } from '../hooks/useSavings'
 import { useFormatters } from '../hooks/useFormatters'
 import { useTranslation } from '../i18n'
+import { useAuth } from '../context/AuthContext'
 import { todayISO } from '../utils/format'
 
-type ModalType = 'income' | 'variable' | 'fixed' | 'category' | null
+type ModalType = 'income' | 'variable' | 'fixed' | 'category' | 'savings' | null
 
 const FAB_VISIBLE_PAGES = ['income', 'variable-expenses', 'fixed-expenses', 'categories']
 const ALL_ACTIVE_PAGES = [...FAB_VISIBLE_PAGES, 'dashboard']
@@ -24,6 +27,8 @@ const PAGE_MODAL_MAP: Record<string, ModalType> = {
   'fixed-expenses': 'fixed',
   'categories': 'category',
 }
+
+const SAVINGS_PRESET_ICONS = Object.keys(SAVINGS_ICON_MAP).filter(icon => icon !== '🎯')
 
 const PRESET_COLORS = [
   '#ef4444', '#f97316', '#f59e0b', '#22c55e',
@@ -134,8 +139,11 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
   const { addFixedExpense } = useFixedExpenses()
   const { categories, addCategory } = useCategories()
   const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
+  const { addGoal } = useSavings()
   const { formatAmount } = useFormatters()
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const savingsEnabled = user?.savings_enabled ?? false
 
   // ── Income form state ─────────────────────────────────────────────────────
   const [incAmt, setIncAmt] = useState('')
@@ -163,6 +171,12 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
   const [catIcon, setCatIcon] = useState('🛒')
   const [catBudgetLimit, setCatBudgetLimit] = useState('')
 
+  // ── Savings goal form state ───────────────────────────────────────────────
+  const [savName, setSavName] = useState('')
+  const [savTarget, setSavTarget] = useState('')
+  const [savIcon, setSavIcon] = useState('🎯')
+  const [savDeadline, setSavDeadline] = useState('')
+
   // ── Open / close helpers ──────────────────────────────────────────────────
   function openModal(type: ModalType) {
     setTimeout(() => {
@@ -175,6 +189,8 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
         setFixLabel(''); setFixAmt(''); setFixDay('1'); setFixCatId('')
       } else if (type === 'category') {
         setCatName(''); setCatColor(PRESET_COLORS[6]); setCatIcon('🛒'); setCatBudgetLimit('')
+      } else if (type === 'savings') {
+        setSavName(''); setSavTarget(''); setSavIcon('🎯'); setSavDeadline('')
       }
       setActiveModal(type)
     }, 50)
@@ -233,6 +249,20 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
     closeModal()
   }
 
+  async function saveSavingsGoal() {
+    const amt = parseFloat(savTarget.replace(',', '.'))
+    if (!savName.trim() || isNaN(amt) || amt <= 0) return
+    await addGoal({
+      name: savName.trim(),
+      targetAmount: amt,
+      savedAmount: 0,
+      deadline: savDeadline || null,
+      icon: savIcon,
+      color: '#7C3AED',
+    })
+    closeModal()
+  }
+
   // ── Live budget preview (variable expense) ────────────────────────────────
   const liveBudget = varCatId ? budgetStatuses.find(b => b.categoryId === varCatId) : null
   const liveVarAmt = parseFloat(varAmt.replace(',', '.')) || 0
@@ -260,6 +290,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
     { type: 'variable', label: t.fab.expenseLabel, icon: ArrowDown, color: '#FB7185', bg: 'rgba(251,113,133,.16)' },
     { type: 'fixed', label: t.fab.fixedLabel, icon: Lock, color: '#FBBF24', bg: 'rgba(251,191,36,.16)' },
     { type: 'category', label: t.fab.categoryLabel, icon: Tag, color: '#8B5CF6', bg: 'rgba(139,92,246,.16)' },
+    ...(savingsEnabled ? [{ type: 'savings' as ModalType, label: t.fab.savingsLabel, icon: PiggyBank, color: '#A855F7', bg: 'rgba(168,85,247,.16)' }] : []),
   ]
 
   return (
@@ -303,8 +334,9 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
               </button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {LAUNCH_TILES.map(tile => {
+              {LAUNCH_TILES.map((tile, i) => {
                 const Icon = tile.icon
+                const isLastOdd = i === LAUNCH_TILES.length - 1 && LAUNCH_TILES.length % 2 === 1
                 return (
                   <button
                     key={tile.type}
@@ -315,6 +347,7 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
                       display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10,
                       background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
                       borderRadius: 18, padding: '18px 14px', cursor: 'pointer', textAlign: 'left',
+                      gridColumn: isLastOdd ? '1 / -1' : undefined,
                     }}
                   >
                     <div style={{ position: 'absolute', top: -22, right: -22, width: 70, height: 70, borderRadius: '50%', background: tile.color, filter: 'blur(24px)', opacity: 0.45, pointerEvents: 'none' }} />
@@ -543,6 +576,50 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
           onKeyDown={e => { if (!AMOUNT_KEY_ALLOW.includes(e.key)) e.preventDefault() }}
           style={finputStyle}
         />
+      </CompactModal>
+
+      {/* ── ADD SAVINGS GOAL modal ────────────────────────────────────────── */}
+      <CompactModal
+        open={activeModal === 'savings'} onClose={closeModal}
+        icon={PiggyBank} iconColor="#A855F7" iconBg="rgba(168,85,247,.16)"
+        title={t.savings.addTitle}
+        accent="#A855F7" accent2="#8B5CF6"
+        onSubmit={saveSavingsGoal}
+        submitDisabled={!savName.trim() || !savTarget}
+      >
+        <input
+          type="text" placeholder={t.savings.namePlaceholder}
+          value={savName}
+          onChange={e => setSavName(e.target.value)}
+          style={finputStyle}
+        />
+
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '2px 2px 4px' }}>
+          {SAVINGS_PRESET_ICONS.map(em => {
+            const Icon = SAVINGS_ICON_MAP[em] ?? PiggyBank
+            const selected = savIcon === em
+            return (
+              <button
+                key={em}
+                type="button"
+                onClick={() => setSavIcon(em)}
+                style={{
+                  width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: selected ? '#A855F7' : 'var(--aurora-glass)',
+                  border: selected ? '1px solid transparent' : '1px solid var(--aurora-gline)',
+                  cursor: 'pointer', transition: 'all 0.12s',
+                }}
+              >
+                <Icon size={17} color={selected ? '#fff' : 'var(--aurora-lo)'} strokeWidth={1.8} />
+              </button>
+            )
+          })}
+        </div>
+
+        <AmountField value={savTarget} onChange={setSavTarget} accent="#A855F7" />
+
+        <DateInput compact value={savDeadline} onChange={setSavDeadline} />
       </CompactModal>
     </>
   )

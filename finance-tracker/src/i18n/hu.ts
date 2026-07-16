@@ -703,10 +703,13 @@ export const hu: Translations = {
     fixedDesc: 'Bérleti díj, előfizetés, részlet',
     categoryLabel: 'Kategória',
     categoryDesc: 'Új kiadási kategória',
+    savingsLabel: 'Megtakarítás',
+    savingsDesc: 'Új megtakarítási cél',
     saveIncome: 'Bevétel mentése',
     saveExpense: 'Kiadás mentése',
     saveFixed: 'Fix kiadás mentése',
     saveCategory: 'Kategória létrehozása',
+    saveSavings: 'Cél létrehozása',
   },
   pin: {
     pinSet: 'PIN beállítva',

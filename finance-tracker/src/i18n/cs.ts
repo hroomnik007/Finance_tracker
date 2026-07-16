@@ -703,10 +703,13 @@ export const cs: Translations = {
     fixedDesc: 'Nájem, předplatné, splátka',
     categoryLabel: 'Kategorie',
     categoryDesc: 'Nová kategorie výdajů',
+    savingsLabel: 'Spoření',
+    savingsDesc: 'Nový spořicí cíl',
     saveIncome: 'Uložit příjem',
     saveExpense: 'Uložit výdaj',
     saveFixed: 'Uložit fixní výdaj',
     saveCategory: 'Vytvořit kategorii',
+    saveSavings: 'Vytvořit cíl',
   },
   pin: {
     pinSet: 'PIN byl nastaven',

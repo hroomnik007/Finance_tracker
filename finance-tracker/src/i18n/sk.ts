@@ -701,10 +701,13 @@ export const sk = {
     fixedDesc: 'Nájom, predplatné, splátka',
     categoryLabel: 'Kategória',
     categoryDesc: 'Nová kategória výdavkov',
+    savingsLabel: 'Sporenie',
+    savingsDesc: 'Nový cieľ sporenia',
     saveIncome: 'Uložiť príjem',
     saveExpense: 'Uložiť výdavok',
     saveFixed: 'Uložiť fixný výdavok',
     saveCategory: 'Vytvoriť kategóriu',
+    saveSavings: 'Vytvoriť cieľ',
   },
   pin: {
     pinSet: 'PIN bol nastavený',

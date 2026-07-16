@@ -25,7 +25,7 @@ const PRESET_ICONS = [
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '10px 12px',
+  padding: '9px 12px',
   borderRadius: 10,
   border: '1px solid var(--border)',
   background: 'var(--bg3)',
@@ -40,7 +40,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
   color: 'var(--text2)',
-  marginBottom: 6,
+  marginBottom: 4,
   display: 'block',
 }
 
@@ -219,25 +219,29 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
   }, [selectedGoal, resumeGoal])
 
   const form = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 0 8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 0 8px' }}>
       {/* Icon row */}
       <div>
         <label style={labelStyle}>{t.savings.iconLabel}</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {PRESET_ICONS.map(icon => (
-            <button
-              key={icon}
-              onClick={() => setFormIcon(icon)}
-              style={{
-                width: 36, height: 36, borderRadius: 8, fontSize: 18,
-                border: formIcon === icon ? '2px solid var(--violet)' : '1px solid var(--border)',
-                background: formIcon === icon ? 'rgba(124,58,237,0.12)' : 'var(--bg3)',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              {icon}
-            </button>
-          ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+          {PRESET_ICONS.map(icon => {
+            const Icon = SAVINGS_ICON_MAP[icon] ?? Target
+            const selected = formIcon === icon
+            return (
+              <button
+                key={icon}
+                onClick={() => setFormIcon(icon)}
+                style={{
+                  width: 38, height: 38, borderRadius: 10,
+                  border: selected ? '2px solid var(--violet)' : '1px solid var(--border)',
+                  background: selected ? 'rgba(124,58,237,0.12)' : 'var(--bg3)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <Icon size={17} color={selected ? 'var(--violet)' : 'var(--text2)'} strokeWidth={1.8} />
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -321,7 +325,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
       <div>
         <label style={labelStyle}>{t.savings.noteLabel} <span style={{ color: 'var(--text3)', fontWeight: 400 }}>{t.savings.noteOptional}</span></label>
         <textarea
-          style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+          style={{ ...inputStyle, minHeight: 44, resize: 'vertical' }}
           value={formNote}
           onChange={e => setFormNote(e.target.value)}
           placeholder=""
