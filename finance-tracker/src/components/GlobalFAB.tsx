@@ -348,6 +348,8 @@ export function GlobalFAB({ month, year, showToast, currentPage, openTrigger }: 
                       background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
                       borderRadius: 18, padding: '18px 14px', cursor: 'pointer', textAlign: 'left',
                       gridColumn: isLastOdd ? '1 / -1' : undefined,
+                      width: isLastOdd ? 'calc(50% - 6px)' : undefined,
+                      justifySelf: isLastOdd ? 'center' : undefined,
                     }}
                   >
                     <div style={{ position: 'absolute', top: -22, right: -22, width: 70, height: 70, borderRadius: '50%', background: tile.color, filter: 'blur(24px)', opacity: 0.45, pointerEvents: 'none' }} />
