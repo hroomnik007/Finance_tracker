@@ -583,6 +583,8 @@ export const sk = {
     timeHours: 'pred {n} h',
     timeYesterday: 'včera',
     timeDays: 'pred {n} dňami',
+    today: 'Dnes',
+    showMore: 'Zobraziť viac →',
     leaveError: 'Chyba pri opúšťaní domácnosti',
   },
   savings: {

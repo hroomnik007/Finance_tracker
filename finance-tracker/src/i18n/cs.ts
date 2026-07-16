@@ -585,6 +585,8 @@ export const cs: Translations = {
     timeHours: 'před {n} h',
     timeYesterday: 'včera',
     timeDays: 'před {n} dny',
+    today: 'Dnes',
+    showMore: 'Zobrazit více →',
     leaveError: 'Chyba při opouštění domácnosti',
   },
   savings: {

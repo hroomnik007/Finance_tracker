@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Copy, Check, Crown, Users } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { MemberAvatar } from '../components/MemberAvatar'
@@ -27,6 +27,16 @@ function timeAgo(iso: string, ht: { timeJustNow: string; timeMinutes: string; ti
   return ht.timeDays.replace('{n}', String(days))
 }
 
+const ACTIVITY_INITIAL_LIMIT = 8
+
+function dayLabel(iso: string, ht: { today: string; timeYesterday: string; timeDays: string }): string {
+  const startOfDay = (t: number) => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime() }
+  const diffDays = Math.round((startOfDay(Date.now()) - startOfDay(new Date(iso).getTime())) / 86400000)
+  if (diffDays <= 0) return ht.today
+  if (diffDays === 1) return ht.timeYesterday
+  return ht.timeDays.replace('{n}', String(diffDays))
+}
+
 interface HouseholdPageProps {
   month: number
   year: number
@@ -46,6 +56,7 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
   const [leavePending, setLeavePending] = useState(false)
   const [leaveLoading, setLeaveLoading] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [activityExpanded, setActivityExpanded] = useState(false)
 
   const householdEnabled = user?.household_enabled ?? false
   const householdId = user?.household_id ?? null
@@ -90,6 +101,18 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
       setTimeout(() => setCopied(false), 2000)
     })
   }
+
+  const visibleActivity = activityExpanded ? activityFeed : activityFeed.slice(0, ACTIVITY_INITIAL_LIMIT)
+  const activityGroups = useMemo(() => {
+    const groups: { label: string; items: ActivityItem[] }[] = []
+    for (const a of visibleActivity) {
+      const label = dayLabel(a.created_at, ht)
+      const last = groups[groups.length - 1]
+      if (last && last.label === label) last.items.push(a)
+      else groups.push({ label, items: [a] })
+    }
+    return groups
+  }, [visibleActivity, ht])
 
   const totalIncome = stats?.total_income ?? 0
   const totalExpenses = stats?.total_expenses ?? 0
@@ -313,38 +336,51 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
               Live
             </span>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 8 }}>
-            {activityFeed.map((a, i) => {
-              const member = householdData?.members.find(m => m.id === a.created_by)
-              const name = a.created_by_name ?? member?.name ?? '?'
-              const isIncome = a.type === 'income'
-              const actionText = isIncome ? ht.addedIncome : ht.addedExpense
-              const description = parseDescription(a.description, 1).label || '—'
-              return (
-                <GlassCard key={i} radius={16}>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <MemberAvatar
-                      userId={a.created_by ?? 'unknown'}
-                      userName={name}
-                      size={28}
-                      avatarUrl={member?.avatar_url ?? null}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-hi)', marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontWeight: 600 }}>{name}</span>
-                        <span style={{ color: 'var(--aurora-faint)' }}> {actionText} </span>
-                        <span style={{ fontWeight: 500 }}>{description}</span>
-                      </p>
-                      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', margin: 0 }}>{timeAgo(a.created_at, ht)}</p>
-                    </div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: isIncome ? 'var(--aurora-emerald)' : 'var(--aurora-rose)', flexShrink: 0 }}>
-                      {isIncome ? '+' : '−'}{formatAmount(a.amount)}
-                    </span>
-                  </div>
-                </GlassCard>
-              )
-            })}
-          </div>
+          {activityGroups.map((group, gi) => (
+            <div key={gi} style={{ marginBottom: 16 }}>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'var(--aurora-faint)', margin: '0 0 8px' }}>{group.label}</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 8 }}>
+                {group.items.map((a, i) => {
+                  const member = householdData?.members.find(m => m.id === a.created_by)
+                  const name = a.created_by_name ?? member?.name ?? '?'
+                  const isIncome = a.type === 'income'
+                  const actionText = isIncome ? ht.addedIncome : ht.addedExpense
+                  const description = parseDescription(a.description, 1).label || '—'
+                  return (
+                    <GlassCard key={`${gi}-${i}`} radius={16}>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <MemberAvatar
+                          userId={a.created_by ?? 'unknown'}
+                          userName={name}
+                          size={28}
+                          avatarUrl={member?.avatar_url ?? null}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-hi)', marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontWeight: 600 }}>{name}</span>
+                            <span style={{ color: 'var(--aurora-faint)' }}> {actionText} </span>
+                            <span style={{ fontWeight: 500 }}>{description}</span>
+                          </p>
+                          <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', margin: 0 }}>{timeAgo(a.created_at, ht)}</p>
+                        </div>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: isIncome ? 'var(--aurora-emerald)' : 'var(--aurora-rose)', flexShrink: 0 }}>
+                          {isIncome ? '+' : '−'}{formatAmount(a.amount)}
+                        </span>
+                      </div>
+                    </GlassCard>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          {!activityExpanded && activityFeed.length > ACTIVITY_INITIAL_LIMIT && (
+            <button
+              onClick={() => setActivityExpanded(true)}
+              style={{ marginTop: 4, fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--aurora-violet)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'block' }}
+            >
+              {ht.showMore}
+            </button>
+          )}
         </div>
       )}
 

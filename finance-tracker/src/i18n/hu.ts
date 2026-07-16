@@ -585,6 +585,8 @@ export const hu: Translations = {
     timeHours: '{n} ó ezelőtt',
     timeYesterday: 'tegnap',
     timeDays: '{n} napja',
+    today: 'Ma',
+    showMore: 'Több megjelenítése →',
     leaveError: 'Hiba a háztartás elhagyásakor',
   },
   savings: {

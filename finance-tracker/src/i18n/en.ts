@@ -585,6 +585,8 @@ export const en: Translations = {
     timeHours: '{n} h ago',
     timeYesterday: 'yesterday',
     timeDays: '{n} days ago',
+    today: 'Today',
+    showMore: 'Show more →',
     leaveError: 'Error leaving household',
   },
   savings: {
