@@ -32,8 +32,8 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   const submenuCardStyle: React.CSSProperties = {
     position: 'fixed',
     bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-    left: '8px',
-    right: '8px',
+    left: '20px',
+    right: '20px',
     background: 'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 40%), var(--aurora-panel)',
     border: '1px solid rgba(139,92,246,0.22)',
     borderRadius: '16px',
