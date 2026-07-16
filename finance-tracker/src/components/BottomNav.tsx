@@ -27,6 +27,26 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   const [showExpenseMenu, setShowExpenseMenu] = useState(false)
   const [showViacSheet, setShowViacSheet] = useState(false)
   const collapsed = useScrollCollapse()
+  const menuOpen = showExpenseMenu || showViacSheet
+
+  const submenuCardStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+    left: '8px',
+    right: '8px',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 40%), var(--aurora-panel)',
+    border: '1px solid rgba(139,92,246,0.22)',
+    borderRadius: '16px',
+    padding: '10px 8px 8px',
+    zIndex: 99,
+    boxShadow: '0 -8px 28px rgba(139,92,246,0.16), 0 -10px 30px rgba(0,0,0,0.4)',
+  }
+
+  const dragHandle = (
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+      <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--aurora-faint)' }} />
+    </div>
+  )
 
   function handleExpenseNav(page: Page) {
     onChange(page)
@@ -47,20 +67,8 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             style={{ position: 'fixed', inset: 0, zIndex: 98 }}
             onClick={() => setShowExpenseMenu(false)}
           />
-          <div
-            style={{
-              position: 'fixed',
-              bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-              left: '8px',
-              right: '8px',
-              background: 'var(--aurora-panel)',
-              border: '1px solid var(--aurora-gline)',
-              borderRadius: '16px',
-              padding: '8px',
-              zIndex: 99,
-              boxShadow: '0 -10px 30px rgba(0,0,0,0.4)',
-            }}
-          >
+          <div style={submenuCardStyle}>
+            {dragHandle}
             {([
               { icon: <Receipt size={16} />, label: t.nav.variable, page: 'variable-expenses' as Page },
               { icon: <Lock size={16} />, label: t.nav.fixed, page: 'fixed-expenses' as Page },
@@ -101,20 +109,8 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             style={{ position: 'fixed', inset: 0, zIndex: 98 }}
             onClick={() => setShowViacSheet(false)}
           />
-          <div
-            style={{
-              position: 'fixed',
-              bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-              left: '8px',
-              right: '8px',
-              background: 'var(--aurora-panel)',
-              border: '1px solid var(--aurora-gline)',
-              borderRadius: '16px',
-              padding: '8px',
-              zIndex: 99,
-              boxShadow: '0 -10px 30px rgba(0,0,0,0.4)',
-            }}
-          >
+          <div style={submenuCardStyle}>
+            {dragHandle}
             {savingsEnabled && (
               <button
                 onClick={() => handleViacNav('savings')}
@@ -192,21 +188,21 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           }}
         >
           <NavTab
-            active={current === 'dashboard'}
+            active={current === 'dashboard' && !menuOpen}
             collapsed={collapsed}
             icon={<Home size={20} />}
             label={t.nav.overview}
-            onClick={() => { setShowExpenseMenu(false); onChange('dashboard') }}
+            onClick={() => { setShowExpenseMenu(false); setShowViacSheet(false); onChange('dashboard') }}
           />
           <NavTab
-            active={current === 'income'}
+            active={current === 'income' && !menuOpen}
             collapsed={collapsed}
             icon={<TrendingUp size={20} />}
             label={t.nav.income}
-            onClick={() => { setShowExpenseMenu(false); onChange('income') }}
+            onClick={() => { setShowExpenseMenu(false); setShowViacSheet(false); onChange('income') }}
           />
           <NavTab
-            active={expensesActive || showExpenseMenu}
+            active={showExpenseMenu || (expensesActive && !showViacSheet)}
             collapsed={collapsed}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -218,7 +214,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             onClick={() => { setShowViacSheet(false); setShowExpenseMenu(s => !s) }}
           />
           <NavTab
-            active={current === 'settings'}
+            active={current === 'settings' && !menuOpen}
             collapsed={collapsed}
             icon={<Settings size={20} />}
             label={t.nav.settings}
@@ -226,7 +222,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           />
           {showViac && (
             <NavTab
-              active={viacActive || showViacSheet}
+              active={showViacSheet || (viacActive && !showExpenseMenu)}
               collapsed={collapsed}
               icon={<MoreHorizontal size={20} />}
               label={t.nav.more}
@@ -235,7 +231,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           )}
           {showOnlySavings && (
             <NavTab
-              active={current === 'savings'}
+              active={current === 'savings' && !menuOpen}
               collapsed={collapsed}
               icon={<PiggyBank size={20} />}
               label={t.nav.savings}
@@ -244,7 +240,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
           )}
           {showOnlyHousehold && (
             <NavTab
-              active={current === 'household'}
+              active={current === 'household' && !menuOpen}
               collapsed={collapsed}
               icon={
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
