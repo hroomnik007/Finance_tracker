@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Plus, PiggyBank, Target } from 'lucide-react'
-import { BottomSheet } from '../components/BottomSheet'
+import { CompactModal } from '../components/CompactModal'
 import { SavingsDetailModal } from '../components/SavingsDetailModal'
 import { SwipeableRow } from '../components/SwipeableRow'
 import { GlassCard } from '../components/GlassCard'
@@ -331,22 +331,7 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
     </div>
   )
 
-  const footer = (
-    <button
-      onClick={handleSave}
-      disabled={saving || !formName.trim() || !formTarget || parseFloat(formTarget) <= 0}
-      style={{
-        width: '100%', padding: '13px 0', borderRadius: 12,
-        background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-        color: 'white', fontSize: 15, fontWeight: 600, border: 'none',
-        cursor: saving ? 'not-allowed' : 'pointer',
-        opacity: saving ? 0.7 : 1,
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      {selectedGoal ? t.savings.saveChanges : t.savings.add}
-    </button>
-  )
+  const saveDisabled = saving || !formName.trim() || !formTarget || parseFloat(formTarget) <= 0
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -472,14 +457,19 @@ export function SavingsPage({ openAddTrigger }: { openAddTrigger?: number }) {
         formatAmount={formatAmount}
       />
 
-      <BottomSheet
+      <CompactModal
         open={view === 'edit'}
         onClose={closeEdit}
+        icon={PiggyBank}
+        iconColor="#8B5CF6"
+        iconBg="rgba(139,92,246,.16)"
         title={selectedGoal ? t.savings.editTitle : t.savings.addTitle}
-        footer={footer}
+        accent="#8B5CF6" accent2="#EC4899"
+        onSubmit={handleSave}
+        submitDisabled={saveDisabled}
       >
         {form}
-      </BottomSheet>
+      </CompactModal>
     </div>
   )
 }
