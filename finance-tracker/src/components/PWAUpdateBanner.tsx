@@ -1,6 +1,19 @@
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { useTranslation } from '../i18n'
 
+// Reliable reload once the freshly-activated service worker takes control.
+// The waiting SW only sends this event after it receives SKIP_WAITING (i.e. after
+// the user clicks "Aktualizovať"); on first install the SW stays waiting and does
+// not claim this page, so controllerchange does not fire here — no unwanted reload.
+let reloadingForUpdate = false
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingForUpdate) return
+    reloadingForUpdate = true
+    window.location.reload()
+  })
+}
+
 export function PWAUpdateBanner() {
   const { t } = useTranslation()
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({

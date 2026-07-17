@@ -38,8 +38,11 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
+        // NOTE: with registerType: 'prompt' the SW must stay in the "waiting" state
+        // until the user clicks "Aktualizovať". Setting skipWaiting/clientsClaim here
+        // makes the SW self-activate immediately and omits the SKIP_WAITING message
+        // listener, so the prompt's updateServiceWorker(true) → messageSkipWaiting()
+        // has nothing to talk to and the page never reloads. Leave them off.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
