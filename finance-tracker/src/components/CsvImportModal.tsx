@@ -3,6 +3,7 @@ import { X, Upload, Check } from 'lucide-react'
 import { createTransaction } from '../api/transactions'
 import { useTranslation } from '../i18n'
 import { SettingsDropdown } from './SettingsDropdown'
+import type { ParseResult } from 'papaparse'
 
 interface ImportRow {
   date: string
@@ -80,6 +81,43 @@ function parseTatra(rows: CsvRow[]): ImportRow[] {
       return {
         date: parseDate(rawDate),
         description: desc,
+        amount: Math.abs(amount),
+        type: amount >= 0 ? 'income' as const : 'expense' as const,
+        selected: true,
+      }
+    })
+    .filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
+}
+
+function parseCSOB(rows: CsvRow[]): ImportRow[] {
+  // ČSOB export columns: datum zauctovania, suma, mena, referencia platitela, typ transakcie,
+  // cislo uctu protistrany, banka protistrany, nazov protistrany, informacia pre prijemcu, doplnujuce udaje
+  return rows
+    .map(r => {
+      const rawDate = r['datum zauctovania'] ?? ''
+      const rawAmount = r['suma'] ?? '0'
+      const txType = (r['typ transakcie'] ?? '').trim()
+      const counterparty = (r['nazov protistrany'] ?? '').trim()
+      const info = (r['informacia pre prijemcu'] ?? '').trim()
+      const amount = parseAmount(rawAmount)
+
+      // Card payments carry the merchant name after "Miesto: " inside the info field;
+      // other transaction types fall back to the counterparty name, then the raw info, then the type.
+      let description: string
+      const miestoIdx = info.indexOf('Miesto: ')
+      if (miestoIdx !== -1) {
+        description = info.slice(miestoIdx + 'Miesto: '.length).trim()
+      } else if (counterparty) {
+        description = counterparty
+      } else if (info) {
+        description = info
+      } else {
+        description = txType
+      }
+
+      return {
+        date: parseDate(rawDate),
+        description,
         amount: Math.abs(amount),
         type: amount >= 0 ? 'income' as const : 'expense' as const,
         selected: true,
@@ -170,38 +208,56 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
     setRows([])
     // papaparse loads on demand — CSV import is a rare action
     const Papa = (await import('papaparse')).default
+
+    function handleParsed(result: ParseResult<CsvRow>) {
+      const headers = result.meta.fields ?? []
+      if (format === 'custom') {
+        setCsvHeaders(headers)
+        setRawCsvRows(result.data)
+        setCustomMapping({ date: headers[0] ?? '', description: headers[1] ?? '', amount: headers[2] ?? '' })
+        return
+      }
+      let parsed: ImportRow[] = []
+      switch (format) {
+        case 'revolut':  parsed = parseRevolut(result.data); break
+        case 'tatra':    parsed = parseTatra(result.data); break
+        case 'csob':     parsed = parseCSOB(result.data); break
+        case 'slsp':     parsed = parseSLSP(result.data); break
+        case 'mbank':    parsed = parseMBank(result.data); break
+        case 'bank365':  parsed = parse365Bank(result.data); break
+      }
+      if (parsed.length === 0) {
+        setError(t.csv.noValidRecords)
+      } else {
+        if (parsed.length > 500) {
+          setWarning(t.csv.tooManyRows)
+          parsed = parsed.slice(0, 500)
+        } else {
+          setWarning(null)
+        }
+        setRows(applyFilter(parsed))
+      }
+    }
+
+    if (format === 'csob') {
+      // ČSOB export starts with an account summary line + a blank line before the real
+      // column header row — strip those so header:true picks up the actual columns.
+      const text = await file.text()
+      const body = text.split(/\r\n|\r|\n/).slice(2).join('\n')
+      Papa.parse<CsvRow>(body, {
+        header: true,
+        skipEmptyLines: true,
+        complete: handleParsed,
+        error: () => setError(t.csv.readError),
+      })
+      return
+    }
+
     Papa.parse<CsvRow>(file, {
       header: true,
       skipEmptyLines: true,
       delimiter: (format === 'mbank' || format === 'bank365') ? ';' : undefined,
-      complete: (result) => {
-        const headers = result.meta.fields ?? []
-        if (format === 'custom') {
-          setCsvHeaders(headers)
-          setRawCsvRows(result.data)
-          setCustomMapping({ date: headers[0] ?? '', description: headers[1] ?? '', amount: headers[2] ?? '' })
-          return
-        }
-        let parsed: ImportRow[] = []
-        switch (format) {
-          case 'revolut':  parsed = parseRevolut(result.data); break
-          case 'tatra':    parsed = parseTatra(result.data); break
-          case 'slsp':     parsed = parseSLSP(result.data); break
-          case 'mbank':    parsed = parseMBank(result.data); break
-          case 'bank365':  parsed = parse365Bank(result.data); break
-        }
-        if (parsed.length === 0) {
-          setError(t.csv.noValidRecords)
-        } else {
-          if (parsed.length > 500) {
-            setWarning(t.csv.tooManyRows)
-            parsed = parsed.slice(0, 500)
-          } else {
-            setWarning(null)
-          }
-          setRows(applyFilter(parsed))
-        }
-      },
+      complete: handleParsed,
       error: () => setError(t.csv.readError),
     })
   }
