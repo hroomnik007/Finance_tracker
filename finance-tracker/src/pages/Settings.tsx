@@ -13,7 +13,10 @@ import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
 import { createHousehold, joinHousehold, toggleHousehold } from '../api/households'
-import { resolveTheme } from '../utils/theme'
+import {
+  resolveTheme, applyAccentColor, applyBackgroundColor, bgColorStorageKey, defaultBgColor,
+  DEFAULT_ACCENT_COLOR, type ResolvedTheme,
+} from '../utils/theme'
 import { useSettingsContext } from '../context/SettingsContext'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { SettingsDropdown } from '../components/SettingsDropdown'
@@ -49,6 +52,26 @@ const ACCENT_COLORS = [
   { name: 'Oranžová', value: '#F59E0B' },
   { name: 'Ružová', value: '#EC4899' },
   { name: 'Červená', value: '#EF4444' },
+]
+
+// Revolut-style page background tints — separate palette per theme since a
+// color tuned for a dark page reads muddy/washed-out on a light one.
+const BACKGROUND_COLORS_DARK = [
+  { name: 'Navy', value: '#0F1F3A' },
+  { name: 'Rust', value: '#4A2A14' },
+  { name: 'Forest', value: '#0E3B2E' },
+  { name: 'Teal', value: '#0C3B3E' },
+  { name: 'Violet', value: '#2E1A47' },
+  { name: 'Black', value: '#050505' },
+]
+
+const BACKGROUND_COLORS_LIGHT = [
+  { name: 'Sky', value: '#EAF1FB' },
+  { name: 'Peach', value: '#FCEEE3' },
+  { name: 'Mint', value: '#E4F5EC' },
+  { name: 'Teal', value: '#E1F3F4' },
+  { name: 'Lavender', value: '#F4E9F7' },
+  { name: 'Cream', value: '#F7F5F0' },
 ]
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -246,10 +269,10 @@ export function SettingsPage() {
 
   // Apply saved appearance preferences on mount + navigate to section
   useEffect(() => {
-    const savedAccent = loadLocalPref<string>('accent_color', '#7C3AED')
+    const savedAccent = loadLocalPref<string>('accent_color', DEFAULT_ACCENT_COLOR)
     const savedCompact = loadLocalPref<boolean>(compactStorageKey, compactDefault)
     const html = document.documentElement
-    html.style.setProperty('--accent-color', savedAccent)
+    applyAccentColor(savedAccent)
     html.classList.toggle('compact', savedCompact)
 
     const section = localStorage.getItem('settings_open_section')
@@ -278,11 +301,25 @@ export function SettingsPage() {
   }, [])
 
   const [accentColor, setAccentColorState] = useState<string>(() =>
-    loadLocalPref<string>('accent_color', '#7C3AED')
+    loadLocalPref<string>('accent_color', DEFAULT_ACCENT_COLOR)
   )
   const [compactMode, setCompactModeState] = useState<boolean>(() =>
     loadLocalPref<boolean>(compactStorageKey, compactDefault)
   )
+
+  // Resolved (dark/light) appearance the background picker should show —
+  // 'system' has no swatches of its own, it just mirrors whichever the OS
+  // currently resolves to.
+  const resolvedTheme: ResolvedTheme = resolveTheme(theme)
+  const [backgroundColor, setBackgroundColorState] = useState<string>(() =>
+    loadLocalPref<string>(bgColorStorageKey(resolvedTheme), defaultBgColor(resolvedTheme))
+  )
+
+  // Keep the displayed swatch selection in sync when the resolved theme
+  // changes (e.g. user flips Dark/Light, or OS theme changes under 'system').
+  useEffect(() => {
+    setBackgroundColorState(loadLocalPref<string>(bgColorStorageKey(resolvedTheme), defaultBgColor(resolvedTheme)))
+  }, [resolvedTheme])
 
   function handleThemeChange(next: 'dark' | 'light' | 'system') {
     setThemeState(next)
@@ -295,7 +332,13 @@ export function SettingsPage() {
   function handleAccentChange(color: string) {
     setAccentColorState(color)
     saveLocalPref('accent_color', color)
-    document.documentElement.style.setProperty('--accent-color', color)
+    applyAccentColor(color)
+  }
+
+  function handleBackgroundChange(color: string) {
+    setBackgroundColorState(color)
+    saveLocalPref(bgColorStorageKey(resolvedTheme), color)
+    applyBackgroundColor(color)
   }
 
   function handleCompactToggle() {
@@ -789,11 +832,11 @@ export function SettingsPage() {
                 </div>
               </SectionCard>
 
-              {/* Card 2: Akcentová farba */}
+              {/* Card 2: Farba tlačidiel */}
               <SectionCard>
                 <SectionHeader icon={Palette} label={t.settings.accentColor} />
                 <div style={{ padding: '12px 20px 16px' }}>
-                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginBottom: 14, marginTop: 0 }}>Použije sa pre tlačidlá, ikony a grafy</p>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginBottom: 14, marginTop: 0 }}>{t.settings.accentColorDescription}</p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {ACCENT_COLORS.map(c => (
                       <button
@@ -812,6 +855,37 @@ export function SettingsPage() {
                         {accentColor === c.value && (
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </SectionCard>
+
+              {/* Card 3: Pozadie */}
+              <SectionCard>
+                <SectionHeader icon={Palette} label={t.settings.backgroundColor} />
+                <div style={{ padding: '12px 20px 16px' }}>
+                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', marginBottom: 14, marginTop: 0 }}>{t.settings.backgroundColorDescription}</p>
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    {(resolvedTheme === 'light' ? BACKGROUND_COLORS_LIGHT : BACKGROUND_COLORS_DARK).map(c => (
+                      <button
+                        key={c.value}
+                        onClick={() => handleBackgroundChange(c.value)}
+                        title={c.name}
+                        style={{
+                          width: 36, height: 36, borderRadius: 9, cursor: 'pointer',
+                          border: '1px solid var(--aurora-gline)', backgroundColor: c.value, flexShrink: 0,
+                          boxShadow: backgroundColor === c.value ? '0 0 0 2px var(--aurora-panel), 0 0 0 4px var(--aurora-violet)' : 'none',
+                          transition: 'transform 0.15s',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                        className="hover:scale-110"
+                      >
+                        {backgroundColor === c.value && (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2.5 7L5.5 10L11.5 4" stroke="var(--aurora-hi)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
                       </button>

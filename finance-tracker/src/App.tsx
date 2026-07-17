@@ -50,7 +50,10 @@ import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { TrackingDateOnboarding } from './components/TrackingDateOnboarding'
 import { CommandPalette } from './components/CommandPalette'
 import { updateUserSettings, sessionCheck } from './api/auth'
-import { resolveTheme, type ThemePreference } from './utils/theme'
+import {
+  resolveTheme, applyAccentColor, applyBackgroundColor, bgColorStorageKey, defaultBgColor,
+  type ThemePreference,
+} from './utils/theme'
 
 // Initialize appearance preferences from localStorage before first render
 ;(() => {
@@ -63,7 +66,9 @@ import { resolveTheme, type ThemePreference } from './utils/theme'
     const compact = JSON.parse(localStorage.getItem(compactKey) ?? compactDefault) as boolean
     const theme = (localStorage.getItem('theme_preference') ?? 'dark') as ThemePreference
     const resolvedTheme = resolveTheme(theme)
-    if (accent) html.style.setProperty('--accent-color', accent)
+    if (accent) applyAccentColor(accent)
+    const bgColor = JSON.parse(localStorage.getItem(bgColorStorageKey(resolvedTheme)) ?? 'null') as string | null
+    applyBackgroundColor(bgColor ?? defaultBgColor(resolvedTheme))
     html.classList.toggle('compact', compact)
     html.setAttribute('data-theme', resolvedTheme)
     html.classList.add(resolvedTheme)
@@ -140,6 +145,23 @@ function App() {
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false)
   const [fabTrigger, setFabTrigger] = useState(0)
   const [savingsFabTrigger, setSavingsFabTrigger] = useState(0)
+
+  // Re-apply the per-theme background tint whenever `data-theme` changes
+  // (theme toggle can be flipped from Topbar, Login, Settings, ForgotPassword,
+  // AuthContext, ...). `--aurora-bg` is set as an inline style so it survives
+  // the stylesheet's dark/light block switching, which means it also needs to
+  // be swapped by hand when the resolved theme itself switches.
+  useEffect(() => {
+    const html = document.documentElement
+    const reapply = () => {
+      const resolved = (html.getAttribute('data-theme') as 'dark' | 'light' | null) ?? 'dark'
+      const saved = JSON.parse(localStorage.getItem(bgColorStorageKey(resolved)) ?? 'null') as string | null
+      applyBackgroundColor(saved ?? defaultBgColor(resolved))
+    }
+    const observer = new MutationObserver(reapply)
+    observer.observe(html, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     const handler = () => setIsDesktop(window.innerWidth >= 1024)
