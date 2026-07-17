@@ -673,6 +673,7 @@ export const sk = {
     title: 'Import výpisu',
     dragHere: 'Presuň CSV sem',
     dragHerePdf: 'Presuň PDF sem',
+    dragHereCsvOrPdf: 'Presuň CSV alebo PDF sem',
     orClick: 'alebo klikni pre výber súboru',
     noValidRecords: 'Žiadne platné záznamy neboli nájdené. Skontrolujte formát súboru.',
     tooManyRows: 'CSV obsahuje viac ako 500 riadkov. Importuje sa prvých 500.',

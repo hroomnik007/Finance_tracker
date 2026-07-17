@@ -675,6 +675,7 @@ export const pl: Translations = {
     title: 'Import wyciągu',
     dragHere: 'Przeciągnij CSV tutaj',
     dragHerePdf: 'Przeciągnij PDF tutaj',
+    dragHereCsvOrPdf: 'Przeciągnij CSV lub PDF tutaj',
     orClick: 'lub kliknij, aby wybrać plik',
     noValidRecords: 'Nie znaleziono prawidłowych rekordów. Sprawdź format pliku.',
     tooManyRows: 'CSV zawiera więcej niż 500 wierszy. Zostanie zaimportowanych pierwsze 500.',

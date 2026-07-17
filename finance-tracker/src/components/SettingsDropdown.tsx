@@ -1,16 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Check } from 'lucide-react'
 
 interface SettingsDropdownOption {
   value: string
   label: string
+  icon?: ReactNode
 }
 
 interface SettingsDropdownProps {
   value: string
   options: SettingsDropdownOption[]
   onChange: (value: string) => void
+  size?: 'md' | 'sm'
 }
 
 // Custom themed dropdown for simple value-pickers in Settings (Mena, Formát dátumu).
@@ -18,7 +21,8 @@ interface SettingsDropdownProps {
 // the same — including portaling to document.body, since these controls live
 // inside containers with backdrop-filter (a new containing block breaks
 // position: fixed/absolute popups otherwise).
-export function SettingsDropdown({ value, options, onChange }: SettingsDropdownProps) {
+export function SettingsDropdown({ value, options, onChange, size = 'md' }: SettingsDropdownProps) {
+  const compact = size === 'sm'
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -64,18 +68,19 @@ export function SettingsDropdown({ value, options, onChange }: SettingsDropdownP
         onClick={() => (open ? setOpen(false) : openDropdown())}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
-          width: 'fit-content', minWidth: 170,
-          padding: '0 12px', height: 36,
+          width: 'fit-content', minWidth: compact ? 140 : 170,
+          padding: compact ? '0 10px' : '0 12px', height: compact ? 32 : 36,
           borderRadius: 8,
           cursor: 'pointer',
           background: 'var(--bg3)',
           border: '1px solid var(--border2)',
           color: 'var(--text)',
-          fontSize: 13,
+          fontSize: compact ? 12.5 : 13,
           fontWeight: 500,
           fontFamily: "'DM Sans', sans-serif",
         }}
       >
+        {current?.icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{current.icon}</span>}
         <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap' }}>{current?.label}</span>
         <ChevronDown
           size={13}
@@ -97,7 +102,7 @@ export function SettingsDropdown({ value, options, onChange }: SettingsDropdownP
           zIndex: 9000,
           padding: '4px 0',
         }}>
-          {options.map(({ value: v, label }) => {
+          {options.map(({ value: v, label, icon }) => {
             const active = value === v
             return (
               <button
@@ -106,7 +111,7 @@ export function SettingsDropdown({ value, options, onChange }: SettingsDropdownP
                 onClick={() => handleSelect(v)}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-                  padding: '9px 14px', border: 'none', cursor: 'pointer',
+                  padding: compact ? '7px 12px' : '9px 14px', border: 'none', cursor: 'pointer',
                   background: active ? 'rgba(124,58,237,0.15)' : 'transparent',
                   color: active ? 'var(--violet)' : 'var(--text)',
                   fontSize: 13, fontWeight: active ? 600 : 400,
@@ -115,7 +120,10 @@ export function SettingsDropdown({ value, options, onChange }: SettingsDropdownP
                   textAlign: 'left',
                 }}
               >
-                <span>{label}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>}
+                  {label}
+                </span>
                 {active && <Check size={14} />}
               </button>
             )

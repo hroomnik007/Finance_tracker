@@ -675,6 +675,7 @@ export const en: Translations = {
     title: 'Import statement',
     dragHere: 'Drop CSV here',
     dragHerePdf: 'Drop PDF here',
+    dragHereCsvOrPdf: 'Drop CSV or PDF here',
     orClick: 'or click to select file',
     noValidRecords: 'No valid records found. Please check the file format.',
     tooManyRows: 'CSV contains more than 500 rows. First 500 will be imported.',

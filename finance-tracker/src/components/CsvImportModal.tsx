@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { X, Upload, Check } from 'lucide-react'
+import { X, Upload, Check, Landmark, FileText } from 'lucide-react'
 import { createTransaction } from '../api/transactions'
 import { useTranslation } from '../i18n'
 import { SettingsDropdown } from './SettingsDropdown'
@@ -25,17 +25,41 @@ interface CsvImportModalProps {
 
 type BankFormat = 'revolut' | 'tatra' | 'csob' | 'slsp' | 'mbank' | 'bank365' | 'custom'
 
-const BANK_FORMATS: { id: BankFormat; label: string; emoji: string }[] = [
-  { id: 'revolut', label: 'Revolut', emoji: '🌀' },
-  { id: 'tatra',   label: 'Tatra banka', emoji: '🏦' },
-  { id: 'csob',    label: 'ČSOB', emoji: '🏦' },
-  { id: 'slsp',    label: 'Slovenská sporiteľňa', emoji: '🏦' },
-  { id: 'mbank',   label: 'mBank', emoji: '🏦' },
-  { id: 'bank365', label: '365.bank', emoji: '🏦' },
-  { id: 'custom',  label: 'Vlastný CSV', emoji: '📋' },
+// No brand/finance icon library (e.g. simple-icons) is installed in this project, and
+// adding one wasn't part of this fix — see task summary. Real bank logos aren't
+// available, so every entry uses the same neutral lucide icon the app already uses
+// elsewhere for generic bank/finance contexts (categoryIcons.ts maps 🏦 → Landmark).
+function BankIconBox() {
+  return (
+    <span style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--aurora-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Landmark size={12} color="var(--aurora-lo)" />
+    </span>
+  )
+}
+
+function CustomIconBox() {
+  return (
+    <span style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--aurora-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <FileText size={12} color="var(--aurora-lo)" />
+    </span>
+  )
+}
+
+const BANK_FORMATS: { id: BankFormat; label: string }[] = [
+  { id: 'revolut', label: 'Revolut' },
+  { id: 'tatra',   label: 'Tatra banka' },
+  { id: 'csob',    label: 'ČSOB' },
+  { id: 'slsp',    label: 'Slovenská sporiteľňa' },
+  { id: 'mbank',   label: 'mBank' },
+  { id: 'bank365', label: '365.bank' },
+  { id: 'custom',  label: 'Vlastný CSV' },
 ]
 
-const BANK_FORMAT_OPTIONS = BANK_FORMATS.map(b => ({ value: b.id, label: `${b.emoji} ${b.label}` }))
+const BANK_FORMAT_OPTIONS = BANK_FORMATS.map(b => ({
+  value: b.id,
+  label: b.label,
+  icon: b.id === 'custom' ? <CustomIconBox /> : <BankIconBox />,
+}))
 
 function parseDate(raw: string): string {
   if (!raw) return ''
@@ -546,7 +570,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
       <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '92vh', background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 26, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--aurora-gline)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--aurora-gline)' }}>
           <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.csv.title}</h2>
           <button onClick={onClose} aria-label="Zavrieť" style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--aurora-lo)', cursor: 'pointer', flexShrink: 0 }}>
             <X size={14} />
@@ -554,7 +578,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           {importedCount !== null ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
@@ -564,24 +588,27 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           ) : rows.length === 0 && csvHeaders.length === 0 ? (
             <div>
               {/* Format picker */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 14 }}>
                 <SettingsDropdown
                   value={format}
                   options={BANK_FORMAT_OPTIONS}
                   onChange={v => setFormat(v as BankFormat)}
+                  size="sm"
                 />
               </div>
 
               <div
-                style={{ border: '2px dashed var(--aurora-gline)', borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: 'rgba(124,58,237,0.03)' }}
+                style={{ border: '2px dashed var(--aurora-gline)', borderRadius: 14, padding: '20px 16px', textAlign: 'center', cursor: 'pointer', background: 'rgba(124,58,237,0.03)' }}
                 onClick={() => fileRef.current?.click()}
                 onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-violet)' }}
                 onDragLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-gline)' }}
                 onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-gline)'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
               >
-                <Upload size={32} style={{ color: 'var(--aurora-violet)', margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', marginBottom: 4 }}>{format === 'bank365' ? t.csv.dragHerePdf : t.csv.dragHere}</p>
-                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.csv.orClick}</p>
+                <Upload size={24} style={{ color: 'var(--aurora-violet)', margin: '0 auto 8px', display: 'block' }} />
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--aurora-hi)', marginBottom: 4 }}>
+                  {format === 'bank365' ? t.csv.dragHerePdf : format === 'revolut' ? t.csv.dragHereCsvOrPdf : t.csv.dragHere}
+                </p>
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>{t.csv.orClick}</p>
                 <input ref={fileRef} type="file" accept={format === 'bank365' ? '.pdf,application/pdf' : format === 'revolut' ? '.csv,text/csv,.pdf,application/pdf' : '.csv,text/csv'} style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
               </div>

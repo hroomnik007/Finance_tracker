@@ -675,6 +675,7 @@ export const cs: Translations = {
     title: 'Import výpisu',
     dragHere: 'Přesuňte CSV sem',
     dragHerePdf: 'Přesuňte PDF sem',
+    dragHereCsvOrPdf: 'Přesuňte CSV nebo PDF sem',
     orClick: 'nebo klikněte pro výběr souboru',
     noValidRecords: 'Nenalezeny žádné platné záznamy. Zkontrolujte formát souboru.',
     tooManyRows: 'CSV obsahuje více než 500 řádků. Importuje se prvních 500.',
