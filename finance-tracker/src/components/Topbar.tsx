@@ -166,7 +166,10 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
   )
 
   const barStyle: CSSProperties = {
-    background: 'var(--aurora-bg)',
+    // Transparent so the app shell's radial background glow shows through
+    // continuously instead of a flat seam at the top-left where the topbar
+    // meets the sidebar.
+    background: 'transparent',
     borderBottom: '1px solid var(--aurora-gline)',
     flexShrink: 0,
   }

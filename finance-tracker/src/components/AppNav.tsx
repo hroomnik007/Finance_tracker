@@ -101,7 +101,11 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--aurora-panel)',
+          // Transparent — lets the app shell's radial background glow (set
+          // on the flex wrapper in App.tsx) show through the sidebar the
+          // same way it does behind the main content, matching the Revolut
+          // reference where sidebar and content share one continuous glow.
+          background: 'transparent',
           borderRight: '1px solid var(--aurora-gline)',
           overflow: 'hidden',
           position: 'relative',

@@ -55,23 +55,26 @@ const ACCENT_COLORS = [
 ]
 
 // Revolut-style page background tints — separate palette per theme since a
-// color tuned for a dark page reads muddy/washed-out on a light one.
+// color tuned for a dark page reads muddy/washed-out on a light one. Each
+// dark-mode value is the corner "glow" color of a radial gradient (see
+// utils/theme.ts backgroundImage()); hex values measured from the Revolut
+// reference screenshots.
 const BACKGROUND_COLORS_DARK = [
-  { name: 'Navy', value: '#0F1F3A' },
-  { name: 'Rust', value: '#4A2A14' },
-  { name: 'Forest', value: '#0E3B2E' },
-  { name: 'Teal', value: '#0C3B3E' },
-  { name: 'Violet', value: '#2E1A47' },
-  { name: 'Black', value: '#050505' },
+  { name: 'Navy', value: '#002041' },
+  { name: 'Rust', value: '#411800' },
+  { name: 'Forest', value: '#0B342E' },
+  { name: 'Teal', value: '#003541' },
+  { name: 'Violet', value: '#24132D' },
+  { name: 'Black', value: '#000000' },
 ]
 
 const BACKGROUND_COLORS_LIGHT = [
-  { name: 'Sky', value: '#EAF1FB' },
-  { name: 'Peach', value: '#FCEEE3' },
-  { name: 'Mint', value: '#E4F5EC' },
-  { name: 'Teal', value: '#E1F3F4' },
-  { name: 'Lavender', value: '#F4E9F7' },
-  { name: 'Cream', value: '#F7F5F0' },
+  { name: 'Sky', value: '#DAEAFA' },
+  { name: 'Peach', value: '#FAE7DC' },
+  { name: 'Mint', value: '#C3DCD7' },
+  { name: 'Teal', value: '#D7EFF4' },
+  { name: 'Lavender', value: '#EDD4F5' },
+  { name: 'Cream', value: '#F7F7F7' },
 ]
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -345,7 +348,7 @@ export function SettingsPage() {
   function handleBackgroundChange(color: string) {
     setBackgroundColorState(color)
     saveLocalPref(bgColorStorageKey(resolvedTheme), color)
-    applyBackgroundColor(color)
+    applyBackgroundColor(color, resolvedTheme)
   }
 
   function handleCompactToggle() {
@@ -1266,7 +1269,7 @@ export function SettingsPage() {
                   <SettingRow label="Exportovať dáta" sublabel="Stiahnuť transakcie a kategórie za zvolené obdobie">
                     <button
                       onClick={() => setExportModalOpen(true)}
-                      style={{ padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
+                      style={{ padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
                     >
                       {t.settings.exportModalTitle}
                     </button>

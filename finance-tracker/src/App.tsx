@@ -68,7 +68,7 @@ import {
     const resolvedTheme = resolveTheme(theme)
     if (accent) applyAccentColor(accent)
     const bgColor = JSON.parse(localStorage.getItem(bgColorStorageKey(resolvedTheme)) ?? 'null') as string | null
-    applyBackgroundColor(bgColor ?? defaultBgColor(resolvedTheme))
+    applyBackgroundColor(bgColor ?? defaultBgColor(resolvedTheme), resolvedTheme)
     html.classList.toggle('compact', compact)
     html.setAttribute('data-theme', resolvedTheme)
     html.classList.add(resolvedTheme)
@@ -156,7 +156,7 @@ function App() {
     const reapply = () => {
       const resolved = (html.getAttribute('data-theme') as 'dark' | 'light' | null) ?? 'dark'
       const saved = JSON.parse(localStorage.getItem(bgColorStorageKey(resolved)) ?? 'null') as string | null
-      applyBackgroundColor(saved ?? defaultBgColor(resolved))
+      applyBackgroundColor(saved ?? defaultBgColor(resolved), resolved)
     }
     const observer = new MutationObserver(reapply)
     observer.observe(html, { attributes: true, attributeFilter: ['data-theme'] })
@@ -443,7 +443,7 @@ function App() {
       height: '100svh',
       width: '100vw',
       overflow: 'hidden',
-      background: 'var(--aurora-bg)',
+      background: 'var(--aurora-bg-image)',
     }}>
       <PWAUpdateBanner />
       {locked && lockMethod === 'pin' && (
@@ -478,9 +478,11 @@ function App() {
         />
       )}
 
-      {/* Physical gap between sidebar and main */}
+      {/* Physical gap between sidebar and main — transparent so the app
+          shell's radial background glow (set on the wrapper above) shows
+          through continuously across sidebar + gap + main, with no seams. */}
       {isDesktop && (
-        <div style={{ width: '12px', flexShrink: 0, background: 'var(--aurora-bg)' }} />
+        <div style={{ width: '12px', flexShrink: 0, background: 'transparent' }} />
       )}
 
       {/* Main content column */}
@@ -490,7 +492,7 @@ function App() {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        background: 'var(--aurora-bg)',
+        background: 'transparent',
       }}>
         <Topbar
           page={page}

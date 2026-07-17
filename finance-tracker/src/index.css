@@ -17,7 +17,8 @@
    by routes not yet migrated.
 ───────────────────────────────────────── */
 :root, :root[data-theme="dark"] {
-  --aurora-bg:      #07060B;
+  --aurora-bg:       #000D19;
+  --aurora-bg-image: radial-gradient(1300px circle at 0% 0%, #002041 0%, #000D19 60%);
   --aurora-hi:      #F5F3FF;
   --aurora-lo:      #A79FC9;
   --aurora-faint:   #B5AECF;
@@ -50,7 +51,8 @@
    drop shadow instead of the dark glow.
 ───────────────────────────────────────── */
 [data-theme="light"] {
-  --aurora-bg:      #FBF7EF;
+  --aurora-bg:       #DAEAFA;
+  --aurora-bg-image: radial-gradient(1400px circle at 0% 0%, #F1F8FE 0%, #DAEAFA 70%);
   --aurora-hi:      #221A2E;
   --aurora-lo:      #6E6580;
   --aurora-faint:   #9A93AC;

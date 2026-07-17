@@ -18,7 +18,7 @@ interface ExportDataModalProps {
   generating?: boolean
 }
 
-const GRADIENT = 'linear-gradient(135deg, #8B5CF6, #EC4899)'
+const GRADIENT = 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))'
 
 const FORMATS: ExportFormat[] = ['CSV', 'PDF', 'XLSX']
 
