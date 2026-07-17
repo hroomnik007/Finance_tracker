@@ -21,6 +21,8 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
+import { ExportDataModal } from '../components/ExportDataModal'
+import type { ExportFormat, ExportPeriod } from '../components/ExportDataModal'
 import type { ApiTransaction, UserSession } from '../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -449,85 +451,78 @@ export function SettingsPage() {
 
   // ── Section 4: Export ─────────────────────────────────────────────────────
   const [exportError, setExportError] = useState<string | null>(null)
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exportGenerating, setExportGenerating] = useState(false)
 
-
-  async function handleExportJSON() {
-    try {
-      setExportError(null)
-      const [transactions, { data: categories }] = await Promise.all([
-        fetchAllTransactions({}),
-        getCategories(),
-      ])
-      const payload = {
-        version: '2',
-        exportedAt: new Date().toISOString(),
-        transactions,
-        categories,
-        settings,
-      }
-      downloadBlob(
-        new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
-        `finvu-export-${new Date().toISOString().split('T')[0]}.json`
-      )
-    } catch {
-      setExportError('Export zlyhal. Skúste znova.')
-    }
+  function periodToIsoRange(period: ExportPeriod): { fromISO: string; toISO: string } {
+    const fromISO = `${period.fromYear}-${String(period.fromMonth).padStart(2, '0')}-01`
+    const lastDay = new Date(period.toYear, period.toMonth, 0).getDate()
+    const toISO = `${period.toYear}-${String(period.toMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    return { fromISO, toISO }
   }
 
-  async function handleExportCSV() {
-    try {
-      setExportError(null)
-      const transactions = await fetchAllTransactions({})
-      const rows = transactions.map(t =>
-        `${t.date},${t.type},"${(t.categoryName ?? '').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
-      )
-      downloadBlob(
-        new Blob([['Dátum,Typ,Kategória,Poznámka,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
-        `finvu-export-${new Date().toISOString().split('T')[0]}.csv`
-      )
-    } catch {
-      setExportError('Export zlyhal. Skúste znova.')
-    }
+  async function handleExportCSV(fromISO: string, toISO: string) {
+    const all = await fetchAllTransactions({})
+    const transactions = all.filter(t => t.date >= fromISO && t.date <= toISO)
+    const rows = transactions.map(t =>
+      `${t.date},${t.type},"${(t.categoryName ?? '').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
+    )
+    downloadBlob(
+      new Blob([['Dátum,Typ,Kategória,Poznámka,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
+      `finvu-export-${fromISO}_${toISO}.csv`
+    )
   }
 
   function handleExportPDF() {
     window.print()
   }
 
-  async function handleExportXLSX() {
+  async function handleExportXLSX(fromISO: string, toISO: string) {
+    // xlsx is heavy — load it only when the user actually exports
+    const [XLSX, all, { data: categories }] = await Promise.all([
+      import('@e965/xlsx'),
+      fetchAllTransactions({}),
+      getCategories(),
+    ])
+    const transactions = all.filter(t => t.date >= fromISO && t.date <= toISO)
+
+    const transactionRows = transactions.map(t => ({
+      Dátum: t.date,
+      Typ: t.type,
+      Kategória: t.categoryName ?? '',
+      Poznámka: t.description ?? '',
+      Suma: t.amount,
+    }))
+    const categoryRows = categories.map(c => ({
+      Názov: c.name,
+      Typ: c.type,
+      Limit: c.budgetLimit ?? '',
+    }))
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(transactionRows), 'Transakcie')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categoryRows), 'Kategórie')
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    downloadBlob(
+      new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+      `finvu-export-${fromISO}_${toISO}.xlsx`
+    )
+  }
+
+  async function handleGenerateExport(format: ExportFormat, period: ExportPeriod) {
+    const { fromISO, toISO } = periodToIsoRange(period)
+    setExportGenerating(true)
+    setExportError(null)
     try {
-      setExportError(null)
-      // xlsx is heavy — load it only when the user actually exports
-      const [XLSX, transactions, { data: categories }] = await Promise.all([
-        import('@e965/xlsx'),
-        fetchAllTransactions({}),
-        getCategories(),
-      ])
-
-      const transactionRows = transactions.map(t => ({
-        Dátum: t.date,
-        Typ: t.type,
-        Kategória: t.categoryName ?? '',
-        Poznámka: t.description ?? '',
-        Suma: t.amount,
-      }))
-      const categoryRows = categories.map(c => ({
-        Názov: c.name,
-        Typ: c.type,
-        Limit: c.budgetLimit ?? '',
-      }))
-
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(transactionRows), 'Transakcie')
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categoryRows), 'Kategórie')
-
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-      downloadBlob(
-        new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-        `finvu-export-${new Date().toISOString().split('T')[0]}.xlsx`
-      )
+      if (format === 'CSV') await handleExportCSV(fromISO, toISO)
+      else if (format === 'XLSX') await handleExportXLSX(fromISO, toISO)
+      else handleExportPDF()
+      setExportModalOpen(false)
     } catch {
       setExportError('Export zlyhal. Skúste znova.')
+    } finally {
+      setExportGenerating(false)
     }
   }
 
@@ -1158,23 +1153,13 @@ export function SettingsPage() {
               <SectionCard>
                 <SectionHeader icon={Database} label="Export a import" />
                 <div className="divide-y divide-white/[0.04] lg:grid lg:grid-cols-2 lg:gap-x-6 lg:divide-y-0">
-                  <SettingRow label="Exportovať dáta" sublabel="Stiahnuť všetky transakcie a kategórie">
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {[
-                        { label: 'JSON', onClick: handleExportJSON },
-                        { label: 'CSV', onClick: handleExportCSV },
-                        { label: 'PDF', onClick: handleExportPDF },
-                        { label: 'XLSX', onClick: handleExportXLSX },
-                      ].map(f => (
-                        <button
-                          key={f.label}
-                          onClick={f.onClick}
-                          style={{ padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', color: 'var(--aurora-lo)', cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
+                  <SettingRow label="Exportovať dáta" sublabel="Stiahnuť transakcie a kategórie za zvolené obdobie">
+                    <button
+                      onClick={() => setExportModalOpen(true)}
+                      style={{ padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
+                    >
+                      {t.settings.exportModalTitle}
+                    </button>
                   </SettingRow>
                   <ChevronRow
                     icon={Upload}
@@ -1591,6 +1576,14 @@ export function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* ── EXPORT DATA MODAL ── */}
+      <ExportDataModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        onGenerate={handleGenerateExport}
+        generating={exportGenerating}
+      />
 
       {/* ── CSV IMPORT MODAL ── */}
       <CsvImportModal open={csvImportOpen} onClose={() => setCsvImportOpen(false)} />
