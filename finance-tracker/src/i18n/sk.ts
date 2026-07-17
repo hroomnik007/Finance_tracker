@@ -300,6 +300,7 @@ export const sk = {
     exportTo: 'Do',
     exportPeriodNote: 'Vyexportujú sa transakcie a kategórie za zvolené obdobie.',
     exportGenerate: 'Generovať',
+    exportPdfTitle: 'Výpis transakcií',
     importStatement: 'Importovať výpis',
     deleteAccountUnavailable: 'Táto funkcia nie je momentálne dostupná. Kontaktujte administrátora.',
     general: 'Všeobecné nastavenia',

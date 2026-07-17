@@ -185,6 +185,13 @@ async function fetchAllTransactions(params: Omit<TransactionParams, 'limit' | 'o
   return all
 }
 
+// Shared by CSV/PDF/XLSX export so all three formats agree on what "the
+// selected period" means.
+async function fetchTransactionsInRange(fromISO: string, toISO: string): Promise<ApiTransaction[]> {
+  const all = await fetchAllTransactions({})
+  return all.filter(t => t.date >= fromISO && t.date <= toISO)
+}
+
 function loadLocalPref<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key)
@@ -505,8 +512,7 @@ export function SettingsPage() {
   }
 
   async function handleExportCSV(fromISO: string, toISO: string) {
-    const all = await fetchAllTransactions({})
-    const transactions = all.filter(t => t.date >= fromISO && t.date <= toISO)
+    const transactions = await fetchTransactionsInRange(fromISO, toISO)
     const rows = transactions.map(t =>
       `${t.date},${t.type},"${(t.categoryName ?? '').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
     )
@@ -516,18 +522,48 @@ export function SettingsPage() {
     )
   }
 
-  function handleExportPDF() {
+  async function handleExportPDF(fromISO: string, toISO: string, period: ExportPeriod) {
+    const transactions = await fetchTransactionsInRange(fromISO, toISO)
+    const fromLabel = `${t.months[period.fromMonth - 1]} ${period.fromYear}`
+    const toLabel = `${t.months[period.toMonth - 1]} ${period.toYear}`
+    const rangeLabel = fromLabel === toLabel ? fromLabel : `${fromLabel} – ${toLabel}`
+
+    const rowsHtml = transactions.map(tx => `
+      <tr>
+        <td>${tx.date}</td>
+        <td>${tx.type}</td>
+        <td>${(tx.categoryName ?? '').replace(/</g, '&lt;')}</td>
+        <td>${(tx.description ?? '').replace(/</g, '&lt;')}</td>
+        <td class="amount">${tx.amount}</td>
+      </tr>`).join('')
+
+    const container = document.createElement('div')
+    container.id = 'finvu-print-export'
+    container.innerHTML = `
+      <h1>${t.settings.exportPdfTitle}: ${rangeLabel}</h1>
+      <table>
+        <thead>
+          <tr><th>Dátum</th><th>Typ</th><th>Kategória</th><th>Poznámka</th><th class="amount">Suma</th></tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>`
+    document.body.appendChild(container)
+
+    const cleanup = () => {
+      container.remove()
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup)
     window.print()
   }
 
   async function handleExportXLSX(fromISO: string, toISO: string) {
     // xlsx is heavy — load it only when the user actually exports
-    const [XLSX, all, { data: categories }] = await Promise.all([
+    const [XLSX, transactions, { data: categories }] = await Promise.all([
       import('@e965/xlsx'),
-      fetchAllTransactions({}),
+      fetchTransactionsInRange(fromISO, toISO),
       getCategories(),
     ])
-    const transactions = all.filter(t => t.date >= fromISO && t.date <= toISO)
 
     const transactionRows = transactions.map(t => ({
       Dátum: t.date,
@@ -560,7 +596,7 @@ export function SettingsPage() {
     try {
       if (format === 'CSV') await handleExportCSV(fromISO, toISO)
       else if (format === 'XLSX') await handleExportXLSX(fromISO, toISO)
-      else handleExportPDF()
+      else await handleExportPDF(fromISO, toISO, period)
       setExportModalOpen(false)
     } catch {
       setExportError('Export zlyhal. Skúste znova.')

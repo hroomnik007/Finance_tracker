@@ -302,6 +302,7 @@ export const hu: Translations = {
     exportTo: 'Eddig',
     exportPeriodNote: 'A kiválasztott időszak tranzakciói és kategóriái kerülnek exportálásra.',
     exportGenerate: 'Generálás',
+    exportPdfTitle: 'Tranzakciós kimutatás',
     importStatement: 'Kivonat importálása',
     deleteAccountUnavailable: 'Ez a funkció jelenleg nem érhető el. Kérjük, lépjen kapcsolatba az adminisztrátorral.',
     general: 'Általános beállítások',

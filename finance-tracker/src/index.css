@@ -899,3 +899,23 @@ html.compact .card { padding: var(--card-padding); }
 @media (min-width: 1024px) {
   .settings-grid { grid-template-columns: 200px 1fr; gap: 24px; align-items: start; }
 }
+
+/* PDF export print view — a temporary #finvu-print-export node is appended to
+   body, containing only the filtered transaction table. Everything else in
+   the document is hidden for the duration of window.print(). */
+#finvu-print-export { display: none; }
+@media print {
+  body > *:not(#finvu-print-export) { display: none !important; }
+  #finvu-print-export {
+    display: block !important;
+    color: #111;
+    background: #fff;
+    font-family: 'Manrope', sans-serif;
+    padding: 24px;
+  }
+  #finvu-print-export h1 { font-family: 'Outfit', sans-serif; font-size: 18px; margin: 0 0 16px; }
+  #finvu-print-export table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  #finvu-print-export th, #finvu-print-export td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; }
+  #finvu-print-export th { font-weight: 700; }
+  #finvu-print-export td.amount, #finvu-print-export th.amount { text-align: right; }
+}

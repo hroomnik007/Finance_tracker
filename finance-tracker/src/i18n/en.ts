@@ -302,6 +302,7 @@ export const en: Translations = {
     exportTo: 'To',
     exportPeriodNote: 'Transactions and categories for the selected period will be exported.',
     exportGenerate: 'Generate',
+    exportPdfTitle: 'Transaction statement',
     importStatement: 'Import statement',
     deleteAccountUnavailable: 'This feature is not currently available. Please contact the administrator.',
     general: 'General settings',

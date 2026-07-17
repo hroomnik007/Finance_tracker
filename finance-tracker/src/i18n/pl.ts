@@ -302,6 +302,7 @@ export const pl: Translations = {
     exportTo: 'Do',
     exportPeriodNote: 'Zostaną wyeksportowane transakcje i kategorie za wybrany okres.',
     exportGenerate: 'Generuj',
+    exportPdfTitle: 'Wyciąg transakcji',
     importStatement: 'Importuj wyciąg',
     deleteAccountUnavailable: 'Ta funkcja nie jest obecnie dostępna. Skontaktuj się z administratorem.',
     general: 'Ustawienia ogólne',

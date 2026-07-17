@@ -302,6 +302,7 @@ export const cs: Translations = {
     exportTo: 'Do',
     exportPeriodNote: 'Vyexportují se transakce a kategorie za zvolené období.',
     exportGenerate: 'Generovat',
+    exportPdfTitle: 'Výpis transakcí',
     importStatement: 'Importovat výpis',
     deleteAccountUnavailable: 'Tato funkce není momentálně dostupná. Kontaktujte správce.',
     general: 'Obecná nastavení',
