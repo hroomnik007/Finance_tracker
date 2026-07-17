@@ -4,6 +4,10 @@ import { createTransaction } from '../api/transactions'
 import { useTranslation } from '../i18n'
 import { SettingsDropdown } from './SettingsDropdown'
 import type { ParseResult } from 'papaparse'
+// pdf.js worker: referenced as an asset URL so the worker file is emitted but its
+// (large) code is NOT pulled into the main bundle. The pdf.js library itself is
+// lazy-loaded on demand inside extractPdfText — PDF import (365.bank) is a rare action.
+import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
 interface ImportRow {
   date: string
@@ -145,22 +149,127 @@ function parseSLSP(rows: CsvRow[]): ImportRow[] {
     .filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
 }
 
-function parse365Bank(rows: CsvRow[]): ImportRow[] {
-  return rows
-    .map(r => {
-      const rawDate = r['Dátum'] ?? r['Datum'] ?? r['Date'] ?? ''
-      const rawAmount = r['Suma'] ?? r['Amount'] ?? '0'
-      const desc = r['Popis'] ?? r['Description'] ?? ''
-      const amount = parseAmount(rawAmount)
-      return {
-        date: parseDate(rawDate),
-        description: desc,
-        amount: Math.abs(amount),
-        type: amount >= 0 ? 'income' as const : 'expense' as const,
-        selected: true,
+// ── 365.bank PDF statement ──
+// 365.bank does not export CSV, only a multi-page PDF statement. We extract the raw
+// text with pdf.js (which loses the table layout) and reconstruct transactions from
+// the resulting linear text. One transaction looks like:
+//   DD. MM. YYYY <Druh>
+//   /VS.../SS.../KS...           (optional payment reference)
+//   SK.. / DE..                  (optional counterparty IBAN)
+//   <counterparty name>          (optional)
+//   Zrealizovaná -XX,XX [VS...]  (amount; may also sit inline on the date line)
+//   KS.. / SS..                  (optional trailing reference lines)
+
+async function extractPdfText(file: File): Promise<string> {
+  // Lazy-load the (heavy) pdf.js library; wire up the pre-emitted worker asset.
+  const pdfjsLib = await import('pdfjs-dist')
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorkerUrl
+  const data = new Uint8Array(await file.arrayBuffer())
+  const doc = await pdfjsLib.getDocument({ data }).promise
+  let full = ''
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p)
+    const content = await page.getTextContent()
+    let line = ''
+    for (const item of content.items) {
+      if (!('str' in item) || typeof item.str !== 'string') continue
+      line += item.str
+      if (item.hasEOL) { full += line + '\n'; line = '' }
+    }
+    if (line) full += line + '\n'
+    full += '\n'
+  }
+  return full
+}
+
+const CSOB365_DATE_RE = /^(\d{1,2})\.\s+(\d{1,2})\.\s+(\d{4})\s+(.+)$/
+const CSOB365_IBAN_RE = /^[A-Z]{2}\d{2}[A-Z0-9]{8,30}$/
+const CSOB365_SKIP_TERMS = ['Prevod na sporiaci účet', 'Investičné Syslenie']
+
+// Header / footer / boilerplate lines that repeat on every page of the statement.
+function is365NoiseLine(line: string): boolean {
+  return (
+    line.startsWith('Dátum Opis transakcie') ||
+    line.includes('Dvořákovo nábrežie') ||
+    line.startsWith('Zapísaná v Obchodnom registri') ||
+    line.startsWith('UT_05_365') ||
+    line.startsWith('Dokument je informatívny') ||
+    /^Strana \d+ \/ \d+$/.test(line)
+  )
+}
+
+// Payment-reference lines (/VS.../SS.../KS..., bare numeric refs, trailing VS/SS/KS) —
+// never a usable counterparty name.
+function is365ReferenceLine(line: string): boolean {
+  return line.startsWith('/') || /^(VS|SS|KS)\S*$/.test(line) || /^\d{6,}$/.test(line)
+}
+
+function extract365Amount(line: string): number | null {
+  const m = line.match(/Zrealizovaná\s+(-?\d[\d\s]*,\d{2})/)
+  return m ? parseAmount(m[1]) : null
+}
+
+function parse365BankPDF(text: string): ImportRow[] {
+  const lines = text
+    .split(/\r\n|\r|\n/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0 && !is365NoiseLine(l))
+
+  const out: ImportRow[] = []
+  let i = 0
+  while (i < lines.length) {
+    const dm = lines[i].match(CSOB365_DATE_RE)
+    if (!dm) { i++; continue }
+    const [, dd, mm, yyyy, rest] = dm
+    const date = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
+
+    let druh = rest
+    let amount: number | null = null
+    const between: string[] = []
+    const zIdxOnDate = rest.indexOf('Zrealizovaná')
+    if (zIdxOnDate !== -1) {
+      // Compact single-line transaction: date + Druh + amount all on one line.
+      druh = rest.slice(0, zIdxOnDate).trim()
+      amount = extract365Amount(rest)
+      i++
+    } else {
+      // Collect the description lines until the "Zrealizovaná" amount line.
+      i++
+      while (i < lines.length && !lines[i].startsWith('Zrealizovaná') && !CSOB365_DATE_RE.test(lines[i])) {
+        between.push(lines[i])
+        i++
       }
+      if (i < lines.length && lines[i].startsWith('Zrealizovaná')) {
+        amount = extract365Amount(lines[i])
+        i++
+      }
+    }
+    if (amount === null) continue
+
+    // Skip savings-transfer / internal entries entirely.
+    const haystack = [druh, ...between].join(' ')
+    if (CSOB365_SKIP_TERMS.some(term => haystack.includes(term))) continue
+
+    // Name priority: last description line that is neither an IBAN nor a reference;
+    // otherwise fall back to the Druh (e.g. "Nákup platobný terminál").
+    let name = ''
+    for (let k = between.length - 1; k >= 0; k--) {
+      const cand = between[k]
+      if (CSOB365_IBAN_RE.test(cand) || is365ReferenceLine(cand)) continue
+      name = cand
+      break
+    }
+
+    out.push({
+      date,
+      description: name || druh,
+      amount: Math.abs(amount),
+      type: amount >= 0 ? 'income' as const : 'expense' as const,
+      selected: true,
     })
-    .filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
+  }
+
+  return out.filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
 }
 
 function parseMBank(rows: CsvRow[]): ImportRow[] {
@@ -202,10 +311,36 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
     return parsed.map(r => ({ ...r, selected: filterType ? r.type === filterType : true }))
   }
 
+  function acceptParsed(parsed: ImportRow[]) {
+    if (parsed.length === 0) {
+      setError(t.csv.noValidRecords)
+    } else {
+      if (parsed.length > 500) {
+        setWarning(t.csv.tooManyRows)
+        parsed = parsed.slice(0, 500)
+      } else {
+        setWarning(null)
+      }
+      setRows(applyFilter(parsed))
+    }
+  }
+
   async function handleFile(file: File) {
     setError(null)
     setImportedCount(null)
     setRows([])
+
+    // 365.bank ships a PDF statement instead of CSV — extract text, then parse.
+    if (format === 'bank365') {
+      try {
+        const text = await extractPdfText(file)
+        acceptParsed(parse365BankPDF(text))
+      } catch {
+        setError(t.csv.readError)
+      }
+      return
+    }
+
     // papaparse loads on demand — CSV import is a rare action
     const Papa = (await import('papaparse')).default
 
@@ -224,19 +359,8 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
         case 'csob':     parsed = parseCSOB(result.data); break
         case 'slsp':     parsed = parseSLSP(result.data); break
         case 'mbank':    parsed = parseMBank(result.data); break
-        case 'bank365':  parsed = parse365Bank(result.data); break
       }
-      if (parsed.length === 0) {
-        setError(t.csv.noValidRecords)
-      } else {
-        if (parsed.length > 500) {
-          setWarning(t.csv.tooManyRows)
-          parsed = parsed.slice(0, 500)
-        } else {
-          setWarning(null)
-        }
-        setRows(applyFilter(parsed))
-      }
+      acceptParsed(parsed)
     }
 
     if (format === 'csob') {
@@ -256,7 +380,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
     Papa.parse<CsvRow>(file, {
       header: true,
       skipEmptyLines: true,
-      delimiter: (format === 'mbank' || format === 'bank365') ? ';' : undefined,
+      delimiter: format === 'mbank' ? ';' : undefined,
       complete: handleParsed,
       error: () => setError(t.csv.readError),
     })
@@ -363,9 +487,9 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
                 onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-gline)'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
               >
                 <Upload size={32} style={{ color: 'var(--aurora-violet)', margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', marginBottom: 4 }}>{t.csv.dragHere}</p>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', marginBottom: 4 }}>{format === 'bank365' ? t.csv.dragHerePdf : t.csv.dragHere}</p>
                 <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.csv.orClick}</p>
-                <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }}
+                <input ref={fileRef} type="file" accept={format === 'bank365' ? '.pdf,application/pdf' : '.csv,text/csv'} style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
               </div>
               {error && <p style={{ color: '#F87171', fontSize: 13, marginTop: 14, textAlign: 'center' }}>{error}</p>}

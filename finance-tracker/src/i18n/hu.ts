@@ -673,6 +673,7 @@ export const hu: Translations = {
   csv: {
     title: 'CSV importálása',
     dragHere: 'Húzza ide a CSV-t',
+    dragHerePdf: 'Húzza ide a PDF-et',
     orClick: 'vagy kattintson a fájl kiválasztásához',
     noValidRecords: 'Nem találhatók érvényes rekordok. Kérjük, ellenőrizze a fájl formátumát.',
     tooManyRows: 'A CSV több mint 500 sort tartalmaz. Az első 500 sor kerül importálásra.',
