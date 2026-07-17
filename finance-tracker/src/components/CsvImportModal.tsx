@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
-import { X, Upload, Check, ChevronDown } from 'lucide-react'
+import { X, Upload, Check } from 'lucide-react'
 import { createTransaction } from '../api/transactions'
 import { useTranslation } from '../i18n'
+import { SettingsDropdown } from './SettingsDropdown'
 
 interface ImportRow {
   date: string
@@ -17,16 +18,19 @@ interface CsvImportModalProps {
   filterType?: 'income' | 'expense'
 }
 
-type BankFormat = 'revolut' | 'tatra' | 'slsp' | 'mbank' | 'bank365' | 'custom'
+type BankFormat = 'revolut' | 'tatra' | 'csob' | 'slsp' | 'mbank' | 'bank365' | 'custom'
 
 const BANK_FORMATS: { id: BankFormat; label: string; emoji: string }[] = [
   { id: 'revolut', label: 'Revolut', emoji: '🌀' },
   { id: 'tatra',   label: 'Tatra banka', emoji: '🏦' },
+  { id: 'csob',    label: 'ČSOB', emoji: '🏦' },
   { id: 'slsp',    label: 'Slovenská sporiteľňa', emoji: '🏦' },
   { id: 'mbank',   label: 'mBank', emoji: '🏦' },
   { id: 'bank365', label: '365.bank', emoji: '🏦' },
   { id: 'custom',  label: 'Vlastný CSV', emoji: '📋' },
 ]
+
+const BANK_FORMAT_OPTIONS = BANK_FORMATS.map(b => ({ value: b.id, label: `${b.emoji} ${b.label}` }))
 
 function parseDate(raw: string): string {
   if (!raw) return ''
@@ -143,7 +147,6 @@ function parseMBank(rows: CsvRow[]): ImportRow[] {
 export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProps) {
   const { t } = useTranslation()
   const [format, setFormat] = useState<BankFormat>('revolut')
-  const [showFormatPicker, setShowFormatPicker] = useState(false)
   const [rows, setRows] = useState<ImportRow[]>([])
   const [importing, setImporting] = useState(false)
   const [importedCount, setImportedCount] = useState<number | null>(null)
@@ -263,18 +266,17 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
 
   const allSelected = rows.length > 0 && rows.every(r => r.selected)
   const selectedCount = rows.filter(r => r.selected).length
-  const currentBank = BANK_FORMATS.find(b => b.id === format)!
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '92vh', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,3,8,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }} onClick={onClose} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '92vh', background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 26, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 30px 70px rgba(0,0,0,0.6)' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{t.csv.title}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text2)', padding: 4 }}>
-            <X size={18} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--aurora-gline)' }}>
+          <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.csv.title}</h2>
+          <button onClick={onClose} aria-label="Zavrieť" style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--aurora-lo)', cursor: 'pointer', flexShrink: 0 }}>
+            <X size={14} />
           </button>
         </div>
 
@@ -289,36 +291,24 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           ) : rows.length === 0 && csvHeaders.length === 0 ? (
             <div>
               {/* Format picker */}
-              <div style={{ position: 'relative', marginBottom: 20 }}>
-                <button
-                  onClick={() => setShowFormatPicker(p => !p)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 12, cursor: 'pointer', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }}
-                >
-                  <span>{currentBank.emoji} {currentBank.label}</span>
-                  <ChevronDown size={16} color="var(--text3)" />
-                </button>
-                {showFormatPicker && (
-                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 12, overflow: 'hidden', zIndex: 10 }}>
-                    {BANK_FORMATS.map(b => (
-                      <button key={b.id} onClick={() => { setFormat(b.id); setShowFormatPicker(false) }}
-                        style={{ display: 'block', width: '100%', padding: '10px 14px', background: b.id === format ? 'rgba(124,58,237,0.2)' : 'transparent', border: 'none', color: b.id === format ? 'var(--violet)' : 'var(--text)', fontSize: 14, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
-                        {b.emoji} {b.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div style={{ marginBottom: 20 }}>
+                <SettingsDropdown
+                  value={format}
+                  options={BANK_FORMAT_OPTIONS}
+                  onChange={v => setFormat(v as BankFormat)}
+                />
               </div>
 
               <div
-                style={{ border: '2px dashed var(--border2)', borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: 'rgba(124,58,237,0.03)' }}
+                style={{ border: '2px dashed var(--aurora-gline)', borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: 'rgba(124,58,237,0.03)' }}
                 onClick={() => fileRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = '#7C3AED' }}
-                onDragLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border2)' }}
-                onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border2)'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+                onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-violet)' }}
+                onDragLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-gline)' }}
+                onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--aurora-gline)'; const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
               >
-                <Upload size={32} style={{ color: '#7C3AED', margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{t.csv.dragHere}</p>
-                <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{t.csv.orClick}</p>
+                <Upload size={32} style={{ color: 'var(--aurora-violet)', margin: '0 auto 12px', display: 'block' }} />
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', marginBottom: 4 }}>{t.csv.dragHere}</p>
+                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.csv.orClick}</p>
                 <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
               </div>
