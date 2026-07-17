@@ -297,6 +297,7 @@ export const pl: Translations = {
     householdJoinErrorMember: 'Jesteś już członkiem tego gospodarstwa',
     householdJoinErrorFailed: 'Dołączenie nie powiodło się',
     dataNote: 'Dane są przechowywane na serwerze. Regularnie eksportuj kopię zapasową.',
+    importStatement: 'Importuj wyciąg',
     deleteAccountUnavailable: 'Ta funkcja nie jest obecnie dostępna. Skontaktuj się z administratorem.',
     general: 'Ustawienia ogólne',
     currency: 'Waluta',
@@ -671,7 +672,7 @@ export const pl: Translations = {
     incomeDefault: 'Przychód',
   },
   csv: {
-    title: 'Import CSV',
+    title: 'Import wyciągu',
     dragHere: 'Przeciągnij CSV tutaj',
     dragHerePdf: 'Przeciągnij PDF tutaj',
     orClick: 'lub kliknij, aby wybrać plik',

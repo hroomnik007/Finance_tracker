@@ -297,6 +297,7 @@ export const hu: Translations = {
     householdJoinErrorMember: 'Már tagja ennek a háztartásnak',
     householdJoinErrorFailed: 'A csatlakozás nem sikerült',
     dataNote: 'Az adatok a szerveren tárolódnak. Rendszeresen exportáljon biztonsági mentést.',
+    importStatement: 'Kivonat importálása',
     deleteAccountUnavailable: 'Ez a funkció jelenleg nem érhető el. Kérjük, lépjen kapcsolatba az adminisztrátorral.',
     general: 'Általános beállítások',
     currency: 'Pénznem',
@@ -671,7 +672,7 @@ export const hu: Translations = {
     incomeDefault: 'Bevétel',
   },
   csv: {
-    title: 'CSV importálása',
+    title: 'Kivonat importálása',
     dragHere: 'Húzza ide a CSV-t',
     dragHerePdf: 'Húzza ide a PDF-et',
     orClick: 'vagy kattintson a fájl kiválasztásához',

@@ -1180,7 +1180,7 @@ export function SettingsPage() {
                     icon={Upload}
                     iconColor="var(--aurora-lo)"
                     iconBg="var(--aurora-glass)"
-                    label="Importovať CSV"
+                    label={t.settings.importStatement}
                     sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP"
                     onClick={() => setCsvImportOpen(true)}
                   />

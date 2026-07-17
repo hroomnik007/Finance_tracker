@@ -297,6 +297,7 @@ export const en: Translations = {
     householdJoinErrorMember: 'You are already a member of this household',
     householdJoinErrorFailed: 'Failed to join',
     dataNote: 'Data is stored on the server. Export regularly for backup.',
+    importStatement: 'Import statement',
     deleteAccountUnavailable: 'This feature is not currently available. Please contact the administrator.',
     general: 'General settings',
     currency: 'Currency',
@@ -671,7 +672,7 @@ export const en: Translations = {
     incomeDefault: 'Income',
   },
   csv: {
-    title: 'Import CSV',
+    title: 'Import statement',
     dragHere: 'Drop CSV here',
     dragHerePdf: 'Drop PDF here',
     orClick: 'or click to select file',

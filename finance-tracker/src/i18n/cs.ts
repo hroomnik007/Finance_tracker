@@ -297,6 +297,7 @@ export const cs: Translations = {
     householdJoinErrorMember: 'Již jste členem této domácnosti',
     householdJoinErrorFailed: 'Připojení se nezdařilo',
     dataNote: 'Data jsou uložena na serveru. Pravidelně exportujte pro zálohu.',
+    importStatement: 'Importovat výpis',
     deleteAccountUnavailable: 'Tato funkce není momentálně dostupná. Kontaktujte správce.',
     general: 'Obecná nastavení',
     currency: 'Měna',
@@ -671,7 +672,7 @@ export const cs: Translations = {
     incomeDefault: 'Příjem',
   },
   csv: {
-    title: 'Import CSV',
+    title: 'Import výpisu',
     dragHere: 'Přesuňte CSV sem',
     dragHerePdf: 'Přesuňte PDF sem',
     orClick: 'nebo klikněte pro výběr souboru',

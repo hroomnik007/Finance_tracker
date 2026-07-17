@@ -295,6 +295,7 @@ export const sk = {
     householdJoinErrorMember: 'Už si členom tejto domácnosti',
     householdJoinErrorFailed: 'Nepodarilo sa pripojiť',
     dataNote: 'Dáta sú uložené na serveri. Exportuj pravidelne pre zálohovanie.',
+    importStatement: 'Importovať výpis',
     deleteAccountUnavailable: 'Táto funkcia nie je momentálne dostupná. Kontaktujte administrátora.',
     general: 'Všeobecné nastavenia',
     currency: 'Mena',
@@ -669,7 +670,7 @@ export const sk = {
     incomeDefault: 'Príjem',
   },
   csv: {
-    title: 'Import CSV',
+    title: 'Import výpisu',
     dragHere: 'Presuň CSV sem',
     dragHerePdf: 'Presuň PDF sem',
     orClick: 'alebo klikni pre výber súboru',

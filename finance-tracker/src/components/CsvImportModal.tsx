@@ -272,6 +272,87 @@ function parse365BankPDF(text: string): ImportRow[] {
   return out.filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
 }
 
+// ── Revolut PDF statement ──
+// Revolut also offers a PDF export (in addition to the CSV parsed by parseRevolut above),
+// with a different layout: "Account transactions from ... to ..." followed by a table
+// whose columns (Date | Description | Money out | Money in | Balance) collapse into
+// linear text once extracted. One transaction looks like:
+//   MMM D, YYYY <Description> €XX.XX €YY.YY   (transaction amount, then running balance)
+//   <optional continuation lines: "To: ...", "Card: ...", currency conversion, ...>
+// Only one of Money out / Money in is filled per row, so the sign can't be read off
+// the row directly — it's inferred from whether the running balance went up or down
+// relative to the previous transaction (seeded from the "Opening balance" in the
+// Balance summary table).
+
+const REVOLUT_MONTHS: Record<string, string> = {
+  jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+  jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
+}
+const REVOLUT_DATE_RE = /^([A-Za-z]{3})[a-z]*\s+(\d{1,2}),\s+(\d{4})\s+(.+)$/
+const REVOLUT_AMOUNT_RE = /€([\d,]+\.\d{2})/g
+
+function parseRevolutAmount(raw: string): number {
+  if (!raw) return 0
+  return parseFloat(raw.replace(/,/g, '')) || 0
+}
+
+function parseRevolutPDF(text: string): ImportRow[] {
+  const lines = text.split(/\r\n|\r|\n/).map(l => l.trim()).filter(l => l.length > 0)
+
+  const startIdx = lines.findIndex(l => l.startsWith('Account transactions from'))
+  if (startIdx === -1) return []
+
+  // Seed the running balance from the "Opening balance" figure in the Balance summary
+  // table (e.g. "Account (Current Account) €71.87 €71.33 €20.58 €21.12") — the first
+  // €amount on the summary data row, found by scanning the lines before the table.
+  let previousBalance: number | null = null
+  for (const line of lines.slice(0, startIdx)) {
+    const matches = [...line.matchAll(REVOLUT_AMOUNT_RE)]
+    if (matches.length >= 4) {
+      previousBalance = parseRevolutAmount(matches[0][1])
+      break
+    }
+  }
+
+  let i = startIdx + 1
+  if (i < lines.length && lines[i].startsWith('Date') && lines[i].includes('Description')) i++
+
+  const out: ImportRow[] = []
+  while (i < lines.length) {
+    const dm = lines[i].match(REVOLUT_DATE_RE)
+    if (!dm) { i++; continue }
+    const [, mon, dd, yyyy, rest] = dm
+    const month = REVOLUT_MONTHS[mon.toLowerCase()]
+    i++
+    if (!month) continue
+
+    const amountMatches = [...rest.matchAll(REVOLUT_AMOUNT_RE)]
+    // Skip continuation lines ("To: ...", "Card: ...", currency conversion, footer) —
+    // they carry no further amounts to capture, just consume until the next transaction.
+    while (i < lines.length && !REVOLUT_DATE_RE.test(lines[i])) i++
+
+    if (amountMatches.length < 2) continue
+    const amount = parseRevolutAmount(amountMatches[0][1])
+    const balanceAfter = parseRevolutAmount(amountMatches[amountMatches.length - 1][1])
+    const description = rest.split('€')[0].trim()
+
+    const type: 'income' | 'expense' = previousBalance === null
+      ? 'expense'
+      : (balanceAfter >= previousBalance ? 'income' : 'expense')
+    previousBalance = balanceAfter
+
+    out.push({
+      date: `${yyyy}-${month}-${dd.padStart(2, '0')}`,
+      description,
+      amount: Math.abs(amount),
+      type,
+      selected: true,
+    })
+  }
+
+  return out.filter(r => r.amount > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date))
+}
+
 function parseMBank(rows: CsvRow[]): ImportRow[] {
   // mBank SK: #Data operacji, #Opis operacji, #Kwota, or Dátum, Opis, Suma
   return rows
@@ -335,6 +416,18 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
       try {
         const text = await extractPdfText(file)
         acceptParsed(parse365BankPDF(text))
+      } catch {
+        setError(t.csv.readError)
+      }
+      return
+    }
+
+    // Revolut also offers a PDF statement alongside its CSV export — dispatch on the
+    // uploaded file's extension since both are accepted for this bank.
+    if (format === 'revolut' && /\.pdf$/i.test(file.name)) {
+      try {
+        const text = await extractPdfText(file)
+        acceptParsed(parseRevolutPDF(text))
       } catch {
         setError(t.csv.readError)
       }
@@ -489,7 +582,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
                 <Upload size={32} style={{ color: 'var(--aurora-violet)', margin: '0 auto 12px', display: 'block' }} />
                 <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--aurora-hi)', marginBottom: 4 }}>{format === 'bank365' ? t.csv.dragHerePdf : t.csv.dragHere}</p>
                 <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)', margin: 0 }}>{t.csv.orClick}</p>
-                <input ref={fileRef} type="file" accept={format === 'bank365' ? '.pdf,application/pdf' : '.csv,text/csv'} style={{ display: 'none' }}
+                <input ref={fileRef} type="file" accept={format === 'bank365' ? '.pdf,application/pdf' : format === 'revolut' ? '.csv,text/csv,.pdf,application/pdf' : '.csv,text/csv'} style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
               </div>
               {error && <p style={{ color: '#F87171', fontSize: 13, marginTop: 14, textAlign: 'center' }}>{error}</p>}

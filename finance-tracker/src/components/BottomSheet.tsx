@@ -148,7 +148,7 @@ export function BottomSheet({ open, onClose, title, children, footer, onImportCs
                   border: '1px solid rgba(139,92,246,0.3)',
                   color: 'var(--violet)', cursor: 'pointer',
                 }}
-                title="Import CSV"
+                title="Import výpisu"
               >
                 <FileUp size={17} />
               </button>

@@ -73,8 +73,8 @@ export function CompactModal({
             <button
               type="button"
               onClick={onImportCsv}
-              aria-label="Import CSV"
-              title="Import CSV"
+              aria-label="Import výpisu"
+              title="Import výpisu"
               style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--aurora-lo)', cursor: 'pointer', flexShrink: 0 }}
             >
               <FileUp size={13} />
