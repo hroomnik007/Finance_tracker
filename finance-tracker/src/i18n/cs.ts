@@ -587,6 +587,7 @@ export const cs: Translations = {
     timeDays: 'před {n} dny',
     today: 'Dnes',
     showMore: 'Zobrazit více →',
+    showLess: 'Zobrazit méně ↑',
     leaveError: 'Chyba při opouštění domácnosti',
   },
   savings: {

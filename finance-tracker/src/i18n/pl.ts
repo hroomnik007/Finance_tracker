@@ -587,6 +587,7 @@ export const pl: Translations = {
     timeDays: '{n} dni temu',
     today: 'Dzisiaj',
     showMore: 'Pokaż więcej →',
+    showLess: 'Pokaż mniej ↑',
     leaveError: 'Błąd podczas opuszczania gospodarstwa',
   },
   savings: {

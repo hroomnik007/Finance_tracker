@@ -585,6 +585,7 @@ export const sk = {
     timeDays: 'pred {n} dňami',
     today: 'Dnes',
     showMore: 'Zobraziť viac →',
+    showLess: 'Zobraziť menej ↑',
     leaveError: 'Chyba pri opúšťaní domácnosti',
   },
   savings: {

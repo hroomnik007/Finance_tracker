@@ -373,12 +373,12 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
               </div>
             </div>
           ))}
-          {!activityExpanded && activityFeed.length > ACTIVITY_INITIAL_LIMIT && (
+          {activityFeed.length > ACTIVITY_INITIAL_LIMIT && (
             <button
-              onClick={() => setActivityExpanded(true)}
+              onClick={() => setActivityExpanded(prev => !prev)}
               style={{ marginTop: 4, fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--aurora-violet)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'block' }}
             >
-              {ht.showMore}
+              {activityExpanded ? ht.showLess : ht.showMore}
             </button>
           )}
         </div>
