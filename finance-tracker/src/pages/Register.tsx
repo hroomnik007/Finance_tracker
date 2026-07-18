@@ -74,7 +74,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
 
   if (verificationSent) {
     return (
-      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--bg)' }}>
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--aurora-bg-image)' }}>
         <div className="fu" style={{ width: '100%', maxWidth: 460, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16,
           background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 24, padding: 32,
           boxShadow: 'var(--shadow-elevated)',
@@ -95,7 +95,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
   }
 
   return (
-    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'var(--aurora-bg-image)', position: 'relative', overflow: 'hidden' }}>
 
       {/* Atmospheric blob */}
       <div style={{

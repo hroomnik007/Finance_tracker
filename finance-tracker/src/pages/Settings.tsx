@@ -73,7 +73,7 @@ const BACKGROUND_COLORS_LIGHT = [
   { name: 'Peach', value: '#FAE7DC' },
   { name: 'Mint', value: '#C3DCD7' },
   { name: 'Teal', value: '#D7EFF4' },
-  { name: 'Lavender', value: '#EDD4F5' },
+  { name: 'Lavender', value: '#F6F1FB' },
   { name: 'Cream', value: '#F7F7F7' },
 ]
 
@@ -531,33 +531,22 @@ export function SettingsPage() {
     const toLabel = `${t.months[period.toMonth - 1]} ${period.toYear}`
     const rangeLabel = fromLabel === toLabel ? fromLabel : `${fromLabel} – ${toLabel}`
 
-    const rowsHtml = transactions.map(tx => `
-      <tr>
-        <td>${tx.date}</td>
-        <td>${tx.type}</td>
-        <td>${(tx.categoryName ?? '').replace(/</g, '&lt;')}</td>
-        <td>${(tx.description ?? '').replace(/</g, '&lt;')}</td>
-        <td class="amount">${tx.amount}</td>
-      </tr>`).join('')
-
-    const container = document.createElement('div')
-    container.id = 'finvu-print-export'
-    container.innerHTML = `
-      <h1>${t.settings.exportPdfTitle}: ${rangeLabel}</h1>
-      <table>
-        <thead>
-          <tr><th>Dátum</th><th>Typ</th><th>Kategória</th><th>Poznámka</th><th class="amount">Suma</th></tr>
-        </thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>`
-    document.body.appendChild(container)
-
-    const cleanup = () => {
-      container.remove()
-      window.removeEventListener('afterprint', cleanup)
-    }
-    window.addEventListener('afterprint', cleanup)
-    window.print()
+    // pdfExport (jsPDF + embedded Unicode font) is heavy — load it on demand.
+    const { generateTransactionsPdf } = await import('../lib/pdfExport')
+    await generateTransactionsPdf({
+      transactions: transactions.map(tx => ({
+        date: tx.date,
+        type: tx.type,
+        categoryName: tx.categoryName,
+        description: tx.description,
+        amount: tx.amount,
+      })),
+      title: t.settings.exportPdfTitle,
+      rangeLabel,
+      incomeLabel: t.expenses.categories.typeIncome,
+      expenseLabel: t.expenses.categories.typeExpense,
+      fileName: `finvu-export-${fromISO}_${toISO}.pdf`,
+    })
   }
 
   async function handleExportXLSX(fromISO: string, toISO: string) {

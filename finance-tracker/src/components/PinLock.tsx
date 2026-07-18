@@ -60,7 +60,7 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'var(--aurora-bg)',
+      background: 'var(--aurora-bg-image)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 24,
     }}>

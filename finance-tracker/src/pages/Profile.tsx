@@ -204,7 +204,8 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'var(--aurora-bg-image)' }}
       onClick={onClose}
     >
       <div

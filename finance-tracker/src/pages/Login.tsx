@@ -180,7 +180,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   }
 
   return (
-    <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: 'var(--aurora-bg)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: 'var(--aurora-bg-image)', position: 'relative', overflow: 'hidden' }}>
 
       {/* Atmospheric blob */}
       <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 70%)', pointerEvents: 'none' }} />
