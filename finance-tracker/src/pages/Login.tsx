@@ -343,7 +343,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
         >
           <div
             className="modal-in"
-            style={{ width: '100%', maxWidth: 340, padding: 24, borderRadius: 26, background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', boxShadow: '0 30px 70px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            style={{ width: '100%', maxWidth: 340, padding: 24, borderRadius: 26, background: 'var(--aurora-bg-image)', border: '1px solid var(--aurora-gline)', boxShadow: '0 30px 70px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: 20 }}>

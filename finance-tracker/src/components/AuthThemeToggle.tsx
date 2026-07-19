@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Sun, Moon, SunMoon } from 'lucide-react'
+import { Sun, Moon } from 'lucide-react'
 import { resolveTheme, type ThemePreference } from '../utils/theme'
 
-// Segmented Dark / Light / System theme switcher for the pre-auth screens
-// (Login / Register). Mirrors the control used in Nastavenia → Vzhľad instead
-// of the old isolated circular sun/moon toggle, so the auth screens share the
-// app's current visual language. Writes `theme_preference` + resolves it onto
+// Segmented Dark / Light theme switcher for the pre-auth screens (Login /
+// Register). "System" is intentionally omitted here — Nastavenia → Vzhľad
+// keeps all 3 options. Writes `theme_preference` + resolves it onto
 // `data-theme`; App.tsx's MutationObserver re-applies the chosen background
 // tint whenever `data-theme` flips.
 export function AuthThemeToggle() {
@@ -24,7 +23,6 @@ export function AuthThemeToggle() {
       {([
         { id: 'dark', icon: Moon, label: 'Dark' },
         { id: 'light', icon: Sun, label: 'Light' },
-        { id: 'system', icon: SunMoon, label: 'System' },
       ] as const).map(({ id, icon: Icon, label }) => {
         const active = pref === id
         return (
