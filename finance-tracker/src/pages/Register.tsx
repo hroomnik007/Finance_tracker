@@ -112,14 +112,9 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
           </div>
         </div>
 
-        {/* Form card */}
+        {/* Form fields */}
         <div className="fu" style={{
           width: '100%',
-          background: 'var(--bg2)',
-          border: '1px solid var(--border)',
-          borderRadius: 24,
-          padding: 26,
-          boxShadow: 'var(--shadow-elevated)',
           display: 'flex', flexDirection: 'column', gap: 16,
         }}>
 
