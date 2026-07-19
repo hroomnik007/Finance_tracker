@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
 import { getAuthMethods } from '../api/auth'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
+import { AuthThemeToggle } from '../components/AuthThemeToggle'
 import { PinKeypad } from '../components/PinKeypad'
 
 interface LoginPageProps {
@@ -32,13 +33,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [authMethods, setAuthMethods] = useState({ pin: false, google: false, password: false })
   const lastPinTapRef = useRef(0)
 
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try {
-      const current = document.documentElement.getAttribute('data-theme')
-      return current === 'light' ? 'light' : 'dark'
-    } catch { return 'dark' }
-  })
-
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('demo') !== 'true') return
     setEmail('demo@finvu.sk')
@@ -60,13 +54,6 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     }, 500)
     return () => clearTimeout(timer)
   }, [email])
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem('theme_preference', next)
-    document.documentElement.setAttribute('data-theme', next)
-  }
 
   const googleLogin = useGoogleLogin({
     onSuccess: async tokenResponse => {
@@ -188,16 +175,10 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       {/* Top controls: language switcher + theme toggle */}
       <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, zIndex: 100 }}>
         <LanguageSwitcher />
-        <button
-          onClick={toggleTheme}
-          style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}
-          title={theme === 'dark' ? t.auth.lightMode : t.auth.darkMode}
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
+        <AuthThemeToggle />
       </div>
 
-      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', padding: '20px 24px 28px', position: 'relative', zIndex: 1 }}>
+      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 24px 28px', position: 'relative', zIndex: 1 }}>
 
         {/* Brand row */}
         <div className="fade-up" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 32 }}>
@@ -339,10 +320,8 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
           </button>
         )}
 
-        <div style={{ flex: 1, minHeight: 24 }} />
-
-        {/* Register link — anchored to bottom */}
-        <p style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--aurora-lo)', margin: 0, fontFamily: "'Manrope', sans-serif" }}>
+        {/* Register link */}
+        <p style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--aurora-lo)', margin: '28px 0 0', fontFamily: "'Manrope', sans-serif" }}>
           {t.auth.noAccount}{' '}
           <button
             type="button"
@@ -359,7 +338,7 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
       {pinModalOpen && (
         <div
           className="fade-in"
-          style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(4,3,8,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', zIndex: 200 }}
+          style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'var(--aurora-bg-image)', zIndex: 200 }}
           onClick={() => setPinModalOpen(false)}
         >
           <div

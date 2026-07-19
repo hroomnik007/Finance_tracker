@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
+import { AuthThemeToggle } from '../components/AuthThemeToggle'
 
 interface RegisterPageProps {
   onNavigateLogin: () => void
@@ -24,17 +25,6 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
   const [focused, setFocused] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try { return (localStorage.getItem('theme_preference') as 'dark' | 'light') ?? 'dark' } catch { return 'dark' }
-  })
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem('theme_preference', next)
-    document.documentElement.setAttribute('data-theme', next)
-  }
 
   const handleRegister = async () => {
     setError(null)
@@ -108,28 +98,17 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
       {/* Top controls: language switcher + theme toggle */}
       <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, zIndex: 100 }}>
         <LanguageSwitcher />
-        <button
-          onClick={toggleTheme}
-          aria-label={theme === 'dark' ? t.auth.switchToLight : t.auth.switchToDark}
-          style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: 'var(--bg2)', border: '1px solid var(--border)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, flexShrink: 0,
-          }}
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
+        <AuthThemeToggle />
       </div>
 
-      <div className="fade-up" style={{ width: '100%', maxWidth: 460, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+      <div className="fade-up" style={{ width: '100%', maxWidth: 460, display: 'flex', flexDirection: 'column', alignItems: 'stretch', position: 'relative', zIndex: 1 }}>
 
-        {/* Logo */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-          <img src="/logo.svg" alt="Finvu" style={{ width: 72, height: 72, borderRadius: 18 }} />
-          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>Finvu</div>
-          <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            {t.nav.appTagline.toUpperCase()}
+        {/* Brand row — logo beside title, unified with Login */}
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 32 }}>
+          <img src="/logo.svg" alt="Finvu" style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0 }} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 27, fontWeight: 700, color: 'var(--aurora-hi)', margin: '0 0 6px' }}>Finvu</h1>
+            <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-lo)', margin: 0 }}>{t.nav.appTagline}</p>
           </div>
         </div>
 

@@ -212,7 +212,7 @@ export function ProfileModal({ onClose, onLogout }: { onClose: () => void; onLog
         style={{
           borderRadius: 22,
           overflow: 'hidden',
-          background: 'var(--aurora-panel)',
+          background: 'var(--aurora-bg-image)',
           border: '1px solid var(--aurora-gline)',
           width: '100%',
           maxWidth: 520,
