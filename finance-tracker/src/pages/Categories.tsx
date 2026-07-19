@@ -728,7 +728,7 @@ export function CategoriesPage() {
               <button
                 type="button"
                 onClick={async () => { setAutoLimitWarning(false); await doSave() }}
-                style={{ flex: 1, height: 44, borderRadius: 14, background: 'linear-gradient(135deg,#8B5CF6,#EC4899)', fontSize: 12.5, fontWeight: 700, color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
+                style={{ flex: 1, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))', fontSize: 12.5, fontWeight: 700, color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
               >
                 Áno — prepísať
               </button>

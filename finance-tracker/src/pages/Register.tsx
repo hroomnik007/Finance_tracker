@@ -239,7 +239,7 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
             disabled={isLoading || !gdprConsent}
             style={{
               marginTop: 4, height: 50,
-              background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
+              background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))',
               border: 'none', borderRadius: 13,
               width: '100%', fontSize: 15, fontWeight: 700,
               color: 'white', cursor: (isLoading || !gdprConsent) ? 'not-allowed' : 'pointer',

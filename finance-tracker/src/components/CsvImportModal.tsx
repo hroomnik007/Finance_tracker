@@ -583,7 +583,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
               <p style={{ fontSize: 18, fontWeight: 600, color: '#34D399', marginBottom: 8 }}>{t.csv.importSuccess.replace('{n}', String(importedCount))}</p>
-              <button onClick={onClose} style={{ height: 48, padding: '0 32px', background: 'linear-gradient(135deg, #7C3AED, #6D28D9)', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 12 }}>{t.csv.close}</button>
+              <button onClick={onClose} style={{ height: 48, padding: '0 32px', background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 12 }}>{t.csv.close}</button>
             </div>
           ) : rows.length === 0 && csvHeaders.length === 0 ? (
             <div>
@@ -636,7 +636,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
               {error && <p style={{ color: '#F87171', fontSize: 13, marginTop: 8 }}>{error}</p>}
               <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
                 <button onClick={reset} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border2)', borderRadius: 12, color: 'var(--text2)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.back}</button>
-                <button onClick={applyCustomMapping} style={{ flex: 2, height: 44, background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.continue}</button>
+                <button onClick={applyCustomMapping} style={{ flex: 2, height: 44, background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t.csv.continue}</button>
               </div>
             </div>
           ) : (
@@ -678,7 +678,7 @@ export function CsvImportModal({ open, onClose, filterType }: CsvImportModalProp
           <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, flexShrink: 0 }}>
             <button onClick={reset} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border2)', borderRadius: 14, color: 'var(--text2)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>{t.common.cancel}</button>
             <button onClick={handleImport} disabled={selectedCount === 0 || importing}
-              style={{ flex: 2, height: 48, background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: selectedCount > 0 && !importing ? 'pointer' : 'default', opacity: importing || selectedCount === 0 ? 0.4 : 1, fontFamily: 'inherit' }}>
+              style={{ flex: 2, height: 48, background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))', border: 'none', borderRadius: 14, color: 'white', fontSize: 15, fontWeight: 600, cursor: selectedCount > 0 && !importing ? 'pointer' : 'default', opacity: importing || selectedCount === 0 ? 0.4 : 1, fontFamily: 'inherit' }}>
               {importing ? t.csv.importing : `${t.csv.importBtn} (${selectedCount})`}
             </button>
           </div>
