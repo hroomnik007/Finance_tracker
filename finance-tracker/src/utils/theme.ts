@@ -79,7 +79,7 @@ function shiftLightness(hex: string, delta: number): string {
 // shifted lightness), so every accent produces a coherent monochromatic
 // two-tone gradient instead.
 export const ACCENT_COLOR_KEY = 'accent_color'
-export const DEFAULT_ACCENT_COLOR = '#7C3AED'
+export const DEFAULT_ACCENT_COLOR = '#3B82F6'
 
 export function accentGradientEnd(color: string): string {
   return shiftLightness(color, 18)

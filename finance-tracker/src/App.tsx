@@ -52,7 +52,7 @@ import { CommandPalette } from './components/CommandPalette'
 import { updateUserSettings, sessionCheck } from './api/auth'
 import {
   resolveTheme, applyAccentColor, applyBackgroundColor, bgColorStorageKey, defaultBgColor,
-  type ThemePreference,
+  DEFAULT_ACCENT_COLOR, type ThemePreference,
 } from './utils/theme'
 
 // Initialize appearance preferences from localStorage before first render
@@ -66,7 +66,7 @@ import {
     const compact = JSON.parse(localStorage.getItem(compactKey) ?? compactDefault) as boolean
     const theme = (localStorage.getItem('theme_preference') ?? 'dark') as ThemePreference
     const resolvedTheme = resolveTheme(theme)
-    if (accent) applyAccentColor(accent)
+    applyAccentColor(accent ?? DEFAULT_ACCENT_COLOR)
     const bgColor = JSON.parse(localStorage.getItem(bgColorStorageKey(resolvedTheme)) ?? 'null') as string | null
     applyBackgroundColor(bgColor ?? defaultBgColor(resolvedTheme), resolvedTheme)
     html.classList.toggle('compact', compact)
