@@ -48,17 +48,17 @@ export function RegisterPage({ onNavigateLogin, onNavigatePrivacyPolicy }: Regis
 
   const inp = (name: string, hasRight = false): React.CSSProperties => ({
     width: '100%',
-    background: 'var(--bg3)',
-    color: 'var(--text)',
+    background: 'var(--aurora-glass)',
+    color: 'var(--aurora-hi)',
     borderRadius: 13,
     padding: hasRight ? '0 44px 0 16px' : '0 16px',
     height: 50,
     fontSize: 15,
-    fontFamily: "'DM Sans', sans-serif",
-    border: `1.5px solid ${focused === name ? 'var(--violet)' : 'var(--border2)'}`,
+    fontFamily: "'Manrope', sans-serif",
+    border: `1.5px solid ${focused === name ? 'var(--aurora-violet)' : 'var(--aurora-gline)'}`,
     outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
-    boxShadow: focused === name ? '0 0 0 3px rgba(139,92,246,0.1)' : 'none',
+    boxShadow: focused === name ? '0 0 0 3px rgba(139,92,246,0.15)' : 'none',
     boxSizing: 'border-box' as const,
   })
 
