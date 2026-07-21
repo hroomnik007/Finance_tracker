@@ -55,8 +55,32 @@ export async function fetchFixedExpenses(
     const trackingYM = trackingStart ? trackingStart.substring(0, 7) : null
     // If tracking_start_date is set and the viewed month is before it, show no fixed expenses
     if (monthStr && trackingYM && monthStr < trackingYM) return []
-    const { data } = await getTransactions({ type: 'expense', isFixed: true, month: monthStr, limit: 200 })
-    return data.map(toFixedExpense)
+
+    if (!monthStr) {
+      const { data } = await getTransactions({ type: 'expense', isFixed: true, limit: 200 })
+      return data.map(toFixedExpense)
+    }
+
+    // A fixed expense is entered once and recurs every month after that — the
+    // backend `month` param filters by creation date, not recurrence, so it
+    // would hide a bill created in an earlier month. No month filter is sent;
+    // each distinct bill (keyed by its description) counts once for the viewed
+    // month using its most recent occurrence at or before that month's end,
+    // matching the dedup in the getSummaryCards backend endpoint.
+    // TODO: paginate if a user accumulates >200 fixed expense records.
+    const { data } = await getTransactions({ type: 'expense', isFixed: true, limit: 200 })
+    if (data.length === 200) {
+      console.warn('useFixedExpenses: fixed expense limit reached, some records may be missing')
+    }
+    const latestByIdentity = new Map<string, ApiTransaction>()
+    for (const t of data) {
+      if (t.date.substring(0, 7) > monthStr) continue
+      if (trackingYM && t.date.substring(0, 7) < trackingYM) continue
+      const key = t.description ?? ''
+      const existing = latestByIdentity.get(key)
+      if (!existing || t.date > existing.date) latestByIdentity.set(key, t)
+    }
+    return [...latestByIdentity.values()].map(toFixedExpense)
   } catch {
     return []
   }

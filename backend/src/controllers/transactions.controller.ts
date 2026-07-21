@@ -434,18 +434,44 @@ export async function getSummaryCards(req: AuthRequest, res: Response): Promise<
   const balanceExpenses = balanceRows.filter(r => r.type === "expense").reduce((acc, r) => acc + parseFloat(r.total), 0);
   const balance = Math.round((balanceIncome - balanceExpenses) * 100) / 100;
 
-  // Month income & expenses
+  // Month income & variable expenses: exact date match within the month (unchanged).
   const monthRows = await db
     .select({
       type: transactions.type,
       total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`,
     })
     .from(transactions)
-    .where(and(baseFilter, gte(transactions.date, monthStart), lt(transactions.date, monthEnd)))
+    .where(and(
+      baseFilter,
+      gte(transactions.date, monthStart),
+      lt(transactions.date, monthEnd),
+      or(eq(transactions.type, "income"), eq(transactions.isFixed, false)),
+    ))
     .groupBy(transactions.type);
 
   const income = Math.round(monthRows.filter(r => r.type === "income").reduce((acc, r) => acc + parseFloat(r.total), 0));
-  const expenses = Math.round(monthRows.filter(r => r.type === "expense").reduce((acc, r) => acc + parseFloat(r.total), 0));
+  const variableExpenses = monthRows.filter(r => r.type === "expense").reduce((acc, r) => acc + parseFloat(r.total), 0);
+
+  // Fixed (recurring) expenses: entered once and expected to recur every month
+  // without the user re-adding them — so each distinct bill (per user, keyed by
+  // its description) counts once per month using its most recent occurrence at
+  // or before the end of the requested month, not every historical row summed.
+  const latestFixedRows = await db
+    .selectDistinctOn([transactions.userId, transactions.description], {
+      amount: transactions.amount,
+    })
+    .from(transactions)
+    .where(and(
+      baseFilter,
+      eq(transactions.type, "expense"),
+      eq(transactions.isFixed, true),
+      lt(transactions.date, monthEnd),
+    ))
+    .orderBy(transactions.userId, transactions.description, sql`${transactions.date} DESC`);
+
+  const fixedExpenses = latestFixedRows.reduce((acc, r) => acc + parseFloat(r.amount), 0);
+
+  const expenses = Math.round(variableExpenses + fixedExpenses);
   const savingsRate = income > 0 ? Math.round((income - expenses) / income * 100) : 0;
 
   res.json({ balance, income, expenses, savingsRate });
