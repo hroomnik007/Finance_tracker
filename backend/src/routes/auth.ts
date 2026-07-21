@@ -31,11 +31,11 @@ const loginLimiter = rateLimit({
 });
 
 const pinLoginLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 5,
+  windowMs: 10 * 60 * 1000,
+  max: 8,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Príliš veľa pokusov PIN. Skúste za 5 minút." },
+  message: { error: "Príliš veľa pokusov PIN. Skúste za 10 minút." },
 });
 
 const generalLimiter = rateLimit({
