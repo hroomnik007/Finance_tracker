@@ -30,7 +30,7 @@ export function useBudgetStatus({ categories, variableExpenses, fixedExpenses = 
           limit,
           percentage,
           isWarning: percentage >= 70 && percentage < 90,
-          isOver: percentage >= 100,
+          isOver: percentage > 100,
         }
       }),
   [categories, variableExpenses, fixedExpenses])
