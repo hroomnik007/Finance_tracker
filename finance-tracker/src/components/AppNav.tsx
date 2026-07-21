@@ -32,6 +32,7 @@ export function AppNav({ current, onChange, collapsed, onToggle, mobileOpen, onM
   if (current !== prevCurrent) {
     setPrevCurrent(current)
     if (expensesActive && isExpanded) setExpOpen(true)
+    else if (!expensesActive) setExpOpen(false)
   }
 
   const [submenuVisible, setSubmenuVisible] = useState(false)

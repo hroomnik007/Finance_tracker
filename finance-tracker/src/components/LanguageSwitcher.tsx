@@ -67,7 +67,7 @@ export function LanguageSwitcher({ onLanguageChange, variant = 'compact' }: Lang
       <button
         ref={btnRef}
         type="button"
-        onClick={openDropdown}
+        onClick={() => (open ? setOpen(false) : openDropdown())}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           width: '100%',
