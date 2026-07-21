@@ -9,6 +9,7 @@ import { CsvImportModal } from '../components/CsvImportModal'
 import { GlassCard } from '../components/GlassCard'
 import { HeroCard } from '../components/HeroCard'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
+import { useFixedExpenses } from '../hooks/useFixedExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useBudgetStatus } from '../hooks/useBudgetStatus'
 import { useFormatters } from '../hooks/useFormatters'
@@ -78,8 +79,9 @@ function CategoryCircle({ icon: Icon, label, selected, accent, onClick }: {
 export function VariableExpensesPage({ month, year, showToast }: VariableExpensesPageProps) {
   const { variableExpenses, addVariableExpense, updateVariableExpense, deleteVariableExpense } =
     useVariableExpenses(month, year)
+  const { fixedExpenses } = useFixedExpenses(month, year)
   const { categories, addCategory } = useCategories()
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses })
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses })
   const { formatAmount, formatDate } = useFormatters()
   const { t, locale } = useTranslation()
 
