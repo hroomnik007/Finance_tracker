@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer,
@@ -332,13 +332,26 @@ const upcomingFixed = useMemo(() => {
   const animatedBalance = useCountUp(heroBalance, 800)
   const animatedIncome = useCountUp(heroIncome, 800)
   const animatedExpenses = useCountUp(heroExpenses, 800)
+  const balanceGradientRef = useRef<HTMLSpanElement>(null)
+  // Chromium can leave the background-clip:text paint layer blank after the rapid
+  // per-frame text mutations from useCountUp settle (known paint-invalidation bug,
+  // worse under a backdrop-filter ancestor). Nudging a layout-triggering property
+  // once the animation reaches its final value forces a fresh repaint.
+  useEffect(() => {
+    if (animatedBalance !== heroBalance) return
+    const el = balanceGradientRef.current
+    if (!el) return
+    el.style.transform = 'translateZ(0)'
+    void el.offsetHeight
+    el.style.transform = ''
+  }, [animatedBalance, heroBalance])
   const heroSection = (
     <HeroCard variant="neutral">
       <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
         {t.dashboard.balance} · {t.months[month - 1]} {year}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
-        <span style={{
+        <span ref={balanceGradientRef} style={{
           fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
           background: `linear-gradient(120deg, var(--aurora-hi), ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
           WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent',

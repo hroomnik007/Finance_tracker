@@ -226,14 +226,17 @@
   --bottom-nav-border: var(--border);
 }
 
-html { background: var(--bg); color: var(--text); }
+/* overscroll-behavior-y: none on both html and body suppresses the browser/PWA's
+   native pull-to-refresh reload gesture — the app has no in-page scroll container
+   that reaches the true document root, so the rule must sit here to take effect. */
+html { background: var(--bg); color: var(--text); overscroll-behavior-y: none; }
 
 body {
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior: none;
+  overscroll-behavior-y: none;
 }
 
 #root {

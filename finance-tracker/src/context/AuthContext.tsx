@@ -95,7 +95,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        const { accessToken } = await refreshToken()
+        let accessToken: string
+        try {
+          ;({ accessToken } = await refreshToken())
+        } catch {
+          // A pull-to-refresh reload can land while the previous page load's
+          // refresh-token rotation is still in flight, so this request loses
+          // the race and 401s even though a valid rotated cookie is about to
+          // land. One short retry gives that in-flight rotation time to
+          // finish before treating it as a real logged-out session.
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          ;({ accessToken } = await refreshToken())
+        }
         setAccessToken(accessToken)
         const { user: me } = await getMe()
         setUser(me)
