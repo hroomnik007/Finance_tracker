@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  X, Upload, Palette, Bell, Shield, Database, User, Monitor, Laptop, Smartphone, Tablet,
+  X, Palette, Bell, Shield, Database, User, Monitor, Laptop, Smartphone, Tablet,
   CalendarClock, Users, PiggyBank, KeyRound, Hash, ChevronRight, Check, Sun, Moon, SunMoon,
   AlertTriangle, Trash2, RotateCcw, UserX, Ban, ArrowLeft,
 } from 'lucide-react'
@@ -1263,14 +1263,14 @@ export function SettingsPage() {
                       {t.settings.exportModalTitle}
                     </button>
                   </SettingRow>
-                  <ChevronRow
-                    icon={Upload}
-                    iconColor="var(--aurora-lo)"
-                    iconBg="var(--aurora-glass)"
-                    label={t.settings.importStatement}
-                    sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP"
-                    onClick={() => setCsvImportOpen(true)}
-                  />
+                  <SettingRow label={t.settings.importStatement} sublabel="Z banky: Revolut, Tatra, ČSOB, SLSP">
+                    <button
+                      onClick={() => setCsvImportOpen(true)}
+                      style={{ padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg, var(--aurora-violet), var(--aurora-fuchsia))', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: "'Outfit', sans-serif" }}
+                    >
+                      {t.settings.importStatement}
+                    </button>
+                  </SettingRow>
                 </div>
                 <div style={{ borderTop: '1px solid var(--aurora-gline)', padding: '10px 20px' }}>
                   <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>{t.settings.dataNote}</p>
