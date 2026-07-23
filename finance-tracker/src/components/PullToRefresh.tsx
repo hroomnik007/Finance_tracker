@@ -33,9 +33,11 @@ interface PullToRefreshProps {
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
+  // Read in JSX (the transition toggle below), so it has to be state rather
+  // than a ref — refs can't be read during render.
+  const [pulling, setPulling] = useState(false)
   const startY = useRef(0)
   const scrollParentRef = useRef<HTMLElement | null>(null)
-  const pulling = useRef(false)
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (refreshing) return
@@ -43,17 +45,17 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     scrollParentRef.current = sp
     if (sp && sp.scrollTop <= 0) {
       startY.current = e.touches[0].clientY
-      pulling.current = true
+      setPulling(true)
     } else {
-      pulling.current = false
+      setPulling(false)
     }
   }, [refreshing])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!pulling.current || refreshing) return
+    if (!pulling || refreshing) return
     const sp = scrollParentRef.current
     if (!sp || sp.scrollTop > 0) {
-      pulling.current = false
+      setPulling(false)
       setPull(0)
       return
     }
@@ -65,11 +67,11 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     // Stops the native browser/PWA pull-to-refresh reload from also triggering.
     e.preventDefault()
     setPull(Math.min(MAX_PULL, delta * DAMPING))
-  }, [refreshing])
+  }, [pulling, refreshing])
 
   const handleTouchEnd = useCallback(() => {
-    if (!pulling.current) return
-    pulling.current = false
+    if (!pulling) return
+    setPulling(false)
     if (pull >= PULL_THRESHOLD) {
       setRefreshing(true)
       setPull(PULL_THRESHOLD)
@@ -80,7 +82,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     } else {
       setPull(0)
     }
-  }, [pull, onRefresh])
+  }, [pulling, pull, onRefresh])
 
   const indicatorProgress = Math.min(1, pull / PULL_THRESHOLD)
 
@@ -95,7 +97,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         height: pull, flexShrink: 0, overflow: 'hidden',
-        transition: pulling.current ? 'none' : 'height 0.2s ease',
+        transition: pulling ? 'none' : 'height 0.2s ease',
       }}>
         <div style={{
           width: 30, height: 30, borderRadius: '50%',
