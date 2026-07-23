@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer,
@@ -332,32 +332,41 @@ const upcomingFixed = useMemo(() => {
   const animatedBalance = useCountUp(heroBalance, 800)
   const animatedIncome = useCountUp(heroIncome, 800)
   const animatedExpenses = useCountUp(heroExpenses, 800)
-  const balanceGradientRef = useRef<HTMLSpanElement>(null)
-  // Chromium can leave the background-clip:text paint layer blank after the rapid
-  // per-frame text mutations from useCountUp settle (known paint-invalidation bug,
-  // worse under a backdrop-filter ancestor). Nudging a layout-triggering property
-  // once the animation reaches its final value forces a fresh repaint.
-  useEffect(() => {
-    if (animatedBalance !== heroBalance) return
-    const el = balanceGradientRef.current
-    if (!el) return
-    el.style.transform = 'translateZ(0)'
-    void el.offsetHeight
-    el.style.transform = ''
-  }, [animatedBalance, heroBalance])
+  // background-clip:text on a node whose text content is rewritten on every one
+  // of the ~48 useCountUp animation frames can end up with its gradient paint
+  // layer left blank by Chromium (a paint-invalidation bug — forcing a reflow
+  // after the fact did not reliably fix it). Instead of clipping the gradient
+  // to a rapidly-mutating node, the clipped span is only ever mounted with the
+  // final, settled value — while the count-up is in flight, a plain solid-color
+  // span (which Chromium never fails to repaint) shows the animating digits.
+  // Float-tolerant: the eased count-up's last frame can land a hair off the
+  // exact target (floating-point rounding), which would otherwise never
+  // satisfy a strict === check and leave the gradient span permanently unmounted.
+  const balanceSettled = Math.abs(animatedBalance - heroBalance) < 0.005
+  const balanceSign = heroBalance >= 0 ? '+' : '−'
+  const balanceText = Math.floor(Math.abs(balanceSettled ? heroBalance : animatedBalance)).toLocaleString('sk-SK')
+  const balanceFontStyle = {
+    fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
+  } as const
   const heroSection = (
     <HeroCard variant="neutral">
       <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, letterSpacing: '0.08em', color: 'var(--aurora-hi)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
         {t.dashboard.balance} · {t.months[month - 1]} {year}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' as const }}>
-        <span ref={balanceGradientRef} style={{
-          fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 'clamp(34px, 9vw, 44px)', lineHeight: 1,
-          background: `linear-gradient(120deg, var(--aurora-hi), ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
-          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent',
-        }}>
-          {heroBalance >= 0 ? '+' : '−'}{Math.floor(Math.abs(animatedBalance)).toLocaleString('sk-SK')}
-        </span>
+        {balanceSettled ? (
+          <span style={{
+            ...balanceFontStyle,
+            background: `linear-gradient(120deg, var(--aurora-hi), ${heroBalance < 0 ? 'var(--aurora-rose)' : 'var(--aurora-cyan)'})`,
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent',
+          }}>
+            {balanceSign}{balanceText}
+          </span>
+        ) : (
+          <span style={{ ...balanceFontStyle, color: 'var(--aurora-hi)' }}>
+            {balanceSign}{balanceText}
+          </span>
+        )}
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--aurora-hi)' }}>
           ,{String(Math.round((Math.abs(animatedBalance) % 1) * 100)).padStart(2, '0')}&nbsp;€
         </span>

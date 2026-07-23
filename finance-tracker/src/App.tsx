@@ -4,6 +4,7 @@ import { AppNav } from './components/AppNav'
 import { BottomNav } from './components/BottomNav'
 import { Topbar } from './components/Topbar'
 import { GlobalFAB } from './components/GlobalFAB'
+import { PullToRefresh } from './components/PullToRefresh'
 import { ToastContainer } from './components/ToastContainer'
 import { LoginPage } from './pages/Login'
 
@@ -506,7 +507,7 @@ function App() {
           onNavigate={setPage}
           onToggleTheme={handleToggleTheme}
         />
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <PullToRefresh onRefresh={() => queryClient.refetchQueries()}>
           <Suspense fallback={null}>
           {page === 'dashboard' && (
             <Dashboard month={month} year={year} onNavigate={setPage} dashView={dashView} />
@@ -531,7 +532,7 @@ function App() {
           )}
           {page === 'savings' && <SavingsPage openAddTrigger={savingsFabTrigger} />}
           </Suspense>
-        </div>
+        </PullToRefresh>
       </main>
 
       {/* Global FAB — mobile circle button + shared add modal */}

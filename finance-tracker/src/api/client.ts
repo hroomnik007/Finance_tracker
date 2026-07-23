@@ -34,15 +34,33 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-let isRefreshing = false
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+// Single in-flight refresh promise, shared by every caller — the reactive 401
+// interceptor below AND any proactive caller (AuthContext.initAuth on boot,
+// PullToRefresh triggering a burst of concurrent requests that can all 401 at
+// once on an expired token). Whoever asks first starts the POST /api/auth/refresh;
+// everyone else just awaits the same promise instead of firing their own request.
+// This is what actually prevents the refresh-token rotation race (two concurrent
+// refreshes, the loser's token already invalidated by the winner) that used to
+// cascade into a full logout.
+let refreshPromise: Promise<string> | null = null
 
-function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) reject(error)
-    else resolve(token!)
-  })
-  failedQueue = []
+export function refreshAccessToken(): Promise<string> {
+  if (refreshPromise) return refreshPromise
+  refreshPromise = axios
+    .post(`${BASE_URL}/api/auth/refresh`, {}, { withCredentials: true })
+    .then(({ data }) => {
+      const newToken: string = data.accessToken
+      setAccessToken(newToken)
+      return newToken
+    })
+    .catch((err) => {
+      setAccessToken(null)
+      throw err
+    })
+    .finally(() => {
+      refreshPromise = null
+    })
+  return refreshPromise
 }
 
 apiClient.interceptors.response.use(
@@ -57,32 +75,13 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject })
-      }).then((token) => {
-        originalRequest.headers.Authorization = `Bearer ${token}`
-        return apiClient(originalRequest)
-      })
-    }
-
     originalRequest._retry = true
-    isRefreshing = true
 
     try {
-      const { data } = await axios.post(
-        `${BASE_URL}/api/auth/refresh`,
-        {},
-        { withCredentials: true }
-      )
-      const newToken: string = data.accessToken
-      setAccessToken(newToken)
-      processQueue(null, newToken)
+      const newToken = await refreshAccessToken()
       originalRequest.headers.Authorization = `Bearer ${newToken}`
       return apiClient(originalRequest)
     } catch (refreshError) {
-      processQueue(refreshError, null)
-      setAccessToken(null)
       if (!initializingAuth) {
         // If PIN lock is enabled, a failed background token refresh (e.g. after
         // returning from an auto-locked background tab) must not clear the
@@ -92,8 +91,6 @@ apiClient.interceptors.response.use(
         window.dispatchEvent(new Event(hasPinLock ? 'auth:pin-lock-required' : 'auth:logout'))
       }
       return Promise.reject(refreshError)
-    } finally {
-      isRefreshing = false
     }
   }
 )

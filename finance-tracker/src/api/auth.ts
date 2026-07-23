@@ -1,4 +1,4 @@
-import { apiClient } from './client'
+import { apiClient, refreshAccessToken } from './client'
 import { announceAchievementUnlocks } from '../utils/achievementEvents'
 import type { AuthUser, UserSession } from '../types'
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser'
@@ -23,8 +23,11 @@ export async function logout(): Promise<void> {
 }
 
 export async function refreshToken(): Promise<{ accessToken: string }> {
-  const { data } = await apiClient.post('/api/auth/refresh')
-  return data
+  // Routes through the same in-flight-deduplicated refresh as the response
+  // interceptor (see client.ts) — a concurrent reactive 401 refresh and this
+  // proactive call (e.g. AuthContext boot, PullToRefresh) share one request.
+  const accessToken = await refreshAccessToken()
+  return { accessToken }
 }
 
 export async function getMe(): Promise<{ user: AuthUser }> {

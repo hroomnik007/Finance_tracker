@@ -1,0 +1,125 @@
+import { useRef, useState, useCallback, type ReactNode } from 'react'
+
+const PULL_THRESHOLD = 70
+const MAX_PULL = 110
+const DAMPING = 0.5
+
+/** Walks up from the touched element to find the nearest actually-scrollable
+ * ancestor (overflow-y: auto/scroll with real overflow) — every page owns its
+ * own scroll container, so detection has to be generic rather than hardcoded
+ * to one page's DOM shape. */
+function findScrollParent(el: HTMLElement | null): HTMLElement | null {
+  let node: HTMLElement | null = el
+  while (node && node !== document.body) {
+    const style = getComputedStyle(node)
+    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+      return node
+    }
+    node = node.parentElement
+  }
+  return null
+}
+
+interface PullToRefreshProps {
+  onRefresh: () => Promise<unknown>
+  children: ReactNode
+}
+
+/** Custom pull-to-refresh: shows a small drag indicator and refetches data in
+ * place when released past the threshold. Also calls preventDefault on the
+ * pulling touchmove so the browser/PWA's native pull-to-refresh (a full page
+ * reload) never gets a chance to fire — that native reload was the actual
+ * cause of the refresh-token race that used to log users out. */
+export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
+  const [pull, setPull] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const startY = useRef(0)
+  const scrollParentRef = useRef<HTMLElement | null>(null)
+  const pulling = useRef(false)
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (refreshing) return
+    const sp = findScrollParent(e.target as HTMLElement)
+    scrollParentRef.current = sp
+    if (sp && sp.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY
+      pulling.current = true
+    } else {
+      pulling.current = false
+    }
+  }, [refreshing])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!pulling.current || refreshing) return
+    const sp = scrollParentRef.current
+    if (!sp || sp.scrollTop > 0) {
+      pulling.current = false
+      setPull(0)
+      return
+    }
+    const delta = e.touches[0].clientY - startY.current
+    if (delta <= 0) {
+      setPull(0)
+      return
+    }
+    // Stops the native browser/PWA pull-to-refresh reload from also triggering.
+    e.preventDefault()
+    setPull(Math.min(MAX_PULL, delta * DAMPING))
+  }, [refreshing])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!pulling.current) return
+    pulling.current = false
+    if (pull >= PULL_THRESHOLD) {
+      setRefreshing(true)
+      setPull(PULL_THRESHOLD)
+      onRefresh().finally(() => {
+        setRefreshing(false)
+        setPull(0)
+      })
+    } else {
+      setPull(0)
+    }
+  }, [pull, onRefresh])
+
+  const indicatorProgress = Math.min(1, pull / PULL_THRESHOLD)
+
+  return (
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: pull, flexShrink: 0, overflow: 'hidden',
+        transition: pulling.current ? 'none' : 'height 0.2s ease',
+      }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: '50%',
+          background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: refreshing ? 1 : indicatorProgress,
+        }}>
+          <svg
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--aurora-violet)"
+            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{
+              transform: refreshing ? undefined : `rotate(${indicatorProgress * 180}deg)`,
+              animation: refreshing ? 'spin 0.7s linear infinite' : undefined,
+            }}
+          >
+            {refreshing
+              ? <path d="M21 12a9 9 0 11-9-9" />
+              : <path d="M12 5v14M5 12l7 7 7-7" />}
+          </svg>
+        </div>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
+    </div>
+  )
+}

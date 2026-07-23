@@ -226,17 +226,17 @@
   --bottom-nav-border: var(--border);
 }
 
-/* overscroll-behavior-y: none on both html and body suppresses the browser/PWA's
-   native pull-to-refresh reload gesture — the app has no in-page scroll container
-   that reaches the true document root, so the rule must sit here to take effect. */
-html { background: var(--bg); color: var(--text); overscroll-behavior-y: none; }
+html { background: var(--bg); color: var(--text); }
 
 body {
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-y: none;
+  /* The custom PullToRefresh component calls preventDefault() on the pulling
+     touchmove itself, so the native browser/PWA pull-to-refresh reload never
+     gets a chance to fire — no blanket overscroll-behavior block needed here. */
+  overscroll-behavior: none;
 }
 
 #root {
