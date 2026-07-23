@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { CheckCircle2 } from 'lucide-react'
 import type { Page } from '../App'
 import { getNotificationFeed, dismissNotification as dismissNotifApi, type NotificationFeedItem } from '../api/notifications'
 import { useFormatters } from '../hooks/useFormatters'
@@ -52,9 +54,27 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   const [loading, setLoading] = useState(false)
   const running = useRef(false)
   const ref = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  // Positioned via getBoundingClientRect + portal (same pattern as
+  // LanguageSwitcher) instead of position:absolute relative to the trigger —
+  // the trigger's wrapper is only bell-button-wide, so right:0 anchored the
+  // panel off that narrow box instead of the viewport, cutting it off on the
+  // left on mobile. left is clamped so the panel never overflows the viewport.
+  const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null)
   const { isAuthenticated } = useAuth()
   const { formatAmount } = useFormatters()
   const unreadCount = notifications.filter(n => !n.read).length
+
+  function openDropdown() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      const width = Math.min(360, window.innerWidth - 24)
+      const left = Math.max(12, Math.min(r.right - width, window.innerWidth - width - 12))
+      setDropPos({ top: r.bottom + 8, left, width })
+    }
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -72,7 +92,12 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   useEffect(() => {
     if (!open) return
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      // The dropdown is portaled to <body>, so it isn't a DOM descendant of
+      // ref — check both the trigger wrapper and the portaled dropdown.
+      if (ref.current?.contains(target)) return
+      if (dropdownRef.current?.contains(target)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -223,7 +248,8 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
       {/* Bell button */}
       <button
-        onClick={() => setOpen(v => !v)}
+        ref={btnRef}
+        onClick={() => (open ? setOpen(false) : openDropdown())}
         aria-label={t.notifications.ariaLabel}
         style={{
           width: 36, height: 36, borderRadius: '50%',
@@ -253,17 +279,19 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         )}
       </button>
 
-      {/* Dropdown */}
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-          width: 'min(360px, calc(100vw - 24px))',
+      {/* Dropdown — portaled to <body> and positioned via getBoundingClientRect
+          so it's anchored to the viewport (and clamped within it) rather than
+          to the trigger's narrow wrapper box. */}
+      {open && dropPos && createPortal(
+        <div ref={dropdownRef} style={{
+          position: 'fixed', top: dropPos.top, left: dropPos.left,
+          width: dropPos.width,
           maxHeight: 'min(480px, 70svh)',
           display: 'flex', flexDirection: 'column',
           background: 'var(--aurora-panel)',
           border: '1px solid var(--aurora-gline)', borderRadius: 20,
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.35)', zIndex: 200,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.35)', zIndex: 9000,
           animation: 'fadeUp 0.18s ease both', overflow: 'hidden',
         }}>
           {/* Header */}
@@ -291,7 +319,13 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
             </div>
           ) : notifications.length === 0 ? (
             <div style={{ padding: '28px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 6, opacity: 0.7 }}>✅</div>
+              <div style={{
+                width: 44, height: 44, borderRadius: 14, margin: '0 auto 10px',
+                background: 'color-mix(in srgb, var(--aurora-emerald) 15%, var(--aurora-glass))',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <CheckCircle2 size={22} color="var(--aurora-emerald)" strokeWidth={1.8} />
+              </div>
               <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--aurora-hi)' }}>{t.notifications.emptyTitle}</div>
             </div>
           ) : (
@@ -352,7 +386,8 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
               ))}
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
