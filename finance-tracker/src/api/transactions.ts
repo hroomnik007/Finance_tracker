@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import type { ApiTransaction, ApiSummary } from '../types'
 import { announceAchievementUnlocks } from '../utils/achievementEvents'
+import { announceNotificationsRefresh } from '../utils/notificationEvents'
 
 export interface TransactionParams {
   month?: string
@@ -38,6 +39,10 @@ export async function createTransaction(
 ): Promise<{ data: ApiTransaction }> {
   const { data } = await apiClient.post('/api/transactions', payload)
   announceAchievementUnlocks(data.newlyUnlockedAchievements)
+  // A new transaction (income, expense, fixed expense) can generate a budget,
+  // fixedDue or income notification — refresh the bell without waiting for
+  // the periodic poll.
+  announceNotificationsRefresh()
   return data
 }
 

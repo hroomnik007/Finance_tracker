@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Calendar, TrendingUp, Target, Trophy, type LucideIcon } from 'lucide-react'
 import type { Page } from '../App'
 import { getNotificationFeed, dismissNotification as dismissNotifApi, type NotificationFeedItem } from '../api/notifications'
 import { useFormatters } from '../hooks/useFormatters'
@@ -8,11 +8,12 @@ import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n'
 import type { Translations } from '../i18n/sk'
 import { subscribeAchievementUnlocks } from '../utils/achievementEvents'
+import { subscribeNotificationsRefresh } from '../utils/notificationEvents'
 import { getAchievementMeta } from '../data/achievements'
 
 interface Notification {
   id: string
-  icon: string
+  icon: LucideIcon
   title: string
   body: string
   time: string
@@ -34,7 +35,7 @@ function achievementNotification(key: string, t: Translations): Notification {
   const name = meta ? t.achievements.items[meta.i18nKey].name : key
   return {
     id: `${ACHIEVEMENT_NOTIF_PREFIX}${key}`,
-    icon: meta?.emoji ?? '🏆',
+    icon: Trophy,
     title: t.achievements.notificationTitle.replace('{name}', name),
     body: '',
     time: t.notifications.today,
@@ -69,7 +70,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
   function openDropdown() {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
-      const width = Math.min(360, window.innerWidth - 24)
+      const width = Math.min(320, window.innerWidth - 32)
       const left = Math.max(12, Math.min(r.right - width, window.innerWidth - width - 12))
       setDropPos({ top: r.bottom + 8, left, width })
     }
@@ -109,7 +110,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         const pct = Math.round((item.spent / item.limit) * 100)
         return {
           id: item.id,
-          icon: pct >= 100 ? '🚨' : '⚠️',
+          icon: AlertTriangle,
           title: `Limit ${item.categoryName} ${pct}%`,
           body: t.notifications.spentOf.replace('{spent}', formatAmount(item.spent)).replace('{limit}', formatAmount(item.limit)),
           time: t.notifications.today,
@@ -123,12 +124,12 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         const timeStr = item.daysUntil === 0 ? t.notifications.today : item.daysUntil === 1 ? t.notifications.tomorrow : t.notifications.inDays.replace('{n}', String(item.daysUntil))
         return {
           id: item.id,
-          icon: '📅',
+          icon: Calendar,
           title: `${item.label} ${timeStr}`,
           body: t.notifications.dueDay.replace('{n}', String(item.dayOfMonth)),
           time: timeStr,
           read: false,
-          color: '#f87171',
+          color: '#60A5FA',
           amount: formatAmount(item.amount),
           target: 'fixed-expenses',
         }
@@ -137,7 +138,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         const timeStr = item.daysAgo === 0 ? t.notifications.today : item.daysAgo === 1 ? t.notifications.yesterday : t.notifications.daysAgo.replace('{n}', String(item.daysAgo))
         return {
           id: item.id,
-          icon: '💰',
+          icon: TrendingUp,
           title: t.notifications.incomeReceived,
           body: `${item.description ?? t.notifications.incomeDefault} — ${formatAmount(item.amount)}`,
           time: timeStr,
@@ -151,12 +152,12 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
         const pct = Math.round((item.savedAmount / item.targetAmount) * 100)
         return {
           id: item.id,
-          icon: item.icon ?? '🎯',
+          icon: Target,
           title: `${item.name} ${pct}%`,
           body: t.notifications.goalRemaining.replace('{amount}', formatAmount(Math.max(0, item.targetAmount - item.savedAmount))),
           time: t.notifications.currentTime,
           read: true,
-          color: '#8B5CF6',
+          color: '#2DD4BF',
           amount: `${formatAmount(item.savedAmount)} / ${formatAmount(item.targetAmount)}`,
           target: 'savings',
         }
@@ -205,11 +206,15 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
     const onVisible = () => { if (document.visibilityState === 'visible') generateNotifications(true) }
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onVisible)
+    // A newly created transaction can generate a budget/fixedDue/income
+    // notification — refresh immediately instead of waiting for the poll.
+    const unsubscribe = subscribeNotificationsRefresh(() => generateNotifications(true))
     return () => {
       clearTimeout(initial)
       clearInterval(interval)
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onVisible)
+      unsubscribe()
     }
   }, [isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -351,15 +356,13 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
                   {!n.read && (
                     <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: '0 3px 3px 0', background: n.color }} />
                   )}
-                  {/* Icon tile */}
+                  {/* Icon tile — same color-mix() circular tile pattern as the empty state */}
                   <div style={{
-                    width: 36, height: 36, borderRadius: 11, flexShrink: 0,
-                    background: n.color + '1c',
-                    border: '1px solid ' + n.color + '33',
+                    width: 44, height: 44, borderRadius: 14, flexShrink: 0,
+                    background: `color-mix(in srgb, ${n.color} 15%, var(--aurora-glass))`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 15,
                   }}>
-                    {n.icon}
+                    <n.icon size={20} color={n.color} strokeWidth={1.8} />
                   </div>
                   {/* Text */}
                   <div style={{ flex: 1, minWidth: 0 }}>

@@ -220,7 +220,7 @@ export function Topbar({ page, month, year, onMonthChange, dashView, onDashViewC
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 52, padding: '0 14px' }}>
           {logoMark(36)}
           <div style={{ flex: 1 }} />
-          <NotificationCenter />
+          <NotificationCenter onNavigate={onNavigate} />
           {avatarEl(44)}
         </div>
 
