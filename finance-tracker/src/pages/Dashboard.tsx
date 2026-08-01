@@ -453,6 +453,7 @@ const upcomingFixed = useMemo(() => {
                   key={i}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, cursor: 'pointer',
+                    width: 'fit-content', maxWidth: '100%',
                     padding: '3px 6px', borderRadius: 6, margin: '0 -6px',
                     background: isSelected ? 'rgba(139,92,246,0.12)' : 'transparent',
                     border: isSelected ? '1px solid rgba(139,92,246,0.2)' : '1px solid transparent',
