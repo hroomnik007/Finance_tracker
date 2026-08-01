@@ -459,6 +459,8 @@ export async function getSummaryCards(req: AuthRequest, res: Response): Promise<
   const latestFixedRows = await db
     .selectDistinctOn([transactions.userId, transactions.description], {
       amount: transactions.amount,
+      description: transactions.description,
+      date: transactions.date,
     })
     .from(transactions)
     .where(and(
@@ -469,7 +471,23 @@ export async function getSummaryCards(req: AuthRequest, res: Response): Promise<
     ))
     .orderBy(transactions.userId, transactions.description, sql`${transactions.date} DESC`);
 
-  const fixedExpenses = latestFixedRows.reduce((acc, r) => acc + parseFloat(r.amount), 0);
+  // A fixed expense only becomes "spent" once its due day in the requested
+  // month has actually arrived — mirrors the frontend's isFixedExpenseDue
+  // (useFixedExpenses.ts). Months fully in the past always count in full.
+  const today = new Date();
+  const curMonth = today.getMonth() + 1;
+  const curYear = today.getFullYear();
+  const fixedExpenses = latestFixedRows.reduce((acc, r) => {
+    let dayOfMonth = r.date ? Number(r.date.slice(8, 10)) : 1;
+    try {
+      const obj = JSON.parse(r.description ?? "");
+      if (obj && typeof obj.d === "number") dayOfMonth = obj.d;
+    } catch { /* plain text description */ }
+    const isDue = year !== curYear ? year < curYear
+      : month !== curMonth ? month < curMonth
+      : dayOfMonth <= today.getDate();
+    return isDue ? acc + parseFloat(r.amount) : acc;
+  }, 0);
 
   const expenses = Math.round(variableExpenses + fixedExpenses);
   const savingsRate = income > 0 ? Math.round((income - expenses) / income * 100) : 0;
