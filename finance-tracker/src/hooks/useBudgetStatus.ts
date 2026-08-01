@@ -1,22 +1,28 @@
 import { useMemo } from 'react'
 import type { Category, VariableExpense, FixedExpense, BudgetStatus } from '../types'
+import { isFixedExpenseDue } from './useFixedExpenses'
 
 interface UseBudgetStatusParams {
   categories: Category[]
   variableExpenses: VariableExpense[]
   fixedExpenses?: FixedExpense[]
+  month?: number
+  year?: number
 }
 
-export function useBudgetStatus({ categories, variableExpenses, fixedExpenses = [] }: UseBudgetStatusParams): BudgetStatus[] {
-  return useMemo(() =>
-    categories
+export function useBudgetStatus({ categories, variableExpenses, fixedExpenses = [], month, year }: UseBudgetStatusParams): BudgetStatus[] {
+  return useMemo(() => {
+    const now = new Date()
+    const viewMonth = month ?? now.getMonth() + 1
+    const viewYear = year ?? now.getFullYear()
+    return categories
       .filter(c => c.budgetLimit !== undefined && c.budgetLimit > 0)
       .map(cat => {
         const varSpent = variableExpenses
           .filter(e => e.categoryId === cat.id)
           .reduce((sum, e) => sum + e.amount, 0)
         const fixedSpent = fixedExpenses
-          .filter(f => f.categoryId === cat.id)
+          .filter(f => f.categoryId === cat.id && isFixedExpenseDue(f.dayOfMonth, viewMonth, viewYear, now))
           .reduce((sum, f) => sum + f.amount, 0)
         const spent = varSpent + fixedSpent
         const limit = cat.budgetLimit!
@@ -32,6 +38,6 @@ export function useBudgetStatus({ categories, variableExpenses, fixedExpenses = 
           isWarning: percentage >= 70 && percentage < 90,
           isOver: percentage > 100,
         }
-      }),
-  [categories, variableExpenses, fixedExpenses])
+      })
+  }, [categories, variableExpenses, fixedExpenses, month, year])
 }

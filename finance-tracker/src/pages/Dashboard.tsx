@@ -13,7 +13,7 @@ import { HeroCard } from '../components/HeroCard'
 import { CATEGORY_ICON_MAP } from '../utils/categoryIcons'
 import { SAVINGS_ICON_MAP } from '../utils/savingsIcons'
 import { useIncomes } from '../hooks/useIncomes'
-import { useFixedExpenses } from '../hooks/useFixedExpenses'
+import { useFixedExpenses, isFixedExpenseDue } from '../hooks/useFixedExpenses'
 import { useVariableExpenses } from '../hooks/useVariableExpenses'
 import { useCategories } from '../hooks/useCategories'
 import { useFormatters } from '../hooks/useFormatters'
@@ -103,11 +103,16 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
   useEffect(() => { setMounted(true) }, [])
 
   const { incomes: allIncomes } = useIncomes(month, year)
-  const { fixedExpenses } = useFixedExpenses(month, year)
+  const { fixedExpenses: allMonthFixedExpenses } = useFixedExpenses(month, year)
   const { fixedExpenses: allFixedExpenses } = useFixedExpenses()
   const { variableExpenses: allVariableExpenses } = useVariableExpenses(month, year)
   const { categories } = useCategories()
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses, fixedExpenses })
+  // A fixed expense only counts once its due day in the viewed month has
+  // actually passed — see isFixedExpenseDue.
+  const fixedExpenses = useMemo(() =>
+    allMonthFixedExpenses.filter(f => isFixedExpenseDue(f.dayOfMonth, month, year)),
+  [allMonthFixedExpenses, month, year])
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses: allVariableExpenses, fixedExpenses, month, year })
   const sortedBudgetStatuses = useMemo(() =>
     budgetStatuses
       .filter(b => b.limit > 0)
@@ -460,7 +465,14 @@ const upcomingFixed = useMemo(() => {
                     if (itemPieIdx !== -1) selectPie(clickedIndex === itemPieIdx ? null : itemPieIdx)
                   }}
                 >
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.color }} />
+                  {(() => {
+                    const Icon = CATEGORY_ICON_MAP[item.icon ?? ''] ?? Tag
+                    return (
+                      <div style={{ width: 20, height: 20, borderRadius: 7, background: catBg(item.color), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={12} color={item.color} strokeWidth={1.8} />
+                      </div>
+                    )
+                  })()}
                   <span style={{
                     fontFamily: "'Manrope', sans-serif",
                     fontSize: 12,

@@ -272,7 +272,7 @@ export function CategoriesPage() {
   const { variableExpenses } = useVariableExpenses(now.getMonth() + 1, now.getFullYear())
   const { fixedExpenses } = useFixedExpenses()
 
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses })
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses, month: now.getMonth() + 1, year: now.getFullYear() })
 
   // Single most urgent over/near-budget category gets a tinted card — everything else stays neutral
   const worstBudgetStatus = useMemo(() =>

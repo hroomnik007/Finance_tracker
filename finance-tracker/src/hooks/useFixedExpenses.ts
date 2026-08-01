@@ -23,6 +23,18 @@ function encodeDescription(label: string, note: string, dayOfMonth: number): str
   return JSON.stringify({ l: label, n: note, d: dayOfMonth })
 }
 
+// A fixed expense only becomes "spent" once its due day in the viewed month
+// has actually arrived — a bill due on the 10th shouldn't count toward
+// totals on the 1st. Months fully in the past always count in full (their
+// due day has necessarily passed); months in the future never count yet.
+export function isFixedExpenseDue(dayOfMonth: number, month: number, year: number, today: Date = new Date()): boolean {
+  const curMonth = today.getMonth() + 1
+  const curYear = today.getFullYear()
+  if (year !== curYear) return year < curYear
+  if (month !== curMonth) return month < curMonth
+  return dayOfMonth <= today.getDate()
+}
+
 function toFixedExpense(t: ApiTransaction): FixedExpense {
   const fallbackDay = t.date ? new Date(t.date + 'T12:00:00').getDate() : 1
   const parsed = parseDescription(t.description, fallbackDay)

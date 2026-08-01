@@ -81,7 +81,7 @@ export function VariableExpensesPage({ month, year, showToast }: VariableExpense
     useVariableExpenses(month, year)
   const { fixedExpenses } = useFixedExpenses(month, year)
   const { categories, addCategory } = useCategories()
-  const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses })
+  const budgetStatuses = useBudgetStatus({ categories, variableExpenses, fixedExpenses, month, year })
   const { formatAmount, formatDate } = useFormatters()
   const { t, locale } = useTranslation()
 
