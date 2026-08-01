@@ -534,9 +534,10 @@ const upcomingFixed = useMemo(() => {
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
               {pieDisplayIndex !== null && pieData[pieDisplayIndex] ? (() => {
                 const slice = pieData[pieDisplayIndex]
+                const SliceIcon = CATEGORY_ICON_MAP[slice.icon ?? ''] ?? Tag
                 return (
                   <>
-                    <span style={{ fontSize: 18, marginBottom: 2 }}>{slice.icon}</span>
+                    <SliceIcon size={18} color={slice.color} strokeWidth={1.8} style={{ marginBottom: 2 }} />
                     <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
                     <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
                     <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: 0 }}>{totalExpenses > 0 ? Math.round((slice.value / totalExpenses) * 100) : 0}%</p>
