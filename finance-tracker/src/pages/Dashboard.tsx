@@ -443,7 +443,7 @@ const upcomingFixed = useMemo(() => {
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Legend */}
-          <div className="grid grid-cols-1 md:grid-cols-2" style={{ flex: 1, minWidth: 0, rowGap: 6, columnGap: 12, alignContent: 'center' }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(148px, 100%), 1fr))', rowGap: 6, columnGap: 12, alignContent: 'center', maxHeight: 190, overflowY: 'auto' }}>
             {sortedPieData.map((item, i) => {
               const itemPieIdx = pieData.findIndex(d => d.name === item.name)
               const isSelected = clickedIndex !== null && clickedIndex === itemPieIdx
