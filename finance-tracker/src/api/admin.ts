@@ -2,28 +2,28 @@ import axios from 'axios'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
-// In-memory only — never localStorage/sessionStorage, so the token isn't
-// readable by any script running in the page (e.g. via a future XSS bug)
-// and isn't left behind after the tab closes.
-let adminToken: string | null = null
+// The admin session lives entirely in an httpOnly cookie set by the backend
+// (POST /api/auth/admin-login, scoped to /api/admin) — never in JS-readable
+// storage, so it can't be exfiltrated via XSS, and it survives page reloads
+// since the browser — not our JS — holds it.
+const adminClient = axios.create({ baseURL: BASE_URL, withCredentials: true })
 
-export function getAdminToken(): string | null {
-  return adminToken
+/** Resolves true if the admin cookie is present and still valid. */
+export async function checkAdminSession(): Promise<boolean> {
+  try {
+    await adminClient.get('/api/admin/session')
+    return true
+  } catch {
+    return false
+  }
 }
 
-export function setAdminToken(token: string): void {
-  adminToken = token
-}
-
-export function clearAdminToken(): void {
-  adminToken = null
+export async function adminLogout(): Promise<void> {
+  await adminClient.post('/api/admin/logout').catch(() => {})
 }
 
 async function adminGet<T>(path: string): Promise<T> {
-  const token = getAdminToken()
-  const { data } = await axios.get<T>(`${BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+  const { data } = await adminClient.get<T>(path)
   return data
 }
 

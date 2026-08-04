@@ -17,6 +17,8 @@ import {
   refreshTokenExpiry,
   REFRESH_COOKIE,
   REFRESH_COOKIE_OPTIONS,
+  ADMIN_COOKIE,
+  ADMIN_COOKIE_OPTIONS,
 } from "../lib/tokens";
 import { sendEmail, verificationEmailHtml, resetPasswordEmailHtml, resetPasswordEmailText } from "../lib/email";
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories";
@@ -522,7 +524,13 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
   }
 
   const token = signAdminToken();
-  res.json({ token });
+  res.cookie(ADMIN_COOKIE, token, ADMIN_COOKIE_OPTIONS);
+  res.json({ success: true });
+}
+
+export async function adminLogout(_req: Request, res: Response): Promise<void> {
+  res.clearCookie(ADMIN_COOKIE, { path: ADMIN_COOKIE_OPTIONS.path });
+  res.json({ success: true });
 }
 
 export async function updateWeeklyEmail(req: AuthRequest, res: Response): Promise<void> {

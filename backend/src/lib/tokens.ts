@@ -78,3 +78,13 @@ export const REFRESH_COOKIE_OPTIONS = {
   maxAge: 30 * 24 * 60 * 60 * 1000,
   path: "/api/auth",
 };
+
+export const ADMIN_COOKIE = "adminToken";
+
+export const ADMIN_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+  maxAge: 4 * 60 * 60 * 1000,
+  path: "/api/admin",
+};

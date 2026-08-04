@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { adminLogin } from '../api/auth'
-import { setAdminToken } from '../api/admin'
 import { AuthThemeToggle } from '../components/AuthThemeToggle'
 import { GlassCard } from '../components/GlassCard'
 
@@ -22,8 +21,7 @@ export function AdminLoginPage({ onSuccess }: AdminLoginPageProps) {
     setError(null)
     setLoading(true)
     try {
-      const { token } = await adminLogin(username, password)
-      setAdminToken(token)
+      await adminLogin(username, password)
       onSuccess()
     } catch {
       setError('Nesprávne prihlasovacie údaje.')

@@ -3,7 +3,7 @@ import { Users, UserPlus, CreditCard, Flame, LogOut, Check, X } from 'lucide-rea
 import { AdminLoginPage } from './AdminLogin'
 import { GlassCard } from '../components/GlassCard'
 import {
-  getAdminToken, clearAdminToken,
+  checkAdminSession, adminLogout,
   fetchAdminStats, fetchAdminUsers,
   type AdminStats, type AdminUser,
 } from '../api/admin'
@@ -14,14 +14,19 @@ export function AdminPage() {
     return () => { document.title = 'Finvu' }
   }, [])
 
-  const [hasToken, setHasToken] = useState(() => !!getAdminToken())
+  // undefined = still checking the httpOnly admin cookie with the server
+  const [hasSession, setHasSession] = useState<boolean | undefined>(undefined)
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
   const [error, setError] = useState<string | null>(null)
-  const loading = hasToken && !stats && !error
+  const loading = hasSession && !stats && !error
 
   useEffect(() => {
-    if (!hasToken) return
+    checkAdminSession().then(setHasSession)
+  }, [])
+
+  useEffect(() => {
+    if (!hasSession) return
     Promise.all([fetchAdminStats(), fetchAdminUsers()])
       .then(([s, u]) => {
         setStats(s)
@@ -29,21 +34,28 @@ export function AdminPage() {
       })
       .catch((err) => {
         if (err?.response?.status === 401) {
-          clearAdminToken()
-          setHasToken(false)
+          setHasSession(false)
         } else {
           setError('Nepodarilo sa načítať admin dáta.')
         }
       })
-  }, [hasToken])
+  }, [hasSession])
 
-  if (!hasToken) {
-    return <AdminLoginPage onSuccess={() => setHasToken(true)} />
+  if (hasSession === undefined) {
+    return (
+      <div style={{ minHeight: '100svh', background: 'var(--aurora-bg-image)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontFamily: "'Manrope', sans-serif", color: 'var(--aurora-lo)', fontSize: 16 }}>Načítavam...</p>
+      </div>
+    )
+  }
+
+  if (!hasSession) {
+    return <AdminLoginPage onSuccess={() => setHasSession(true)} />
   }
 
   function handleLogout() {
-    clearAdminToken()
-    setHasToken(false)
+    adminLogout()
+    setHasSession(false)
     setStats(null)
     setUsers([])
     setError(null)

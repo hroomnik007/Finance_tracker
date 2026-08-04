@@ -1,14 +1,14 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { verifyAdminToken } from "../lib/tokens";
+import { verifyAdminToken, ADMIN_COOKIE } from "../lib/tokens";
 import { getStats, getUserList } from "../controllers/admin.controller";
+import { adminLogout } from "../controllers/auth.controller";
 
 function authenticateAdmin(req: Request, res: Response, next: NextFunction): void {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
+  const token: string | undefined = req.cookies?.[ADMIN_COOKIE];
+  if (!token) {
     res.status(401).json({ error: "Admin token required" });
     return;
   }
-  const token = header.slice(7);
   try {
     verifyAdminToken(token);
     next();
@@ -19,7 +19,10 @@ function authenticateAdmin(req: Request, res: Response, next: NextFunction): voi
 
 const router = Router();
 
+router.post("/logout", adminLogout);
+
 router.use(authenticateAdmin);
+router.get("/session", (_req, res) => res.json({ ok: true }));
 router.get("/stats", getStats);
 router.get("/users", getUserList);
 
