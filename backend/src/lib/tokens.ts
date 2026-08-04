@@ -88,3 +88,22 @@ export const ADMIN_COOKIE_OPTIONS = {
   maxAge: 4 * 60 * 60 * 1000,
   path: "/api/admin",
 };
+
+// sameSite: "none" is required because the admin UI (finvu.pedani.eu) and
+// API (api.pedani.eu) are different subdomains — but that also means the
+// browser attaches ADMIN_COOKIE on cross-site requests, opening a CSRF hole
+// on any mutating /api/admin route. This second cookie is deliberately NOT
+// httpOnly so frontend JS can read it and echo it back as a header
+// (double-submit pattern) — requireAdminCsrf in routes/admin.ts rejects any
+// non-GET request where the header doesn't match this cookie, which a
+// cross-site attacker cannot forge since they can't read our cookies.
+export const ADMIN_CSRF_COOKIE = "adminCsrf";
+export const ADMIN_CSRF_HEADER = "x-admin-csrf-token";
+
+export const ADMIN_CSRF_COOKIE_OPTIONS = {
+  httpOnly: false,
+  secure: env.NODE_ENV === "production",
+  sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+  maxAge: 4 * 60 * 60 * 1000,
+  path: "/api/admin",
+};
