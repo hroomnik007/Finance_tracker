@@ -258,6 +258,14 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
   if (!matchedRow) { res.status(401).json({ error: "Refresh token not recognized or expired" }); return; }
 
+  const [tokenUser] = await db.select({ isDeactivated: users.isDeactivated }).from(users).where(eq(users.id, payload.userId)).limit(1);
+  if (!tokenUser || tokenUser.isDeactivated) {
+    await db.delete(refreshTokens).where(eq(refreshTokens.userId, payload.userId));
+    res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path });
+    res.status(403).json({ error: "Účet je deaktivovaný.", code: "ACCOUNT_DEACTIVATED" });
+    return;
+  }
+
   if (matchedRow.revokedAt) {
     // This token was already rotated away — someone is replaying an old
     // refresh token, which means it was likely stolen. Kill every active
@@ -612,6 +620,11 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
 
   let [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
+  if (user?.isDeactivated) {
+    res.status(403).json({ error: "Váš účet je deaktivovaný. Pre reaktiváciu kontaktujte podporu.", code: "ACCOUNT_DEACTIVATED" });
+    return;
+  }
+
   if (!user) {
     const [newUser] = await db
       .insert(users)
@@ -683,6 +696,11 @@ export async function pinLogin(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (user.isDeactivated) {
+    res.status(403).json({ error: "Váš účet je deaktivovaný. Pre reaktiváciu kontaktujte podporu.", code: "ACCOUNT_DEACTIVATED" });
+    return;
+  }
+
   const { accessToken, sessionId } = await issueTokens(res, user.id, user.email, req);
   res.json({ user: userPublic(user), accessToken, sessionId });
 }
@@ -728,6 +746,8 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
 
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
   await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path });
   res.json({ success: true });
 }
 
@@ -783,6 +803,7 @@ export async function deleteSession(req: AuthRequest, res: Response): Promise<vo
 export async function deactivateAccount(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!
   await db.update(users).set({ isDeactivated: true, updatedAt: new Date() }).where(eq(users.id, userId))
+  await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId))
   res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path })
   res.json({ success: true })
 }

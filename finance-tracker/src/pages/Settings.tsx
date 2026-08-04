@@ -507,6 +507,14 @@ export function SettingsPage() {
   const [exportModalOpen, setExportModalOpen] = useState(false)
   const [exportGenerating, setExportGenerating] = useState(false)
 
+  // Prevents CSV/formula injection: a field starting with =, +, -, @, tab or
+  // CR would be interpreted as a live formula by Excel/Sheets when the user
+  // opens the exported file (e.g. a transaction description of
+  // `=HYPERLINK("http://evil.example","x")`).
+  function sanitizeSpreadsheetField(value: string): string {
+    return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
+  }
+
   function periodToIsoRange(period: ExportPeriod): { fromISO: string; toISO: string } {
     const fromISO = `${period.fromYear}-${String(period.fromMonth).padStart(2, '0')}-01`
     const lastDay = new Date(period.toYear, period.toMonth, 0).getDate()
@@ -517,7 +525,7 @@ export function SettingsPage() {
   async function handleExportCSV(fromISO: string, toISO: string) {
     const transactions = await fetchTransactionsInRange(fromISO, toISO)
     const rows = transactions.map(t =>
-      `${t.date},${t.type},"${(t.categoryName ?? '').replace(/"/g, "'")}","${(t.description ?? '').replace(/"/g, "'")}",${t.amount}`
+      `${t.date},${t.type},"${sanitizeSpreadsheetField((t.categoryName ?? '').replace(/"/g, "'"))}","${sanitizeSpreadsheetField((t.description ?? '').replace(/"/g, "'"))}",${t.amount}`
     )
     downloadBlob(
       new Blob([['Dátum,Typ,Kategória,Poznámka,Suma', ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }),
@@ -560,12 +568,12 @@ export function SettingsPage() {
     const transactionRows = transactions.map(t => ({
       Dátum: t.date,
       Typ: t.type,
-      Kategória: t.categoryName ?? '',
-      Poznámka: t.description ?? '',
+      Kategória: sanitizeSpreadsheetField(t.categoryName ?? ''),
+      Poznámka: sanitizeSpreadsheetField(t.description ?? ''),
       Suma: t.amount,
     }))
     const categoryRows = categories.map(c => ({
-      Názov: c.name,
+      Názov: sanitizeSpreadsheetField(c.name),
       Typ: c.type,
       Limit: c.budgetLimit ?? '',
     }))

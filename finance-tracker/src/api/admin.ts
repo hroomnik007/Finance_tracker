@@ -2,18 +2,21 @@ import axios from 'axios'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
-export const ADMIN_TOKEN_KEY = 'admin_token'
+// In-memory only — never localStorage/sessionStorage, so the token isn't
+// readable by any script running in the page (e.g. via a future XSS bug)
+// and isn't left behind after the tab closes.
+let adminToken: string | null = null
 
 export function getAdminToken(): string | null {
-  return localStorage.getItem(ADMIN_TOKEN_KEY)
+  return adminToken
 }
 
 export function setAdminToken(token: string): void {
-  localStorage.setItem(ADMIN_TOKEN_KEY, token)
+  adminToken = token
 }
 
 export function clearAdminToken(): void {
-  localStorage.removeItem(ADMIN_TOKEN_KEY)
+  adminToken = null
 }
 
 async function adminGet<T>(path: string): Promise<T> {
