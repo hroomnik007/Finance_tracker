@@ -293,7 +293,7 @@ export function NotificationCenter({ onNavigate }: NotificationCenterProps) {
           width: dropPos.width,
           maxHeight: 'min(480px, 70svh)',
           display: 'flex', flexDirection: 'column',
-          background: 'var(--aurora-panel)',
+          background: 'var(--aurora-glass)',
           border: '1px solid var(--aurora-gline)', borderRadius: 20,
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           boxShadow: '0 12px 40px rgba(0,0,0,0.35)', zIndex: 9000,
