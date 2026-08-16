@@ -227,7 +227,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettingsContext()
   const { t } = useTranslation()
   const { deleteAccount, user, updateMonthlyEmail, refreshUser, logout } = useAuth()
-  const { setupPin, hasPin, removePin, verifyPin: verifyLockPin } = usePinLockContext()
+  const { setupPin, hasPin, removePin } = usePinLockContext()
 
   const compactStorageKey = window.innerWidth < 768 ? 'finvu_compact_mobile' : 'finvu_compact_desktop'
   const compactDefault = window.innerWidth < 768
@@ -440,17 +440,21 @@ export function SettingsPage() {
     setPinRemoveInput(next)
     if (next.length === 4) {
       setPinRemoveLoading(true)
-      const ok = await verifyLockPin(next)
-      if (!ok) {
-        setPinRemoveShake(true)
-        setPinRemoveError(t.profile.incorrectPin)
-        setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
-      } else {
+      // removePin() itself verifies currentPin server-side (direct bcrypt
+      // compare, independent of the pinDevice cookie) — pre-checking via
+      // verifyLockPin (pinLogin) here was wrong: pinLogin also requires a
+      // valid device-binding cookie, so it spuriously rejected a correct PIN
+      // on any browser that never completed PIN setup.
+      try {
         await removePin(undefined, next)
         setPinRemoveOpen(false)
         setPinRemoveInput('')
         setPinRemoveError(null)
         setPinRemoveLoading(false)
+      } catch {
+        setPinRemoveShake(true)
+        setPinRemoveError(t.profile.incorrectPin)
+        setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
       }
     }
   }
