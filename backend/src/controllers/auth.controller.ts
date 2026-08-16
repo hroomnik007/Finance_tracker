@@ -125,6 +125,31 @@ async function verifyAndSlidePinDeviceToken(res: Response, userId: string, req: 
   return true;
 }
 
+// Pre-login status check for the PIN login screen: lets the frontend tell
+// "this device was never bound to a PIN" apart from "wrong PIN" before the
+// user even types anything. Deliberately takes no email/identity input and
+// returns nothing but a boolean — it must be indistinguishable for a
+// nonexistent email, an account with no PIN set, and a foreign device, since
+// all three of those states, and "cookie present but expired/revoked",
+// collapse to the same false here. Does NOT slide the token's expiry or
+// touch lastUsedAt (this is a status check, not a use of the device), and is
+// entirely independent of the per-account PIN lockout.
+export async function pinDeviceStatus(req: Request, res: Response): Promise<void> {
+  const token: string | undefined = req.cookies?.[PIN_DEVICE_COOKIE];
+  if (!token) { res.json({ deviceRegistered: false }); return; }
+
+  const rows = await db
+    .select({ tokenHash: pinDeviceTokens.tokenHash })
+    .from(pinDeviceTokens)
+    .where(gt(pinDeviceTokens.expiresAt, new Date()));
+
+  let deviceRegistered = false;
+  for (const row of rows) {
+    if (await compareToken(token, row.tokenHash)) { deviceRegistered = true; break; }
+  }
+  res.json({ deviceRegistered });
+}
+
 const PIN_LOCKOUT_THRESHOLD = 5;
 const PIN_LOCKOUT_MS = 15 * 60 * 1000;
 
@@ -895,6 +920,60 @@ export async function removePin(req: AuthRequest, res: Response): Promise<void> 
     pinHash: null, pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
   }).where(eq(users.id, userId));
   await revokePinDeviceTokens(res, userId);
+
+  res.json({ success: true });
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// "Moje zariadenia" — lets a logged-in user see and revoke which browsers
+// are PIN-bound to their account. isCurrentDevice is derived here (not
+// stored) by comparing this request's own pinDevice cookie against each
+// row's hash — never expose tokenHash itself.
+export async function getPinDevices(req: AuthRequest, res: Response): Promise<void> {
+  const rows = await db
+    .select({
+      id: pinDeviceTokens.id,
+      label: pinDeviceTokens.label,
+      tokenHash: pinDeviceTokens.tokenHash,
+      createdAt: pinDeviceTokens.createdAt,
+      lastUsedAt: pinDeviceTokens.lastUsedAt,
+      expiresAt: pinDeviceTokens.expiresAt,
+    })
+    .from(pinDeviceTokens)
+    .where(eq(pinDeviceTokens.userId, req.userId!))
+    .orderBy(desc(pinDeviceTokens.lastUsedAt));
+
+  const cookieToken: string | undefined = req.cookies?.[PIN_DEVICE_COOKIE];
+  const devices = await Promise.all(rows.map(async (row) => ({
+    id: row.id,
+    label: row.label,
+    createdAt: row.createdAt,
+    lastUsedAt: row.lastUsedAt,
+    expiresAt: row.expiresAt,
+    isCurrentDevice: !!cookieToken && await compareToken(cookieToken, row.tokenHash),
+  })));
+
+  res.json({ data: devices });
+}
+
+export async function deletePinDevice(req: AuthRequest, res: Response): Promise<void> {
+  const { id } = req.params as { id: string };
+  if (!UUID_RE.test(id)) { res.status(404).json({ error: "Zariadenie nenájdené." }); return; }
+
+  // Scoped to req.userId — never trust :id alone, or one user could revoke
+  // another user's device token by guessing/enumerating IDs.
+  const deleted = await db
+    .delete(pinDeviceTokens)
+    .where(and(eq(pinDeviceTokens.id, id), eq(pinDeviceTokens.userId, req.userId!)))
+    .returning({ tokenHash: pinDeviceTokens.tokenHash });
+
+  if (deleted.length === 0) { res.status(404).json({ error: "Zariadenie nenájdené." }); return; }
+
+  const cookieToken: string | undefined = req.cookies?.[PIN_DEVICE_COOKIE];
+  if (cookieToken && await compareToken(cookieToken, deleted[0].tokenHash)) {
+    res.clearCookie(PIN_DEVICE_COOKIE, { path: PIN_DEVICE_COOKIE_OPTIONS.path });
+  }
 
   res.json({ success: true });
 }

@@ -3,7 +3,7 @@ import { Eye, EyeOff, ArrowRight, X } from 'lucide-react'
 import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
-import { getAuthMethods } from '../api/auth'
+import { getAuthMethods, getPinDeviceStatus } from '../api/auth'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { AuthThemeToggle } from '../components/AuthThemeToggle'
 import { PinKeypad } from '../components/PinKeypad'
@@ -29,6 +29,10 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   const [pinValue, setPinValue] = useState('')
   const [pinLoading, setPinLoading] = useState(false)
   const [pinError, setPinError] = useState<string | null>(null)
+  // null = still checking; this is what tells the modal apart from a "wrong
+  // PIN" screen when the device was simply never bound (see backend's
+  // pin-device-status endpoint / PIN device-binding architecture).
+  const [pinDeviceRegistered, setPinDeviceRegistered] = useState<boolean | null>(null)
 
   const [authMethods, setAuthMethods] = useState({ pin: false, google: false, password: false })
   const lastPinTapRef = useRef(0)
@@ -125,14 +129,28 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
   }, [pinLoading])
 
   useEffect(() => {
-    if (!pinModalOpen) return
+    if (!pinModalOpen || pinDeviceRegistered !== true) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key >= '0' && e.key <= '9') handlePinKey(e.key)
       else if (e.key === 'Backspace') handlePinKey('backspace')
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [pinModalOpen, handlePinKey])
+  }, [pinModalOpen, pinDeviceRegistered, handlePinKey])
+
+  // Checked on every modal open, not just once — the PIN device cookie can
+  // change between opens (e.g. PIN was just set up on this browser in
+  // another tab). Falls back to "registered" on a network error so a
+  // transient failure doesn't block the existing, previously-working flow.
+  useEffect(() => {
+    if (!pinModalOpen) return
+    setPinDeviceRegistered(null)
+    let cancelled = false
+    getPinDeviceStatus()
+      .then(({ deviceRegistered }) => { if (!cancelled) setPinDeviceRegistered(deviceRegistered) })
+      .catch(() => { if (!cancelled) setPinDeviceRegistered(true) })
+    return () => { cancelled = true }
+  }, [pinModalOpen])
 
   const pillInput = (name: string): React.CSSProperties => ({
     width: '100%',
@@ -361,9 +379,31 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
               </button>
             </div>
 
-            <PinKeypad length={4} digits={pinValue.length} disabled={pinLoading} onKey={handlePinKey} />
-
-            {pinError && <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--aurora-rose)', margin: '16px 0 0', fontFamily: "'Manrope', sans-serif" }}>{pinError}</p>}
+            {pinDeviceRegistered === false ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
+                <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--aurora-lo)', margin: 0, fontFamily: "'Manrope', sans-serif", lineHeight: 1.5 }}>
+                  {t.auth.pinDeviceNotRegistered}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPinModalOpen(false)}
+                  style={{
+                    width: '100%', height: 44,
+                    background: 'linear-gradient(135deg,var(--aurora-violet),var(--aurora-fuchsia))',
+                    color: 'white', border: 'none', borderRadius: 14,
+                    fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                    fontFamily: "'Outfit', sans-serif",
+                  }}
+                >
+                  {t.auth.pinDeviceNotRegisteredCta}
+                </button>
+              </div>
+            ) : (
+              <>
+                <PinKeypad length={4} digits={pinValue.length} disabled={pinLoading || pinDeviceRegistered === null} onKey={handlePinKey} />
+                {pinError && <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--aurora-rose)', margin: '16px 0 0', fontFamily: "'Manrope', sans-serif" }}>{pinError}</p>}
+              </>
+            )}
           </div>
         </div>
       )}

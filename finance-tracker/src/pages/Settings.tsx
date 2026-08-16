@@ -8,7 +8,9 @@ import {
 import { CsvImportModal } from '../components/CsvImportModal'
 import { GlassCard } from '../components/GlassCard'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, updateUserSettings, changePassword, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
+import { updateWeeklyEmail, updateUserSettings, changePassword, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount, getPinDevices, deletePinDevice } from '../api/auth'
+import type { PinDevice } from '../api/auth'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -406,6 +408,35 @@ export function SettingsPage() {
       setSessions(prev => prev.filter(s => s.id !== id))
     } catch { /* ignore */ }
     finally { setSessionDeletingId(null) }
+  }
+
+  // PIN devices ("Moje zariadenia")
+  const [pinDevices, setPinDevices] = useState<PinDevice[]>([])
+  const [pinDevicesLoading, setPinDevicesLoading] = useState(false)
+  const [pinDevicesModalOpen, setPinDevicesModalOpen] = useState(false)
+  const [pinDeviceDeletingId, setPinDeviceDeletingId] = useState<string | null>(null)
+  const [pinDeviceConfirmId, setPinDeviceConfirmId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (activeSection !== 'security' || !hasPin) return
+    setPinDevicesLoading(true)
+    getPinDevices().then(setPinDevices).catch(() => {}).finally(() => setPinDevicesLoading(false))
+  }, [activeSection, hasPin])
+
+  async function handleRevokePinDevice(id: string) {
+    setPinDeviceDeletingId(id)
+    try {
+      await deletePinDevice(id)
+      setPinDevices(prev => prev.filter(d => d.id !== id))
+    } catch { /* ignore */ }
+    finally { setPinDeviceDeletingId(null); setPinDeviceConfirmId(null) }
+  }
+
+  // Revoking the device you're currently signed in on needs an extra warning
+  // — it silently kills PIN login for this exact browser.
+  function requestRevokePinDevice(device: PinDevice) {
+    if (device.isCurrentDevice) { setPinDeviceConfirmId(device.id); return }
+    void handleRevokePinDevice(device.id)
   }
 
   // Deactivate account
@@ -1246,6 +1277,20 @@ export function SettingsPage() {
                 />
               </SectionCard>
 
+              {/* Moje zariadenia (PIN) — collapsed summary row, only relevant once PIN is set up */}
+              {hasPin && (
+                <SectionCard>
+                  <ChevronRow
+                    icon={KeyRound}
+                    iconColor="var(--aurora-lo)"
+                    iconBg="var(--aurora-glass)"
+                    label={t.settings.pinDevicesTitle}
+                    sublabel={pinDevicesLoading ? 'Načítavam...' : `${pinDevices.length} ${pinDevices.length === 1 ? 'zariadenie' : pinDevices.length < 5 ? 'zariadenia' : 'zariadení'}`}
+                    onClick={() => setPinDevicesModalOpen(true)}
+                  />
+                </SectionCard>
+              )}
+
               {/* DEAKTIVÁCIA — collapsed summary row */}
               <SectionCard>
                 <ChevronRow
@@ -1604,6 +1649,63 @@ export function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* ── PIN DEVICES MODAL ("Moje zariadenia") ── */}
+      {pinDevicesModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 fade-in" onClick={() => setPinDevicesModalOpen(false)}>
+          <div style={{ background: 'var(--aurora-panel)', border: '1px solid var(--aurora-gline)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 420, maxHeight: '80vh', overflowY: 'auto' }} className="modal-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--aurora-hi)', margin: 0 }}>{t.settings.pinDevicesTitle}</h2>
+              <button onClick={() => setPinDevicesModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4 }}><X size={16} /></button>
+            </div>
+            {pinDevicesLoading ? (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>Načítavam...</p>
+            ) : pinDevices.length === 0 ? (
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, color: 'var(--aurora-faint)' }}>{t.settings.pinDeviceNoDevices}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {pinDevices.map(device => (
+                  <GlassCard key={device.id} radius={14} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--aurora-glass)', border: '1px solid var(--aurora-gline)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <KeyRound size={18} strokeWidth={1.5} color="var(--aurora-lo)" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 500, color: 'var(--aurora-hi)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.label ?? 'Neznáme zariadenie'}</p>
+                        {device.isCurrentDevice && (
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(52,211,153,0.15)', color: 'var(--aurora-emerald)', letterSpacing: '0.05em', flexShrink: 0 }}>
+                            {t.settings.pinDeviceCurrentBadge}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0 }}>
+                        {t.settings.pinDeviceLastUsed}: {new Date(device.lastUsedAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', margin: 0 }}>
+                        {t.settings.pinDeviceExpires}: {new Date(device.expiresAt).toLocaleDateString('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => requestRevokePinDevice(device)}
+                      disabled={pinDeviceDeletingId === device.id}
+                      style={{ flexShrink: 0, background: 'rgba(251,113,133,0.1)', border: '1px solid rgba(251,113,133,0.25)', color: 'var(--aurora-rose)', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Manrope', sans-serif" }}
+                    >
+                      {t.settings.pinDeviceRevoke}
+                    </button>
+                  </GlassCard>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!pinDeviceConfirmId}
+        message={t.settings.revokeCurrentDeviceWarning}
+        onConfirm={() => pinDeviceConfirmId && handleRevokePinDevice(pinDeviceConfirmId)}
+        onCancel={() => setPinDeviceConfirmId(null)}
+      />
 
       {/* ── DEACTIVATION MODAL ── */}
       {deactivationModalOpen && (

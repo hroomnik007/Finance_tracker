@@ -134,6 +134,33 @@ export async function deletePin(currentPassword?: string, currentPin?: string): 
   await apiClient.delete('/api/auth/pin', { data: { currentPassword, currentPin } })
 }
 
+// Pre-login check for the PIN login screen: does this browser have a valid
+// pinDevice cookie at all? Lets the UI distinguish "never set up on this
+// device" from "wrong PIN" before the user types anything. No auth/identity
+// input — the cookie is sent automatically (withCredentials).
+export async function getPinDeviceStatus(): Promise<{ deviceRegistered: boolean }> {
+  const { data } = await apiClient.get('/api/auth/pin-device-status')
+  return data
+}
+
+export interface PinDevice {
+  id: string
+  label: string | null
+  createdAt: string
+  lastUsedAt: string
+  expiresAt: string
+  isCurrentDevice: boolean
+}
+
+export async function getPinDevices(): Promise<PinDevice[]> {
+  const { data } = await apiClient.get('/api/auth/pin-devices')
+  return (data as { data: PinDevice[] }).data
+}
+
+export async function deletePinDevice(id: string): Promise<void> {
+  await apiClient.delete(`/api/auth/pin-devices/${id}`)
+}
+
 export async function webauthnRegisterOptions(): Promise<PublicKeyCredentialCreationOptionsJSON> {
   const { data } = await apiClient.get('/api/auth/webauthn/register-options')
   return data

@@ -6,6 +6,7 @@ import {
   updateAvatar, demoLogin, adminLogin, updateWeeklyEmail, googleAuth, updateUserSettings,
   pinLogin, updatePin, removePin, changePassword, getAuthMethods, sessionCheck, pingSession,
   getSessions, deleteSession, deactivateAccount,
+  pinDeviceStatus, getPinDevices, deletePinDevice,
 } from "../controllers/auth.controller";
 import {
   webauthnRegisterOptions, webauthnRegisterVerify,
@@ -36,6 +37,17 @@ const pinLoginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Príliš veľa pokusov PIN. Skúste za 10 minút." },
+});
+
+// Not an auth endpoint with sensitive failure consequences (it only ever
+// reveals "does this cookie match a valid device token"), but still worth a
+// cap since it's unauthenticated and open to anonymous polling.
+const pinDeviceStatusLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Príliš veľa pokusov. Skúste za 10 minút." },
 });
 
 // GET /webauthn/authenticate-options is intentionally unauthenticated (a
@@ -107,8 +119,11 @@ router.post("/demo-login",      registerLimiter, demoLogin);
 router.post("/admin-login",     loginLimiter, adminLogin);
 router.post("/google",          loginLimiter, googleAuth);
 router.post("/pin-login",       pinLoginLimiter, pinLogin);
+router.get("/pin-device-status", pinDeviceStatusLimiter, pinDeviceStatus);
 router.patch("/pin",            authenticateToken, updatePin);
 router.delete("/pin",           authenticateToken, removePin);
+router.get("/pin-devices",      authenticateToken, getPinDevices);
+router.delete("/pin-devices/:id", authenticateToken, deletePinDevice);
 router.patch("/password",       authenticateToken, changePassword);
 
 // Sessions
