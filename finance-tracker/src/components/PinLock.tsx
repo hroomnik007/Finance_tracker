@@ -48,15 +48,6 @@ export function PinLock({ onVerify, onFallbackToLogin }: PinLockProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pin])
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') handleKey(e.key)
-      else if (e.key === 'Backspace') handleKey('backspace')
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,

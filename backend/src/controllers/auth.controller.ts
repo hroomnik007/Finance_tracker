@@ -887,15 +887,27 @@ export async function updatePin(req: AuthRequest, res: Response): Promise<void> 
     }
   }
 
-  const pinHash = await bcrypt.hash(pin, env.BCRYPT_ROUNDS);
-  await db.update(users).set({
-    pinHash, pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
-  }).where(eq(users.id, userId));
+  // Re-entering the SAME PIN value (e.g. registering PIN login on a second
+  // device with the PIN you already use) must not revoke device tokens that
+  // were never actually invalidated — only an actual value change does that.
+  const isSamePin = !!user.pinHash && await bcrypt.compare(pin, user.pinHash);
 
-  // A changed PIN invalidates every device previously bound to the old one —
-  // this browser/device gets a fresh token, everyone else must re-set-up.
-  await revokePinDeviceTokens(res, userId);
-  await issuePinDeviceToken(res, userId, req);
+  if (isSamePin) {
+    await db.update(users).set({
+      pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
+    }).where(eq(users.id, userId));
+    await issuePinDeviceToken(res, userId, req);
+  } else {
+    const pinHash = await bcrypt.hash(pin, env.BCRYPT_ROUNDS);
+    await db.update(users).set({
+      pinHash, pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
+    }).where(eq(users.id, userId));
+
+    // A changed PIN invalidates every device previously bound to the old one —
+    // this browser/device gets a fresh token, everyone else must re-set-up.
+    await revokePinDeviceTokens(res, userId);
+    await issuePinDeviceToken(res, userId, req);
+  }
 
   res.json({ success: true });
 }

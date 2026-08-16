@@ -128,15 +128,10 @@ export function LoginPage({ onNavigateRegister, onNavigateForgotPassword }: Logi
     setPinValue(prev => (prev.length >= 4 ? prev : prev + k))
   }, [pinLoading])
 
-  useEffect(() => {
-    if (!pinModalOpen || pinDeviceRegistered !== true) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') handlePinKey(e.key)
-      else if (e.key === 'Backspace') handlePinKey('backspace')
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [pinModalOpen, pinDeviceRegistered, handlePinKey])
+  // Physical-keyboard entry is now handled inside PinKeypad itself (see
+  // components/PinKeypad.tsx) — it's only rendered below while pinModalOpen
+  // && pinDeviceRegistered !== false, and disabled (which also mutes its
+  // keyboard listener) while pinDeviceRegistered === null or pinLoading.
 
   // Checked on every modal open, not just once — the PIN device cookie can
   // change between opens (e.g. PIN was just set up on this browser in

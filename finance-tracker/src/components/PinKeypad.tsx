@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Delete } from 'lucide-react'
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫']
@@ -11,6 +12,21 @@ interface PinKeypadProps {
 }
 
 export function PinKeypad({ length, digits, shake, disabled, onKey }: PinKeypadProps) {
+  // Single source of physical-keyboard support for every screen that renders
+  // this keypad (PIN login, PIN lock re-auth, PIN removal, ...) — scoped to
+  // this component's own mount lifecycle, which already matches "listener
+  // only active while the modal/screen showing the keypad is open" since
+  // callers only render PinKeypad while that screen is up.
+  useEffect(() => {
+    if (disabled) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') onKey(e.key)
+      else if (e.key === 'Backspace') onKey('backspace')
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [disabled, onKey])
+
   return (
     <>
       <div

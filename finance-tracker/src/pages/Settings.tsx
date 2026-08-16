@@ -27,6 +27,7 @@ import { useTranslation } from '../i18n'
 import { useAuth } from '../context/AuthContext'
 import { usePinLockContext } from '../context/PinLockContext'
 import { PinSetupModal } from '../components/PinSetupModal'
+import { PinKeypad } from '../components/PinKeypad'
 import { ExportDataModal } from '../components/ExportDataModal'
 import type { ExportFormat, ExportPeriod } from '../components/ExportDataModal'
 import type { ApiTransaction, UserSession } from '../types'
@@ -465,7 +466,7 @@ export function SettingsPage() {
 
   async function handlePinRemoveKey(k: string) {
     if (pinRemoveLoading) return
-    if (k === '⌫') { setPinRemoveInput(p => p.slice(0, -1)); return }
+    if (k === 'backspace') { setPinRemoveInput(p => p.slice(0, -1)); return }
     if (pinRemoveInput.length >= 4) return
     const next = pinRemoveInput + k
     setPinRemoveInput(next)
@@ -1359,41 +1360,11 @@ export function SettingsPage() {
               <button onClick={() => setPinRemoveOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--aurora-faint)', padding: 4, display: 'flex' }}><X size={16} /></button>
             </div>
             <p style={{ fontSize: 13, color: 'var(--aurora-faint)', marginBottom: 20 }}>{t.settings.removePinConfirm}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-              <div style={{ display: 'flex', gap: 14 }} className={pinRemoveShake ? 'pin-lock-shake' : ''}>
-                {[0,1,2,3].map(i => (
-                  <div key={i} style={{
-                    width: 14, height: 14, borderRadius: '50%',
-                    background: pinRemoveInput.length > i ? '#7C3AED' : 'transparent',
-                    border: '2px solid ' + (pinRemoveInput.length > i ? '#7C3AED' : '#4C3A8A'),
-                    transition: 'all 0.15s',
-                  }} />
-                ))}
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <PinKeypad length={4} digits={pinRemoveInput.length} shake={pinRemoveShake} disabled={pinRemoveLoading} onKey={handlePinRemoveKey} />
               {pinRemoveError && (
                 <p style={{ fontSize: 12, color: 'var(--aurora-rose)', margin: 0 }}>{pinRemoveError}</p>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gap: 8 }}>
-                {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((k, i) => (
-                  k === '' ? <div key={i} /> : (
-                    <button
-                      key={i}
-                      onClick={() => handlePinRemoveKey(k)}
-                      style={{
-                        width: 60, height: 60, borderRadius: '50%',
-                        background: k === '⌫' ? 'transparent' : 'var(--aurora-hover)',
-                        border: k === '⌫' ? 'none' : '1px solid var(--aurora-gline)',
-                        color: 'var(--aurora-hi)', fontSize: k === '⌫' ? 16 : 20, fontWeight: 600,
-                        cursor: pinRemoveLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: pinRemoveLoading ? 0.5 : 1,
-                      }}
-                    >
-                      {k === '⌫' ? '⌫' : k}
-                    </button>
-                  )
-                ))}
-              </div>
             </div>
           </div>
         </div>
