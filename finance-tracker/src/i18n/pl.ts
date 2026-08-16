@@ -409,7 +409,7 @@ export const pl: Translations = {
     devicesAndSessionsTitle: 'Urządzenia i sesje',
     activeSessions: 'Aktywne sesje',
     activeSessionsSubtitle: 'Urządzenia z aktywnym logowaniem',
-    pinDevicesTitle: 'Moje urządzenia',
+    pinDevicesTitle: 'Szybki dostęp PIN',
     pinDevicesSubtitle: 'Urządzenia z ustawionym dostępem PIN',
     pinDeviceRevoke: 'Odwołaj dostęp',
     pinDeviceCurrentBadge: 'TO URZĄDZENIE',

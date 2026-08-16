@@ -412,7 +412,7 @@ export function SettingsPage() {
     finally { setSessionDeletingId(null) }
   }
 
-  // PIN devices ("Moje zariadenia")
+  // PIN devices ("PIN rýchly prístup")
   const [pinDevices, setPinDevices] = useState<PinDevice[]>([])
   const [pinDevicesLoading, setPinDevicesLoading] = useState(false)
   const [pinDeviceDeletingId, setPinDeviceDeletingId] = useState<string | null>(null)

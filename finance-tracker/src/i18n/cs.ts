@@ -409,7 +409,7 @@ export const cs: Translations = {
     devicesAndSessionsTitle: 'Zařízení a relace',
     activeSessions: 'Aktivní relace',
     activeSessionsSubtitle: 'Zařízení s aktivním přihlášením',
-    pinDevicesTitle: 'Moje zařízení',
+    pinDevicesTitle: 'PIN rychlý přístup',
     pinDevicesSubtitle: 'Zařízení s nastaveným PIN přístupem',
     pinDeviceRevoke: 'Odvolat přístup',
     pinDeviceCurrentBadge: 'TOTO ZAŘÍZENÍ',

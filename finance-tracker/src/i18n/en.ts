@@ -409,7 +409,7 @@ export const en: Translations = {
     devicesAndSessionsTitle: 'Devices and sessions',
     activeSessions: 'Active sessions',
     activeSessionsSubtitle: 'Devices with active login',
-    pinDevicesTitle: 'My devices',
+    pinDevicesTitle: 'PIN quick access',
     pinDevicesSubtitle: 'Devices with PIN access set up',
     pinDeviceRevoke: 'Revoke access',
     pinDeviceCurrentBadge: 'THIS DEVICE',

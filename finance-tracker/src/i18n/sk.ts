@@ -407,7 +407,7 @@ export const sk = {
     devicesAndSessionsTitle: 'Zariadenia a relácie',
     activeSessions: 'Aktívne relácie',
     activeSessionsSubtitle: 'Zariadenia s aktívnym prihlásením',
-    pinDevicesTitle: 'Moje zariadenia',
+    pinDevicesTitle: 'PIN rýchly prístup',
     pinDevicesSubtitle: 'Zariadenia s nastaveným PIN prístupom',
     pinDeviceRevoke: 'Odvolať prístup',
     pinDeviceCurrentBadge: 'TOTO ZARIADENIE',

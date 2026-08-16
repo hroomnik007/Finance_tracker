@@ -409,7 +409,7 @@ export const hu: Translations = {
     devicesAndSessionsTitle: 'Eszközök és munkamenetek',
     activeSessions: 'Aktív munkamenetek',
     activeSessionsSubtitle: 'Aktív bejelentkezéssel rendelkező eszközök',
-    pinDevicesTitle: 'Eszközeim',
+    pinDevicesTitle: 'Gyors PIN hozzáférés',
     pinDevicesSubtitle: 'PIN-hozzáféréssel rendelkező eszközök',
     pinDeviceRevoke: 'Hozzáférés visszavonása',
     pinDeviceCurrentBadge: 'EZ AZ ESZKÖZ',
