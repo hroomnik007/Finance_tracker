@@ -27,10 +27,23 @@ const RP_NAME = "Finvu";
 const RP_ID = process.env.WEBAUTHN_RP_ID ?? "financie.pedani.eu";
 const ORIGIN = process.env.WEBAUTHN_ORIGIN ?? "https://financie.pedani.eu";
 
+// Unauthenticated login-challenge issuance (webauthnAuthenticateOptions below)
+// means this store must defend itself: bounded size (oldest-inserted entries
+// evicted first once full) plus a periodic sweep that reclaims expired
+// entries even if the caller never comes back to consume them — a plain
+// unbounded Map here was a trivial unauthenticated memory-exhaustion DoS
+// (security audit run-1).
+const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+const MAX_CHALLENGES = 10_000;
+
 const challengeStore = new Map<string, { challenge: string; expiresAt: number }>();
 
 function storeChallenge(key: string, challenge: string) {
-  challengeStore.set(key, { challenge, expiresAt: Date.now() + 5 * 60 * 1000 });
+  if (!challengeStore.has(key) && challengeStore.size >= MAX_CHALLENGES) {
+    const oldestKey = challengeStore.keys().next().value;
+    if (oldestKey !== undefined) challengeStore.delete(oldestKey);
+  }
+  challengeStore.set(key, { challenge, expiresAt: Date.now() + CHALLENGE_TTL_MS });
 }
 
 function consumeChallenge(key: string): string | null {
@@ -39,6 +52,14 @@ function consumeChallenge(key: string): string | null {
   if (!entry || entry.expiresAt < Date.now()) return null;
   return entry.challenge;
 }
+
+const sweepInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of challengeStore) {
+    if (entry.expiresAt < now) challengeStore.delete(key);
+  }
+}, 60 * 1000);
+sweepInterval.unref();
 
 async function issueTokens(res: Response, userId: string, email: string): Promise<{ accessToken: string; sessionId: string }> {
   const accessToken = signAccessToken({ userId, email });

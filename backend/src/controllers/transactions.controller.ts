@@ -162,7 +162,14 @@ export async function createTransaction(req: AuthRequest, res: Response): Promis
   // Awaited (not fire-and-forget) so the response can report freshly-unlocked achievements.
   let newlyUnlockedAchievements: string[] = [];
   try {
-    await updateStreakAndBadges(req.userId!, body.data.date);
+    // Streaks measure "did this user actually use the app today", so they're
+    // keyed off the server-recorded creation timestamp, not the user-editable
+    // `date` field (which represents when the transaction occurred and can
+    // legitimately be backdated for a real receipt — but was also a way to
+    // fabricate an instant streak/veteran badge with zero real usage; see
+    // security audit run-1).
+    const todayServer = row.createdAt.toISOString().slice(0, 10);
+    await updateStreakAndBadges(req.userId!, todayServer);
     ({ newlyUnlocked: newlyUnlockedAchievements } = await evaluateAchievements(req.userId!));
   } catch (err) {
     console.error('streak/achievement update failed:', err);

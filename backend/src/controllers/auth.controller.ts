@@ -5,7 +5,7 @@ import { eq, and, gt, desc } from "drizzle-orm";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "../db";
-import { users, refreshTokens, categories, transactions, webauthnCredentials, households, passwordResetTokens, userSessions } from "../db/schema";
+import { users, refreshTokens, categories, transactions, webauthnCredentials, households, passwordResetTokens, userSessions, pinDeviceTokens } from "../db/schema";
 import { env } from "../config/env";
 import {
   signAccessToken,
@@ -21,6 +21,10 @@ import {
   ADMIN_COOKIE_OPTIONS,
   ADMIN_CSRF_COOKIE,
   ADMIN_CSRF_COOKIE_OPTIONS,
+  PIN_DEVICE_COOKIE,
+  PIN_DEVICE_COOKIE_OPTIONS,
+  generatePinDeviceToken,
+  pinDeviceTokenExpiry,
 } from "../lib/tokens";
 import { sendEmail, verificationEmailHtml, resetPasswordEmailHtml, resetPasswordEmailText } from "../lib/email";
 import { DEFAULT_CATEGORIES } from "../lib/defaultCategories";
@@ -52,6 +56,7 @@ function userPublic(u: {
   trackingStartDate?: string | null;
   onboardingBannerDismissed?: boolean | null;
   pinHash?: string | null;
+  passwordHash?: string | null;
   autoLockMinutes?: number | null;
 }) {
   return {
@@ -71,8 +76,67 @@ function userPublic(u: {
     tracking_start_date: u.trackingStartDate ?? null,
     onboarding_banner_dismissed: u.onboardingBannerDismissed ?? false,
     has_pin: !!u.pinHash,
+    // Lets the frontend decide whether changing/removing a PIN should ask for
+    // the current password or the current PIN as the re-auth factor.
+    has_password: !!u.passwordHash,
     auto_lock_minutes: u.autoLockMinutes ?? null,
   };
+}
+
+// PIN device-binding + lockout helpers — shared by pinLogin/updatePin/removePin.
+
+async function issuePinDeviceToken(res: Response, userId: string, req: Request): Promise<void> {
+  const token = generatePinDeviceToken();
+  const tokenHash = await hashToken(token);
+  const label = (req.headers['user-agent'] as string | undefined)?.slice(0, 255) ?? null;
+  await db.insert(pinDeviceTokens).values({ userId, tokenHash, label, expiresAt: pinDeviceTokenExpiry() });
+  res.cookie(PIN_DEVICE_COOKIE, token, PIN_DEVICE_COOKIE_OPTIONS);
+}
+
+async function revokePinDeviceTokens(res: Response, userId: string): Promise<void> {
+  await db.delete(pinDeviceTokens).where(eq(pinDeviceTokens.userId, userId));
+  res.clearCookie(PIN_DEVICE_COOKIE, { path: PIN_DEVICE_COOKIE_OPTIONS.path });
+}
+
+// Verifies the pinDevice cookie against stored (hashed) tokens for this user
+// and, on a match, slides the token's expiry forward another 90 days — both
+// in the DB and by re-issuing the cookie — so a device in regular use never
+// silently falls out of the binding.
+async function verifyAndSlidePinDeviceToken(res: Response, userId: string, req: Request): Promise<boolean> {
+  const token: string | undefined = req.cookies?.[PIN_DEVICE_COOKIE];
+  if (!token) return false;
+
+  const rows = await db
+    .select()
+    .from(pinDeviceTokens)
+    .where(and(eq(pinDeviceTokens.userId, userId), gt(pinDeviceTokens.expiresAt, new Date())));
+
+  let matched: (typeof rows)[number] | undefined;
+  for (const row of rows) {
+    if (await compareToken(token, row.tokenHash)) { matched = row; break; }
+  }
+  if (!matched) return false;
+
+  const now = new Date();
+  await db.update(pinDeviceTokens)
+    .set({ lastUsedAt: now, expiresAt: pinDeviceTokenExpiry() })
+    .where(eq(pinDeviceTokens.id, matched.id));
+  res.cookie(PIN_DEVICE_COOKIE, token, PIN_DEVICE_COOKIE_OPTIONS);
+  return true;
+}
+
+const PIN_LOCKOUT_THRESHOLD = 5;
+const PIN_LOCKOUT_MS = 15 * 60 * 1000;
+
+async function registerPinFailure(userId: string, currentAttempts: number): Promise<void> {
+  const attempts = currentAttempts + 1;
+  if (attempts >= PIN_LOCKOUT_THRESHOLD) {
+    await db.update(users)
+      .set({ pinFailedAttempts: 0, pinLockedUntil: new Date(Date.now() + PIN_LOCKOUT_MS) })
+      .where(eq(users.id, userId));
+  } else {
+    await db.update(users).set({ pinFailedAttempts: attempts }).where(eq(users.id, userId));
+  }
 }
 
 function parseUA(ua: string): { deviceName: string; browser: string } {
@@ -327,6 +391,7 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
       trackingStartDate: users.trackingStartDate,
       onboardingBannerDismissed: users.onboardingBannerDismissed,
       pinHash: users.pinHash,
+      passwordHash: users.passwordHash,
     })
     .from(users)
     .where(eq(users.id, req.userId!))
@@ -491,11 +556,16 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
   await db
     .update(users)
-    .set({ passwordHash })
+    .set({ passwordHash, pinHash: null, pinFailedAttempts: 0, pinLockedUntil: null })
     .where(eq(users.id, resetRecord.userId));
 
   await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id, resetRecord.id));
   await db.delete(refreshTokens).where(eq(refreshTokens.userId, resetRecord.userId));
+  // A password reset is the account's own "I think I was compromised" flow —
+  // it must invalidate every standing credential, not just the password.
+  // Leaving the PIN (and any device bound to it) alive here was exactly the
+  // durable-backdoor gap from security audit run-1.
+  await revokePinDeviceTokens(res, resetRecord.userId);
 
   res.json({ message: "Heslo bolo úspešne zmenené." });
 }
@@ -573,7 +643,20 @@ export async function updateUserSettings(req: AuthRequest, res: Response): Promi
   if (typeof language === 'string' && VALID_LANGS.includes(language)) update.language = language;
   if (typeof savingsEnabled === 'boolean') update.savingsEnabled = savingsEnabled;
   if (trackingStartDate === null || (typeof trackingStartDate === 'string' && DATE_RE.test(trackingStartDate))) {
-    update.trackingStartDate = trackingStartDate ?? null;
+    // Floored at the account's real creation date and capped at today — an
+    // arbitrarily old value here used to instantly satisfy the "veteran"
+    // (daysActive >= 365) achievement with zero genuine usage (security audit
+    // run-1). A single fetch is cheap and keeps the floor authoritative
+    // (server-recorded createdAt), not something the client can also spoof.
+    if (trackingStartDate === null) {
+      update.trackingStartDate = null;
+    } else {
+      const [row] = await db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1);
+      const floor = row?.createdAt.toISOString().slice(0, 10) ?? trackingStartDate;
+      const today = new Date().toISOString().slice(0, 10);
+      const clamped = trackingStartDate < floor ? floor : (trackingStartDate > today ? today : trackingStartDate);
+      update.trackingStartDate = clamped;
+    }
   }
   if (typeof onboardingBannerDismissed === 'boolean') update.onboardingBannerDismissed = onboardingBannerDismissed;
   if (autoLockMinutes === null || (typeof autoLockMinutes === 'number' && [0, 1, 5, 15].includes(autoLockMinutes))) {
@@ -648,7 +731,7 @@ export async function googleAuth(req: Request, res: Response): Promise<void> {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId: newUser.id, isDefault: true }))
     );
 
-    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, lastActiveAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', language: 'sk', trackingStartDate: null, onboardingBannerDismissed: false, autoLockMinutes: null, isDeactivated: false };
+    user = { ...newUser, passwordHash: null, googleId, emailVerified: true, verificationToken: null, resetToken: null, resetTokenExpiry: null, lastLoginAt: null, lastActiveAt: null, createdAt: new Date(), updatedAt: new Date(), monthlyEmailEnabled: false, onboardingComplete: false, currentStreak: 0, longestStreak: 0, lastActivityDate: null, badges: [], pinHash: null, defaultPage: 'dashboard', currencyFormat: 'sk', householdId: null, householdEnabled: false, savingsEnabled: false, theme: 'dark', language: 'sk', trackingStartDate: null, onboardingBannerDismissed: false, autoLockMinutes: null, isDeactivated: false, pinFailedAttempts: 0, pinLockedUntil: null };
   } else if (!user.googleId) {
     await db.update(users).set({ googleId, emailVerified: true }).where(eq(users.id, user.id));
   }
@@ -697,15 +780,39 @@ export async function pinLogin(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  const GENERIC_FAIL = { error: "Nesprávny PIN." };
+
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || !user.pinHash) {
     res.status(401).json({ error: "PIN prihlásenie nie je aktivované." });
     return;
   }
 
+  // Per-account lockout (independent of the IP-based pinLoginLimiter below) —
+  // checked before touching the PIN hash at all. Same generic message as a
+  // wrong PIN so a caller can't distinguish "locked" from "just wrong".
+  if (user.pinLockedUntil && user.pinLockedUntil > new Date()) {
+    res.status(401).json(GENERIC_FAIL);
+    return;
+  }
+
+  // Device binding: a correct PIN from a browser that never completed PIN
+  // setup (no valid pinDevice cookie) is rejected outright, before the PIN is
+  // even compared — this is what turns "email + 4 digits from anywhere" into
+  // "email + 4 digits from a device that was already trusted". Deliberately
+  // does NOT count against pin_failed_attempts: it reveals nothing about the
+  // PIN itself, so penalizing it would let an attacker lock a legitimate user
+  // out just by omitting the cookie.
+  const deviceOk = await verifyAndSlidePinDeviceToken(res, user.id, req);
+  if (!deviceOk) {
+    res.status(401).json(GENERIC_FAIL);
+    return;
+  }
+
   const valid = await bcrypt.compare(pin, user.pinHash);
   if (!valid) {
-    res.status(401).json({ error: "Nesprávny PIN." });
+    await registerPinFailure(user.id, user.pinFailedAttempts ?? 0);
+    res.status(401).json(GENERIC_FAIL);
     return;
   }
 
@@ -714,25 +821,81 @@ export async function pinLogin(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (user.pinFailedAttempts) {
+    await db.update(users).set({ pinFailedAttempts: 0 }).where(eq(users.id, user.id));
+  }
+
   const { accessToken, sessionId } = await issueTokens(res, user.id, user.email, req);
   res.json({ user: userPublic(user), accessToken, sessionId });
 }
 
 export async function updatePin(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  const { pin } = req.body as { pin?: string };
+  const { pin, currentPassword, currentPin } = req.body as { pin?: string; currentPassword?: string; currentPin?: string };
   if (!pin || typeof pin !== 'string' || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
     res.status(400).json({ error: "PIN musí byť 4-miestne číslo." });
     return;
   }
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) { res.status(404).json({ error: "Používateľ neexistuje." }); return; }
+
+  // Re-auth before planting/replacing a full-strength login credential — a
+  // valid access token alone is not enough (see security audit run-1: a
+  // stolen token could otherwise silently set a PIN as a durable backdoor).
+  // Whichever factor the account actually has is accepted: current PIN if
+  // one is already set, current password if the account has one. A
+  // Google-only account setting its very first PIN has no factor to check —
+  // consistent with deleteAccount's existing exemption for the same case.
+  if (user.pinHash) {
+    const pinOk = typeof currentPin === 'string' && currentPin.length === 4 && await bcrypt.compare(currentPin, user.pinHash);
+    const pwOk = !pinOk && !!user.passwordHash && typeof currentPassword === 'string' && await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!pinOk && !pwOk) {
+      res.status(401).json({ error: "Nesprávne overenie totožnosti." });
+      return;
+    }
+  } else if (user.passwordHash) {
+    const pwOk = typeof currentPassword === 'string' && await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!pwOk) {
+      res.status(401).json({ error: "Nesprávne heslo." });
+      return;
+    }
+  }
+
   const pinHash = await bcrypt.hash(pin, env.BCRYPT_ROUNDS);
-  await db.update(users).set({ pinHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  await db.update(users).set({
+    pinHash, pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+
+  // A changed PIN invalidates every device previously bound to the old one —
+  // this browser/device gets a fresh token, everyone else must re-set-up.
+  await revokePinDeviceTokens(res, userId);
+  await issuePinDeviceToken(res, userId, req);
+
   res.json({ success: true });
 }
 
 export async function removePin(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.userId!;
-  await db.update(users).set({ pinHash: null, updatedAt: new Date() }).where(eq(users.id, userId));
+  const { currentPassword, currentPin } = req.body as { currentPassword?: string; currentPin?: string };
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) { res.status(404).json({ error: "Používateľ neexistuje." }); return; }
+
+  if (user.pinHash) {
+    const pinOk = typeof currentPin === 'string' && currentPin.length === 4 && await bcrypt.compare(currentPin, user.pinHash);
+    const pwOk = !pinOk && !!user.passwordHash && typeof currentPassword === 'string' && await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!pinOk && !pwOk) {
+      res.status(401).json({ error: "Nesprávne overenie totožnosti." });
+      return;
+    }
+  }
+
+  await db.update(users).set({
+    pinHash: null, pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+  await revokePinDeviceTokens(res, userId);
+
   res.json({ success: true });
 }
 
@@ -758,8 +921,11 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
   }
 
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
-  await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  await db.update(users).set({
+    passwordHash, pinHash: null, pinFailedAttempts: 0, pinLockedUntil: null, updatedAt: new Date(),
+  }).where(eq(users.id, userId));
   await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  await revokePinDeviceTokens(res, userId);
   res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_OPTIONS.path });
   res.json({ success: true });
 }

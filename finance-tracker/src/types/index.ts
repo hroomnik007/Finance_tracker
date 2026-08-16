@@ -99,6 +99,7 @@ export interface AuthUser {
   tracking_start_date?: string | null
   onboarding_banner_dismissed?: boolean
   has_pin?: boolean
+  has_password?: boolean
   language?: string | null
   isDemo?: boolean
   phone?: string | null

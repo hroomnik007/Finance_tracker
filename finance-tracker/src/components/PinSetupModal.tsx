@@ -5,22 +5,39 @@ import { useTranslation } from '../i18n'
 interface PinSetupModalProps {
   open: boolean
   onClose: () => void
-  onSetPin: (pin: string) => Promise<void>
+  onSetPin: (pin: string, identity?: { currentPassword?: string; currentPin?: string }) => Promise<void>
+  /**
+   * Which re-auth factor the backend will require before accepting the new
+   * PIN (see security audit run-1 — a valid access token alone is no longer
+   * enough to plant/replace a PIN). 'pin' when the account already has one
+   * (asks for it via the same keypad UI); 'password' for a first-time setup
+   * on a password account. Omit/null when neither applies (e.g. a
+   * Google-only account setting its very first PIN — nothing to confirm).
+   */
+  identityCheck?: 'pin' | 'password' | null
 }
 
 const KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
-export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
+export function PinSetupModal({ open, onClose, onSetPin, identityCheck = null }: PinSetupModalProps) {
   const { t } = useTranslation()
-  const [step, setStep] = useState<'enter' | 'confirm' | 'success'>('enter')
+  const [step, setStep] = useState<'identity' | 'enter' | 'confirm' | 'success'>(identityCheck ? 'identity' : 'enter')
+  const [identityPin, setIdentityPin] = useState('')
+  const [identityPassword, setIdentityPassword] = useState('')
+  const [identityError, setIdentityError] = useState<string | null>(null)
   const [first, setFirst] = useState('')
   const [pin, setPin] = useState('')
   const [shake, setShake] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // Reset to the right starting step whenever the modal is (re)opened.
+  useEffect(() => {
+    if (open) setStep(identityCheck ? 'identity' : 'enter')
+  }, [open, identityCheck])
+
   // Keyboard input — must be before any conditional return
   useEffect(() => {
-    if (!open || step === 'success') return
+    if (!open || step === 'success' || step === 'identity') return
     const onKey = (e: KeyboardEvent) => {
       if (saving) return
       if (e.key >= '0' && e.key <= '9') {
@@ -33,9 +50,60 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [open, step, saving])
 
+  // Identity keypad input (currentPin case only — password uses a text input)
+  useEffect(() => {
+    if (!open || step !== 'identity' || identityCheck !== 'pin') return
+    const onKey = (e: KeyboardEvent) => {
+      if (saving) return
+      if (e.key >= '0' && e.key <= '9') {
+        setIdentityPin(prev => prev.length >= 4 ? prev : prev + e.key)
+      } else if (e.key === 'Backspace') {
+        setIdentityPin(p => p.slice(0, -1))
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, step, identityCheck, saving])
+
+  async function trySetPin(newPin: string, identity?: { currentPassword?: string; currentPin?: string }) {
+    setSaving(true)
+    try {
+      await onSetPin(newPin, identity)
+      setSaving(false)
+      setStep('success')
+      setTimeout(() => {
+        setStep(identityCheck ? 'identity' : 'enter'); setFirst(''); setPin('')
+        setIdentityPin(''); setIdentityPassword(''); setIdentityError(null)
+        onClose()
+      }, 1500)
+    } catch {
+      setSaving(false)
+      setFirst(''); setPin('')
+      if (identityCheck) {
+        // Most likely cause: wrong current password/PIN — send the user back
+        // to re-enter it rather than silently failing on the new-PIN screen.
+        setIdentityError(identityCheck === 'password' ? 'Nesprávne heslo.' : t.profile.incorrectPin)
+        setIdentityPin('')
+        setStep('identity')
+      } else {
+        // No identity factor was required (e.g. Google-only first PIN) — a
+        // failure here is a network/server error, not a wrong credential.
+        setStep('enter')
+      }
+    }
+  }
+
+  // Identity PIN completion — advance to the new-PIN entry once 4 digits are in
+  useEffect(() => {
+    if (step !== 'identity' || identityCheck !== 'pin' || identityPin.length !== 4 || saving) return
+    setIdentityError(null)
+    setStep('enter')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identityPin])
+
   // Pin completion logic — must be before any conditional return
   useEffect(() => {
-    if (pin.length !== 4 || saving || step === 'success') return
+    if (pin.length !== 4 || saving || step === 'success' || step === 'identity') return
     if (step === 'enter') {
       setFirst(pin)
       setTimeout(() => { setStep('confirm'); setPin('') }, 150)
@@ -44,15 +112,10 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
         setShake(true)
         setTimeout(() => { setShake(false); setPin('') }, 600)
       } else {
-        setSaving(true)
-        onSetPin(pin).then(() => {
-          setSaving(false)
-          setStep('success')
-          setTimeout(() => {
-            setStep('enter'); setFirst(''); setPin('')
-            onClose()
-          }, 1500)
-        })
+        const identity = identityCheck === 'pin' ? { currentPin: identityPin }
+          : identityCheck === 'password' ? { currentPassword: identityPassword }
+          : undefined
+        trySetPin(pin, identity)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,8 +124,15 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
   if (!open) return null
 
   function handleClose() {
-    setStep('enter'); setFirst(''); setPin('')
+    setStep(identityCheck ? 'identity' : 'enter'); setFirst(''); setPin('')
+    setIdentityPin(''); setIdentityPassword(''); setIdentityError(null)
     onClose()
+  }
+
+  function submitIdentityPassword() {
+    if (!identityPassword) return
+    setIdentityError(null)
+    setStep('enter')
   }
 
   if (step === 'success') {
@@ -80,6 +150,89 @@ export function PinSetupModal({ open, onClose, onSetPin }: PinSetupModalProps) {
           </div>
           <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>{t.pin.pinSet}</p>
           <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>{t.pin.pinSetDesc}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'identity') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} onClick={handleClose} />
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: 340,
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 24, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>Overenie totožnosti</h2>
+            <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4 }}><X size={18} /></button>
+          </div>
+
+          <div style={{ padding: '32px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+            {identityCheck === 'password' ? (
+              <>
+                <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>Pre nastavenie PIN kódu najprv zadaj svoje heslo.</p>
+                {identityError && <p style={{ fontSize: 12, color: '#f87171', margin: 0, textAlign: 'center' }}>{identityError}</p>}
+                <input
+                  type="password"
+                  autoFocus
+                  placeholder={t.profile.currentPassword}
+                  value={identityPassword}
+                  onChange={e => setIdentityPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submitIdentityPassword()}
+                  style={{ height: 44, width: '100%', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 10, color: 'var(--text)', fontSize: 14, padding: '0 14px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                />
+                <button
+                  onClick={submitIdentityPassword}
+                  disabled={!identityPassword}
+                  style={{ height: 44, width: '100%', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'var(--violet)', color: 'white', border: 'none', cursor: identityPassword ? 'pointer' : 'not-allowed', opacity: identityPassword ? 1 : 0.5, fontFamily: 'inherit' }}
+                >
+                  Pokračovať
+                </button>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>Pre zmenu PIN kódu najprv zadaj aktuálny PIN.</p>
+                {identityError && <p style={{ fontSize: 12, color: '#f87171', margin: 0, textAlign: 'center' }}>{identityError}</p>}
+                <div style={{ display: 'flex', gap: 16 }} className={shake ? 'pin-shake' : ''}>
+                  {[0,1,2,3].map(i => (
+                    <div key={i} style={{
+                      width: 16, height: 16, borderRadius: '50%',
+                      background: identityPin.length > i ? 'var(--violet)' : 'transparent',
+                      border: '2px solid ' + (identityPin.length > i ? 'var(--violet)' : 'var(--border2)'),
+                      transition: 'all 0.15s',
+                    }} />
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 64px)', gap: 10 }}>
+                  {KEYS.map((k, i) => (
+                    k === '' ? <div key={i} /> : (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (saving) return
+                          if (k === '⌫') { setIdentityPin(p => p.slice(0, -1)); return }
+                          if (identityPin.length < 4) setIdentityPin(p => p + k)
+                        }}
+                        style={{
+                          width: 64, height: 64, borderRadius: '50%',
+                          background: k === '⌫' ? 'transparent' : 'var(--bg3)',
+                          border: k === '⌫' ? 'none' : '1px solid var(--border2)',
+                          color: 'var(--text)', fontSize: k === '⌫' ? 18 : 20, fontWeight: 600,
+                          cursor: 'pointer', fontFamily: 'inherit',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          opacity: saving ? 0.5 : 1,
+                        }}
+                      >
+                        {k === '⌫' ? <Delete size={18} /> : k}
+                      </button>
+                    )
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     )

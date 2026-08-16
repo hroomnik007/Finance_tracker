@@ -123,12 +123,15 @@ export async function pinLogin(email: string, pin: string): Promise<{ user: impo
   return data
 }
 
-export async function savePin(pin: string): Promise<void> {
-  await apiClient.patch('/api/auth/pin', { pin })
+// currentPassword/currentPin: re-auth factor required by the backend before
+// planting/replacing a PIN (a bare access token is no longer enough — see
+// security audit run-1). Pass whichever the caller already collected.
+export async function savePin(pin: string, currentPassword?: string, currentPin?: string): Promise<void> {
+  await apiClient.patch('/api/auth/pin', { pin, currentPassword, currentPin })
 }
 
-export async function deletePin(): Promise<void> {
-  await apiClient.delete('/api/auth/pin')
+export async function deletePin(currentPassword?: string, currentPin?: string): Promise<void> {
+  await apiClient.delete('/api/auth/pin', { data: { currentPassword, currentPin } })
 }
 
 export async function webauthnRegisterOptions(): Promise<PublicKeyCredentialCreationOptionsJSON> {

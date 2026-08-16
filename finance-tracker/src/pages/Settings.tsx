@@ -8,7 +8,7 @@ import {
 import { CsvImportModal } from '../components/CsvImportModal'
 import { GlassCard } from '../components/GlassCard'
 import { getNotificationsEnabled, setNotificationsEnabled } from '../hooks/useFixedExpenseNotifications'
-import { updateWeeklyEmail, updateUserSettings, changePassword, savePin, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
+import { updateWeeklyEmail, updateUserSettings, changePassword, getSessions, deleteSessionById, deactivateAccount as apiDeactivateAccount } from '../api/auth'
 import { getTransactions, deleteTransaction } from '../api/transactions'
 import type { TransactionParams } from '../api/transactions'
 import { getCategories } from '../api/categories'
@@ -446,7 +446,7 @@ export function SettingsPage() {
         setPinRemoveError(t.profile.incorrectPin)
         setTimeout(() => { setPinRemoveShake(false); setPinRemoveInput(''); setPinRemoveLoading(false) }, 600)
       } else {
-        await removePin()
+        await removePin(undefined, next)
         setPinRemoveOpen(false)
         setPinRemoveInput('')
         setPinRemoveError(null)
@@ -1701,9 +1701,9 @@ export function SettingsPage() {
       <PinSetupModal
         open={pinSetupOpen}
         onClose={() => setPinSetupOpen(false)}
-        onSetPin={async (pin) => {
-          setupPin(pin)
-          try { await savePin(pin) } catch { /* local PIN is set */ }
+        identityCheck={hasPin ? 'pin' : (user?.has_password ? 'password' : null)}
+        onSetPin={async (pin, identity) => {
+          await setupPin(pin, identity?.currentPassword, identity?.currentPin)
           if (user?.email) localStorage.setItem(`pin_enabled_${user.email}`, '1')
         }}
       />

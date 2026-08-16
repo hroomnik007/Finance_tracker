@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { createHash, timingSafeEqual } from "crypto";
+import { createHash, timingSafeEqual, randomBytes } from "crypto";
 import { env } from "../config/env";
 
 // Refresh tokens are high-entropy, machine-generated opaque strings (unlike
@@ -106,4 +106,39 @@ export const ADMIN_CSRF_COOKIE_OPTIONS = {
   sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
   maxAge: 4 * 60 * 60 * 1000,
   path: "/api/admin",
+};
+
+// ── PIN device binding ──────────────────────────────────────────────────────
+// PIN login is a full-strength remote credential (same privilege as password
+// login), so a bare email+PIN must not be enough from an arbitrary browser —
+// it must also present a token proving it's a device the PIN was actually set
+// up on. Issued by updatePin, verified (and slid forward) by pinLogin, wiped
+// by updatePin/removePin/changePassword/resetPassword. Same opaque-token +
+// SHA-256-hash-at-rest pattern as REFRESH_COOKIE (see hashToken/compareToken
+// above) — never stored or logged in plaintext.
+export const PIN_DEVICE_COOKIE = "pinDevice";
+
+export function generatePinDeviceToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
+export function pinDeviceTokenExpiry(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + 90);
+  return d;
+}
+
+// sameSite: "none" (prod) matches REFRESH_COOKIE/ADMIN_COOKIE in this file —
+// the frontend and API are served from different subdomains, and a stricter
+// SameSite value is silently never sent cross-site, which would make PIN
+// login appear to work in local dev (same-origin) and then fail for every
+// user in production. httpOnly + a dedicated, narrowly-scoped, short-lived
+// (relative to the refresh cookie) opaque token is the actual defense here,
+// not the SameSite attribute.
+export const PIN_DEVICE_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+  maxAge: 90 * 24 * 60 * 60 * 1000,
+  path: "/api/auth",
 };

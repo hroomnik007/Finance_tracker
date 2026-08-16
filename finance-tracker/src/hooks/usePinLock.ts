@@ -156,8 +156,8 @@ export function usePinLock() {
     }
   }, [user])
 
-  const setupPin = useCallback(async (pin: string) => {
-    await savePin(pin)
+  const setupPin = useCallback(async (pin: string, currentPassword?: string, currentPin?: string) => {
+    await savePin(pin, currentPassword, currentPin)
     localStorage.setItem(LOCK_METHOD_KEY, 'pin')
     sessionStorage.setItem(PIN_SESSION_KEY, 'true')
     setLockMethod('pin')
@@ -176,8 +176,8 @@ export function usePinLock() {
     }
   }, [user])
 
-  const removePin = useCallback(async () => {
-    await deletePin()
+  const removePin = useCallback(async (currentPassword?: string, currentPin?: string) => {
+    await deletePin(currentPassword, currentPin)
     localStorage.removeItem(LOCK_METHOD_KEY)
     sessionStorage.removeItem(PIN_SESSION_KEY)
     setLockMethod(null)

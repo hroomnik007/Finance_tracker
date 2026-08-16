@@ -3,7 +3,7 @@ import { X, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { usePinLock } from '../hooks/usePinLock'
 import { PinSetupModal } from './PinSetupModal'
-import { savePin, webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
+import { webauthnRegisterOptions, webauthnRegisterVerify } from '../api/auth'
 import { useTranslation } from '../i18n'
 
 const STEP_EMOJIS = ['🎉', '💰', '📊', '🐷', '🏠', '⚙️', '🔐']
@@ -308,12 +308,11 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
       <PinSetupModal
         open={pinSetupOpen}
         onClose={() => setPinSetupOpen(false)}
-        onSetPin={async (pin) => {
-          setupPin(pin)
-          try { await savePin(pin) } catch { /* ignore */ }
+        identityCheck={user?.has_password ? 'password' : null}
+        onSetPin={async (pin, identity) => {
+          await setupPin(pin, identity?.currentPassword, identity?.currentPin)
           if (user?.email) localStorage.setItem(`pin_enabled_${user.email}`, '1')
           setPinDone(true)
-          setPinSetupOpen(false)
         }}
       />
     </>

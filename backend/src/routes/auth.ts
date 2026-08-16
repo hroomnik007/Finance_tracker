@@ -38,6 +38,18 @@ const pinLoginLimiter = rateLimit({
   message: { error: "Príliš veľa pokusov PIN. Skúste za 10 minút." },
 });
 
+// GET /webauthn/authenticate-options is intentionally unauthenticated (a
+// caller hasn't logged in yet when requesting a login challenge) — without a
+// limiter it was an unauthenticated memory-exhaustion DoS (security audit
+// run-1). Mirrors pinLoginLimiter's shape.
+const webauthnOptionsLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Príliš veľa pokusov. Skúste za 10 minút." },
+});
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -107,7 +119,7 @@ router.post("/deactivate",                    authenticateToken, deactivateAccou
 // WebAuthn
 router.get("/webauthn/register-options",      authenticateToken, webauthnRegisterOptions);
 router.post("/webauthn/register-verify",      authenticateToken, webauthnRegisterVerify);
-router.get("/webauthn/authenticate-options",  webauthnAuthenticateOptions);
+router.get("/webauthn/authenticate-options",  webauthnOptionsLimiter, webauthnAuthenticateOptions);
 router.post("/webauthn/authenticate-verify",  webauthnAuthenticateVerify);
 
 export default router;

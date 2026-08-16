@@ -48,6 +48,8 @@ export const users = pgTable("users", {
   lastActiveAt: timestamp("last_active_at"),
   autoLockMinutes: integer("auto_lock_minutes"),
   isDeactivated: boolean("is_deactivated").default(false).notNull(),
+  pinFailedAttempts: integer("pin_failed_attempts").default(0).notNull(),
+  pinLockedUntil: timestamp("pin_locked_until"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -246,3 +248,19 @@ export const userAchievements = pgTable("user_achievements", {
   index("user_achievements_user_id_idx").on(t.userId),
 ]);
 export type UserAchievement = typeof userAchievements.$inferSelect;
+
+// One row per device that has completed PIN setup on this account. PIN login
+// (POST /api/auth/pin-login) requires a valid, unexpired token here IN
+// ADDITION to the correct PIN — a bare email+PIN from an unrecognized device
+// is rejected outright. Rows are pruned whenever the PIN is changed/removed
+// or the account's password is changed/reset (see auth.controller.ts).
+export const pinDeviceTokens = pgTable("pin_device_tokens", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: varchar("token_hash", { length: 255 }).notNull(),
+  label: varchar("label", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (t) => [index("pin_device_tokens_user_id_idx").on(t.userId)]);
+export type PinDeviceToken = typeof pinDeviceTokens.$inferSelect;
