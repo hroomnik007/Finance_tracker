@@ -406,6 +406,7 @@ export const hu: Translations = {
     autoLock1min: '1 perc',
     autoLock5min: '5 perc',
     autoLock15min: '15 perc',
+    devicesAndSessionsTitle: 'Eszközök és munkamenetek',
     activeSessions: 'Aktív munkamenetek',
     activeSessionsSubtitle: 'Aktív bejelentkezéssel rendelkező eszközök',
     pinDevicesTitle: 'Eszközeim',

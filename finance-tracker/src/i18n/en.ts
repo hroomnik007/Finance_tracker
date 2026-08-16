@@ -406,6 +406,7 @@ export const en: Translations = {
     autoLock1min: '1 minute',
     autoLock5min: '5 minutes',
     autoLock15min: '15 minutes',
+    devicesAndSessionsTitle: 'Devices and sessions',
     activeSessions: 'Active sessions',
     activeSessionsSubtitle: 'Devices with active login',
     pinDevicesTitle: 'My devices',

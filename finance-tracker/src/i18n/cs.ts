@@ -406,6 +406,7 @@ export const cs: Translations = {
     autoLock1min: '1 minuta',
     autoLock5min: '5 minut',
     autoLock15min: '15 minut',
+    devicesAndSessionsTitle: 'Zařízení a relace',
     activeSessions: 'Aktivní relace',
     activeSessionsSubtitle: 'Zařízení s aktivním přihlášením',
     pinDevicesTitle: 'Moje zařízení',

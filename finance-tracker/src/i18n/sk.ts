@@ -404,6 +404,7 @@ export const sk = {
     autoLock1min: '1 minúta',
     autoLock5min: '5 minút',
     autoLock15min: '15 minút',
+    devicesAndSessionsTitle: 'Zariadenia a relácie',
     activeSessions: 'Aktívne relácie',
     activeSessionsSubtitle: 'Zariadenia s aktívnym prihlásením',
     pinDevicesTitle: 'Moje zariadenia',
