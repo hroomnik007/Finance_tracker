@@ -53,6 +53,24 @@ export function CategoryDonutCard({ data, title, total }: CategoryDonutCardProps
   const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
   const denom = total ?? pieData.reduce((s, d) => s + d.value, 0)
 
+  // Integer percentages that always sum to exactly 100 (largest-remainder
+  // method) — plain per-slice Math.round can land on 99 % or 101 %. Aligned to
+  // pieData order.
+  const pctByIndex = useMemo(() => {
+    const sum = pieData.reduce((s, d) => s + d.value, 0)
+    if (sum <= 0) return pieData.map(() => 0)
+    const raw = pieData.map(d => (d.value / sum) * 100)
+    const result = raw.map(Math.floor)
+    let remainder = 100 - result.reduce((a, b) => a + b, 0)
+    const byFraction = raw
+      .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+      .sort((a, b) => b.frac - a.frac)
+    for (let k = 0; k < byFraction.length && remainder > 0; k++, remainder--) {
+      result[byFraction[k].i] += 1
+    }
+    return result
+  }, [pieData])
+
   // Effective active index: clicked (locked) > legend hover > pie hover
   const pieDisplayIndex = clickedIndex ?? legendHoverIndex ?? activeIndex
 
@@ -114,7 +132,11 @@ export function CategoryDonutCard({ data, title, total }: CategoryDonutCardProps
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Legend */}
-            <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(148px, 100%), 1fr))', rowGap: 6, columnGap: 12, alignContent: showAllPie ? 'start' : 'center', maxHeight: showAllPie ? 'none' : 190, overflowY: showAllPie ? 'visible' : 'auto' }}>
+            {/* alignContent must stay 'start': with 'center' an overflowing list
+                (many categories) is centred inside the 190px box, pushing the
+                first rows above the scroll origin where they can't be reached —
+                on desktop too, not just the mobile "show more" case. */}
+            <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(148px, 100%), 1fr))', rowGap: 6, columnGap: 12, alignContent: 'start', maxHeight: showAllPie ? 'none' : 190, overflowY: showAllPie ? 'visible' : 'auto' }}>
               {sortedPieData.map((item, i) => {
                 const itemPieIdx = pieData.findIndex(d => d.name === item.name)
                 const isSelected = clickedIndex !== null && clickedIndex === itemPieIdx
@@ -153,7 +175,7 @@ export function CategoryDonutCard({ data, title, total }: CategoryDonutCardProps
                       fontWeight: isHighlighted ? 700 : 400,
                       transition: 'font-weight 0.1s, color 0.1s',
                     }}>{item.name}</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', flexShrink: 0 }}>{denom > 0 ? Math.round((item.value / denom) * 100) : 0}%</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', flexShrink: 0 }}>{itemPieIdx !== -1 ? pctByIndex[itemPieIdx] : 0}%</span>
                   </div>
                 )
                 if (i < 5) return row
@@ -212,7 +234,7 @@ export function CategoryDonutCard({ data, title, total }: CategoryDonutCardProps
                       <SliceIcon size={18} color={slice.color} strokeWidth={1.8} style={{ marginBottom: 2 }} />
                       <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
                       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: 0 }}>{denom > 0 ? Math.round((slice.value / denom) * 100) : 0}%</p>
+                      <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: 0 }}>{pctByIndex[pieDisplayIndex] ?? 0}%</p>
                     </>
                   )
                 })() : (
