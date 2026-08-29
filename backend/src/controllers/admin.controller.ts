@@ -27,6 +27,7 @@ export async function getUserList(_req: Request, res: Response): Promise<void> {
       name: users.name,
       createdAt: users.createdAt,
       lastLoginAt: users.lastLoginAt,
+      lastActiveAt: users.lastActiveAt,
       emailVerified: users.emailVerified,
       transactionCount: sql<number>`(select count(*)::int from transactions t where t.user_id = users.id)`,
     })

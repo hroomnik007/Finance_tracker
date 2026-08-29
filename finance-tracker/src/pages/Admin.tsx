@@ -150,7 +150,7 @@ export function AdminPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: "'Manrope', sans-serif" }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--aurora-gline)' }}>
-                  {['Meno', 'Email', 'Email overený', 'Registrácia', 'Posledné prihlásenie', 'Transakcie'].map(h => (
+                  {['Meno', 'Email', 'Email overený', 'Registrácia', 'Posledné prihlásenie', 'Naposledy aktívny', 'Transakcie'].map(h => (
                     <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--aurora-lo)', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>
                   ))}
                 </tr>
@@ -175,6 +175,9 @@ export function AdminPage() {
                     </td>
                     <td style={{ padding: '12px 16px', color: 'var(--aurora-lo)' }}>
                       {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString('sk-SK') : '—'}
+                    </td>
+                    <td style={{ padding: '12px 16px', color: 'var(--aurora-lo)' }}>
+                      {u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString('sk-SK') : '—'}
                     </td>
                     <td style={{ padding: '12px 16px', color: 'var(--aurora-violet)', fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
                       {u.transactionCount}

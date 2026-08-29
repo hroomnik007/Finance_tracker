@@ -59,6 +59,7 @@ export interface AdminUser {
   name: string
   createdAt: string
   lastLoginAt: string | null
+  lastActiveAt: string | null
   emailVerified: boolean
   transactionCount: number
 }
