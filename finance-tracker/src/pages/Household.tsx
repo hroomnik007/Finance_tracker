@@ -142,13 +142,18 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
     for (const m of stats.per_member) {
       for (const c of m.category_breakdown) {
         if (c.amount <= 0) continue
-        const key = c.category_id ?? `__${c.name}`
+        // Každý člen má vlastnú tabuľku kategórií, takže "Zdravie" mňa a "Zdravie"
+        // manželky majú rôzne category_id. V module Domácnosť ich párujeme podľa
+        // názvu kategórie (na Dashboarde ostávajú separátne — tam sa táto agregácia
+        // nepoužíva).
+        const name = (c.name ?? '').trim()
+        const key = name.toLowerCase() || (c.category_id ?? '__uncategorized')
         const existing = map.get(key)
         if (existing) {
           existing.value += c.amount
         } else {
           const cat = c.category_id ? categories.find(k => k.id === c.category_id) : undefined
-          map.set(key, { name: c.name, color: c.color ?? cat?.color ?? '#6b7280', value: c.amount, icon: cat?.icon })
+          map.set(key, { name: name || c.name, color: c.color ?? cat?.color ?? '#6b7280', value: c.amount, icon: cat?.icon })
         }
       }
     }
