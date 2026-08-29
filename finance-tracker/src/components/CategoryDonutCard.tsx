@@ -33,9 +33,14 @@ export function CategoryDonutCard({ data, title, total }: CategoryDonutCardProps
   const [legendHoverIndex, setLegendHoverIndex] = useState<number | null>(null)
   const [clickedIndex, setClickedIndex] = useState<number | null>(null)
   const [showAllPie, setShowAllPie] = useState(false)
+  // Gate the recharts <ResponsiveContainer> until after the first paint so it
+  // measures a real box — same rAF pattern as FixedExpenses.tsx (setState inside
+  // a plain mount effect trips react-hooks/set-state-in-effect).
   const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   // On touch devices there is no mouseleave, so tapping a segment leaves
   // activeIndex/legendHoverIndex set — always reset all three so the centre
