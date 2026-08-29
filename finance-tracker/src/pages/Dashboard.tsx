@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  PieChart, Pie, Cell, Sector, ResponsiveContainer,
-} from 'recharts'
 import { CalendarClock, X, Tag, Target } from 'lucide-react'
 import { ExpenseHeatmap } from '../components/ExpenseHeatmap'
+import { CategoryDonutCard } from '../components/CategoryDonutCard'
 import { ForecastCard } from '../components/ForecastCard'
 import { StreakBadge } from '../components/StreakBadge'
 import { StreakModal } from '../components/StreakModal'
@@ -81,26 +79,10 @@ interface DashboardProps {
 }
 
 export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const [legendHoverIndex, setLegendHoverIndex] = useState<number | null>(null)
-  const [clickedIndex, setClickedIndex] = useState<number | null>(null)
-
-  // Pie selection is derived from three states (clicked > legend hover > pie
-  // hover). On touch devices there is no mouseleave, so tapping a segment
-  // leaves activeIndex/legendHoverIndex set — clearing only clickedIndex would
-  // keep the segment highlighted and the centre stuck off "Celkom". Both
-  // helpers below always reset all three so the centre reliably returns to the
-  // total on mobile as well as desktop.
-  const resetPie = () => { setClickedIndex(null); setLegendHoverIndex(null); setActiveIndex(null) }
-  const selectPie = (index: number | null) => { setClickedIndex(index); setLegendHoverIndex(null); setActiveIndex(null) }
-  const [showAllPie, setShowAllPie] = useState(false)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [streakModalOpen, setStreakModalOpen] = useState(false)
   const [trackingDate, setTrackingDate] = useState(() => new Date().toISOString().split('T')[0])
   const [trackingSaving, setTrackingSaving] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
 
   const { incomes: allIncomes } = useIncomes(month, year)
   const { fixedExpenses: allMonthFixedExpenses } = useFixedExpenses(month, year)
@@ -161,9 +143,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
       .filter(d => d.value > 0)
   , [categories, variableExpenses, fixedExpenses])
 
-  const sortedPieData = [...pieData].sort((a, b) => b.value - a.value)
-  const remainingPieCount = sortedPieData.length > 5 ? sortedPieData.length - 5 : 0
-
   const { data: chartData = [] } = useQuery({
     queryKey: ['dashboardChart', month, year, user?.tracking_start_date ?? null, user?.createdAt ?? null, dashView],
     queryFn: async () => {
@@ -191,26 +170,6 @@ export function Dashboard({ month, year, onNavigate, dashView }: DashboardProps)
     queryFn: () => getSummaryCards(year, month, dashView),
     enabled: !!user,
   })
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderPieShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, index } = props as {
-      cx: number; cy: number; innerRadius: number; outerRadius: number
-      startAngle: number; endAngle: number; fill: string; index: number
-    }
-    return (
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={index === pieDisplayIndex ? outerRadius + 6 : outerRadius}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        fillOpacity={pieDisplayIndex !== null && index !== pieDisplayIndex ? 0.5 : 1}
-      />
-    )
-  }
 
   const todayStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -403,163 +362,8 @@ const upcomingFixed = useMemo(() => {
     </HeroCard>
   )
 
-  // Effective active index: clicked (locked) > legend hover > pie hover
-  const pieDisplayIndex = clickedIndex ?? legendHoverIndex ?? activeIndex
-
   const pieChartCard = (
-    <GlassCard
-      radius={20}
-      style={{ position: 'relative', zIndex: clickedIndex !== null ? 11 : 'auto' }}
-      onClick={resetPie}
-    >
-      <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--aurora-hi)', margin: '0 0 12px', textAlign: 'center' }} className="lg:text-left">{t.dashboard.expensesByCategory}</h3>
-      {pieData.length === 0 ? (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div style={{ position: 'relative', width: 190, height: 190, minHeight: 190 }}>
-            {mounted && (
-              <ResponsiveContainer width={190} height={190}>
-                <PieChart>
-                  <Pie
-                    data={[{ value: 1 }]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={90}
-                    dataKey="value"
-                    startAngle={90}
-                    endAngle={-270}
-                    isAnimationActive={false}
-                  >
-                    <Cell fill="var(--aurora-gline)" />
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, color: 'var(--aurora-faint)', margin: 0, textAlign: 'center' }}>{t.dashboard.noExpenses}</p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Legend */}
-          <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(148px, 100%), 1fr))', rowGap: 6, columnGap: 12, alignContent: 'center', maxHeight: 190, overflowY: 'auto' }}>
-            {sortedPieData.map((item, i) => {
-              const itemPieIdx = pieData.findIndex(d => d.name === item.name)
-              const isSelected = clickedIndex !== null && clickedIndex === itemPieIdx
-              const isHighlighted = pieDisplayIndex !== null && pieDisplayIndex === itemPieIdx
-              const row = (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, cursor: 'pointer',
-                    width: 'fit-content', maxWidth: '100%',
-                    padding: '3px 6px', borderRadius: 6, margin: '0 -6px',
-                    background: isSelected ? 'rgba(139,92,246,0.12)' : 'transparent',
-                    border: isSelected ? '1px solid rgba(139,92,246,0.2)' : '1px solid transparent',
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={() => { if (itemPieIdx !== -1) setLegendHoverIndex(itemPieIdx) }}
-                  onMouseLeave={() => setLegendHoverIndex(null)}
-                  onClick={e => {
-                    e.stopPropagation()
-                    if (itemPieIdx !== -1) selectPie(clickedIndex === itemPieIdx ? null : itemPieIdx)
-                  }}
-                >
-                  {(() => {
-                    const Icon = CATEGORY_ICON_MAP[item.icon ?? ''] ?? Tag
-                    return (
-                      <div style={{ width: 20, height: 20, borderRadius: 7, background: catBg(item.color), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={12} color={item.color} strokeWidth={1.8} />
-                      </div>
-                    )
-                  })()}
-                  <span style={{
-                    fontFamily: "'Manrope', sans-serif",
-                    fontSize: 12,
-                    color: isHighlighted ? 'var(--aurora-hi)' : 'var(--aurora-lo)',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    fontWeight: isHighlighted ? 700 : 400,
-                    transition: 'font-weight 0.1s, color 0.1s',
-                  }}>{item.name}</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: 'var(--aurora-faint)', flexShrink: 0 }}>{totalExpenses > 0 ? Math.round((item.value / totalExpenses) * 100) : 0}%</span>
-                </div>
-              )
-              if (i < 5) return row
-              return (
-                <div key={i} className={!showAllPie ? 'hidden md:block' : undefined}>
-                  {row}
-                </div>
-              )
-            })}
-            {remainingPieCount > 0 && (
-              <button
-                className="md:hidden"
-                onClick={() => setShowAllPie(p => !p)}
-                style={{ fontSize: 12, color: 'var(--aurora-violet)', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', fontFamily: "'Manrope', sans-serif" }}
-              >
-                {showAllPie ? t.dashboard.showLess : t.dashboard.moreItems.replace('{n}', String(remainingPieCount))}
-              </button>
-            )}
-          </div>
-          {/* Donut */}
-          <div
-            style={{ position: 'relative', flexShrink: 0, width: 190, height: 190, minHeight: 190 }}
-            onClick={e => e.stopPropagation()}
-          >
-            {mounted && <ResponsiveContainer width={190} height={190}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
-                  shape={renderPieShape}
-                  onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                  onClick={(_: unknown, index: number) => {
-                    selectPie(clickedIndex === index ? null : index)
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {pieData.map((_, i) => <Cell key={i} fill={pieData[i].color} />)}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>}
-            {/* Center label */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              {pieDisplayIndex !== null && pieData[pieDisplayIndex] ? (() => {
-                const slice = pieData[pieDisplayIndex]
-                const SliceIcon = CATEGORY_ICON_MAP[slice.icon ?? ''] ?? Tag
-                return (
-                  <>
-                    <SliceIcon size={18} color={slice.color} strokeWidth={1.8} style={{ marginBottom: 2 }} />
-                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', fontWeight: 500, textAlign: 'center', padding: '0 4px', margin: 0 }}>{slice.name}</p>
-                    <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: '2px 0 0' }}>{formatAmount(slice.value)}</p>
-                    <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: 0 }}>{totalExpenses > 0 ? Math.round((slice.value / totalExpenses) * 100) : 0}%</p>
-                  </>
-                )
-              })() : (
-                <>
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: 'var(--aurora-hi)', lineHeight: 1.2, margin: 0 }}>{formatAmount(totalExpenses)}</p>
-                  <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, color: 'var(--aurora-faint)', margin: '2px 0 0' }}>{t.dashboard.total}</p>
-                </>
-              )}
-            </div>
-            {/* Center click target — always active, resets selection back to the overall total */}
-            <div
-              style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 104, height: 104, borderRadius: '50%', cursor: 'pointer', zIndex: 2 }}
-              onClick={resetPie}
-            />
-          </div>
-        </div>
-      )}
-    </GlassCard>
+    <CategoryDonutCard data={pieData} title={t.dashboard.expensesByCategory} total={totalExpenses} />
   )
 
   const heatmapCard = (
@@ -891,12 +695,6 @@ const upcomingFixed = useMemo(() => {
       </div>
 
     </div>
-    {clickedIndex !== null && (
-      <div
-        style={{ position: 'fixed', inset: 0, zIndex: 10 }}
-        onClick={resetPie}
-      />
-    )}
     </div>
   )
 }

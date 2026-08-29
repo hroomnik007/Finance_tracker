@@ -5,11 +5,14 @@ import { MemberAvatar } from '../components/MemberAvatar'
 import { BottomSheet } from '../components/BottomSheet'
 import { GlassCard } from '../components/GlassCard'
 import { HeroCard } from '../components/HeroCard'
+import { CategoryDonutCard } from '../components/CategoryDonutCard'
 import { useAuth } from '../context/AuthContext'
 import { useFormatters } from '../hooks/useFormatters'
+import { useCategories } from '../hooks/useCategories'
 import { useCountUp } from '../hooks/useCountUp'
 import { useTranslation } from '../i18n'
 import { getMyHousehold, getMonthlyStats, getActivity, leaveHousehold } from '../api/households'
+import { getSummaryCards } from '../api/transactions'
 import type { HouseholdData, MonthlyStats, ActivityItem } from '../api/households'
 import { parseDescription } from '../hooks/useFixedExpenses'
 
@@ -45,11 +48,13 @@ interface HouseholdPageProps {
 export function HouseholdPage({ month, year }: HouseholdPageProps) {
   const { user, refreshUser } = useAuth()
   const { formatAmount } = useFormatters()
+  const { categories } = useCategories()
   const { t } = useTranslation()
   const { household: ht } = t
 
   const [householdData, setHouseholdData] = useState<HouseholdData | null>(null)
   const [stats, setStats] = useState<MonthlyStats | null>(null)
+  const [summaryCards, setSummaryCards] = useState<{ balance: number; income: number; expenses: number; savingsRate: number } | null>(null)
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -80,14 +85,18 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
     if (!householdEnabled || !householdId) { setLoading(false); return }
     setLoading(true)
     try {
-      const [hd, ms, activity] = await Promise.all([
+      const [hd, ms, activity, sc] = await Promise.all([
         getMyHousehold(),
         getMonthlyStats(householdId, month, year),
         getActivity(householdId, month, year, 20),
+        // Same cumulative balance source as the Dashboard "Rodinné" Hero — the
+        // balance carries across months instead of resetting each month.
+        getSummaryCards(year, month, 'family').catch(() => null),
       ])
       setHouseholdData(hd)
       setStats(ms)
       setActivityFeed(activity)
+      setSummaryCards(sc)
     } catch { /* not authenticated or no household */ }
     setLoading(false)
   }, [householdEnabled, householdId, month, year])
@@ -116,10 +125,35 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
 
   const totalIncome = stats?.total_income ?? 0
   const totalExpenses = stats?.total_expenses ?? 0
-  const balance = totalIncome - totalExpenses
-  const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0
+  // Zostatok sa kumuluje naprieč mesiacmi (rovnaká logika ako Dashboard Rodinné) —
+  // fallback na mesačný rozdiel kým sa summary-cards nenačíta / pri chybe.
+  const balance = summaryCards?.balance ?? (totalIncome - totalExpenses)
+  // Miera úspory ostáva mesačná (príjmy − výdavky za daný mesiac), nezávisle od
+  // kumulatívneho zostatku.
+  const savingsRate = totalIncome > 0 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0
   const memberCount = householdData?.members.length ?? 0
   const animatedBalance = useCountUp(balance, 800)
+
+  // Výdavky podľa kategórie — agregované naprieč VŠETKÝMI členmi domácnosti pre
+  // zvolený mesiac (rovnaký zdroj ako Hero agregácia: stats.per_member).
+  const householdPieData = useMemo(() => {
+    if (!stats) return []
+    const map = new Map<string, { name: string; color: string; value: number; icon?: string | null }>()
+    for (const m of stats.per_member) {
+      for (const c of m.category_breakdown) {
+        if (c.amount <= 0) continue
+        const key = c.category_id ?? `__${c.name}`
+        const existing = map.get(key)
+        if (existing) {
+          existing.value += c.amount
+        } else {
+          const cat = c.category_id ? categories.find(k => k.id === c.category_id) : undefined
+          map.set(key, { name: c.name, color: c.color ?? cat?.color ?? '#6b7280', value: c.amount, icon: cat?.icon })
+        }
+      }
+    }
+    return Array.from(map.values())
+  }, [stats, categories])
 
   if (!householdEnabled) {
     return (
@@ -205,6 +239,13 @@ export function HouseholdPage({ month, year }: HouseholdPageProps) {
           </div>
         </div>
       </HeroCard>
+
+      {/* ── Výdavky podľa kategórie (agregované naprieč členmi) ── */}
+      <CategoryDonutCard
+        data={householdPieData}
+        title={t.dashboard.expensesByCategory}
+        total={stats?.total_expenses ?? 0}
+      />
 
       {/* ── ČLENOVIA section header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
